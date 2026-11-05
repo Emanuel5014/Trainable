@@ -1,40 +1,29 @@
 package com.emanuel5014.trainable.data.repository
 
-import android.content.Context
 import com.emanuel5014.trainable.data.local.dao.PhysicalCheckDao
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
-import com.emanuel5014.trainable.util.ImageStorageUtils
-import com.emanuel5014.trainable.util.PhysicalCheckCryptoManager
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.nio.charset.StandardCharsets
-import javax.crypto.Cipher
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
-import javax.inject.Inject
-import javax.inject.Singleton
+import kotlin.time.Clock
 
-@Singleton
-class PhysicalCheckRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+/**
+ * The physical checks and their photos, optionally encrypted with a password ([PhysicalCheckCrypto]). The photos
+ * live in [files]; their names, comma separated, in the check's row.
+ */
+class PhysicalCheckRepository(
     private val physicalCheckDao: PhysicalCheckDao,
-    private val cryptoManager: PhysicalCheckCryptoManager,
+    private val cryptoManager: PhysicalCheckCrypto,
+    private val files: PhysicalCheckFiles,
     private val preferencesRepository: UserPreferencesRepository
 ) {
 
-    private val folderName = "physical_checks"
     private val validationString = "TRAINABLE_SECURE_VAL"
 
     // Chiave in memoria per la sessione corrente dell'app
-    private var activeSecretKey: SecretKey? = null
-
-    private val filesDirectory: File
-        get() = File(context.filesDir, folderName).apply { if (!exists()) mkdirs() }
+    private var activeSecretKey: ByteArray? = null
 
     fun getAllPhysicalChecks(): Flow<List<PhysicalCheckEntity>> = physicalCheckDao.getAllPhysicalChecks()
 
@@ -58,7 +47,7 @@ class PhysicalCheckRepository @Inject constructor(
             val encryptedPass = decodeHex(wrappedPassHex)
             val iv = decodeHex(ivHex)
 
-            val password = cryptoManager.decryptPasswordWithKeystore(encryptedPass, iv)
+            val password = cryptoManager.unwrapPassword(encryptedPass, iv)
             if (password != null) {
                 activeSecretKey = cryptoManager.deriveKey(password, salt)
                 return@withContext true
@@ -83,19 +72,16 @@ class PhysicalCheckRepository @Inject constructor(
             val valIv = decodeHex(validationIvHex)
 
             val derivedKey = cryptoManager.deriveKey(password, salt)
-            
+
             // Verifica la password provando a decifrare il blocco di validazione
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            val spec = GCMParameterSpec(128, valIv)
-            cipher.init(Cipher.DECRYPT_MODE, derivedKey, spec)
-            val decryptedBytes = cipher.doFinal(validation)
-            val decryptedStr = String(decryptedBytes, StandardCharsets.UTF_8)
+            val decryptedBytes = cryptoManager.decryptWithIv(validation, valIv, derivedKey)
+            val decryptedStr = decryptedBytes.decodeToString()
 
             if (decryptedStr == validationString) {
                 activeSecretKey = derivedKey
-                
+
                 // Salva nuovamente la password tramite Keystore sul dispositivo per auto-sblocco futuro
-                val (wrapped, newIv) = cryptoManager.encryptPasswordWithKeystore(password)
+                val (wrapped, newIv) = cryptoManager.wrapPassword(password)
                 preferencesRepository.setPhysicalCheckWrappedKeyKeystore(toHex(wrapped))
                 preferencesRepository.setPhysicalCheckWrappedKeyIv(toHex(newIv))
                 return@withContext true
@@ -115,10 +101,7 @@ class PhysicalCheckRepository @Inject constructor(
             val derivedKey = cryptoManager.deriveKey(password, salt)
 
             // Crea blocco di validazione
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, derivedKey)
-            val valBytes = cipher.doFinal(validationString.toByteArray(StandardCharsets.UTF_8))
-            val valIv = cipher.iv
+            val (valBytes, valIv) = cryptoManager.encryptWithIv(validationString.encodeToByteArray(), derivedKey)
 
             // Salva credenziali e salt
             preferencesRepository.setPhysicalCheckEncryptionSalt(toHex(salt))
@@ -126,21 +109,19 @@ class PhysicalCheckRepository @Inject constructor(
             preferencesRepository.setPhysicalCheckValidationIv(toHex(valIv))
 
             // Salva password cifrata via Keystore per uso locale
-            val (wrapped, iv) = cryptoManager.encryptPasswordWithKeystore(password)
+            val (wrapped, iv) = cryptoManager.wrapPassword(password)
             preferencesRepository.setPhysicalCheckWrappedKeyKeystore(toHex(wrapped))
             preferencesRepository.setPhysicalCheckWrappedKeyIv(toHex(iv))
 
             activeSecretKey = derivedKey
 
             // Cifra i file esistenti
-            val directory = filesDirectory
-            directory.listFiles()?.forEach { file ->
-                if (file.isFile && !file.name.endsWith(".enc")) {
-                    val plainBytes = file.readBytes()
+            files.list().forEach { name ->
+                if (!name.endsWith(".enc")) {
+                    val plainBytes = files.read(name)
                     val encryptedBytes = cryptoManager.encryptData(plainBytes, derivedKey)
-                    val encFile = File(directory, file.name + ".enc")
-                    encFile.writeBytes(encryptedBytes)
-                    file.delete()
+                    files.write("$name.enc", encryptedBytes)
+                    files.delete(name)
                 }
             }
 
@@ -162,14 +143,12 @@ class PhysicalCheckRepository @Inject constructor(
         val key = activeSecretKey ?: return@withContext false
 
         try {
-            val directory = filesDirectory
-            directory.listFiles()?.forEach { file ->
-                if (file.isFile && file.name.endsWith(".enc")) {
-                    val encBytes = file.readBytes()
+            files.list().forEach { name ->
+                if (name.endsWith(".enc")) {
+                    val encBytes = files.read(name)
                     val plainBytes = cryptoManager.decryptData(encBytes, key)
-                    val decFile = File(directory, file.name.removeSuffix(".enc"))
-                    decFile.writeBytes(plainBytes)
-                    file.delete()
+                    files.write(name.removeSuffix(".enc"), plainBytes)
+                    files.delete(name)
                 }
             }
 
@@ -192,16 +171,16 @@ class PhysicalCheckRepository @Inject constructor(
      * Salva una nuova foto per un check fisico.
      */
     suspend fun savePhoto(imageBytes: ByteArray): String = withContext(Dispatchers.IO) {
-        val filename = "check_${System.currentTimeMillis()}_${(100..999).random()}.jpg"
-        val compressedBytes = ImageStorageUtils.compressImageBytes(imageBytes)
+        val filename = "check_${Clock.System.now().toEpochMilliseconds()}_${(100..999).random()}.jpg"
+        val compressedBytes = files.compressImage(imageBytes)
         val isEncryptionEnabled = preferencesRepository.physicalCheckEncryptionEnabled.first()
         val key = activeSecretKey
 
         if (isEncryptionEnabled && key != null) {
             val encryptedBytes = cryptoManager.encryptData(compressedBytes, key)
-            File(filesDirectory, "$filename.enc").writeBytes(encryptedBytes)
+            files.write("$filename.enc", encryptedBytes)
         } else {
-            File(filesDirectory, filename).writeBytes(compressedBytes)
+            files.write(filename, compressedBytes)
         }
         filename
     }
@@ -211,28 +190,27 @@ class PhysicalCheckRepository @Inject constructor(
      */
     suspend fun getPhotoBytes(filename: String): ByteArray? = withContext(Dispatchers.IO) {
         val isEncryptionEnabled = preferencesRepository.physicalCheckEncryptionEnabled.first()
-        
-        val encFile = File(filesDirectory, "$filename.enc")
-        val plainFile = File(filesDirectory, filename)
+
+        val encName = "$filename.enc"
 
         try {
-            if (encFile.exists()) {
+            if (files.exists(encName)) {
                 val key = activeSecretKey ?: return@withContext null
-                val encBytes = encFile.readBytes()
+                val encBytes = files.read(encName)
                 cryptoManager.decryptData(encBytes, key)
-            } else if (plainFile.exists()) {
+            } else if (files.exists(filename)) {
                 if (isEncryptionEnabled) {
                     // Se la crittografia è attiva ma il file è in chiaro, cifralo al volo per sicurezza
                     val key = activeSecretKey
                     if (key != null) {
-                        val plainBytes = plainFile.readBytes()
+                        val plainBytes = files.read(filename)
                         val encryptedBytes = cryptoManager.encryptData(plainBytes, key)
-                        encFile.writeBytes(encryptedBytes)
-                        plainFile.delete()
+                        files.write(encName, encryptedBytes)
+                        files.delete(filename)
                         return@withContext plainBytes
                     }
                 }
-                plainFile.readBytes()
+                files.read(filename)
             } else {
                 null
             }
@@ -271,8 +249,8 @@ class PhysicalCheckRepository @Inject constructor(
     }
 
     suspend fun deletePhotoFromCheck(checkId: Int, filenameToDelete: String) = withContext(Dispatchers.IO) {
-        File(filesDirectory, filenameToDelete).delete()
-        File(filesDirectory, "$filenameToDelete.enc").delete()
+        files.delete(filenameToDelete)
+        files.delete("$filenameToDelete.enc")
         val existing = physicalCheckDao.getPhysicalCheckById(checkId) ?: return@withContext
         val remainingFilenames = existing.fotoFilenames.split(",").filter { it != filenameToDelete }
         physicalCheckDao.updatePhysicalCheck(existing.copy(fotoFilenames = remainingFilenames.joinToString(",")))
@@ -280,7 +258,7 @@ class PhysicalCheckRepository @Inject constructor(
 
     suspend fun resetAllAndDisableEncryption() = withContext(Dispatchers.IO) {
         // Elimina tutte le foto dal disco
-        filesDirectory.listFiles()?.forEach { it.delete() }
+        files.list().forEach { files.delete(it) }
         // Elimina tutti i record dal database
         physicalCheckDao.deleteAll()
         // Pulisci tutte le preferenze di crittografia
@@ -297,23 +275,27 @@ class PhysicalCheckRepository @Inject constructor(
         // Elimina i file delle foto associati
         if (check.fotoFilenames.isNotEmpty()) {
             check.fotoFilenames.split(",").forEach { filename ->
-                File(filesDirectory, filename).delete()
-                File(filesDirectory, "$filename.enc").delete()
+                files.delete(filename)
+                files.delete("$filename.enc")
             }
         }
         physicalCheckDao.deletePhysicalCheck(check)
     }
 
-    // Helper conversioni HEX
-    private fun toHex(bytes: ByteArray): String = bytes.joinToString("") { "%02x".format(it) }
-    private fun decodeHex(hex: String): ByteArray {
-        val len = hex.length
-        val data = ByteArray(len / 2)
-        var i = 0
-        while (i < len) {
-            data[i / 2] = ((Character.digit(hex[i], 16) shl 4) + Character.digit(hex[i + 1], 16)).toByte()
-            i += 2
+    companion object {
+        // Helper conversioni HEX
+        fun toHex(bytes: ByteArray): String =
+            bytes.joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
+
+        fun decodeHex(hex: String): ByteArray {
+            val len = hex.length
+            val data = ByteArray(len / 2)
+            var i = 0
+            while (i < len) {
+                data[i / 2] = ((hex[i].digitToInt(16) shl 4) + hex[i + 1].digitToInt(16)).toByte()
+                i += 2
+            }
+            return data
         }
-        return data
     }
 }

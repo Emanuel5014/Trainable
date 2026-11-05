@@ -35,6 +35,16 @@ object RepositoryModule {
 
     @Provides
     @Singleton
+    fun providePhysicalCheckRepository(
+        dao: com.emanuel5014.trainable.data.local.dao.PhysicalCheckDao,
+        crypto: com.emanuel5014.trainable.util.PhysicalCheckCryptoManager,
+        @ApplicationContext context: Context,
+        preferences: UserPreferencesRepository
+    ): com.emanuel5014.trainable.data.repository.PhysicalCheckRepository =
+        com.emanuel5014.trainable.data.repository.PhysicalCheckRepository(dao, crypto, AndroidPhysicalCheckFiles(context), preferences)
+
+    @Provides
+    @Singleton
     fun provideAnalyticsRepository(analyticsDao: AnalyticsDao, weightLogDao: WeightLogDao): AnalyticsRepository =
         AnalyticsRepository(analyticsDao, weightLogDao)
 

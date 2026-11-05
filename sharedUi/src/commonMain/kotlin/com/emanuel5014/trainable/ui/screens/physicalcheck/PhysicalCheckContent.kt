@@ -1,17 +1,62 @@
 package com.emanuel5014.trainable.ui.screens.physicalcheck
 
-import com.emanuel5014.trainable.ui.theme.actionGlass
-import com.emanuel5014.trainable.ui.theme.actionGlassContainer
-import com.emanuel5014.trainable.ui.theme.actionGlassElevation
-import com.emanuel5014.trainable.ui.theme.actionGlassSource
-import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.physical_check_max_2
+import com.emanuel5014.trainable.sharedui.resources.physical_check_encryption_disabled
+import com.emanuel5014.trainable.sharedui.resources.physical_check_select_photo_toast
+import com.emanuel5014.trainable.sharedui.resources.back
+import com.emanuel5014.trainable.sharedui.resources.camera
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.close
+import com.emanuel5014.trainable.sharedui.resources.delete
+import com.emanuel5014.trainable.sharedui.resources.edit
+import com.emanuel5014.trainable.sharedui.resources.gallery
+import com.emanuel5014.trainable.sharedui.resources.ok
+import com.emanuel5014.trainable.sharedui.resources.physical_check_add_check_cd
+import com.emanuel5014.trainable.sharedui.resources.physical_check_add_photos
+import com.emanuel5014.trainable.sharedui.resources.physical_check_auth_button
+import com.emanuel5014.trainable.sharedui.resources.physical_check_compare_cd
+import com.emanuel5014.trainable.sharedui.resources.physical_check_compare_count
+import com.emanuel5014.trainable.sharedui.resources.physical_check_date
+import com.emanuel5014.trainable.sharedui.resources.physical_check_delete_message
+import com.emanuel5014.trainable.sharedui.resources.physical_check_delete_photo_message
+import com.emanuel5014.trainable.sharedui.resources.physical_check_delete_photo_title
+import com.emanuel5014.trainable.sharedui.resources.physical_check_delete_title
+import com.emanuel5014.trainable.sharedui.resources.physical_check_edit_check
+import com.emanuel5014.trainable.sharedui.resources.physical_check_encrypted_vault
+import com.emanuel5014.trainable.sharedui.resources.physical_check_enter_password_desc
+import com.emanuel5014.trainable.sharedui.resources.physical_check_fingerprint_cd
+import com.emanuel5014.trainable.sharedui.resources.physical_check_fingerprint_desc
+import com.emanuel5014.trainable.sharedui.resources.physical_check_forgot_password
+import com.emanuel5014.trainable.sharedui.resources.physical_check_lock_cd
+import com.emanuel5014.trainable.sharedui.resources.physical_check_new_check
+import com.emanuel5014.trainable.sharedui.resources.physical_check_no_checks
+import com.emanuel5014.trainable.sharedui.resources.physical_check_no_checks_desc
+import com.emanuel5014.trainable.sharedui.resources.physical_check_notes_label
+import com.emanuel5014.trainable.sharedui.resources.physical_check_password_error
+import com.emanuel5014.trainable.sharedui.resources.physical_check_password_label
+import com.emanuel5014.trainable.sharedui.resources.physical_check_photos_count
+import com.emanuel5014.trainable.sharedui.resources.physical_check_photos_selected
+import com.emanuel5014.trainable.sharedui.resources.physical_check_protected_access
+import com.emanuel5014.trainable.sharedui.resources.physical_check_remove_cd
+import com.emanuel5014.trainable.sharedui.resources.physical_check_reset_confirm
+import com.emanuel5014.trainable.sharedui.resources.physical_check_reset_message
+import com.emanuel5014.trainable.sharedui.resources.physical_check_reset_title
+import com.emanuel5014.trainable.sharedui.resources.physical_check_select_source
+import com.emanuel5014.trainable.sharedui.resources.physical_check_settings_cd
+import com.emanuel5014.trainable.sharedui.resources.physical_check_title
+import com.emanuel5014.trainable.sharedui.resources.physical_check_unlock
+import com.emanuel5014.trainable.sharedui.resources.physical_check_weight_label
+import com.emanuel5014.trainable.sharedui.resources.save
+import com.emanuel5014.trainable.ui.components.LocalShowMessage
+import kotlin.time.Clock
+
+import com.emanuel5014.trainable.ui.glass.actionGlass
+import com.emanuel5014.trainable.ui.glass.actionGlassContainer
+import com.emanuel5014.trainable.ui.glass.actionGlassElevation
+import com.emanuel5014.trainable.ui.glass.actionGlassSource
+import com.emanuel5014.trainable.ui.glass.rememberActionGlassSource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -45,14 +90,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -61,34 +103,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.fragment.app.FragmentActivity
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
-import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.util.DateFormatter
-import com.emanuel5014.trainable.util.BiometricHelper
 import com.emanuel5014.trainable.util.WeightUnitConverter
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.io.File
-import java.util.Calendar
-import java.util.TimeZone
-import com.emanuel5014.trainable.ui.components.shared.ImageEditorDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun PhysicalCheckScreen(
+fun PhysicalCheckContent(
     onNavigateBack: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToCompare: (Int, Int) -> Unit,
-    viewModel: PhysicalCheckViewModel = hiltViewModel()
+    viewModel: PhysicalCheckModel
 ) {
-    val context = LocalContext.current
     val checks by viewModel.checks.collectAsState()
     val isUnlocked by viewModel.isUnlocked.collectAsState()
     val encryptionEnabled by viewModel.encryptionEnabled.collectAsState(initial = false)
@@ -110,9 +138,7 @@ fun PhysicalCheckScreen(
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
-    val swipeActionsEnabled by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true }
-    }.collectAsState(initial = true)
+    val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState(initial = true)
 
     data class FullscreenState(val checkId: Int, val filenames: List<String>, val initialIndex: Int)
     var fullscreenState by remember { mutableStateOf<FullscreenState?>(null) }
@@ -121,57 +147,40 @@ fun PhysicalCheckScreen(
     var showAddPhotoOptions by remember { mutableStateOf(false) }
     var checkToEdit by remember { mutableStateOf<PhysicalCheckEntity?>(null) }
     val photoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
     val topPhotoEditQueue = remember { mutableStateListOf<ByteArray>() }
     var topOnEditFinished by remember { mutableStateOf<((ByteArray) -> Unit)?>(null) }
 
-    val addPhotoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia()
-    ) { uris ->
-        val checkId = addingPhotosForCheckId
-        if (checkId == null) {
-            viewModel.setPhotoCaptureCompleted()
-            return@rememberLauncherForActivityResult
-        }
-        val contentResolver = context.contentResolver
-        val bytesList = mutableListOf<ByteArray>()
-        uris.forEach { uri ->
-            try {
-                contentResolver.openInputStream(uri)?.use { inputStream ->
-                    bytesList.add(inputStream.readBytes())
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        if (bytesList.isNotEmpty()) {
-            val editedList = mutableListOf<ByteArray>()
-            topPhotoEditQueue.clear()
-            topPhotoEditQueue.addAll(bytesList)
-            topOnEditFinished = { editedBytes ->
-                editedList.add(editedBytes)
-                if (topPhotoEditQueue.isEmpty()) {
-                    viewModel.addPhotosToCheck(checkId, editedList)
-                    topOnEditFinished = null
-                }
-            }
-        }
-        addingPhotosForCheckId = null
-        viewModel.setPhotoCaptureCompleted()
-    }
-
-    val addPhotoCameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
+    val platform = LocalPhysicalCheckPlatform.current
+    val addPhotoCapture = platform.rememberPhotoCapture(
+        onPicked = { bytesList ->
             val checkId = addingPhotosForCheckId
             if (checkId == null) {
                 viewModel.setPhotoCaptureCompleted()
-                return@rememberLauncherForActivityResult
+                return@rememberPhotoCapture
             }
-            tempCameraUri?.let { uri ->
-                val bytes = com.emanuel5014.trainable.util.ImageStorageUtils.readAndCompressImage(context, uri)
+            if (bytesList.isNotEmpty()) {
+                val editedList = mutableListOf<ByteArray>()
+                topPhotoEditQueue.clear()
+                topPhotoEditQueue.addAll(bytesList)
+                topOnEditFinished = { editedBytes ->
+                    editedList.add(editedBytes)
+                    if (topPhotoEditQueue.isEmpty()) {
+                        viewModel.addPhotosToCheck(checkId, editedList)
+                        topOnEditFinished = null
+                    }
+                }
+            }
+            addingPhotosForCheckId = null
+            viewModel.setPhotoCaptureCompleted()
+        },
+        onCameraResult = { success, bytes ->
+            if (success) {
+                val checkId = addingPhotosForCheckId
+                if (checkId == null) {
+                    viewModel.setPhotoCaptureCompleted()
+                    return@rememberPhotoCapture
+                }
                 if (bytes != null) {
                     val editedList = mutableListOf<ByteArray>()
                     topPhotoEditQueue.clear()
@@ -184,42 +193,27 @@ fun PhysicalCheckScreen(
                         }
                     }
                 }
-                try {
-                    context.contentResolver.delete(uri, null, null)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
             }
-        }
-        addingPhotosForCheckId = null
-        showAddPhotoOptions = false
-        viewModel.setPhotoCaptureCompleted()
-    }
-
-    val addPhotoPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            val uri = createCheckTempImageUri(context)
-            tempCameraUri = uri
-            addPhotoCameraLauncher.launch(uri)
-        } else {
+            addingPhotosForCheckId = null
+            showAddPhotoOptions = false
             viewModel.setPhotoCaptureCompleted()
-            Toast.makeText(context, context.getString(R.string.physical_check_camera_denied), Toast.LENGTH_SHORT).show()
-        }
-    }
+        },
+        onCameraDenied = { viewModel.setPhotoCaptureCompleted() }
+    )
+    val biometricPrompt = platform.rememberBiometricPrompt()
+    val showMessage = LocalShowMessage.current
+    val maxTwoText = stringResource(Res.string.physical_check_max_2)
+    val encryptionDisabledText = stringResource(Res.string.physical_check_encryption_disabled)
 
     LaunchedEffect(biometricEnabled, sessionActive, biometricRetry) {
         if (biometricEnabled && !sessionActive) {
-            val activity = context as? FragmentActivity
-            if (activity != null) {
-                BiometricHelper.checkAndShowBiometricPrompt(
-                    activity = activity,
-                    onSuccess = {
+            if (biometricPrompt != null) {
+                biometricPrompt(
+                    {
                         viewModel.setSessionActive(true)
                         viewModel.touch()
                     },
-                    onError = { biometricRetry++ }
+                    { biometricRetry++ }
                 )
             } else {
                 viewModel.setSessionActive(true)
@@ -256,18 +250,18 @@ fun PhysicalCheckScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Fingerprint,
-                            contentDescription = stringResource(R.string.physical_check_fingerprint_cd),
+                            contentDescription = stringResource(Res.string.physical_check_fingerprint_cd),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(64.dp)
                         )
                         Text(
-                            text = stringResource(R.string.physical_check_protected_access),
+                            text = stringResource(Res.string.physical_check_protected_access),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = stringResource(R.string.physical_check_fingerprint_desc),
+                            text = stringResource(Res.string.physical_check_fingerprint_desc),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 8.dp)
@@ -277,7 +271,7 @@ fun PhysicalCheckScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(stringResource(R.string.physical_check_auth_button))
+                            Text(stringResource(Res.string.physical_check_auth_button))
                         }
                     }
                 }
@@ -315,18 +309,18 @@ fun PhysicalCheckScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Lock,
-                            contentDescription = stringResource(R.string.physical_check_lock_cd),
+                            contentDescription = stringResource(Res.string.physical_check_lock_cd),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(64.dp)
                         )
                         Text(
-                            text = stringResource(R.string.physical_check_encrypted_vault),
+                            text = stringResource(Res.string.physical_check_encrypted_vault),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = stringResource(R.string.physical_check_enter_password_desc),
+                            text = stringResource(Res.string.physical_check_enter_password_desc),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 8.dp)
@@ -338,7 +332,7 @@ fun PhysicalCheckScreen(
                                 passwordInput = it
                                 passwordError = false
                             },
-                            label = { Text(stringResource(R.string.physical_check_password_label)) },
+                            label = { Text(stringResource(Res.string.physical_check_password_label)) },
                             isError = passwordError,
                             singleLine = true,
                             visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
@@ -355,7 +349,7 @@ fun PhysicalCheckScreen(
 
                         if (passwordError) {
                             Text(
-                                text = stringResource(R.string.physical_check_password_error),
+                                text = stringResource(Res.string.physical_check_password_error),
                                 color = MaterialTheme.colorScheme.error,
                                 fontSize = 12.sp,
                                 modifier = Modifier.align(Alignment.Start)
@@ -378,7 +372,7 @@ fun PhysicalCheckScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(stringResource(R.string.physical_check_unlock))
+                            Text(stringResource(Res.string.physical_check_unlock))
                         }
 
                         TextButton(
@@ -386,7 +380,7 @@ fun PhysicalCheckScreen(
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
                             Text(
-                                text = stringResource(R.string.physical_check_forgot_password),
+                                text = stringResource(Res.string.physical_check_forgot_password),
                                 color = MaterialTheme.colorScheme.error,
                                 fontSize = 13.sp
                             )
@@ -401,10 +395,10 @@ fun PhysicalCheckScreen(
             Scaffold(
                 topBar = {
                     TopAppBar(
-                        title = { Text(stringResource(R.string.physical_check_title), fontWeight = FontWeight.Bold) },
+                        title = { Text(stringResource(Res.string.physical_check_title), fontWeight = FontWeight.Bold) },
                         navigationIcon = {
                             IconButton(onClick = onNavigateBack) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                             }
                         },
                         actions = {
@@ -414,7 +408,7 @@ fun PhysicalCheckScreen(
                                         val checkId = selectedForCompare.first()
                                         checkToEdit = checks.find { it.id == checkId }
                                     }) {
-                                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
+                                        Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit))
                                     }
                                 }
                                 if (selectedForCompare.size == 1) {
@@ -424,7 +418,7 @@ fun PhysicalCheckScreen(
                                     }) {
                                         Icon(
                                             Icons.Default.Delete,
-                                            contentDescription = stringResource(R.string.delete),
+                                            contentDescription = stringResource(Res.string.delete),
                                             tint = MaterialTheme.colorScheme.error
                                         )
                                     }
@@ -437,7 +431,7 @@ fun PhysicalCheckScreen(
                                 }) {
                                     Icon(
                                         imageVector = if (isSelectionMode) Icons.Default.Close else Icons.Default.Compare,
-                                        contentDescription = stringResource(R.string.physical_check_compare_cd)
+                                        contentDescription = stringResource(Res.string.physical_check_compare_cd)
                                     )
                                 }
                             }
@@ -445,7 +439,7 @@ fun PhysicalCheckScreen(
                                 viewModel.touch()
                                 onNavigateToSettings()
                             }) {
-                                Icon(Icons.Default.Security, contentDescription = stringResource(R.string.physical_check_settings_cd))
+                                Icon(Icons.Default.Security, contentDescription = stringResource(Res.string.physical_check_settings_cd))
                             }
                         }
                     )
@@ -466,7 +460,7 @@ fun PhysicalCheckScreen(
                         ) {
                             Icon(Icons.Default.Compare, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.physical_check_compare_count))
+                            Text(stringResource(Res.string.physical_check_compare_count))
                         }
                     } else if (!isSelectionMode) {
                         FloatingActionButton(
@@ -479,7 +473,7 @@ fun PhysicalCheckScreen(
                             elevation = actionGlassElevation(actionGlass),
                             modifier = Modifier.actionGlass(actionGlass, MaterialTheme.colorScheme.primary, cornerRadius = 16.dp)
                         ) {
-                            Icon(Icons.Default.AddAPhoto, contentDescription = stringResource(R.string.physical_check_add_check_cd))
+                            Icon(Icons.Default.AddAPhoto, contentDescription = stringResource(Res.string.physical_check_add_check_cd))
                         }
                     }
                 }
@@ -503,13 +497,13 @@ fun PhysicalCheckScreen(
                                 modifier = Modifier.size(96.dp)
                             )
                             Text(
-                                text = stringResource(R.string.physical_check_no_checks),
+                                text = stringResource(Res.string.physical_check_no_checks),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = stringResource(R.string.physical_check_no_checks_desc),
+                                text = stringResource(Res.string.physical_check_no_checks_desc),
                                 fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -574,14 +568,14 @@ fun PhysicalCheckScreen(
                                         if (direction == SwipeToDismissBoxValue.EndToStart) {
                                             Icon(
                                                 Icons.Default.Delete,
-                                                contentDescription = stringResource(R.string.delete),
+                                                contentDescription = stringResource(Res.string.delete),
                                                 tint = MaterialTheme.colorScheme.onError,
                                                 modifier = Modifier.size(28.dp)
                                             )
                                         } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
                                             Icon(
                                                 Icons.Default.Edit,
-                                                contentDescription = stringResource(R.string.edit),
+                                                contentDescription = stringResource(Res.string.edit),
                                                 tint = MaterialTheme.colorScheme.onPrimary,
                                                 modifier = Modifier.size(28.dp)
                                             )
@@ -601,7 +595,7 @@ fun PhysicalCheckScreen(
                                             if (selectedForCompare.size < 2) {
                                                 selectedForCompare = selectedForCompare + check.id
                                             } else {
-                                                Toast.makeText(context, context.getString(R.string.physical_check_max_2), Toast.LENGTH_SHORT).show()
+                                                showMessage(maxTwoText)
                                             }
                                         }
                                     },
@@ -631,24 +625,24 @@ fun PhysicalCheckScreen(
     if (showResetConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showResetConfirmDialog = false },
-            title = { Text(stringResource(R.string.physical_check_reset_title), fontWeight = FontWeight.Bold) },
-            text = { Text(stringResource(R.string.physical_check_reset_message)) },
+            title = { Text(stringResource(Res.string.physical_check_reset_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(Res.string.physical_check_reset_message)) },
             confirmButton = {
                 Button(
                     onClick = {
                         showResetConfirmDialog = false
                         viewModel.resetAllData {
-                            Toast.makeText(context, context.getString(R.string.physical_check_encryption_disabled), Toast.LENGTH_SHORT).show()
+                            showMessage(encryptionDisabledText)
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text(stringResource(R.string.physical_check_reset_confirm))
+                    Text(stringResource(Res.string.physical_check_reset_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResetConfirmDialog = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -673,8 +667,8 @@ fun PhysicalCheckScreen(
                 isSelectionMode = false
                 selectedForCompare = emptySet()
             },
-            title = { Text(stringResource(R.string.physical_check_delete_title)) },
-            text = { Text(stringResource(R.string.physical_check_delete_message)) },
+            title = { Text(stringResource(Res.string.physical_check_delete_title)) },
+            text = { Text(stringResource(Res.string.physical_check_delete_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteCheck(check)
@@ -682,7 +676,7 @@ fun PhysicalCheckScreen(
                     isSelectionMode = false
                     selectedForCompare = emptySet()
                 }) {
-                    Text(stringResource(R.string.delete), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Res.string.delete), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -691,7 +685,7 @@ fun PhysicalCheckScreen(
                     isSelectionMode = false
                     selectedForCompare = emptySet()
                 }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -767,7 +761,7 @@ fun PhysicalCheckScreen(
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.physical_check_add_photos),
+                    text = stringResource(Res.string.physical_check_add_photos),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Black
@@ -779,32 +773,21 @@ fun PhysicalCheckScreen(
                 ) {
                     OptionItem(
                         icon = Icons.Default.PhotoCamera,
-                        label = stringResource(R.string.camera),
+                        label = stringResource(Res.string.camera),
                         onClick = {
                             showAddPhotoOptions = false
                             viewModel.setPhotoCaptureStarted()
-                            val permission = Manifest.permission.CAMERA
-                            if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                                val uri = createCheckTempImageUri(context)
-                                tempCameraUri = uri
-                                addPhotoCameraLauncher.launch(uri)
-                            } else {
-                                addPhotoPermissionLauncher.launch(permission)
-                            }
+                            addPhotoCapture.takePhoto()
                         },
                         modifier = Modifier.weight(1f)
                     )
                     OptionItem(
                         icon = Icons.Default.PhotoLibrary,
-                        label = stringResource(R.string.gallery),
+                        label = stringResource(Res.string.gallery),
                         onClick = {
                             showAddPhotoOptions = false
                             viewModel.setPhotoCaptureStarted()
-                            addPhotoPickerLauncher.launch(
-                                androidx.activity.result.PickVisualMediaRequest(
-                                    ActivityResultContracts.PickVisualMedia.ImageOnly
-                                )
-                            )
+                            addPhotoCapture.pickPhotos()
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -814,7 +797,7 @@ fun PhysicalCheckScreen(
     }
 
     if (topPhotoEditQueue.isNotEmpty() && topOnEditFinished != null) {
-        ImageEditorDialog(
+        platform.ImageEditor(
             imageBytes = topPhotoEditQueue.first(),
             onDismiss = {
                 topPhotoEditQueue.clear()
@@ -834,7 +817,7 @@ fun PhysicalCheckScreen(
 fun PhysicalCheckFullscreenViewer(
     filenames: List<String>,
     initialIndex: Int,
-    viewModel: PhysicalCheckViewModel,
+    viewModel: PhysicalCheckModel,
     onDismiss: () -> Unit,
     onDeletePhoto: ((Int) -> Unit)? = null
 ) {
@@ -899,7 +882,7 @@ fun PhysicalCheckFullscreenViewer(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.delete),
+                            contentDescription = stringResource(Res.string.delete),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -911,7 +894,7 @@ fun PhysicalCheckFullscreenViewer(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.close),
+                        contentDescription = stringResource(Res.string.close),
                         tint = Color.White
                     )
                 }
@@ -922,20 +905,20 @@ fun PhysicalCheckFullscreenViewer(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text(stringResource(R.string.physical_check_delete_photo_title)) },
-            text = { Text(stringResource(R.string.physical_check_delete_photo_message)) },
+            title = { Text(stringResource(Res.string.physical_check_delete_photo_title)) },
+            text = { Text(stringResource(Res.string.physical_check_delete_photo_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     val currentIndex = pagerState.currentPage
                     showDeleteConfirm = false
                     onDeletePhoto?.invoke(currentIndex)
                 }) {
-                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -945,7 +928,7 @@ fun PhysicalCheckFullscreenViewer(
 @Composable
 private fun ZoomableDecryptedImage(
     filename: String,
-    viewModel: PhysicalCheckViewModel,
+    viewModel: PhysicalCheckModel,
     onZoomChanged: (Boolean) -> Unit
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
@@ -1008,7 +991,7 @@ private fun ZoomableDecryptedImage(
 @Composable
 fun PhysicalCheckCard(
     check: PhysicalCheckEntity,
-    viewModel: PhysicalCheckViewModel,
+    viewModel: PhysicalCheckModel,
     isSelected: Boolean,
     isSelectionMode: Boolean,
     onToggleSelection: () -> Unit,
@@ -1133,7 +1116,7 @@ fun PhysicalCheckCard(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Add,
-                                            contentDescription = stringResource(R.string.physical_check_add_photos),
+                                            contentDescription = stringResource(Res.string.physical_check_add_photos),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(24.dp)
                                         )
@@ -1179,7 +1162,7 @@ fun PhysicalCheckCard(
 @Composable
 fun DecryptedImage(
     filename: String,
-    viewModel: PhysicalCheckViewModel,
+    viewModel: PhysicalCheckModel,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop
 ) {
@@ -1191,11 +1174,11 @@ fun DecryptedImage(
     if (imageBytes != null) {
         val bitmap = remember(imageBytes) {
             val bytes = imageBytes!!
-            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            decodePhotoBitmap(bytes)
         }
         if (bitmap != null) {
             androidx.compose.foundation.Image(
-                bitmap = bitmap.asImageBitmap(),
+                bitmap = bitmap,
                 contentDescription = null,
                 modifier = modifier,
                 contentScale = contentScale
@@ -1220,58 +1203,38 @@ fun DecryptedImage(
 fun AddPhysicalCheckDialog(
     onDismiss: () -> Unit,
     onConfirm: (Long, Float?, String?, List<ByteArray>) -> Unit,
-    viewModel: PhysicalCheckViewModel
+    viewModel: PhysicalCheckModel
 ) {
-    val context = LocalContext.current
     val weightUnit by viewModel.weightUnit.collectAsState()
     var weightInput by remember { mutableStateOf("") }
     var notesInput by remember { mutableStateOf("") }
     val photoBytesList = remember { mutableStateListOf<ByteArray>() }
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = Clock.System.now().toEpochMilliseconds())
 
     var fullscreenPhotoIndex by remember { mutableStateOf<Int?>(null) }
     var photoToDeleteIndex by remember { mutableStateOf<Int?>(null) }
     var showPhotoOptions by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
-
     val dialogPhotoEditQueue = remember { mutableStateListOf<ByteArray>() }
     var dialogOnEditFinished by remember { mutableStateOf<((ByteArray) -> Unit)?>(null) }
 
-    val pickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia()
-    ) { uris ->
-        val contentResolver = context.contentResolver
-        val bytesList = mutableListOf<ByteArray>()
-        uris.forEach { uri ->
-            try {
-                contentResolver.openInputStream(uri)?.use { inputStream ->
-                    bytesList.add(inputStream.readBytes())
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        if (bytesList.isNotEmpty()) {
-            dialogPhotoEditQueue.clear()
-            dialogPhotoEditQueue.addAll(bytesList)
-            dialogOnEditFinished = { editedBytes ->
-                photoBytesList.add(editedBytes)
-                if (dialogPhotoEditQueue.isEmpty()) {
-                    dialogOnEditFinished = null
+    val photoCapture = LocalPhysicalCheckPlatform.current.rememberPhotoCapture(
+        onPicked = { bytesList ->
+            if (bytesList.isNotEmpty()) {
+                dialogPhotoEditQueue.clear()
+                dialogPhotoEditQueue.addAll(bytesList)
+                dialogOnEditFinished = { editedBytes ->
+                    photoBytesList.add(editedBytes)
+                    if (dialogPhotoEditQueue.isEmpty()) {
+                        dialogOnEditFinished = null
+                    }
                 }
             }
-        }
-        viewModel.setPhotoCaptureCompleted()
-    }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            tempImageUri?.let { uri ->
-                val bytes = com.emanuel5014.trainable.util.ImageStorageUtils.readAndCompressImage(context, uri)
+            viewModel.setPhotoCaptureCompleted()
+        },
+        onCameraResult = { success, bytes ->
+            if (success) {
                 if (bytes != null) {
                     dialogPhotoEditQueue.clear()
                     dialogPhotoEditQueue.add(bytes)
@@ -1282,46 +1245,25 @@ fun AddPhysicalCheckDialog(
                         }
                     }
                 }
-                try {
-                    context.contentResolver.delete(uri, null, null)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
             }
-        }
-        showPhotoOptions = false
-        viewModel.setPhotoCaptureCompleted()
-    }
-
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            val uri = createCheckTempImageUri(context)
-            tempImageUri = uri
-            cameraLauncher.launch(uri)
-        } else {
+            showPhotoOptions = false
             viewModel.setPhotoCaptureCompleted()
-            Toast.makeText(context, context.getString(R.string.physical_check_camera_denied), Toast.LENGTH_SHORT).show()
-        }
-    }
+        },
+        onCameraDenied = { viewModel.setPhotoCaptureCompleted() }
+    )
 
     fun handleCameraClick() {
         viewModel.setPhotoCaptureStarted()
-        val permission = Manifest.permission.CAMERA
-        if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-            val uri = createCheckTempImageUri(context)
-            tempImageUri = uri
-            cameraLauncher.launch(uri)
-        } else {
-            cameraPermissionLauncher.launch(permission)
-        }
+        photoCapture.takePhoto()
     }
+
+    val showMessage = LocalShowMessage.current
+    val selectPhotoText = stringResource(Res.string.physical_check_select_photo_toast)
 
     AlertDialog(
         modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.physical_check_new_check), fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(Res.string.physical_check_new_check), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
@@ -1344,12 +1286,12 @@ fun AddPhysicalCheckDialog(
                     )
                     Column {
                         Text(
-                            text = stringResource(R.string.physical_check_date),
+                            text = stringResource(Res.string.physical_check_date),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = DateFormatter.format(datePickerState.selectedDateMillis ?: System.currentTimeMillis()),
+                            text = DateFormatter.format(datePickerState.selectedDateMillis ?: Clock.System.now().toEpochMilliseconds()),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -1360,7 +1302,7 @@ fun AddPhysicalCheckDialog(
                 OutlinedTextField(
                     value = weightInput,
                     onValueChange = { weightInput = it },
-                    label = { Text(stringResource(R.string.physical_check_weight_label).replace(" (kg)", " ($weightUnit)")) },
+                    label = { Text(stringResource(Res.string.physical_check_weight_label).replace(" (kg)", " ($weightUnit)")) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -1369,7 +1311,7 @@ fun AddPhysicalCheckDialog(
                 OutlinedTextField(
                     value = notesInput,
                     onValueChange = { notesInput = it },
-                    label = { Text(stringResource(R.string.physical_check_notes_label)) },
+                    label = { Text(stringResource(Res.string.physical_check_notes_label)) },
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -1381,12 +1323,12 @@ fun AddPhysicalCheckDialog(
                 ) {
                     Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.physical_check_add_photos))
+                    Text(stringResource(Res.string.physical_check_add_photos))
                 }
 
                 if (photoBytesList.isNotEmpty()) {
                     Text(
-                        text = stringResource(R.string.physical_check_photos_selected, photoBytesList.size),
+                        text = stringResource(Res.string.physical_check_photos_selected, photoBytesList.size),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -1403,7 +1345,7 @@ fun AddPhysicalCheckDialog(
                         items(photoBytesList) { bytes ->
                             val itemIndex = photoBytesList.indexOf(bytes)
                             val bitmap = remember(bytes) {
-                                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                decodePhotoBitmap(bytes)
                             }
                             if (bitmap != null) {
                                 Box(
@@ -1414,7 +1356,7 @@ fun AddPhysicalCheckDialog(
                                         .clickable { fullscreenPhotoIndex = itemIndex }
                                 ) {
                                     androidx.compose.foundation.Image(
-                                        bitmap = bitmap.asImageBitmap(),
+                                        bitmap = bitmap,
                                         contentDescription = null,
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop
@@ -1429,7 +1371,7 @@ fun AddPhysicalCheckDialog(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
-                                            contentDescription = stringResource(R.string.physical_check_remove_cd),
+                                            contentDescription = stringResource(Res.string.physical_check_remove_cd),
                                             tint = Color.White,
                                             modifier = Modifier.size(10.dp)
                                         )
@@ -1445,7 +1387,7 @@ fun AddPhysicalCheckDialog(
             Button(
                 onClick = {
                     if (photoBytesList.isEmpty()) {
-                        Toast.makeText(context, context.getString(R.string.physical_check_select_photo_toast), Toast.LENGTH_SHORT).show()
+                        showMessage(selectPhotoText)
                         return@Button
                     }
                     var peso = weightInput.replace(",", ".").toFloatOrNull()
@@ -1453,19 +1395,19 @@ fun AddPhysicalCheckDialog(
                         peso = WeightUnitConverter.convertStorage(peso, weightUnit)
                     }
                     onConfirm(
-                        datePickerState.selectedDateMillis ?: System.currentTimeMillis(),
+                        datePickerState.selectedDateMillis ?: Clock.System.now().toEpochMilliseconds(),
                         peso,
                         notesInput.takeIf { it.isNotBlank() },
                         photoBytesList.toList()
                     )
                 }
             ) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(Res.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -1475,12 +1417,12 @@ fun AddPhysicalCheckDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.ok))
+                    Text(stringResource(Res.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         ) {
@@ -1512,7 +1454,7 @@ fun AddPhysicalCheckDialog(
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.physical_check_select_source),
+                    text = stringResource(Res.string.physical_check_select_source),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Black
@@ -1524,7 +1466,7 @@ fun AddPhysicalCheckDialog(
                 ) {
                     OptionItem(
                         icon = Icons.Default.PhotoCamera,
-                        label = stringResource(R.string.camera),
+                        label = stringResource(Res.string.camera),
                         onClick = {
                             showPhotoOptions = false
                             handleCameraClick()
@@ -1533,15 +1475,11 @@ fun AddPhysicalCheckDialog(
                     )
                     OptionItem(
                         icon = Icons.Default.PhotoLibrary,
-                        label = stringResource(R.string.gallery),
+                        label = stringResource(Res.string.gallery),
                         onClick = {
                             showPhotoOptions = false
                             viewModel.setPhotoCaptureStarted()
-                            pickerLauncher.launch(
-                                androidx.activity.result.PickVisualMediaRequest(
-                                    ActivityResultContracts.PickVisualMedia.ImageOnly
-                                )
-                            )
+                            photoCapture.pickPhotos()
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -1554,7 +1492,7 @@ fun AddPhysicalCheckDialog(
         val bytes = photoBytesList.getOrNull(index)
         if (bytes != null) {
             val bitmap = remember(bytes) {
-                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                decodePhotoBitmap(bytes)
             }
             Dialog(
                 onDismissRequest = { fullscreenPhotoIndex = null },
@@ -1571,7 +1509,7 @@ fun AddPhysicalCheckDialog(
                             contentAlignment = Alignment.Center
                         ) {
                             androidx.compose.foundation.Image(
-                                bitmap = bitmap.asImageBitmap(),
+                                bitmap = bitmap,
                                 contentDescription = null,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1635,8 +1573,8 @@ fun AddPhysicalCheckDialog(
     photoToDeleteIndex?.let { index ->
         AlertDialog(
             onDismissRequest = { photoToDeleteIndex = null },
-            title = { Text(stringResource(R.string.physical_check_delete_photo_title)) },
-            text = { Text(stringResource(R.string.physical_check_delete_photo_message)) },
+            title = { Text(stringResource(Res.string.physical_check_delete_photo_title)) },
+            text = { Text(stringResource(Res.string.physical_check_delete_photo_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     photoBytesList.removeAt(index)
@@ -1650,19 +1588,19 @@ fun AddPhysicalCheckDialog(
                     }
                     photoToDeleteIndex = null
                 }) {
-                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { photoToDeleteIndex = null }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
     }
 
     if (dialogPhotoEditQueue.isNotEmpty() && dialogOnEditFinished != null) {
-        ImageEditorDialog(
+        LocalPhysicalCheckPlatform.current.ImageEditor(
             imageBytes = dialogPhotoEditQueue.first(),
             onDismiss = {
                 dialogPhotoEditQueue.clear()
@@ -1714,11 +1652,10 @@ private fun OptionItem(
 @Composable
 private fun EditPhysicalCheckDialog(
     check: PhysicalCheckEntity,
-    viewModel: PhysicalCheckViewModel,
+    viewModel: PhysicalCheckModel,
     onDismiss: () -> Unit,
     onConfirm: (Long, Float?, String?) -> Unit
 ) {
-    val context = LocalContext.current
     val weightUnit by viewModel.weightUnit.collectAsState()
     var weightInput by remember {
         mutableStateOf(
@@ -1743,48 +1680,29 @@ private fun EditPhysicalCheckDialog(
     var photoToDelete by remember { mutableStateOf<String?>(null) }
     var showPhotoOptions by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
-
     val editPhotoEditQueue = remember { mutableStateListOf<ByteArray>() }
     var editOnEditFinished by remember { mutableStateOf<((ByteArray) -> Unit)?>(null) }
 
-    val pickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia()
-    ) { uris ->
-        val contentResolver = context.contentResolver
-        val bytesList = mutableListOf<ByteArray>()
-        uris.forEach { uri ->
-            try {
-                contentResolver.openInputStream(uri)?.use { inputStream ->
-                    bytesList.add(inputStream.readBytes())
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        if (bytesList.isNotEmpty()) {
-            val editedList = mutableListOf<ByteArray>()
-            editPhotoEditQueue.clear()
-            editPhotoEditQueue.addAll(bytesList)
-            editOnEditFinished = { editedBytes ->
-                editedList.add(editedBytes)
-                if (editPhotoEditQueue.isEmpty()) {
-                    viewModel.addPhotosToCheck(check.id, editedList) { newFilenames ->
-                        existingFilenames.addAll(newFilenames)
+    val photoCapture = LocalPhysicalCheckPlatform.current.rememberPhotoCapture(
+        onPicked = { bytesList ->
+            if (bytesList.isNotEmpty()) {
+                val editedList = mutableListOf<ByteArray>()
+                editPhotoEditQueue.clear()
+                editPhotoEditQueue.addAll(bytesList)
+                editOnEditFinished = { editedBytes ->
+                    editedList.add(editedBytes)
+                    if (editPhotoEditQueue.isEmpty()) {
+                        viewModel.addPhotosToCheck(check.id, editedList) { newFilenames ->
+                            existingFilenames.addAll(newFilenames)
+                        }
+                        editOnEditFinished = null
                     }
-                    editOnEditFinished = null
                 }
             }
-        }
-        viewModel.setPhotoCaptureCompleted()
-    }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            tempImageUri?.let { uri ->
-                val bytes = com.emanuel5014.trainable.util.ImageStorageUtils.readAndCompressImage(context, uri)
+            viewModel.setPhotoCaptureCompleted()
+        },
+        onCameraResult = { success, bytes ->
+            if (success) {
                 if (bytes != null) {
                     val editedList = mutableListOf<ByteArray>()
                     editPhotoEditQueue.clear()
@@ -1799,46 +1717,22 @@ private fun EditPhysicalCheckDialog(
                         }
                     }
                 }
-                try {
-                    context.contentResolver.delete(uri, null, null)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
             }
-        }
-        showPhotoOptions = false
-        viewModel.setPhotoCaptureCompleted()
-    }
-
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            val uri = createCheckTempImageUri(context)
-            tempImageUri = uri
-            cameraLauncher.launch(uri)
-        } else {
+            showPhotoOptions = false
             viewModel.setPhotoCaptureCompleted()
-            Toast.makeText(context, context.getString(R.string.physical_check_camera_denied), Toast.LENGTH_SHORT).show()
-        }
-    }
+        },
+        onCameraDenied = { viewModel.setPhotoCaptureCompleted() }
+    )
 
     fun handleCameraClick() {
         viewModel.setPhotoCaptureStarted()
-        val permission = Manifest.permission.CAMERA
-        if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-            val uri = createCheckTempImageUri(context)
-            tempImageUri = uri
-            cameraLauncher.launch(uri)
-        } else {
-            cameraPermissionLauncher.launch(permission)
-        }
+        photoCapture.takePhoto()
     }
 
     AlertDialog(
         modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.physical_check_edit_check), fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(Res.string.physical_check_edit_check), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
@@ -1861,7 +1755,7 @@ private fun EditPhysicalCheckDialog(
                     )
                     Column {
                         Text(
-                            text = stringResource(R.string.physical_check_date),
+                            text = stringResource(Res.string.physical_check_date),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1877,7 +1771,7 @@ private fun EditPhysicalCheckDialog(
                 OutlinedTextField(
                     value = weightInput,
                     onValueChange = { weightInput = it },
-                    label = { Text(stringResource(R.string.physical_check_weight_label).replace(" (kg)", " ($weightUnit)")) },
+                    label = { Text(stringResource(Res.string.physical_check_weight_label).replace(" (kg)", " ($weightUnit)")) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -1886,14 +1780,14 @@ private fun EditPhysicalCheckDialog(
                 OutlinedTextField(
                     value = notesInput,
                     onValueChange = { notesInput = it },
-                    label = { Text(stringResource(R.string.physical_check_notes_label)) },
+                    label = { Text(stringResource(Res.string.physical_check_notes_label)) },
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 if (existingFilenames.isNotEmpty()) {
                     Text(
-                        text = stringResource(R.string.physical_check_photos_count, existingFilenames.size),
+                        text = stringResource(Res.string.physical_check_photos_count, existingFilenames.size),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -1949,7 +1843,7 @@ private fun EditPhysicalCheckDialog(
                 ) {
                     Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.physical_check_add_photos))
+                    Text(stringResource(Res.string.physical_check_add_photos))
                 }
             }
         },
@@ -1965,12 +1859,12 @@ private fun EditPhysicalCheckDialog(
                     notesInput.takeIf { it.isNotBlank() }
                 )
             }) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(Res.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -1980,12 +1874,12 @@ private fun EditPhysicalCheckDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.ok))
+                    Text(stringResource(Res.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         ) {
@@ -2017,7 +1911,7 @@ private fun EditPhysicalCheckDialog(
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.physical_check_select_source),
+                    text = stringResource(Res.string.physical_check_select_source),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Black
@@ -2029,7 +1923,7 @@ private fun EditPhysicalCheckDialog(
                 ) {
                     OptionItem(
                         icon = Icons.Default.PhotoCamera,
-                        label = stringResource(R.string.camera),
+                        label = stringResource(Res.string.camera),
                         onClick = {
                             showPhotoOptions = false
                             handleCameraClick()
@@ -2038,15 +1932,11 @@ private fun EditPhysicalCheckDialog(
                     )
                     OptionItem(
                         icon = Icons.Default.PhotoLibrary,
-                        label = stringResource(R.string.gallery),
+                        label = stringResource(Res.string.gallery),
                         onClick = {
                             showPhotoOptions = false
                             viewModel.setPhotoCaptureStarted()
-                            pickerLauncher.launch(
-                                androidx.activity.result.PickVisualMediaRequest(
-                                    ActivityResultContracts.PickVisualMedia.ImageOnly
-                                )
-                            )
+                            photoCapture.pickPhotos()
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -2082,27 +1972,27 @@ private fun EditPhysicalCheckDialog(
     photoToDelete?.let { filename ->
         AlertDialog(
             onDismissRequest = { photoToDelete = null },
-            title = { Text(stringResource(R.string.physical_check_delete_photo_title)) },
-            text = { Text(stringResource(R.string.physical_check_delete_photo_message)) },
+            title = { Text(stringResource(Res.string.physical_check_delete_photo_title)) },
+            text = { Text(stringResource(Res.string.physical_check_delete_photo_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     existingFilenames.remove(filename)
                     viewModel.deletePhotoFromCheck(check.id, filename)
                     photoToDelete = null
                 }) {
-                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { photoToDelete = null }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
     }
 
     if (editPhotoEditQueue.isNotEmpty() && editOnEditFinished != null) {
-        ImageEditorDialog(
+        LocalPhysicalCheckPlatform.current.ImageEditor(
             imageBytes = editPhotoEditQueue.first(),
             onDismiss = {
                 editPhotoEditQueue.clear()
@@ -2115,13 +2005,4 @@ private fun EditPhysicalCheckDialog(
             }
         )
     }
-}
-
-private fun createCheckTempImageUri(context: Context): Uri {
-    val tempFile = File(context.cacheDir, "check_temp_${System.currentTimeMillis()}.jpg")
-    return FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.fileprovider",
-        tempFile
-    )
 }

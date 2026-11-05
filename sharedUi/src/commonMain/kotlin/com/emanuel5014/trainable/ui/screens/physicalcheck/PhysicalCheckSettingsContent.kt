@@ -1,9 +1,38 @@
 package com.emanuel5014.trainable.ui.screens.physicalcheck
 
-import android.widget.Toast
+import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.back
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.physical_check_biometric_desc
+import com.emanuel5014.trainable.sharedui.resources.physical_check_biometric_lock
+import com.emanuel5014.trainable.sharedui.resources.physical_check_confirm_password
+import com.emanuel5014.trainable.sharedui.resources.physical_check_disable
+import com.emanuel5014.trainable.sharedui.resources.physical_check_disable_encryption
+import com.emanuel5014.trainable.sharedui.resources.physical_check_disable_encryption_desc
+import com.emanuel5014.trainable.sharedui.resources.physical_check_enable
+import com.emanuel5014.trainable.sharedui.resources.physical_check_enable_encryption
+import com.emanuel5014.trainable.sharedui.resources.physical_check_enable_encryption_desc
+import com.emanuel5014.trainable.sharedui.resources.physical_check_encryption
+import com.emanuel5014.trainable.sharedui.resources.physical_check_encryption_desc
+import com.emanuel5014.trainable.sharedui.resources.physical_check_encryption_disabled
+import com.emanuel5014.trainable.sharedui.resources.physical_check_encryption_enabled
+import com.emanuel5014.trainable.sharedui.resources.physical_check_encryption_error
+import com.emanuel5014.trainable.sharedui.resources.physical_check_forgot_password
+import com.emanuel5014.trainable.sharedui.resources.physical_check_health_section
+import com.emanuel5014.trainable.sharedui.resources.physical_check_new_password
+import com.emanuel5014.trainable.sharedui.resources.physical_check_password_error
+import com.emanuel5014.trainable.sharedui.resources.physical_check_password_label
+import com.emanuel5014.trainable.sharedui.resources.physical_check_password_min_length
+import com.emanuel5014.trainable.sharedui.resources.physical_check_passwords_dont_match
+import com.emanuel5014.trainable.sharedui.resources.physical_check_reset_confirm
+import com.emanuel5014.trainable.sharedui.resources.physical_check_reset_message
+import com.emanuel5014.trainable.sharedui.resources.physical_check_reset_title
+import com.emanuel5014.trainable.sharedui.resources.physical_check_settings_title
+import com.emanuel5014.trainable.ui.components.LocalShowMessage
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.imePadding
-import com.emanuel5014.trainable.R
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -17,21 +46,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PhysicalCheckSettingsScreen(
+fun PhysicalCheckSettingsContent(
     onNavigateBack: () -> Unit,
-    viewModel: PhysicalCheckViewModel = hiltViewModel()
+    viewModel: PhysicalCheckModel
 ) {
-    val context = LocalContext.current
+    val showMessage = LocalShowMessage.current
+    val passwordMinLengthText = stringResource(Res.string.physical_check_password_min_length)
+    val passwordsDontMatchText = stringResource(Res.string.physical_check_passwords_dont_match)
+    val encryptionEnabledText = stringResource(Res.string.physical_check_encryption_enabled)
+    val encryptionErrorText = stringResource(Res.string.physical_check_encryption_error)
+    val encryptionDisabledText = stringResource(Res.string.physical_check_encryption_disabled)
     val biometricEnabled by viewModel.biometricEnabled.collectAsState(initial = false)
     val encryptionEnabled by viewModel.encryptionEnabled.collectAsState(initial = false)
 
@@ -41,10 +72,10 @@ fun PhysicalCheckSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.physical_check_settings_title), fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(Res.string.physical_check_settings_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 }
             )
@@ -58,7 +89,7 @@ fun PhysicalCheckSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.physical_check_health_section),
+                text = stringResource(Res.string.physical_check_health_section),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -79,14 +110,14 @@ fun PhysicalCheckSettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.physical_check_biometric_lock),
+                            text = stringResource(Res.string.physical_check_biometric_lock),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = stringResource(R.string.physical_check_biometric_desc),
+                            text = stringResource(Res.string.physical_check_biometric_desc),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -125,14 +156,14 @@ fun PhysicalCheckSettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.physical_check_encryption),
+                            text = stringResource(Res.string.physical_check_encryption),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = stringResource(R.string.physical_check_encryption_desc),
+                            text = stringResource(Res.string.physical_check_encryption_desc),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -174,14 +205,14 @@ fun PhysicalCheckSettingsScreen(
         AlertDialog(
             modifier = Modifier.imePadding(),
             onDismissRequest = { showEnableEncryptionDialog = false },
-            title = { Text(stringResource(R.string.physical_check_enable_encryption), fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(Res.string.physical_check_enable_encryption), fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.physical_check_enable_encryption_desc),
+                        text = stringResource(Res.string.physical_check_enable_encryption_desc),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -189,7 +220,7 @@ fun PhysicalCheckSettingsScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it; errorText = null },
-                        label = { Text(stringResource(R.string.physical_check_new_password)) },
+                        label = { Text(stringResource(Res.string.physical_check_new_password)) },
                         singleLine = true,
                         visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
                         trailingIcon = {
@@ -206,7 +237,7 @@ fun PhysicalCheckSettingsScreen(
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it; errorText = null },
-                        label = { Text(stringResource(R.string.physical_check_confirm_password)) },
+                        label = { Text(stringResource(Res.string.physical_check_confirm_password)) },
                         singleLine = true,
                         visualTransformation = if (confirmPasswordVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
                         trailingIcon = {
@@ -233,32 +264,32 @@ fun PhysicalCheckSettingsScreen(
                 Button(
                     onClick = {
                         if (password.length < 4) {
-                            errorText = context.getString(R.string.physical_check_password_min_length)
+                            errorText = passwordMinLengthText
                             return@Button
                         }
                         if (password != confirmPassword) {
-                            errorText = context.getString(R.string.physical_check_passwords_dont_match)
+                            errorText = passwordsDontMatchText
                             return@Button
                         }
 
                         viewModel.enableEncryption(
                             password = password,
                             onSuccess = {
-                                Toast.makeText(context, context.getString(R.string.physical_check_encryption_enabled), Toast.LENGTH_SHORT).show()
+                                showMessage(encryptionEnabledText)
                                 showEnableEncryptionDialog = false
                             },
                             onError = {
-                                errorText = context.getString(R.string.physical_check_encryption_error)
+                                errorText = encryptionErrorText
                             }
                         )
                     }
                 ) {
-                    Text(stringResource(R.string.physical_check_enable))
+                    Text(stringResource(Res.string.physical_check_enable))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEnableEncryptionDialog = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -269,24 +300,24 @@ fun PhysicalCheckSettingsScreen(
     if (showResetConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showResetConfirmDialog = false },
-            title = { Text(stringResource(R.string.physical_check_reset_title), fontWeight = FontWeight.Bold) },
-            text = { Text(stringResource(R.string.physical_check_reset_message)) },
+            title = { Text(stringResource(Res.string.physical_check_reset_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(Res.string.physical_check_reset_message)) },
             confirmButton = {
                 Button(
                     onClick = {
                         showResetConfirmDialog = false
                         viewModel.resetAllData {
-                            Toast.makeText(context, context.getString(R.string.physical_check_encryption_disabled), Toast.LENGTH_SHORT).show()
+                            showMessage(encryptionDisabledText)
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text(stringResource(R.string.physical_check_reset_confirm))
+                    Text(stringResource(Res.string.physical_check_reset_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResetConfirmDialog = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -300,14 +331,14 @@ fun PhysicalCheckSettingsScreen(
         AlertDialog(
             modifier = Modifier.imePadding(),
             onDismissRequest = { showDisableEncryptionDialog = false },
-            title = { Text(stringResource(R.string.physical_check_disable_encryption), fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(Res.string.physical_check_disable_encryption), fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.physical_check_disable_encryption_desc),
+                        text = stringResource(Res.string.physical_check_disable_encryption_desc),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -315,7 +346,7 @@ fun PhysicalCheckSettingsScreen(
                     OutlinedTextField(
                         value = passwordConfirm,
                         onValueChange = { passwordConfirm = it; isError = false },
-                        label = { Text(stringResource(R.string.physical_check_password_label)) },
+                        label = { Text(stringResource(Res.string.physical_check_password_label)) },
                         singleLine = true,
                         isError = isError,
                         visualTransformation = if (passwordConfirmVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
@@ -332,7 +363,7 @@ fun PhysicalCheckSettingsScreen(
 
                     if (isError) {
                         Text(
-                            text = stringResource(R.string.physical_check_password_error),
+                            text = stringResource(Res.string.physical_check_password_error),
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 12.sp
                         )
@@ -346,7 +377,7 @@ fun PhysicalCheckSettingsScreen(
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
                         Text(
-                            text = stringResource(R.string.physical_check_forgot_password),
+                            text = stringResource(Res.string.physical_check_forgot_password),
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 13.sp
                         )
@@ -359,7 +390,7 @@ fun PhysicalCheckSettingsScreen(
                         viewModel.disableEncryption(
                             password = passwordConfirm,
                             onSuccess = {
-                                Toast.makeText(context, context.getString(R.string.physical_check_encryption_disabled), Toast.LENGTH_SHORT).show()
+                                showMessage(encryptionDisabledText)
                                 showDisableEncryptionDialog = false
                             },
                             onError = {
@@ -368,12 +399,12 @@ fun PhysicalCheckSettingsScreen(
                         )
                     }
                 ) {
-                    Text(stringResource(R.string.physical_check_disable))
+                    Text(stringResource(Res.string.physical_check_disable))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDisableEncryptionDialog = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )

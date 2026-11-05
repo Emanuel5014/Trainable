@@ -58,3 +58,18 @@ class SharedPreferencesStore(context: Context, name: String) : KeyValueStore {
     override fun getStringSet(key: String, default: Set<String>?): Set<String>? = prefs.getStringSet(key, default)
     override fun putStringSet(key: String, value: Set<String>) = prefs.edit().putStringSet(key, value).apply()
 }
+
+/** The physical-check photos in `filesDir/physical_checks`, compressed by ImageStorageUtils as before. */
+class AndroidPhysicalCheckFiles(private val context: Context) : com.emanuel5014.trainable.data.repository.PhysicalCheckFiles {
+    private val filesDirectory: java.io.File
+        get() = java.io.File(context.filesDir, "physical_checks").apply { if (!exists()) mkdirs() }
+
+    override fun list(): List<String> = filesDirectory.listFiles()?.filter { it.isFile }?.map { it.name } ?: emptyList()
+    override fun exists(name: String): Boolean = java.io.File(filesDirectory, name).exists()
+    override fun read(name: String): ByteArray = java.io.File(filesDirectory, name).readBytes()
+    override fun write(name: String, bytes: ByteArray) = java.io.File(filesDirectory, name).writeBytes(bytes)
+    override fun delete(name: String) {
+        java.io.File(filesDirectory, name).delete()
+    }
+    override fun compressImage(bytes: ByteArray): ByteArray = ImageStorageUtils.compressImageBytes(bytes)
+}

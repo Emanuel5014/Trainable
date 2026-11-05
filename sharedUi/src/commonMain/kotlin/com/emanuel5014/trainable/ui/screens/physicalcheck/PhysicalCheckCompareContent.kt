@@ -1,5 +1,15 @@
 package com.emanuel5014.trainable.ui.screens.physicalcheck
 
+import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.back
+import com.emanuel5014.trainable.sharedui.resources.physical_check_after
+import com.emanuel5014.trainable.sharedui.resources.physical_check_before
+import com.emanuel5014.trainable.sharedui.resources.physical_check_compare_title
+import com.emanuel5014.trainable.sharedui.resources.physical_check_select_photo_after
+import com.emanuel5014.trainable.sharedui.resources.physical_check_select_photo_before
+import com.emanuel5014.trainable.sharedui.resources.physical_check_view_toggle_cd
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -22,23 +32,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.WeightUnitConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PhysicalCheckCompareScreen(
+fun PhysicalCheckCompareContent(
     checkId1: Int,
     checkId2: Int,
     onNavigateBack: () -> Unit,
-    viewModel: PhysicalCheckViewModel = hiltViewModel()
+    viewModel: PhysicalCheckModel
 ) {
     val checks by viewModel.checks.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
@@ -74,17 +81,17 @@ fun PhysicalCheckCompareScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.physical_check_compare_title), fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(Res.string.physical_check_compare_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { useSliderMode = !useSliderMode }) {
                         Icon(
                             imageVector = if (useSliderMode) Icons.Default.ViewColumn else Icons.Default.Compare,
-                            contentDescription = stringResource(R.string.physical_check_view_toggle_cd)
+                            contentDescription = stringResource(Res.string.physical_check_view_toggle_cd)
                         )
                     }
                 }
@@ -145,7 +152,7 @@ fun PhysicalCheckCompareScreen(
                                 shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp),
                             ) {
                                 Text(
-                                text = stringResource(R.string.physical_check_before) + ": " +
+                                text = stringResource(Res.string.physical_check_before) + ": " +
                                        DateFormatter.format(olderCheck.timestamp) +
                                        (olderCheck.peso?.let { " - " + WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) } ?: ""),
                                     color = Color.White,
@@ -161,7 +168,7 @@ fun PhysicalCheckCompareScreen(
                                 shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp),
                             ) {
                                 Text(
-                                text = stringResource(R.string.physical_check_after) + ": " +
+                                text = stringResource(Res.string.physical_check_after) + ": " +
                                        DateFormatter.format(newerCheck.timestamp) +
                                        (newerCheck.peso?.let { " - " + WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) } ?: ""),
                                     color = Color.White,
@@ -207,7 +214,7 @@ fun PhysicalCheckCompareScreen(
                                             .padding(top = 16.dp)
                                     ) {
                                         Text(
-                                        text = stringResource(R.string.physical_check_before) + ": " +
+                                        text = stringResource(Res.string.physical_check_before) + ": " +
                                                DateFormatter.format(olderCheck.timestamp) +
                                                (olderCheck.peso?.let { " - " + WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) } ?: ""),
                                             color = Color.White,
@@ -242,7 +249,7 @@ fun PhysicalCheckCompareScreen(
                                             .padding(top = 16.dp)
                                     ) {
                                         Text(
-                                        text = stringResource(R.string.physical_check_after) + ": " +
+                                        text = stringResource(Res.string.physical_check_after) + ": " +
                                                DateFormatter.format(newerCheck.timestamp) +
                                                (newerCheck.peso?.let { " - " + WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) } ?: ""),
                                             color = Color.White,
@@ -318,7 +325,7 @@ fun PhysicalCheckCompareScreen(
                     if (olderPhotos.size > 1) {
                         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                             Text(
-                                text = stringResource(R.string.physical_check_select_photo_before),
+                                text = stringResource(Res.string.physical_check_select_photo_before),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -350,7 +357,7 @@ fun PhysicalCheckCompareScreen(
                     if (newerPhotos.size > 1) {
                         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                             Text(
-                                text = stringResource(R.string.physical_check_select_photo_after),
+                                text = stringResource(Res.string.physical_check_select_photo_after),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
