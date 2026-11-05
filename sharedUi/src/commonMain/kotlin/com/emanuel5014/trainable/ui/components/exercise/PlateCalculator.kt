@@ -50,7 +50,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -60,7 +60,34 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.plate_add_hint
+import com.emanuel5014.trainable.sharedui.resources.plate_apply
+import com.emanuel5014.trainable.sharedui.resources.plate_bar
+import com.emanuel5014.trainable.sharedui.resources.plate_bar_dialog_title
+import com.emanuel5014.trainable.sharedui.resources.plate_bar_none
+import com.emanuel5014.trainable.sharedui.resources.plate_bar_other
+import com.emanuel5014.trainable.sharedui.resources.plate_calculator
+import com.emanuel5014.trainable.sharedui.resources.plate_calculator_use
+import com.emanuel5014.trainable.sharedui.resources.plate_cannot_load
+import com.emanuel5014.trainable.sharedui.resources.plate_chip_bar_only
+import com.emanuel5014.trainable.sharedui.resources.plate_chip_below_bar
+import com.emanuel5014.trainable.sharedui.resources.plate_chip_per_side
+import com.emanuel5014.trainable.sharedui.resources.plate_chip_per_side_plain
+import com.emanuel5014.trainable.sharedui.resources.plate_chip_short
+import com.emanuel5014.trainable.sharedui.resources.plate_edited
+import com.emanuel5014.trainable.sharedui.resources.plate_lighter_than_bar
+import com.emanuel5014.trainable.sharedui.resources.plate_no_plates
+import com.emanuel5014.trainable.sharedui.resources.plate_none
+import com.emanuel5014.trainable.sharedui.resources.plate_per_side
+import com.emanuel5014.trainable.sharedui.resources.plate_remove
+import com.emanuel5014.trainable.sharedui.resources.plate_reset
+import com.emanuel5014.trainable.sharedui.resources.plate_tap_to_remove
+import com.emanuel5014.trainable.sharedui.resources.plate_total_weight
+import com.emanuel5014.trainable.sharedui.resources.plate_turn_off
+import com.emanuel5014.trainable.sharedui.resources.save
+import com.emanuel5014.trainable.sharedui.resources.weight_label_unit
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -143,14 +170,14 @@ fun PlateChip(
     val loaded = groupPlates(result.platesPerSide)
     val barless = !PlateCalculator.hasBar(bar)
     val text = when {
-        result.belowBar -> stringResource(R.string.plate_chip_below_bar, barText)
+        result.belowBar -> stringResource(Res.string.plate_chip_below_bar, barText)
         result.isExact && result.platesPerSide.isEmpty() ->
-            if (barless) stringResource(R.string.plate_none) else stringResource(R.string.plate_chip_bar_only, barText)
+            if (barless) stringResource(Res.string.plate_none) else stringResource(Res.string.plate_chip_bar_only, barText)
         // The usual bar is taken for granted, and no bar has nothing to mention; any other bar is worth a mention
         result.isExact && (barless || abs(bar - PlateCalculator.defaultBar(weightUnit)) < 0.01f) ->
-            stringResource(R.string.plate_chip_per_side_plain, loaded)
-        result.isExact -> stringResource(R.string.plate_chip_per_side, loaded, barText)
-        else -> stringResource(R.string.plate_chip_short, loaded.ifEmpty { "–" }, "${format(result.missing)} $weightUnit")
+            stringResource(Res.string.plate_chip_per_side_plain, loaded)
+        result.isExact -> stringResource(Res.string.plate_chip_per_side, loaded, barText)
+        else -> stringResource(Res.string.plate_chip_short, loaded.ifEmpty { "–" }, "${format(result.missing)} $weightUnit")
     }
     val short = !result.belowBar && !result.isExact
     val accent = when {
@@ -189,7 +216,7 @@ fun PlateCalculatorEnableChip(onClick: () -> Unit, modifier: Modifier = Modifier
     HubChip(onClick = onClick, containerColor = SurfaceContainerHigh, modifier = modifier) {
         Icon(Icons.Rounded.FitnessCenter, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(18.dp))
         Text(
-            text = stringResource(R.string.plate_calculator_use),
+            text = stringResource(Res.string.plate_calculator_use),
             style = MaterialTheme.typography.labelLarge,
             color = OnSurfaceVariant,
             fontWeight = FontWeight.ExtraBold,
@@ -254,7 +281,7 @@ fun PlateCalculatorSheet(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = stringResource(R.string.plate_calculator).uppercase(),
+                        text = stringResource(Res.string.plate_calculator).uppercase(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -271,7 +298,7 @@ fun PlateCalculatorSheet(
                     value = total,
                     step = step,
                     range = 0f..maxTotal,
-                    label = stringResource(R.string.plate_total_weight),
+                    label = stringResource(Res.string.plate_total_weight),
                     onValueChange = {
                         total = it
                         manual = null
@@ -280,7 +307,7 @@ fun PlateCalculatorSheet(
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SheetLabel(stringResource(R.string.plate_bar))
+                    SheetLabel(stringResource(Res.string.plate_bar))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -299,7 +326,7 @@ fun PlateCalculatorSheet(
                             )
                         }
                         SheetChip(
-                            label = stringResource(R.string.plate_bar_none),
+                            label = stringResource(Res.string.plate_bar_none),
                             selected = barless,
                             onClick = {
                                 bar = 0f
@@ -308,7 +335,7 @@ fun PlateCalculatorSheet(
                             }
                         )
                         SheetChip(
-                            label = if (custom) "${format(bar)} $weightUnit" else stringResource(R.string.plate_bar_other),
+                            label = if (custom) "${format(bar)} $weightUnit" else stringResource(Res.string.plate_bar_other),
                             selected = custom,
                             onClick = { showBarDialog = true }
                         )
@@ -328,7 +355,7 @@ fun PlateCalculatorSheet(
                 ) {
                     if (manual == null && suggested.belowBar) {
                         Text(
-                            text = stringResource(R.string.plate_lighter_than_bar),
+                            text = stringResource(Res.string.plate_lighter_than_bar),
                             style = MaterialTheme.typography.bodyMedium,
                             color = OnSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -336,7 +363,7 @@ fun PlateCalculatorSheet(
                     } else {
                         val perSide = (loadedTotal - bar) / 2f
                         Text(
-                            text = stringResource(R.string.plate_per_side, "${format(perSide)} $weightUnit"),
+                            text = stringResource(Res.string.plate_per_side, "${format(perSide)} $weightUnit"),
                             style = MaterialTheme.typography.titleLarge,
                             color = OnSurface,
                             fontWeight = FontWeight.ExtraBold
@@ -344,8 +371,8 @@ fun PlateCalculatorSheet(
                         Text(
                             text = when {
                                 shown.isNotEmpty() -> groupPlates(shown)
-                                PlateCalculator.hasBar(bar) -> stringResource(R.string.plate_no_plates)
-                                else -> stringResource(R.string.plate_none)
+                                PlateCalculator.hasBar(bar) -> stringResource(Res.string.plate_no_plates)
+                                else -> stringResource(Res.string.plate_none)
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = OnSurfaceVariant
@@ -353,7 +380,7 @@ fun PlateCalculatorSheet(
                     }
                     if (manual == null && !suggested.belowBar && !suggested.isExact) {
                         Text(
-                            text = stringResource(R.string.plate_cannot_load, "${format(suggested.missing)} $weightUnit"),
+                            text = stringResource(Res.string.plate_cannot_load, "${format(suggested.missing)} $weightUnit"),
                             style = MaterialTheme.typography.bodySmall,
                             color = Error,
                             textAlign = TextAlign.Center
@@ -362,19 +389,19 @@ fun PlateCalculatorSheet(
                     if (manual != null) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = stringResource(R.string.plate_edited),
+                                text = stringResource(Res.string.plate_edited),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = OnSurfaceVariant
                             )
                             TextButton(onClick = { manual = null }) {
-                                Text(stringResource(R.string.plate_reset), fontWeight = FontWeight.ExtraBold)
+                                Text(stringResource(Res.string.plate_reset), fontWeight = FontWeight.ExtraBold)
                             }
                         }
                     }
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SheetLabel(stringResource(R.string.plate_add_hint))
+                    SheetLabel(stringResource(Res.string.plate_add_hint))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -388,7 +415,7 @@ fun PlateCalculatorSheet(
                         }
                     }
                     Text(
-                        text = stringResource(R.string.plate_tap_to_remove),
+                        text = stringResource(Res.string.plate_tap_to_remove),
                         style = MaterialTheme.typography.bodySmall,
                         color = OnSurfaceVariant
                     )
@@ -411,7 +438,7 @@ fun PlateCalculatorSheet(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = stringResource(R.string.plate_apply, "${format(loadedTotal)} $weightUnit").uppercase(),
+                        text = stringResource(Res.string.plate_apply, "${format(loadedTotal)} $weightUnit").uppercase(),
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
@@ -423,7 +450,7 @@ fun PlateCalculatorSheet(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Text(
-                        text = stringResource(R.string.plate_turn_off),
+                        text = stringResource(Res.string.plate_turn_off),
                         color = OnSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
@@ -510,7 +537,7 @@ private fun PlateBarbell(
     modifier: Modifier = Modifier
 ) {
     val heaviest = PlateCalculator.plateChoices(weightUnit).first()
-    val removeLabel = stringResource(R.string.plate_remove)
+    val removeLabel = stringResource(Res.string.plate_remove)
     val lead = 20.dp
     val stop = 8.dp
 
@@ -600,12 +627,12 @@ private fun BarWeightDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = true),
-        title = { Text(stringResource(R.string.plate_bar_dialog_title)) },
+        title = { Text(stringResource(Res.string.plate_bar_dialog_title)) },
         text = {
             GymInputField(
                 value = text,
                 onValueChange = { raw -> text = raw.filter { it.isDigit() || it == '.' || it == ',' } },
-                label = stringResource(R.string.weight_label_unit, weightUnit),
+                label = stringResource(Res.string.weight_label_unit, weightUnit),
                 placeholder = format(initial),
                 keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
@@ -613,12 +640,12 @@ private fun BarWeightDialog(
         },
         confirmButton = {
             TextButton(onClick = { value?.let(onConfirm) }, enabled = value != null) {
-                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase())
+                Text(stringResource(Res.string.cancel).uppercase())
             }
         },
         containerColor = SurfaceContainerHigh,

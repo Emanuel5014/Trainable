@@ -555,7 +555,12 @@ fun WorkoutExecutionScreen(
 
                 // DYNAMIC INTERACTION HUB
                 val currentExState = state.currentExercise
-                CompositionLocalProvider(LocalPanelGlassSource provides panelGlass) {
+                CompositionLocalProvider(
+                    LocalPanelGlassSource provides panelGlass,
+                    com.emanuel5014.trainable.ui.glass.LocalPanelGlass provides remember(panelGlass) {
+                        panelGlass?.let { com.emanuel5014.trainable.ui.theme.AndroidPanelGlass(it) }
+                    }
+                ) {
                 WorkoutHub(
                     state = state,
                     ui = ui,

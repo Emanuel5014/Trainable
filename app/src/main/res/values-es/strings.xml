@@ -21,8 +21,6 @@
     <string name="retry">Reintentar</string>
     <string name="dismiss">Descartar</string>
     <string name="collapse">Contraer</string>
-    <string name="hub_panel_collapse">Contraer el panel</string>
-    <string name="hub_panel_expand">Expandir el panel</string>
     <string name="yes">SÍ</string>
     <string name="no">NO</string>
     <string name="selected">Seleccionado</string>
@@ -230,7 +228,6 @@
     <string name="theme_mode_dark_short">O</string>
 
     <!-- Personalization - Palettes & Styles -->
-    <string name="apply">Aplicar</string>
     <string name="notifications">NOTIFICACIONES</string>
     <string name="timer_notifications">Notificaciones de Temporizador</string>
     <string name="timer_notifications_desc">Mostrar temporizador de descanso y rondas EMOM en notificaciones</string>
@@ -547,7 +544,6 @@
     <string name="custom">Personalizado</string>
     <string name="custom_weight">Peso Personalizado</string>
     <string name="custom_reps">Reps Personalizadas</string>
-    <string name="weight_label_unit">Peso (%1$s)</string>
     <string name="remove_set_confirm">¿Seguro que quieres eliminar esta serie?</string>
     <string name="toggle_superset_with_next">Alternar superserie con el siguiente ejercicio</string>
 
@@ -645,11 +641,9 @@
     <!-- Exercise Types -->
     <string name="exercise_type_time_and_weight">Tiempo y Peso</string>
     <string name="target_time">Tiempo objetivo</string>
-    <string name="target_seconds">Objetivo (segundos)</string>
     <string name="seconds_short">seg</string>
     <string name="skip_timer">Saltar temporizador</string>
     <string name="skip_timer_and_log">Saltar temporizador y Registrar</string>
-    <string name="set_duration_label">Duración</string>
     <string name="adjust_weight">Ajustar peso</string>
     <string name="time_weight_ready">LISTO PARA EMPEZAR</string>
     <string name="time_weight_running">TEMPORIZADOR EN MARCHA</string>
@@ -857,30 +851,6 @@
     <string name="onboarding_nextcloud_title">Tu nube,\ntus copias.</string>
     <string name="onboarding_nextcloud_desc">Opcional: conecta tu propio Nextcloud para guardar una copia de tus datos fuera de este teléfono o restaurarla en uno nuevo.</string>
     <string name="nextcloud_connect">Conectar</string>
-    <string name="plate_calculator">Calculadora de discos</string>
-    <string name="plate_calculator_use">Usar calculadora de discos</string>
-    <string name="plate_chip_per_side">%1$s por lado · barra %2$s</string>
-    <string name="plate_chip_per_side_plain">%1$s por lado</string>
-    <string name="plate_chip_bar_only">Solo la barra · %1$s</string>
-    <string name="plate_chip_below_bar">Menos que la barra (%1$s)</string>
-    <string name="plate_chip_short">%1$s por lado · faltan %2$s</string>
-    <string name="plate_total_weight">Peso total</string>
-    <string name="plate_bar">Barra</string>
-    <string name="plate_bar_other">Otra</string>
-    <string name="plate_bar_none">Sin barra</string>
-    <string name="plate_bar_dialog_title">Peso de la barra</string>
-    <string name="plate_per_side">Por lado: %1$s</string>
-    <string name="plate_no_plates">Sin discos, solo la barra</string>
-    <string name="plate_none">Sin discos</string>
-    <string name="plate_lighter_than_bar">Menos que la barra. Sube el peso o elige una barra más ligera.</string>
-    <string name="plate_cannot_load">%1$s no se pueden cargar con tus discos.</string>
-    <string name="plate_edited">Editado a mano</string>
-    <string name="plate_reset">Restablecer sugerido</string>
-    <string name="plate_add_hint">Añadir un disco por lado</string>
-    <string name="plate_tap_to_remove">Toca un disco de la barra para quitarlo.</string>
-    <string name="plate_remove">Quitar disco</string>
-    <string name="plate_apply">Establecer %1$s</string>
-    <string name="plate_turn_off">Desactivar para este ejercicio</string>
     <string name="warmup_label">Calentamiento</string>
     <string name="cardio_mark_completed">Marcar como completado</string>
     <string name="cardio_complete_logs_time">Registra el tiempo previsto: %1$s</string>
@@ -889,9 +859,6 @@
 
     <!-- Starting weight, rep ranges and double progression -->
     <string name="reps_goal">Objetivo: %1$s</string>
-    <string name="progression_hit_max">%1$d reps en cada serie la última vez</string>
-    <string name="progression_try_weight">Prueba %1$s</string>
-    <string name="progression_dismiss">Mantener el peso actual</string>
 
     <!-- Add workout sheet: routines grouped by active / archived -->
     <!-- Changing the program during a workout -->

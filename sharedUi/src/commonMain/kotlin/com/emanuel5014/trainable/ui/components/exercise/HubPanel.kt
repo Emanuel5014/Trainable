@@ -1,7 +1,6 @@
 package com.emanuel5014.trainable.ui.components
 
-import com.emanuel5014.trainable.ui.theme.LocalPanelGlassSource
-import com.emanuel5014.trainable.ui.theme.panelGlass
+import com.emanuel5014.trainable.ui.glass.LocalPanelGlass
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -53,7 +52,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -61,10 +60,11 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.kyant.shapes.RoundedRectangle
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.lerp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.hub_panel_collapse
+import com.emanuel5014.trainable.sharedui.resources.hub_panel_expand
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import kotlinx.coroutines.CoroutineScope
@@ -81,7 +81,6 @@ private val PANEL_SHAPE = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
  * the device's own corner radius; inset by this much it looks the same on every phone. The screen's own
  * padding already keeps the hub above the system bars.
  */
-private val GLASS_PANEL_SHAPE = RoundedRectangle(32.dp)
 private val GLASS_PANEL_INSET = 8.dp
 
 /**
@@ -218,8 +217,8 @@ fun HubPanel(
         exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
         modifier = modifier
     ) {
-        val glass = LocalPanelGlassSource.current
-        val shape = if (glass == null) PANEL_SHAPE else GLASS_PANEL_SHAPE
+        val glass = LocalPanelGlass.current
+        val shape = glass?.shape ?: PANEL_SHAPE
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -232,7 +231,7 @@ fun HubPanel(
                     if (glass == null) Modifier
                     else Modifier.padding(horizontal = GLASS_PANEL_INSET).padding(bottom = GLASS_PANEL_INSET)
                 )
-                .panelGlass(glass, shape, SurfaceContainerLow),
+                .then(if (glass == null) Modifier else glass.frost(Modifier, shape, SurfaceContainerLow)),
             color = if (glass == null) SurfaceContainerLow else Color.Transparent,
             shape = shape,
             tonalElevation = if (glass == null) 8.dp else 0.dp,
@@ -269,7 +268,7 @@ private fun HubGrabber(sheet: HubSheetState, hapticEnabled: Boolean) {
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         }
     }
-    val label = stringResource(if (sheet.detent >= 0.5f) R.string.hub_panel_collapse else R.string.hub_panel_expand)
+    val label = stringResource(if (sheet.detent >= 0.5f) Res.string.hub_panel_collapse else Res.string.hub_panel_expand)
 
     Box(
         modifier = Modifier

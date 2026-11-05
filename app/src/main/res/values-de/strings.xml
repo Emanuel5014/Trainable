@@ -21,8 +21,6 @@
     <string name="retry">Wiederholen</string>
     <string name="dismiss">Verwerfen</string>
     <string name="collapse">Einklappen</string>
-    <string name="hub_panel_collapse">Bereich einklappen</string>
-    <string name="hub_panel_expand">Bereich ausklappen</string>
     <string name="yes">JA</string>
     <string name="no">NEIN</string>
     <string name="selected">Ausgewählt</string>
@@ -230,7 +228,6 @@
     <string name="theme_mode_dark_short">D</string>
 
     <!-- Personalization - Palettes & Styles -->
-    <string name="apply">Übernehmen</string>
     <string name="notifications">MITTEILUNGEN</string>
     <string name="timer_notifications">Timer-Benachrichtigungen</string>
     <string name="timer_notifications_desc">Pausentimer und EMOM-Runden in Systembenachrichtigungen anzeigen</string>
@@ -547,7 +544,6 @@
     <string name="custom">Benutzerdefiniert</string>
     <string name="custom_weight">Benutzerdefiniertes Gewicht</string>
     <string name="custom_reps">Benutzerdefinierte Reps</string>
-    <string name="weight_label_unit">Gewicht (%1$s)</string>
     <string name="remove_set_confirm">Möchtest du diesen Satz wirklich entfernen?</string>
     <string name="toggle_superset_with_next">Supersatz mit der nächsten Übung umschalten</string>
 
@@ -645,11 +641,9 @@
     <!-- Exercise Types -->
     <string name="exercise_type_time_and_weight">Zeit &amp; Gewicht</string>
     <string name="target_time">Zielzeit</string>
-    <string name="target_seconds">Ziel (Sekunden)</string>
     <string name="seconds_short">Sek.</string>
     <string name="skip_timer">Timer überspringen</string>
     <string name="skip_timer_and_log">Timer überspringen &amp; Speichern</string>
-    <string name="set_duration_label">Dauer</string>
     <string name="adjust_weight">Gewicht anpassen</string>
     <string name="time_weight_ready">BEREIT ZUM STARTEN</string>
     <string name="time_weight_running">TIMER LÄUFT</string>
@@ -857,30 +851,6 @@
     <string name="onboarding_nextcloud_title">Deine Cloud,\ndeine Backups.</string>
     <string name="onboarding_nextcloud_desc">Optional: Verbinde deine eigene Nextcloud, um eine Kopie deiner Daten außerhalb dieses Telefons zu behalten oder sie auf einem neuen wiederherzustellen.</string>
     <string name="nextcloud_connect">Verbinden</string>
-    <string name="plate_calculator">Scheibenrechner</string>
-    <string name="plate_calculator_use">Scheibenrechner verwenden</string>
-    <string name="plate_chip_per_side">%1$s pro Seite · Stange %2$s</string>
-    <string name="plate_chip_per_side_plain">%1$s pro Seite</string>
-    <string name="plate_chip_bar_only">Nur die Stange · %1$s</string>
-    <string name="plate_chip_below_bar">Leichter als die Stange (%1$s)</string>
-    <string name="plate_chip_short">%1$s pro Seite · %2$s fehlen</string>
-    <string name="plate_total_weight">Gesamtgewicht</string>
-    <string name="plate_bar">Stange</string>
-    <string name="plate_bar_other">Andere</string>
-    <string name="plate_bar_none">Ohne Stange</string>
-    <string name="plate_bar_dialog_title">Gewicht der Stange</string>
-    <string name="plate_per_side">Pro Seite: %1$s</string>
-    <string name="plate_no_plates">Keine Scheiben, nur die Stange</string>
-    <string name="plate_none">Keine Scheiben</string>
-    <string name="plate_lighter_than_bar">Leichter als die Stange. Erhöhe das Gewicht oder wähle eine leichtere Stange.</string>
-    <string name="plate_cannot_load">%1$s lassen sich mit deinen Scheiben nicht laden.</string>
-    <string name="plate_edited">Von Hand geändert</string>
-    <string name="plate_reset">Empfehlung wiederherstellen</string>
-    <string name="plate_add_hint">Scheibe pro Seite hinzufügen</string>
-    <string name="plate_tap_to_remove">Tippe auf eine Scheibe an der Stange, um sie zu entfernen.</string>
-    <string name="plate_remove">Scheibe entfernen</string>
-    <string name="plate_apply">%1$s übernehmen</string>
-    <string name="plate_turn_off">Für diese Übung deaktivieren</string>
     <string name="warmup_label">Aufwärmen</string>
     <string name="cardio_mark_completed">Als erledigt markieren</string>
     <string name="cardio_complete_logs_time">Erfasst die geplante Zeit: %1$s</string>
@@ -889,9 +859,6 @@
 
     <!-- Starting weight, rep ranges and double progression -->
     <string name="reps_goal">Ziel: %1$s</string>
-    <string name="progression_hit_max">%1$d Wdh. in jedem Satz beim letzten Mal</string>
-    <string name="progression_try_weight">Probiere %1$s</string>
-    <string name="progression_dismiss">Aktuelles Gewicht behalten</string>
 
     <!-- Add workout sheet: routines grouped by active / archived -->
     <!-- Changing the program during a workout -->

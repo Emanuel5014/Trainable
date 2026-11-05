@@ -22,8 +22,6 @@
     <string name="retry">Retry</string>
     <string name="dismiss">Dismiss</string>
     <string name="collapse">Collapse</string>
-    <string name="hub_panel_collapse">Collapse panel</string>
-    <string name="hub_panel_expand">Expand panel</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
     <string name="selected">Selected</string>
@@ -231,7 +229,6 @@
     <string name="theme_mode_dark_short">D</string>
 
     <!-- Personalization - Palettes & Styles -->
-    <string name="apply">Apply</string>
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Timer Notifications</string>
     <string name="timer_notifications_desc">Show the rest timer and EMOM rounds in system notifications</string>
@@ -548,7 +545,6 @@
     <string name="custom">Custom</string>
     <string name="custom_weight">Custom Weight</string>
     <string name="custom_reps">Custom Reps</string>
-    <string name="weight_label_unit">Weight (%1$s)</string>
     <string name="remove_set_confirm">Are you sure you want to remove this set?</string>
     <string name="toggle_superset_with_next">Toggle superset with next exercise</string>
 
@@ -646,11 +642,9 @@
     <!-- Exercise Types -->
     <string name="exercise_type_time_and_weight">Time &amp; Weight</string>
     <string name="target_time">Target Time</string>
-    <string name="target_seconds">Target (seconds)</string>
     <string name="seconds_short">sec</string>
     <string name="skip_timer">Skip Timer</string>
     <string name="skip_timer_and_log">Skip timer &amp; Log</string>
-    <string name="set_duration_label">Duration</string>
     <string name="adjust_weight">Adjust Weight</string>
     <string name="time_weight_ready">READY TO START</string>
     <string name="time_weight_running">TIMER RUNNING</string>
@@ -858,30 +852,6 @@
     <string name="onboarding_nextcloud_title">Your cloud,\nyour backups.</string>
     <string name="onboarding_nextcloud_desc">Optional: connect your own Nextcloud to keep a copy of your data off this phone, or to restore it on a new one.</string>
     <string name="nextcloud_connect">Connect</string>
-    <string name="plate_calculator">Plate calculator</string>
-    <string name="plate_calculator_use">Use plate calculator</string>
-    <string name="plate_chip_per_side">%1$s per side · bar %2$s</string>
-    <string name="plate_chip_per_side_plain">%1$s per side</string>
-    <string name="plate_chip_bar_only">Bar only · %1$s</string>
-    <string name="plate_chip_below_bar">Lighter than the bar (%1$s)</string>
-    <string name="plate_chip_short">%1$s per side · %2$s short</string>
-    <string name="plate_total_weight">Total weight</string>
-    <string name="plate_bar">Bar</string>
-    <string name="plate_bar_other">Other</string>
-    <string name="plate_bar_none">No bar</string>
-    <string name="plate_bar_dialog_title">Bar weight</string>
-    <string name="plate_per_side">Per side: %1$s</string>
-    <string name="plate_no_plates">No plates, just the bar</string>
-    <string name="plate_none">No plates</string>
-    <string name="plate_lighter_than_bar">Lighter than the bar. Raise the weight or pick a lighter bar.</string>
-    <string name="plate_cannot_load">%1$s can\'t be loaded with your plates.</string>
-    <string name="plate_edited">Edited by hand</string>
-    <string name="plate_reset">Reset to suggested</string>
-    <string name="plate_add_hint">Add a plate to each side</string>
-    <string name="plate_tap_to_remove">Tap a plate on the bar to remove it.</string>
-    <string name="plate_remove">Remove plate</string>
-    <string name="plate_apply">Set %1$s</string>
-    <string name="plate_turn_off">Turn off for this exercise</string>
     <string name="warmup_label">Warmup</string>
     <string name="cardio_mark_completed">Mark as completed</string>
     <string name="cardio_complete_logs_time">Logs the planned time: %1$s</string>
@@ -890,9 +860,6 @@
 
     <!-- Starting weight, rep ranges and double progression -->
     <string name="reps_goal">Goal: %1$s</string>
-    <string name="progression_hit_max">%1$d reps on every set last time</string>
-    <string name="progression_try_weight">Try %1$s</string>
-    <string name="progression_dismiss">Keep the current weight</string>
 
     <!-- Add workout sheet: routines grouped by active / archived -->
     <!-- Changing the program during a workout -->

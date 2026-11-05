@@ -119,7 +119,7 @@ fun RestTimerSection(
                         val minutes = remainingSeconds / 60
                         val seconds = remainingSeconds % 60
                         RollingText(
-                            text = String.format("%d:%02d", minutes, seconds),
+                            text = "$minutes:${seconds.toString().padStart(2, '0')}",
                             style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.78f, 1f, e)),
                             color = OnTertiary,
                             fontWeight = FontWeight.ExtraBold

@@ -232,3 +232,11 @@ fun Modifier.panelGlass(source: Backdrop?, shape: Shape, tint: Color): Modifier 
         onDrawSurface = { drawRect(body) }
     )
 }
+
+/** The shared workout panel's glass on Android: [panelGlass] over [source], with the continuous-corner outline. */
+class AndroidPanelGlass(private val source: LayerBackdrop) : com.emanuel5014.trainable.ui.glass.PanelGlass {
+    override val shape: Shape = com.kyant.shapes.RoundedRectangle(32.dp)
+
+    @Composable
+    override fun frost(modifier: Modifier, shape: Shape, tint: Color): Modifier = modifier.panelGlass(source, shape, tint)
+}

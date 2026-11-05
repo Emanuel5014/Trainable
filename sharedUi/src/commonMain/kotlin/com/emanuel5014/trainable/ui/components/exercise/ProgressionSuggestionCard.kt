@@ -20,10 +20,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.apply
+import com.emanuel5014.trainable.sharedui.resources.progression_dismiss
+import com.emanuel5014.trainable.sharedui.resources.progression_hit_max
+import com.emanuel5014.trainable.sharedui.resources.progression_try_weight
 import com.emanuel5014.trainable.domain.prescription.DoubleProgression
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -67,12 +71,12 @@ fun ProgressionSuggestionCard(
             )
             Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(
-                    text = stringResource(R.string.progression_hit_max, suggestion.reachedReps),
+                    text = stringResource(Res.string.progression_hit_max, suggestion.reachedReps),
                     style = MaterialTheme.typography.labelMedium,
                     color = OnSurfaceVariant
                 )
                 Text(
-                    text = stringResource(R.string.progression_try_weight, weightText),
+                    text = stringResource(Res.string.progression_try_weight, weightText),
                     style = MaterialTheme.typography.titleMedium,
                     color = Primary,
                     fontWeight = FontWeight.ExtraBold
@@ -83,12 +87,12 @@ fun ProgressionSuggestionCard(
                 height = 40,
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp)
             ) {
-                Text(stringResource(R.string.apply).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.apply).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
             IconButton(onClick = onDismiss) {
                 Icon(
                     imageVector = Icons.Rounded.Close,
-                    contentDescription = stringResource(R.string.progression_dismiss),
+                    contentDescription = stringResource(Res.string.progression_dismiss),
                     tint = OnSurfaceVariant
                 )
             }

@@ -49,16 +49,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.custom
+import com.emanuel5014.trainable.sharedui.resources.custom_reps
+import com.emanuel5014.trainable.sharedui.resources.custom_weight
+import com.emanuel5014.trainable.sharedui.resources.ok
+import com.emanuel5014.trainable.sharedui.resources.reps
+import com.emanuel5014.trainable.sharedui.resources.set_duration_label
+import com.emanuel5014.trainable.sharedui.resources.target_seconds
+import com.emanuel5014.trainable.sharedui.resources.weight_label_unit
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -109,7 +116,7 @@ fun WeightRepsInput(
             }
 
             WheelPickerBox(
-                label = stringResource(R.string.weight_label_unit, weightUnit.uppercase()),
+                label = stringResource(Res.string.weight_label_unit, weightUnit.uppercase()),
                 value = displayWeight,
                 range = weightRange,
                 onValueChange = { 
@@ -123,7 +130,7 @@ fun WeightRepsInput(
         
         Column(modifier = Modifier.weight(1f)) {
             WheelPickerBox(
-                label = stringResource(R.string.reps),
+                label = stringResource(Res.string.reps),
                 value = reps.toFloat(),
                 range = (0..100).map { it.toFloat() },
                 onValueChange = { onRepsChange(it.toInt()) },
@@ -138,12 +145,12 @@ fun WeightRepsInput(
         AlertDialog(
             modifier = Modifier.imePadding(),
             onDismissRequest = { showCustomWeightDialog = false },
-            title = { Text(stringResource(R.string.custom_weight), color = OnSurface) },
+            title = { Text(stringResource(Res.string.custom_weight), color = OnSurface) },
             text = {
                 OutlinedTextField(
                     value = customWeightText,
                     onValueChange = { customWeightText = it.replace(',', '.') },
-                    label = { Text(stringResource(R.string.weight_label_unit, weightUnit)) },
+                    label = { Text(stringResource(Res.string.weight_label_unit, weightUnit)) },
                     placeholder = { Text(WeightUnitConverter.format(displayWeight), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -165,12 +172,12 @@ fun WeightRepsInput(
                         showCustomWeightDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.ok), color = Primary)
+                    Text(stringResource(Res.string.ok), color = Primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomWeightDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel), color = OnSurfaceVariant)
                 }
             },
             containerColor = SurfaceContainerHigh
@@ -181,12 +188,12 @@ fun WeightRepsInput(
         AlertDialog(
             modifier = Modifier.imePadding(),
             onDismissRequest = { showCustomRepsDialog = false },
-            title = { Text(stringResource(R.string.custom_reps), color = OnSurface) },
+            title = { Text(stringResource(Res.string.custom_reps), color = OnSurface) },
             text = {
                 OutlinedTextField(
                     value = customRepsText,
                     onValueChange = { customRepsText = it.filter { char -> char.isDigit() } },
-                    label = { Text(stringResource(R.string.reps)) },
+                    label = { Text(stringResource(Res.string.reps)) },
                     placeholder = { Text(reps.toString(), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -207,12 +214,12 @@ fun WeightRepsInput(
                         showCustomRepsDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.ok), color = Primary)
+                    Text(stringResource(Res.string.ok), color = Primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomRepsDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel), color = OnSurfaceVariant)
                 }
             },
             containerColor = SurfaceContainerHigh
@@ -233,10 +240,7 @@ private fun <T> WheelPickerBox(
     onRequestCustom: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    val context = LocalContext.current
-    val hapticEnabled by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
-    }.collectAsState(initial = true)
+    val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
 
     val currentOnValueChange by rememberUpdatedState(onValueChange)
     // The effect below outlives many values: it must compare with the value now, not the one it started with
@@ -314,7 +318,7 @@ private fun <T> WheelPickerBox(
             IconButton(onClick = onRequestCustom, modifier = Modifier.size(48.dp).testTag("wheel_edit")) {
                 Icon(
                     Icons.Rounded.Edit,
-                    contentDescription = stringResource(R.string.custom),
+                    contentDescription = stringResource(Res.string.custom),
                     tint = OnSurfaceVariant,
                     modifier = Modifier.size(18.dp)
                 )
@@ -441,7 +445,7 @@ fun WeightTimeInput(
             }
 
             WheelPickerBox(
-                label = stringResource(R.string.weight_label_unit, weightUnit.uppercase()),
+                label = stringResource(Res.string.weight_label_unit, weightUnit.uppercase()),
                 value = displayWeight,
                 range = weightRange,
                 onValueChange = { 
@@ -467,7 +471,7 @@ fun WeightTimeInput(
             }
 
             WheelPickerBox(
-                label = stringResource(R.string.set_duration_label),
+                label = stringResource(Res.string.set_duration_label),
                 value = seconds.toFloat(),
                 range = secondsRange,
                 onValueChange = { onSecondsChange(it.toInt()) },
@@ -482,12 +486,12 @@ fun WeightTimeInput(
         AlertDialog(
             modifier = Modifier.imePadding(),
             onDismissRequest = { showCustomWeightDialog = false },
-            title = { Text(stringResource(R.string.custom_weight), color = OnSurface) },
+            title = { Text(stringResource(Res.string.custom_weight), color = OnSurface) },
             text = {
                 OutlinedTextField(
                     value = customWeightText,
                     onValueChange = { customWeightText = it.replace(',', '.') },
-                    label = { Text(stringResource(R.string.weight_label_unit, weightUnit)) },
+                    label = { Text(stringResource(Res.string.weight_label_unit, weightUnit)) },
                     placeholder = { Text(WeightUnitConverter.format(displayWeight), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -509,12 +513,12 @@ fun WeightTimeInput(
                         showCustomWeightDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.ok), color = Primary)
+                    Text(stringResource(Res.string.ok), color = Primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomWeightDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel), color = OnSurfaceVariant)
                 }
             },
             containerColor = SurfaceContainerHigh
@@ -525,12 +529,12 @@ fun WeightTimeInput(
         AlertDialog(
             modifier = Modifier.imePadding(),
             onDismissRequest = { showCustomSecondsDialog = false },
-            title = { Text(stringResource(R.string.set_duration_label), color = OnSurface) },
+            title = { Text(stringResource(Res.string.set_duration_label), color = OnSurface) },
             text = {
                 OutlinedTextField(
                     value = customSecondsText,
                     onValueChange = { customSecondsText = it.filter { char -> char.isDigit() } },
-                    label = { Text(stringResource(R.string.target_seconds)) },
+                    label = { Text(stringResource(Res.string.target_seconds)) },
                     placeholder = { Text(seconds.toString(), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -549,12 +553,12 @@ fun WeightTimeInput(
                         showCustomSecondsDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.ok), color = Primary)
+                    Text(stringResource(Res.string.ok), color = Primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomSecondsDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel), color = OnSurfaceVariant)
                 }
             },
             containerColor = SurfaceContainerHigh
@@ -585,7 +589,7 @@ fun TimeRepsInput(
                 if (!baseSecondsRange.contains(secF) && seconds > 0) (baseSecondsRange + secF).sorted() else baseSecondsRange
             }
             WheelPickerBox(
-                label = stringResource(R.string.set_duration_label),
+                label = stringResource(Res.string.set_duration_label),
                 value = seconds.toFloat(),
                 range = secondsRange,
                 onValueChange = { onSecondsChange(it.toInt()) },
@@ -600,7 +604,7 @@ fun TimeRepsInput(
                 if (reps > TIME_REPS_WHEEL_MAX) base + reps.toFloat() else base
             }
             WheelPickerBox(
-                label = stringResource(R.string.reps),
+                label = stringResource(Res.string.reps),
                 value = reps.toFloat(),
                 range = repsRange,
                 onValueChange = { onRepsChange(it.toInt()) },
@@ -613,8 +617,8 @@ fun TimeRepsInput(
 
     if (customSeconds) {
         CustomNumberDialog(
-            title = stringResource(R.string.set_duration_label),
-            label = stringResource(R.string.target_seconds),
+            title = stringResource(Res.string.set_duration_label),
+            label = stringResource(Res.string.target_seconds),
             current = seconds,
             onDismiss = { customSeconds = false },
             onConfirm = { if (it > 0) onSecondsChange(it) }
@@ -622,8 +626,8 @@ fun TimeRepsInput(
     }
     if (customReps) {
         CustomNumberDialog(
-            title = stringResource(R.string.custom_reps),
-            label = stringResource(R.string.reps),
+            title = stringResource(Res.string.custom_reps),
+            label = stringResource(Res.string.reps),
             current = reps,
             onDismiss = { customReps = false },
             onConfirm = onRepsChange
@@ -664,12 +668,12 @@ private fun CustomNumberDialog(
                 text.toIntOrNull()?.let(onConfirm)
                 onDismiss()
             }) {
-                Text(stringResource(R.string.ok), color = Primary)
+                Text(stringResource(Res.string.ok), color = Primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel), color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainerHigh
