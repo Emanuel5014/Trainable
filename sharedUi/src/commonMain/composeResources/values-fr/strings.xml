@@ -1177,4 +1177,6 @@
     <string name="physical_check_unlock">Déverrouiller</string>
     <string name="physical_check_view_toggle_cd">Changer de vue</string>
     <string name="physical_check_weight_label">Poids corporel (kg)</string>
+    <string name="physical_check_camera_unavailable">Appareil photo indisponible sur cet appareil</string>
+    <string name="physical_check_auth_reason">Authentifiez-vous pour accéder à vos check physiques</string>
 </resources>

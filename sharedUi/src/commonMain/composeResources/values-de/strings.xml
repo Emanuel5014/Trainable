@@ -1174,4 +1174,6 @@
     <string name="physical_check_unlock">Entsperren</string>
     <string name="physical_check_view_toggle_cd">Ansicht wechseln</string>
     <string name="physical_check_weight_label">Körpergewicht (kg)</string>
+    <string name="physical_check_camera_unavailable">Kamera auf diesem Gerät nicht verfügbar</string>
+    <string name="physical_check_auth_reason">Authentifiziere dich, um deine Checks zu öffnen</string>
 </resources>

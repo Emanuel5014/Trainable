@@ -1177,4 +1177,6 @@
     <string name="physical_check_unlock">Sblocca</string>
     <string name="physical_check_view_toggle_cd">Cambia vista</string>
     <string name="physical_check_weight_label">Peso corporeo (kg)</string>
+    <string name="physical_check_camera_unavailable">Fotocamera non disponibile su questo dispositivo</string>
+    <string name="physical_check_auth_reason">Autenticati per accedere ai check fisici</string>
 </resources>

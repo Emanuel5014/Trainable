@@ -218,6 +218,12 @@
 					UniformTypeIdentifiers,
 					"-framework",
 					WebKit,
+					"-framework",
+					LocalAuthentication,
+					"-framework",
+					AVFoundation,
+					"-framework",
+					Security,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;
@@ -259,6 +265,12 @@
 					UniformTypeIdentifiers,
 					"-framework",
 					WebKit,
+					"-framework",
+					LocalAuthentication,
+					"-framework",
+					AVFoundation,
+					"-framework",
+					Security,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;

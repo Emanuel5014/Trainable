@@ -96,6 +96,13 @@ internal object IosAppGraph {
         )
     }
 
+    val physicalChecks by lazy {
+        com.emanuel5014.trainable.data.repository.PhysicalCheckRepository(
+            database.physicalCheckDao(), com.emanuel5014.trainable.data.repository.IosPhysicalCheckCrypto(),
+            com.emanuel5014.trainable.data.repository.IosPhysicalCheckFiles(), preferences
+        )
+    }
+
     fun routineDetail(planId: Int, scope: CoroutineScope) =
         RoutineDetailState(planId, workouts, exercises, preferences, oneRepMaxes, scope)
 }

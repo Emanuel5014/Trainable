@@ -64,6 +64,8 @@ import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.localizedNavItems
 import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.navigation.PhysicalCheck
+import com.emanuel5014.trainable.ui.navigation.PhysicalCheckCompare
+import com.emanuel5014.trainable.ui.navigation.PhysicalCheckSettings
 import com.emanuel5014.trainable.ui.navigation.Report
 import com.emanuel5014.trainable.ui.navigation.EditWorkoutSession
 import com.emanuel5014.trainable.ui.navigation.CompareSessions
@@ -225,7 +227,30 @@ internal fun IosNavGraph(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToRoutine = { id -> navController.navigate(RoutineDetail(id)) })
             }
-            composable<PhysicalCheck> { NotOnIosYet("Physical check", onBack = { navController.popBackStack() }) }
+            composable<PhysicalCheck> { entry ->
+                IosPhysicalCheckScreen(entry) { model ->
+                    com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckContent(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToSettings = { navController.navigate(PhysicalCheckSettings) },
+                        onNavigateToCompare = { id1, id2 -> navController.navigate(PhysicalCheckCompare(id1 = id1, id2 = id2)) },
+                        viewModel = model
+                    )
+                }
+            }
+            composable<PhysicalCheckSettings> { entry ->
+                IosPhysicalCheckScreen(entry) { model ->
+                    com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckSettingsContent(
+                        onNavigateBack = { navController.popBackStack() }, viewModel = model)
+                }
+            }
+            composable<PhysicalCheckCompare> { entry ->
+                val route = entry.toRoute<PhysicalCheckCompare>()
+                IosPhysicalCheckScreen(entry) { model ->
+                    com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckCompareContent(
+                        checkId1 = route.id1, checkId2 = route.id2,
+                        onNavigateBack = { navController.popBackStack() }, viewModel = model)
+                }
+            }
             composable<RoutineDetail> { entry ->
                 val planId = entry.toRoute<RoutineDetail>().planId
                 val scope = rememberCoroutineScope()
@@ -296,6 +321,8 @@ private fun IosMainTabs(
     analytics: AnalyticsState
 ) {
     val hapticEnabled by IosAppGraph.preferences.hapticEnabled.collectAsState(initial = true)
+    val physicalCheckBiometric by IosAppGraph.preferences.physicalCheckBiometricEnabled.collectAsState(initial = false)
+    val biometricPrompt = rememberIosBiometricPrompt()
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
@@ -314,7 +341,11 @@ private fun IosMainTabs(
                 onNavigateToQuickWorkout = { name ->
                     navController.navigate(WorkoutExecution(quickStart = true, workoutName = name))
                 },
-                onNavigateToPhysicalChecks = { navController.navigate(PhysicalCheck) }
+                onNavigateToPhysicalChecks = {
+                    // As on Android: the biometric/passcode check comes before the section opens
+                    if (physicalCheckBiometric) biometricPrompt({ navController.navigate(PhysicalCheck) }, {})
+                    else navController.navigate(PhysicalCheck)
+                }
             )
             1 -> RoutineListContent(
                 state = routines,

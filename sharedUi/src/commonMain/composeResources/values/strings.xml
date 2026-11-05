@@ -1174,4 +1174,6 @@
     <string name="physical_check_unlock">Unlock</string>
     <string name="physical_check_view_toggle_cd">Toggle view</string>
     <string name="physical_check_weight_label">Body weight (kg)</string>
+    <string name="physical_check_camera_unavailable">Camera not available on this device</string>
+    <string name="physical_check_auth_reason">Authenticate to open your physical checks</string>
 </resources>
