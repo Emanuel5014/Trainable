@@ -134,6 +134,8 @@ import com.emanuel5014.trainable.domain.prescription.IntensityType
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
+import kotlinx.coroutines.flow.mapNotNull
+import com.emanuel5014.trainable.util.toMessage
 import kotlinx.coroutines.launch
 
 /** Key of the large exercise media item in the sets list, used to read where the sets end. */
@@ -148,6 +150,16 @@ fun WorkoutExecutionScreen(
     onNavigateBack: () -> Unit,
     onNavigateToRoutine: (Int) -> Unit,
     viewModel: WorkoutViewModel = hiltViewModel()
+) {
+    WorkoutExecutionContent(onNavigateBack, onNavigateToRoutine, viewModel.model)
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, kotlinx.coroutines.FlowPreview::class)
+@Composable
+internal fun WorkoutExecutionContent(
+    onNavigateBack: () -> Unit,
+    onNavigateToRoutine: (Int) -> Unit,
+    viewModel: WorkoutModel
 ) {
     val state by viewModel.state.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
@@ -185,8 +197,9 @@ fun WorkoutExecutionScreen(
     // The lifter drags the hub between open and a thin strip; it stays where it was left while the screen is open
     val hubSheet = rememberHubSheetState()
     val screenDensity = LocalDensity.current
-    val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.setExerciseMedia(exerciseId, uri) }
-    ExerciseMediaMessageToasts(viewModel.mediaMessages)
+    val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.setExerciseMedia(exerciseId, uri.toString()) }
+    val mediaMessages = remember(viewModel) { viewModel.mediaMessages.mapNotNull { it.toMessage() } }
+    ExerciseMediaMessageToasts(mediaMessages)
     // Each cardio set has its own distance
     var cardioDistanceInput by remember(state.currentExercise?.exercise?.id, state.currentExercise?.activeCardioSetIndex) {
         mutableStateOf(
@@ -289,8 +302,8 @@ fun WorkoutExecutionScreen(
     LaunchedEffect(Unit) {
         viewModel.navigationEvent.collect { event ->
             when (event) {
-                is WorkoutViewModel.WorkoutNavEvent.NavigateBack -> safeNavigateBack()
-                is WorkoutViewModel.WorkoutNavEvent.ProgramCompleted -> android.widget.Toast.makeText(
+                is WorkoutModel.WorkoutNavEvent.NavigateBack -> safeNavigateBack()
+                is WorkoutModel.WorkoutNavEvent.ProgramCompleted -> android.widget.Toast.makeText(
                     context, context.getString(R.string.program_completed), android.widget.Toast.LENGTH_LONG
                 ).show()
             }
@@ -615,7 +628,7 @@ fun CardioExerciseContent(
     exerciseState: WorkoutExerciseState,
     languageCode: String,
     state: WorkoutState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     onSwap: () -> Unit,
     onAddExercise: (() -> Unit)? = null,
     distanceInput: String,
@@ -898,7 +911,7 @@ internal fun ActiveSetPlateChip(
 fun CardioHubSection(
     exerciseState: WorkoutExerciseState,
     state: WorkoutState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     languageCode: String,
     onFinishWorkout: () -> Unit,
     onAddExercise: (() -> Unit)? = null,

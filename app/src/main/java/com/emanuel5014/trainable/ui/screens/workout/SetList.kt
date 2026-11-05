@@ -101,7 +101,7 @@ internal fun ColumnScope.SetList(
     isExerciseCompleted: Boolean,
     state: WorkoutState,
     ui: WorkoutScreenUiState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     languageCode: String,
     prescriptionLabels: PrescriptionLabels
 ) {

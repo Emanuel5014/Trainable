@@ -59,7 +59,7 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 internal fun WorkoutEarlyDialogs(
     state: WorkoutState,
     ui: WorkoutScreenUiState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     languageCode: String,
     exerciseMedia: Map<Int, String>,
     pickMedia: (Int) -> Unit,
@@ -182,7 +182,7 @@ internal fun WorkoutEarlyDialogs(
 internal fun WorkoutDialogs(
     state: WorkoutState,
     ui: WorkoutScreenUiState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     currentExState: WorkoutExerciseState?,
     activeSet: WorkoutSetState?,
     activeSetIndex: Int,

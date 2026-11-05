@@ -89,7 +89,7 @@ fun EmomExerciseContent(
     exerciseState: WorkoutExerciseState,
     languageCode: String,
     state: WorkoutState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     onSwap: () -> Unit,
     onLogManually: () -> Unit,
     bottomPadding: Dp

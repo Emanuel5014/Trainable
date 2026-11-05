@@ -93,7 +93,7 @@ internal fun ExerciseHeader(
     targetIndex: Int,
     state: WorkoutState,
     ui: WorkoutScreenUiState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     languageCode: String,
     exerciseMedia: Map<Int, String>,
     largeMediaVisible: Boolean,
@@ -148,7 +148,7 @@ private fun ExpandedHeader(
     targetIndex: Int,
     state: WorkoutState,
     ui: WorkoutScreenUiState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     languageCode: String,
     exerciseMedia: Map<Int, String>,
     largeMediaVisible: Boolean,
@@ -238,7 +238,7 @@ private fun CompactHeader(
     targetIndex: Int,
     state: WorkoutState,
     ui: WorkoutScreenUiState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     languageCode: String,
     onOpenDetail: (Int) -> Unit
 ) {
@@ -405,7 +405,7 @@ internal fun ExerciseTools(
     targetIndex: Int,
     state: WorkoutState,
     ui: WorkoutScreenUiState,
-    viewModel: WorkoutViewModel,
+    viewModel: WorkoutModel,
     onOpenDetail: (Int) -> Unit
 ) {
     val groupLabel = stringResource(R.string.exercise_tools_group)
