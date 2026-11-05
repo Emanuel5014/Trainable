@@ -14,7 +14,7 @@ import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
  * What the sheet asks for, put next to what was done: the prescription of an exercise week by week, and how much of
  * it a workout got through. Kept apart from [ReportGenerator] so that it needs nothing of Android.
  */
-internal object ReportProgram {
+object ReportProgram {
 
     /** The prescription of [planExercise] for each of the [weeksCount] weeks, or its plain target when it has no blocks (or advanced programming is off). */
     fun of(planExercise: PlanExerciseWithDetails, weeksCount: Int, advanced: Boolean, labels: PrescriptionLabels): ExerciseProgram {

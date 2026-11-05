@@ -235,7 +235,9 @@ internal fun IosNavGraph(
                     onStartWorkout = { id, sessionId -> navController.navigate(WorkoutExecution(planId = id, sessionId = sessionId)) }
                 )
             }
-            composable<Report> { NotOnIosYet("Report", onBack = { navController.popBackStack() }) }
+            composable<Report> { entry ->
+                IosReportScreen(entry.toRoute<Report>().planIdsString, onNavigateBack = { navController.popBackStack() })
+            }
             composable<EditWorkoutSession> { entry ->
                 val sessionId = entry.toRoute<EditWorkoutSession>().sessionId
                 val scope = rememberCoroutineScope()

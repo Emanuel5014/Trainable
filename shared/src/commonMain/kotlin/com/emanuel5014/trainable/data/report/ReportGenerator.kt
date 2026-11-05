@@ -19,12 +19,12 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
 import com.emanuel5014.trainable.domain.prescription.RepMode
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.first
-import javax.inject.Inject
 
-class ReportGenerator @Inject constructor(
+class ReportGenerator(
     private val workoutRepository: WorkoutRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val localeManager: com.emanuel5014.trainable.util.AppLocaleManager
+    /** The words of prescriptions in the report's language, asked for each routine. */
+    private val reportText: () -> ReportText
 ) {
     suspend fun generateReport(planId: Int, languageCode: String = "en"): PlanReport {
         val planWithDetails = workoutRepository.getPlanWithDetails(planId).first()
@@ -131,8 +131,8 @@ class ReportGenerator @Inject constructor(
         }
 
         // What was changed in the prescription of an exercise along the way, with the units and language of the report
-        val editContext = localeManager.localizedContext()
-        val editLabels = com.emanuel5014.trainable.ui.components.prescriptionLabels(editContext, weightUnit)
+        val text = reportText()
+        val editLabels = text.labels(weightUnit)
         val programEditsByExercise = mutableMapOf<Int, MutableList<ProgramEditEvent>>()
         sessions.forEach { session ->
             session.prescriptionEdits.forEach { edit ->
@@ -145,7 +145,7 @@ class ReportGenerator @Inject constructor(
                         scope = edit.editScope,
                         before = blockLines(edit.before, editLabels),
                         after = blockLines(edit.after, editLabels),
-                        changes = com.emanuel5014.trainable.ui.components.programChangeLines(editContext, weightUnit, edit.before, edit.after)
+                        changes = text.programChangeLines(weightUnit, edit.before, edit.after)
                     )
                 )
             }
@@ -170,9 +170,9 @@ class ReportGenerator @Inject constructor(
                     note = setWithExercise.setLog.note,
                     // The prescription with advanced programming on (its RPE has a column of its own); mini-sets, help and partials always
                     planned = if (advanced) {
-                        com.emanuel5014.trainable.ui.components.setLogPrescriptionBadges(editContext, setWithExercise.setLog)
+                        text.setPrescriptionBadges(setWithExercise.setLog)
                     } else emptyList(),
-                    performed = com.emanuel5014.trainable.ui.components.setLogPerformanceBadges(editContext, setWithExercise.setLog),
+                    performed = text.setPerformanceBadges(setWithExercise.setLog),
                     seconds = setWithExercise.setLog.durataSecondi,
                     straightReps = setWithExercise.setLog.straightReps,
                     // The reps it was done against: a plain set only has one when it had a range. The reps of a "total
@@ -304,8 +304,8 @@ class ReportGenerator @Inject constructor(
         val names = mutableMapOf<String, String>()
         sessions.forEach { session ->
             session.cardio.filter { it.isCompleted }.groupedByExercise().forEach { cardio ->
-                val key = cardio.categoria.trim().lowercase(java.util.Locale.ROOT)
-                names.putIfAbsent(key, cardio.categoria.trim())
+                val key = cardio.categoria.trim().lowercase()
+                if (key !in names) names[key] = cardio.categoria.trim()
                 byActivity.getOrPut(key) { mutableListOf() }.add(
                     ExerciseSessionEntry(
                         date = session.session.timestamp,
@@ -327,7 +327,7 @@ class ReportGenerator @Inject constructor(
             }
         }
         return byActivity.map { (key, entries) ->
-            val planExercise = planWithDetails.exercises.firstOrNull { it.exercise.nome.trim().lowercase(java.util.Locale.ROOT) == key }
+            val planExercise = planWithDetails.exercises.firstOrNull { it.exercise.nome.trim().lowercase() == key }
             val sorted = entries.sortedBy { it.date }
             ExerciseReport(
                 // Activities typed by hand have no exercise: a stable id that cannot clash with a real one

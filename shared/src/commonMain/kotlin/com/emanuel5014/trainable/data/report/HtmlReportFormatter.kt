@@ -4,18 +4,14 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
 import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
 import com.emanuel5014.trainable.domain.prescription.RepRange
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import javax.inject.Inject
+import kotlin.time.Clock
 
 /**
  * The report as one self-contained HTML page: no script, no font or image to download, semantic markup and a layout
  * that wraps instead of scrolling sideways, so it reads the same in the app's WebView, a phone browser, a desktop
  * browser or on paper. Several routines make one page, each with its own header and contents.
  */
-class HtmlReportFormatter @Inject constructor() {
+class HtmlReportFormatter {
 
     fun format(report: PlanReport, languageCode: String = "en"): String = format(listOf(report), languageCode)
 
@@ -39,22 +35,19 @@ class HtmlReportFormatter @Inject constructor() {
             reports.forEachIndexed { index, report -> appendPlan(page, report, index) }
             if (reports.isEmpty()) append("<p class=\"empty\">${escapeHtml(s["no_data"])}</p>\n")
 
-            append("<footer class=\"footer\">${escapeHtml(s["generated_by"])} ${escapeHtml(page.dateTime.format(Date()))}</footer>\n")
+            append("<footer class=\"footer\">${escapeHtml(s["generated_by"])} ${escapeHtml(page.moment(Clock.System.now().toEpochMilliseconds()))}</footer>\n")
             append("</main>\n</body>\n</html>\n")
         }
     }
 
     /** Language, formats and words shared by every part of one page. Dates follow the language of the report, not the device. */
     private class Page(val s: ReportStrings, languageCode: String) {
-        private val locale: Locale = Locale.forLanguageTag(languageCode)
-        val date: DateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, locale)
-        val dateTime: DateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale)
-        private val isoDate = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT)
-        private val isoDateTime = SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.ROOT)
+        private val formats = ReportDateFormats(languageCode)
 
-        fun day(millis: Long): String = date.format(Date(millis))
-        fun isoDay(millis: Long): String = isoDate.format(Date(millis))
-        fun isoMoment(millis: Long): String = isoDateTime.format(Date(millis))
+        fun day(millis: Long): String = formats.day(millis)
+        fun moment(millis: Long): String = formats.moment(millis)
+        fun isoDay(millis: Long): String = formats.isoDay(millis)
+        fun isoMoment(millis: Long): String = formats.isoMoment(millis)
     }
 
     // ── Page and routines ────────────────────────────────────────────────────────────────────────────────────────
@@ -542,7 +535,7 @@ class HtmlReportFormatter @Inject constructor() {
 
             append("<li class=\"event\">\n<div class=\"event-head\">")
             // The moment of the change: two workouts of the same day tell apart by it
-            append("<time class=\"event-date\" datetime=\"${page.isoMoment(edit.createdAt)}\">${escapeHtml(page.dateTime.format(Date(edit.createdAt)))}</time>")
+            append("<time class=\"event-date\" datetime=\"${page.isoMoment(edit.createdAt)}\">${escapeHtml(page.moment(edit.createdAt))}</time>")
             append("<span class=\"chip chip-kind\">${escapeHtml(kind)}</span>")
             edit.week?.let { append("<span class=\"chip chip-week\">${escapeHtml(s["week_short"])} $it</span>") }
             append("<span class=\"chip ${if (isPlan) "chip-scope-plan" else "chip-scope-workout"}\">${escapeHtml(scope)}</span>")
@@ -625,8 +618,8 @@ class HtmlReportFormatter @Inject constructor() {
         val sec = seconds % 60
         return when {
             seconds < 60 -> "${seconds}s"
-            h > 0 -> String.format(Locale.ROOT, "%d:%02d:%02d", h, m, sec)
-            else -> String.format(Locale.ROOT, "%d:%02d", m, sec)
+            h > 0 -> "$h:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}"
+            else -> "$m:${sec.toString().padStart(2, '0')}"
         }
     }
 

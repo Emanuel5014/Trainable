@@ -283,7 +283,6 @@
     <string name="export_database">ESPORTA DATABASE</string>
     <string name="export_csv">ESPORTA CSV</string>
     <string name="import_database">IMPORTA DATABASE</string>
-    <string name="export_successful">Esportazione riuscita</string>
     <string name="export_failed">Esportazione fallita</string>
     <string name="import_successful">Importazione riuscita</string>
     <string name="import_failed">Importazione fallita</string>
@@ -544,8 +543,6 @@
     <string name="crop_aspect_16_9">16:9</string>
 
     <!-- Report -->
-    <string name="report">Report</string>
-    <string name="report_preview">ANTEPRIMA</string>
 
     <string name="custom">Personalizzato</string>
     <string name="custom_weight">Peso Personalizzato</string>

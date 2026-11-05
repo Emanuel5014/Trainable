@@ -990,4 +990,7 @@
     <string name="compare_verdict">A à frente em %1$d · B em %2$d</string>
     <string name="compare_working_sets">Séries de trabalho</string>
     <string name="error">Erro</string>
+    <string name="export_successful">Exportação bem-sucedida</string>
+    <string name="report">Relatório</string>
+    <string name="report_preview">PRÉ-VISUALIZAÇÃO</string>
 </resources>

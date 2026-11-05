@@ -12,51 +12,30 @@ import com.emanuel5014.trainable.data.report.ReportGenerator
 import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
+/** Android's [ReportModel]: the routines from the route, sharing through a FileProvider and saving to a document. */
 @HiltViewModel
 class ReportViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val reportGenerator: ReportGenerator,
-    private val htmlReportFormatter: HtmlReportFormatter,
-    private val localeManager: AppLocaleManager,
+    reportGenerator: ReportGenerator,
+    htmlReportFormatter: HtmlReportFormatter,
+    localeManager: AppLocaleManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val planIds: List<Int> = savedStateHandle.get<String>("planIdsString")
-        ?.split(",")
-        ?.mapNotNull { it.toIntOrNull() }
-        ?: emptyList()
-
-    private val _uiState = MutableStateFlow(ReportUiState(isLoading = true))
-    val uiState: StateFlow<ReportUiState> = _uiState.asStateFlow()
-
-    init {
-        generateReport()
-    }
-
-    private fun generateReport() {
-        viewModelScope.launch {
-            try {
-                val languageCode = localeManager.getResolvedLanguage()
-                val reports = reportGenerator.generateReports(planIds, languageCode)
-                // One page for all the routines: glued pages would be several documents in one file
-                val html = htmlReportFormatter.format(reports, languageCode)
-                _uiState.update { it.copy(html = html, isLoading = false, reports = reports) }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message, isLoading = false) }
-            }
-        }
-    }
+    val model = ReportModel(
+        planIds = ReportModel.planIdsOf(savedStateHandle.get<String>("planIdsString")),
+        reportGenerator = reportGenerator,
+        htmlReportFormatter = htmlReportFormatter,
+        languageCode = { localeManager.getResolvedLanguage() },
+        scope = viewModelScope
+    )
 
     fun shareReport() {
-        val html = _uiState.value.html ?: return
+        val html = model.uiState.value.html ?: return
         viewModelScope.launch {
             try {
                 val cachePath = File(context.cacheDir, "reports")
@@ -82,34 +61,22 @@ class ReportViewModel @Inject constructor(
                 chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(chooser)
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message) }
+                model.failed(e.message)
             }
         }
     }
 
     fun saveReport(uri: Uri) {
-        val html = _uiState.value.html ?: return
+        val html = model.uiState.value.html ?: return
         viewModelScope.launch {
             try {
                 context.contentResolver.openOutputStream(uri)?.use { output ->
                     output.write(html.toByteArray())
                 }
-                _uiState.update { it.copy(saveSuccess = true) }
+                model.saved()
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message) }
+                model.failed(e.message)
             }
         }
     }
-
-    fun clearSaveSuccess() {
-        _uiState.update { it.copy(saveSuccess = false) }
-    }
 }
-
-data class ReportUiState(
-    val isLoading: Boolean = true,
-    val html: String? = null,
-    val reports: List<com.emanuel5014.trainable.data.report.PlanReport> = emptyList(),
-    val error: String? = null,
-    val saveSuccess: Boolean = false
-)

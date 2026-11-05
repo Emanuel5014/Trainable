@@ -56,6 +56,21 @@ object RepositoryModule {
         workoutDao, userDao, exerciseDao, oneRepMaxDao, userPreferencesRepository, AndroidWorkoutPlatform(context)
     )
 
+    /** The report in the language the app shows, with its own resources (as before the report moved to the shared module). */
+    @Provides
+    fun provideReportGenerator(
+        workoutRepository: WorkoutRepository,
+        userPreferencesRepository: UserPreferencesRepository,
+        localeManager: com.emanuel5014.trainable.util.AppLocaleManager
+    ): com.emanuel5014.trainable.data.report.ReportGenerator =
+        com.emanuel5014.trainable.data.report.ReportGenerator(workoutRepository, userPreferencesRepository) {
+            AndroidReportText(localeManager.localizedContext())
+        }
+
+    @Provides
+    fun provideHtmlReportFormatter(): com.emanuel5014.trainable.data.report.HtmlReportFormatter =
+        com.emanuel5014.trainable.data.report.HtmlReportFormatter()
+
     @Provides
     @Singleton
     fun provideHistoryCsvImporter(

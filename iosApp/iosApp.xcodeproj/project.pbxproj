@@ -216,6 +216,8 @@
 					ImageIO,
 					"-framework",
 					UniformTypeIdentifiers,
+					"-framework",
+					WebKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;
@@ -255,6 +257,8 @@
 					ImageIO,
 					"-framework",
 					UniformTypeIdentifiers,
+					"-framework",
+					WebKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;

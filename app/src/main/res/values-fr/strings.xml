@@ -283,7 +283,6 @@
     <string name="export_database">EXPORTER LA BASE DE DONNÉES</string>
     <string name="export_csv">EXPORTER CSV</string>
     <string name="import_database">IMPORTER LA BASE DE DONNÉES</string>
-    <string name="export_successful">Exportation réussie</string>
     <string name="export_failed">Échec de l\'exportation</string>
     <string name="import_successful">Importation réussie</string>
     <string name="import_failed">Échec de l\'importation</string>
@@ -544,8 +543,6 @@
     <string name="crop_aspect_16_9">16:9</string>
 
     <!-- Report -->
-    <string name="report">Rapport</string>
-    <string name="report_preview">APERÇU</string>
 
     <string name="custom">Personnalisé</string>
     <string name="custom_weight">Poids Personnalisé</string>

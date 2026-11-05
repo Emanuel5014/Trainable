@@ -990,4 +990,7 @@
     <string name="compare_verdict">A in vantaggio su %1$d · B su %2$d</string>
     <string name="compare_working_sets">Serie di lavoro</string>
     <string name="error">Errore</string>
+    <string name="export_successful">Esportazione riuscita</string>
+    <string name="report">Report</string>
+    <string name="report_preview">ANTEPRIMA</string>
 </resources>

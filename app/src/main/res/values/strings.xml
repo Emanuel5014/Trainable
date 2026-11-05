@@ -284,7 +284,6 @@
     <string name="export_database">EXPORT DATABASE</string>
     <string name="export_csv">EXPORT CSV</string>
     <string name="import_database">IMPORT DATABASE</string>
-    <string name="export_successful">Export successful</string>
     <string name="export_failed">Export failed</string>
     <string name="import_successful">Import successful</string>
     <string name="import_failed">Import failed</string>
@@ -545,8 +544,6 @@
     <string name="crop_aspect_16_9">16:9</string>
 
     <!-- Report -->
-    <string name="report">Report</string>
-    <string name="report_preview">PREVIEW</string>
 
     <string name="custom">Custom</string>
     <string name="custom_weight">Custom Weight</string>
