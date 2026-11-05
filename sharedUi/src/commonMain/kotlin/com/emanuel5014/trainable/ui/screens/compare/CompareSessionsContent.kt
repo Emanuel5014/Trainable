@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.compare
 
+import com.emanuel5014.trainable.ui.util.bodyPadding
+import com.emanuel5014.trainable.ui.util.scrollEndInset
+import com.emanuel5014.trainable.ui.util.plusBottom
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -197,7 +200,8 @@ fun CompareSessionsContent(
                     comparison = comparison,
                     weightUnit = uiState.weightUnit,
                     languageCode = uiState.languageCode,
-                    modifier = Modifier.padding(paddingValues)
+                    modifier = Modifier.padding(paddingValues.bodyPadding()),
+                    endInset = paddingValues.scrollEndInset()
                 )
             }
         }
@@ -211,7 +215,9 @@ private fun CompareContent(
     comparison: SessionComparison,
     weightUnit: String,
     languageCode: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Room after the last row for the bottom area the body runs under (iOS). */
+    endInset: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -220,7 +226,7 @@ private fun CompareContent(
             end = ResponsiveSize.horizontalPadding,
             top = Spacing.small,
             bottom = Spacing.extraLarge
-        ),
+        ).plusBottom(endInset),
         verticalArrangement = Arrangement.spacedBy(Spacing.medium)
     ) {
         item { SessionsHeader(a, b, comparison) }

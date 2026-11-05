@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.exercises
 
+import com.emanuel5014.trainable.ui.util.bodyPadding
+import com.emanuel5014.trainable.ui.util.scrollEndInset
+import com.emanuel5014.trainable.ui.util.plusBottom
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.all
 import com.emanuel5014.trainable.sharedui.resources.back
@@ -300,7 +303,7 @@ fun ExercisesContent(
         }
     ) { paddingValues ->
         // On a wide screen the list keeps a readable width, centred
-        Box(modifier = Modifier.fillMaxSize().actionGlassSource(actionGlass).padding(paddingValues), contentAlignment = Alignment.TopCenter) {
+        Box(modifier = Modifier.fillMaxSize().actionGlassSource(actionGlass).padding(paddingValues.bodyPadding()), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -308,7 +311,8 @@ fun ExercisesContent(
                 .fillMaxHeight()
                 .imePadding(),
             // Room at the bottom so the button never covers the last row
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 112.dp),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 112.dp)
+                .plusBottom(paddingValues.scrollEndInset()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item(key = "display_settings") {

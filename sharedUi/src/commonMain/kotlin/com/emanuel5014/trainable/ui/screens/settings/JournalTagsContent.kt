@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.ui.util.bodyPadding
+import com.emanuel5014.trainable.ui.util.scrollEndInset
+import com.emanuel5014.trainable.ui.util.plusBottom
 import com.emanuel5014.trainable.sharedui.resources.Res
 import org.jetbrains.compose.resources.stringResource
 import com.emanuel5014.trainable.sharedui.resources.back
@@ -171,9 +174,10 @@ fun JournalTagsContent(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(paddingValues.bodyPadding())
                     .imePadding(),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 32.dp),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 32.dp)
+                    .plusBottom(paddingValues.scrollEndInset()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item(key = "new") {

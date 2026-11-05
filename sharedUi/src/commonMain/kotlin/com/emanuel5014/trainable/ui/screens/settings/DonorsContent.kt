@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.ui.util.bodyPadding
+import com.emanuel5014.trainable.ui.util.scrollEndInset
+import com.emanuel5014.trainable.ui.util.plusBottom
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.ic_kofi
 import com.emanuel5014.trainable.sharedui.resources.donor_supporter_badge
@@ -120,9 +123,10 @@ fun DonorsContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues.bodyPadding())
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(20.dp)
+                .padding(bottom = paddingValues.scrollEndInset()),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Hero Gratitude Card

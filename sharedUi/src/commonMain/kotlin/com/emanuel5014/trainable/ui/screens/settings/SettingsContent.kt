@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.ui.util.bodyPadding
+import com.emanuel5014.trainable.ui.util.scrollEndInset
+import com.emanuel5014.trainable.ui.util.plusBottom
 import com.emanuel5014.trainable.sharedui.resources.Res
 import org.jetbrains.compose.resources.stringResource
 import com.emanuel5014.trainable.sharedui.resources.ai_section_title
@@ -205,9 +208,10 @@ fun SettingsContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues.bodyPadding())
                 .verticalScroll(scrollState)
-                .padding(20.dp),
+                .padding(20.dp)
+                .padding(bottom = paddingValues.scrollEndInset()),
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             SettingsSection(title = stringResource(Res.string.profile)) {

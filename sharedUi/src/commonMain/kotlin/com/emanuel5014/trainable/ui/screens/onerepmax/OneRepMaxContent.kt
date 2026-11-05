@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.onerepmax
 
+import com.emanuel5014.trainable.ui.util.bodyPadding
+import com.emanuel5014.trainable.ui.util.scrollEndInset
+import com.emanuel5014.trainable.ui.util.plusBottom
 import com.emanuel5014.trainable.sharedui.resources.Res
 import org.jetbrains.compose.resources.stringResource
 import com.emanuel5014.trainable.sharedui.resources.add_one_rep_max
@@ -129,8 +132,8 @@ fun OneRepMaxContent(
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().actionGlassSource(actionGlass).padding(padding),
-            contentPadding = PaddingValues(bottom = 120.dp),
+            modifier = Modifier.fillMaxSize().actionGlassSource(actionGlass).padding(padding.bodyPadding()),
+            contentPadding = PaddingValues(bottom = 120.dp).plusBottom(padding.scrollEndInset()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {

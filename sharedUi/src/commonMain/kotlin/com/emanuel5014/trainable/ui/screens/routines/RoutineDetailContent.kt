@@ -2,6 +2,9 @@
 
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.ui.util.bodyPadding
+import com.emanuel5014.trainable.ui.util.scrollEndInset
+import com.emanuel5014.trainable.ui.util.plusBottom
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.add
 import com.emanuel5014.trainable.sharedui.resources.add_exercise
@@ -700,8 +703,8 @@ fun RoutineDetailContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .actionGlassSource(actionGlass)
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(bottom = 120.dp),
+                    .padding(paddingValues.bodyPadding()),
+                contentPadding = PaddingValues(bottom = 120.dp).plusBottom(paddingValues.scrollEndInset()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {

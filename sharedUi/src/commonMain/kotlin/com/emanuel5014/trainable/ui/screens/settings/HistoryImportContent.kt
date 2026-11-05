@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.ui.util.bodyPadding
+import com.emanuel5014.trainable.ui.util.scrollEndInset
+import com.emanuel5014.trainable.ui.util.plusBottom
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -278,9 +281,14 @@ fun HistoryImportContent(
                 )
             }
         ) { padding ->
-            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // The start page scrolls to the bottom edge on iOS; the preview keeps its import bar above it
+            Box(modifier = Modifier.fillMaxSize().padding(if (state is HistoryImportState.Idle) padding.bodyPadding() else padding)) {
                 when (val current = state) {
-                    HistoryImportState.Idle -> IntroContent(onChoose = choose, onDownloadExample = onDownloadExample)
+                    HistoryImportState.Idle -> IntroContent(
+                        onChoose = choose,
+                        onDownloadExample = onDownloadExample,
+                        endInset = padding.scrollEndInset()
+                    )
                     // Waiting is shown by the overlay below
                     HistoryImportState.Reading, is HistoryImportState.Importing -> Unit
                     is HistoryImportState.Failed -> FailureContent(current.failure, onChoose = choose)
@@ -319,12 +327,13 @@ fun HistoryImportContent(
 // --- Start, progress, errors ---
 
 @Composable
-private fun IntroContent(onChoose: () -> Unit, onDownloadExample: () -> Unit) {
+private fun IntroContent(onChoose: () -> Unit, onDownloadExample: () -> Unit, endInset: androidx.compose.ui.unit.Dp) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .padding(bottom = endInset),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(stringResource(Res.string.import_history_intro), style = MaterialTheme.typography.bodyLarge, color = OnSurfaceVariant)
