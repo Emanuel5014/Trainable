@@ -55,12 +55,6 @@ class TimerNotificationReceiver : BroadcastReceiver() {
         val emomEvents = MutableSharedFlow<EmomAction>(extraBufferCapacity = 4)
     }
 
-    enum class TimerAction { SKIP, ADD, SUBTRACT, DISMISS, FINISHED }
-    enum class WarmupTimerAction { SKIP, ADD, SUBTRACT, DISMISS, FINISHED }
-
-    /** What the EMOM notification or its round alarm asks of the workout. */
-    enum class EmomAction { BOUNDARY, DONE, PAUSE, RESUME, STOP }
-
     override fun onReceive(context: Context, intent: Intent) {
         val sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1)
         

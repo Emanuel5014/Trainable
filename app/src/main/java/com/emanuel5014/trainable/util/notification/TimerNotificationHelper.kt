@@ -32,23 +32,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** One button of the EMOM notification; [label] is already in the app language. */
-data class EmomNotificationAction(val action: TimerNotificationReceiver.EmomAction, val label: String)
-
-/** What the ongoing EMOM notification shows, all text already in the app language. */
-data class EmomNotificationInfo(
-    val title: String,
-    val text: String,
-    /** Extra line for the expanded notification where the system has no richer layout. */
-    val detail: String?,
-    /** Epoch millis at which the countdown reaches zero; null while the run is paused. */
-    val countdownEndsAt: Long?,
-    /** Seconds of the whole run already elapsed, for the live progress bar. */
-    val runElapsedSeconds: Int,
-    val rounds: Int,
-    val actions: List<EmomNotificationAction>
-)
-
 @Singleton
 class TimerNotificationHelper @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -133,9 +116,6 @@ class TimerNotificationHelper @Inject constructor(
         getVibrator()?.cancel()
     }
 
-    /** Haptic signals of an EMOM run: a tick before each round, GO when it starts, and the finish. */
-    enum class EmomCue { TICK, GO, DONE }
-
     fun vibrateEmomCue(cue: EmomCue) {
         val v = getVibrator()?.takeIf { it.hasVibrator() } ?: return
         val effect = when (cue) {
@@ -153,13 +133,13 @@ class TimerNotificationHelper @Inject constructor(
 
     // ---- EMOM ----
 
-    private fun emomPendingIntent(action: TimerNotificationReceiver.EmomAction): PendingIntent {
+    private fun emomPendingIntent(action: EmomAction): PendingIntent {
         val (name, requestCode) = when (action) {
-            TimerNotificationReceiver.EmomAction.DONE -> TimerNotificationReceiver.ACTION_EMOM_DONE to 21
-            TimerNotificationReceiver.EmomAction.PAUSE -> TimerNotificationReceiver.ACTION_EMOM_PAUSE to 22
-            TimerNotificationReceiver.EmomAction.RESUME -> TimerNotificationReceiver.ACTION_EMOM_RESUME to 23
-            TimerNotificationReceiver.EmomAction.STOP -> TimerNotificationReceiver.ACTION_EMOM_STOP to 24
-            TimerNotificationReceiver.EmomAction.BOUNDARY -> TimerNotificationReceiver.ACTION_EMOM_BOUNDARY to 25
+            EmomAction.DONE -> TimerNotificationReceiver.ACTION_EMOM_DONE to 21
+            EmomAction.PAUSE -> TimerNotificationReceiver.ACTION_EMOM_PAUSE to 22
+            EmomAction.RESUME -> TimerNotificationReceiver.ACTION_EMOM_RESUME to 23
+            EmomAction.STOP -> TimerNotificationReceiver.ACTION_EMOM_STOP to 24
+            EmomAction.BOUNDARY -> TimerNotificationReceiver.ACTION_EMOM_BOUNDARY to 25
         }
         val intent = Intent(context, TimerNotificationReceiver::class.java).apply { this.action = name }
         return PendingIntent.getBroadcast(
@@ -197,7 +177,7 @@ class TimerNotificationHelper @Inject constructor(
         if (info.countdownEndsAt != null) {
             builder.setUsesChronometer(true)
                 .setChronometerCountDown(true)
-                .setWhen(info.countdownEndsAt)
+                .setWhen(info.countdownEndsAt!!)
         } else {
             builder.setUsesChronometer(false).setShowWhen(false)
         }
@@ -239,7 +219,7 @@ class TimerNotificationHelper @Inject constructor(
 
     /** Wakes the workout when the next round starts, even with the screen off. */
     fun scheduleEmomBoundaryAlarm(triggerAtMillis: Long) {
-        val pendingIntent = emomPendingIntent(TimerNotificationReceiver.EmomAction.BOUNDARY)
+        val pendingIntent = emomPendingIntent(EmomAction.BOUNDARY)
         try {
             AlarmManagerCompat.setExactAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
         } catch (_: SecurityException) {
@@ -248,7 +228,7 @@ class TimerNotificationHelper @Inject constructor(
     }
 
     fun cancelEmomBoundaryAlarm() {
-        alarmManager.cancel(emomPendingIntent(TimerNotificationReceiver.EmomAction.BOUNDARY))
+        alarmManager.cancel(emomPendingIntent(EmomAction.BOUNDARY))
     }
 
     fun cancelEmom() {

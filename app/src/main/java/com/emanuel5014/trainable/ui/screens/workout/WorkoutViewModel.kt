@@ -63,7 +63,12 @@ import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.util.notification.EmomNotificationAction
 import com.emanuel5014.trainable.util.notification.EmomNotificationInfo
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
-import com.emanuel5014.trainable.util.notification.TimerNotificationReceiver
+import com.emanuel5014.trainable.util.notification.WorkoutTimers
+import com.emanuel5014.trainable.util.notification.TimerAction
+import com.emanuel5014.trainable.util.notification.WarmupTimerAction
+import com.emanuel5014.trainable.util.notification.EmomAction
+import com.emanuel5014.trainable.util.notification.EmomCue
+import com.emanuel5014.trainable.util.notification.AndroidWorkoutTimers
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.RestSeconds
@@ -97,12 +102,14 @@ class WorkoutViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val exerciseRepository: ExerciseRepository,
-    private val timerNotificationHelper: TimerNotificationHelper,
+    timerNotificationHelper: TimerNotificationHelper,
     private val localeManager: AppLocaleManager,
     private val oneRepMaxRepository: OneRepMaxRepository,
     private val journalRepository: JournalRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val workoutTimers: WorkoutTimers = AndroidWorkoutTimers(timerNotificationHelper)
 
     private val _state = MutableStateFlow(WorkoutState())
     val state: StateFlow<WorkoutState> = _state.asStateFlow()
@@ -183,45 +190,45 @@ class WorkoutViewModel @Inject constructor(
             userPreferencesRepository.timerNotificationsEnabled.collect { enabled ->
                 _state.update { it.copy(timerNotificationsEnabled = enabled) }
                 if (!enabled) {
-                    timerNotificationHelper.cancelTimer()
-                    timerNotificationHelper.cancelWarmupTimer()
-                    timerNotificationHelper.cancelEmom()
+                    workoutTimers.cancelTimer()
+                    workoutTimers.cancelWarmupTimer()
+                    workoutTimers.cancelEmom()
                 }
             }
         }
 
         viewModelScope.launch {
-            TimerNotificationReceiver.timerEvents.collect { action ->
+            workoutTimers.timerEvents.collect { action ->
                 when (action) {
-                    TimerNotificationReceiver.TimerAction.SKIP -> skipRestTimer()
-                    TimerNotificationReceiver.TimerAction.ADD -> adjustRestTime(_state.value.timerAddSeconds)
-                    TimerNotificationReceiver.TimerAction.SUBTRACT -> adjustRestTime(-_state.value.timerSubtractSeconds)
-                    TimerNotificationReceiver.TimerAction.DISMISS -> timerNotificationHelper.cancelTimer()
-                    TimerNotificationReceiver.TimerAction.FINISHED -> handleTimerFinished()
+                    TimerAction.SKIP -> skipRestTimer()
+                    TimerAction.ADD -> adjustRestTime(_state.value.timerAddSeconds)
+                    TimerAction.SUBTRACT -> adjustRestTime(-_state.value.timerSubtractSeconds)
+                    TimerAction.DISMISS -> workoutTimers.cancelTimer()
+                    TimerAction.FINISHED -> handleTimerFinished()
                 }
             }
         }
 
         viewModelScope.launch {
-            TimerNotificationReceiver.emomEvents.collect { action ->
+            workoutTimers.emomEvents.collect { action ->
                 when (action) {
-                    TimerNotificationReceiver.EmomAction.BOUNDARY -> syncEmomClock()
-                    TimerNotificationReceiver.EmomAction.DONE -> completeEmomRound()
-                    TimerNotificationReceiver.EmomAction.PAUSE -> pauseEmom()
-                    TimerNotificationReceiver.EmomAction.RESUME -> if (_state.value.emomRun != null) startEmom()
-                    TimerNotificationReceiver.EmomAction.STOP -> stopEmom()
+                    EmomAction.BOUNDARY -> syncEmomClock()
+                    EmomAction.DONE -> completeEmomRound()
+                    EmomAction.PAUSE -> pauseEmom()
+                    EmomAction.RESUME -> if (_state.value.emomRun != null) startEmom()
+                    EmomAction.STOP -> stopEmom()
                 }
             }
         }
 
         viewModelScope.launch {
-            TimerNotificationReceiver.warmupTimerEvents.collect { action ->
+            workoutTimers.warmupTimerEvents.collect { action ->
                 when (action) {
-                    TimerNotificationReceiver.WarmupTimerAction.SKIP -> skipWarmupTimer()
-                    TimerNotificationReceiver.WarmupTimerAction.ADD -> adjustWarmupTime(_state.value.timerAddSeconds)
-                    TimerNotificationReceiver.WarmupTimerAction.SUBTRACT -> adjustWarmupTime(-_state.value.timerSubtractSeconds)
-                    TimerNotificationReceiver.WarmupTimerAction.DISMISS -> timerNotificationHelper.cancelWarmupTimer()
-                    TimerNotificationReceiver.WarmupTimerAction.FINISHED -> handleWarmupTimerFinished()
+                    WarmupTimerAction.SKIP -> skipWarmupTimer()
+                    WarmupTimerAction.ADD -> adjustWarmupTime(_state.value.timerAddSeconds)
+                    WarmupTimerAction.SUBTRACT -> adjustWarmupTime(-_state.value.timerSubtractSeconds)
+                    WarmupTimerAction.DISMISS -> workoutTimers.cancelWarmupTimer()
+                    WarmupTimerAction.FINISHED -> handleWarmupTimerFinished()
                 }
             }
         }
@@ -2285,12 +2292,12 @@ class WorkoutViewModel @Inject constructor(
         stopRestTimer()
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
-        if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+        if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
             // The rest timer takes the place of a "warmup finished" notification still on screen; a warmup that is
             // still counting down keeps its own
-            if (_state.value.warmupTimerEndTime == null) timerNotificationHelper.cancelWarmupTimer()
+            if (_state.value.warmupTimerEndTime == null) workoutTimers.cancelWarmupTimer()
             _state.value.sessionId?.let { sessionId ->
-                timerNotificationHelper.startOrUpdateTimerNotification(
+                workoutTimers.startOrUpdateTimerNotification(
                     seconds, sessionId, exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit,
                     totalSeconds = seconds,
                     nextSetRepsLabel = nextSetRepsLabel,
@@ -2382,10 +2389,10 @@ class WorkoutViewModel @Inject constructor(
         val totalSeconds = _state.value.totalRestSeconds
         _state.update { it.copy(remainingRestSeconds = remaining, restTimerEndTime = endTime) }
         if (remaining > 0) {
-            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+            if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
                 _state.value.sessionId?.let { sessionId ->
                     val info = buildNextSetLabel()
-                    timerNotificationHelper.startOrUpdateTimerNotification(
+                    workoutTimers.startOrUpdateTimerNotification(
                         remaining, sessionId,
                         info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit,
                         totalSeconds = totalSeconds,
@@ -2405,9 +2412,9 @@ class WorkoutViewModel @Inject constructor(
         if (_state.value.restTimerEndTime != null) {
             endMiniSetPause()
             _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
-            timerNotificationHelper.cancelFinishAlarm()
-            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.showRestFinished()
+            workoutTimers.cancelFinishAlarm()
+            if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
+                workoutTimers.showRestFinished()
             }
             clearTimerInSession()
             timerJob?.cancel()
@@ -2429,10 +2436,10 @@ class WorkoutViewModel @Inject constructor(
                 
                 if (remaining != _state.value.remainingRestSeconds) {
                     _state.update { it.copy(remainingRestSeconds = remaining) }
-                    if (timerNotificationHelper.isLiveNotificationSupported() && _state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+                    if (workoutTimers.isLiveNotificationSupported() && _state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
                         _state.value.sessionId?.let { sessionId ->
                             val info = buildNextSetLabel()
-                            timerNotificationHelper.startOrUpdateTimerNotification(
+                            workoutTimers.startOrUpdateTimerNotification(
                                 remainingSeconds = remaining,
                                 sessionId = sessionId,
                                 exerciseName = info?.exerciseName,
@@ -2478,10 +2485,10 @@ class WorkoutViewModel @Inject constructor(
             }
             val newTotal = (_state.value.totalRestSeconds + seconds).coerceAtLeast(newRemaining)
             _state.update { it.copy(restTimerEndTime = newEnd, remainingRestSeconds = newRemaining, totalRestSeconds = newTotal) }
-            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+            if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
                 _state.value.sessionId?.let { sessionId ->
                     val info = buildNextSetLabel()
-                    timerNotificationHelper.startOrUpdateTimerNotification(
+                    workoutTimers.startOrUpdateTimerNotification(
                         newRemaining, sessionId,
                         info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit,
                         totalSeconds = newTotal,
@@ -2669,8 +2676,8 @@ class WorkoutViewModel @Inject constructor(
         stopWarmupTimer()
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
         _state.update { it.copy(warmupTimerRemaining = seconds, warmupTimerEndTime = endTime, warmupTimerTotalSeconds = seconds) }
-        if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-            timerNotificationHelper.startOrUpdateWarmupTimerNotification(seconds, totalSeconds = seconds)
+        if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
+            workoutTimers.startOrUpdateWarmupTimerNotification(seconds, totalSeconds = seconds)
         }
         saveWarmupTimerToSession(endTime, seconds)
         startWarmupTimerJob()
@@ -2693,8 +2700,8 @@ class WorkoutViewModel @Inject constructor(
             }
             val newTotal = (_state.value.warmupTimerTotalSeconds + seconds).coerceAtLeast(newRemaining)
             _state.update { it.copy(warmupTimerEndTime = newEnd, warmupTimerRemaining = newRemaining, warmupTimerTotalSeconds = newTotal) }
-            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.startOrUpdateWarmupTimerNotification(newRemaining, totalSeconds = newTotal)
+            if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
+                workoutTimers.startOrUpdateWarmupTimerNotification(newRemaining, totalSeconds = newTotal)
             }
             saveWarmupTimerToSession(newEnd, newTotal)
         }
@@ -2703,16 +2710,16 @@ class WorkoutViewModel @Inject constructor(
     private fun stopWarmupTimer() {
         warmupTimerJob?.cancel()
         warmupTimerJob = null
-        timerNotificationHelper.cancelWarmupTimer()
+        workoutTimers.cancelWarmupTimer()
         _state.update { it.copy(warmupTimerRemaining = 0, warmupTimerEndTime = null, warmupTimerTotalSeconds = 0) }
     }
 
     private fun handleWarmupTimerFinished() {
         if (_state.value.warmupTimerEndTime != null) {
             _state.update { it.copy(warmupTimerRemaining = 0, warmupTimerEndTime = null, warmupTimerTotalSeconds = 0) }
-            timerNotificationHelper.cancelWarmupFinishAlarm()
-            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.showWarmupTimerFinished()
+            workoutTimers.cancelWarmupFinishAlarm()
+            if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
+                workoutTimers.showWarmupTimerFinished()
             }
             warmupTimerJob?.cancel()
             warmupTimerJob = null
@@ -2734,8 +2741,8 @@ class WorkoutViewModel @Inject constructor(
 
                 if (remaining != _state.value.warmupTimerRemaining) {
                     _state.update { it.copy(warmupTimerRemaining = remaining) }
-                    if (timerNotificationHelper.isLiveNotificationSupported() && _state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                        timerNotificationHelper.startOrUpdateWarmupTimerNotification(
+                    if (workoutTimers.isLiveNotificationSupported() && _state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
+                        workoutTimers.startOrUpdateWarmupTimerNotification(
                             remainingSeconds = remaining,
                             totalSeconds = _state.value.warmupTimerTotalSeconds,
                             scheduleAlarm = false
@@ -2764,8 +2771,8 @@ class WorkoutViewModel @Inject constructor(
         val totalSeconds = _state.value.warmupTimerTotalSeconds
         _state.update { it.copy(warmupTimerRemaining = remaining, warmupTimerEndTime = endTime, warmupTimerTotalSeconds = totalSeconds) }
         if (remaining > 0) {
-            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.startOrUpdateWarmupTimerNotification(remaining, totalSeconds = totalSeconds)
+            if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
+                workoutTimers.startOrUpdateWarmupTimerNotification(remaining, totalSeconds = totalSeconds)
             }
             startWarmupTimerJob()
         } else {
@@ -3086,12 +3093,12 @@ class WorkoutViewModel @Inject constructor(
     private fun stopRestTimer() {
         timerJob?.cancel()
         timerJob = null
-        timerNotificationHelper.cancelTimer()
+        workoutTimers.cancelTimer()
         _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
     }
 
     fun cancelCustomVibration() {
-        timerNotificationHelper.cancelCustomVibration()
+        workoutTimers.cancelCustomVibration()
     }
 
     fun cancelWorkout(onComplete: () -> Unit) {
@@ -3827,7 +3834,7 @@ class WorkoutViewModel @Inject constructor(
                     if (emomRun != null) {
                         if (handleEmomTick(emomRun, elapsed)) break
                         // The live bar fills second by second; older versions count down on their own.
-                        if (timerNotificationHelper.isLiveNotificationSupported() && emomLastNotifiedElapsed != elapsed) {
+                        if (workoutTimers.isLiveNotificationSupported() && emomLastNotifiedElapsed != elapsed) {
                             refreshEmomNotification(scheduleAlarm = false)
                         }
                     }
@@ -3953,7 +3960,7 @@ class WorkoutViewModel @Inject constructor(
     fun pauseEmom() {
         if (_state.value.emomRun == null) return
         pauseSetTimer()
-        timerNotificationHelper.cancelEmomBoundaryAlarm()
+        workoutTimers.cancelEmomBoundaryAlarm()
         refreshEmomNotification(scheduleAlarm = false)
     }
 
@@ -4025,11 +4032,11 @@ class WorkoutViewModel @Inject constructor(
         }
         when {
             roundStarted -> {
-                emomCue(TimerNotificationHelper.EmomCue.GO)
+                emomCue(EmomCue.GO)
                 refreshEmomNotification()
             }
             EmomClock.isCountdownTick(elapsed) && elapsed != emomLastCueElapsed ->
-                emomCue(TimerNotificationHelper.EmomCue.TICK)
+                emomCue(EmomCue.TICK)
         }
         emomLastCueElapsed = elapsed
         return false
@@ -4065,7 +4072,7 @@ class WorkoutViewModel @Inject constructor(
         _state.update { it.copy(emomRun = null) }
         if (completed && byClock && exercise != null && emomNotificationsAllowed()) {
             val context = localeManager.localizedContext()
-            timerNotificationHelper.showEmomFinished(
+            workoutTimers.showEmomFinished(
                 context.getString(R.string.emom_notification_finished_title),
                 context.getString(
                     R.string.emom_notification_finished_text,
@@ -4073,17 +4080,17 @@ class WorkoutViewModel @Inject constructor(
                 )
             )
         } else {
-            timerNotificationHelper.cancelEmom()
+            workoutTimers.cancelEmom()
         }
-        if (completed) emomCue(TimerNotificationHelper.EmomCue.DONE)
+        if (completed) emomCue(EmomCue.DONE)
     }
 
-    private fun emomCue(cue: TimerNotificationHelper.EmomCue) {
-        if (_state.value.hapticEnabled) timerNotificationHelper.vibrateEmomCue(cue)
+    private fun emomCue(cue: EmomCue) {
+        if (_state.value.hapticEnabled) workoutTimers.vibrateEmomCue(cue)
     }
 
     private fun emomNotificationsAllowed(): Boolean =
-        _state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()
+        _state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()
 
     /**
      * Posts the EMOM notification for the run as it stands and, unless told otherwise, schedules the
@@ -4128,25 +4135,25 @@ class WorkoutViewModel @Inject constructor(
         }
         val detail = following?.let { context.getString(R.string.emom_then, it.loadText(unit, maxLabel)) }
 
-        fun button(action: TimerNotificationReceiver.EmomAction, label: Int) =
+        fun button(action: EmomAction, label: Int) =
             EmomNotificationAction(action, context.getString(label))
         val actions = when {
             paused -> listOf(
-                button(TimerNotificationReceiver.EmomAction.RESUME, R.string.emom_action_resume),
-                button(TimerNotificationReceiver.EmomAction.STOP, R.string.emom_action_stop)
+                button(EmomAction.RESUME, R.string.emom_action_resume),
+                button(EmomAction.STOP, R.string.emom_action_stop)
             )
             phase == EmomPhase.Work -> listOf(
-                button(TimerNotificationReceiver.EmomAction.DONE, R.string.emom_action_done),
-                button(TimerNotificationReceiver.EmomAction.PAUSE, R.string.emom_action_pause)
+                button(EmomAction.DONE, R.string.emom_action_done),
+                button(EmomAction.PAUSE, R.string.emom_action_pause)
             )
-            else -> listOf(button(TimerNotificationReceiver.EmomAction.PAUSE, R.string.emom_action_pause))
+            else -> listOf(button(EmomAction.PAUSE, R.string.emom_action_pause))
         }
 
         val startedAt = state.setTimerStartedAt
         val countdownEndsAt = if (paused || startedAt == null) null else {
             startedAt + (EmomClock.nextRoundAt(elapsed) - state.setTimerBaseSeconds) * 1000L
         }
-        timerNotificationHelper.showEmomNotification(
+        workoutTimers.showEmomNotification(
             EmomNotificationInfo(
                 title = title,
                 text = text,
@@ -4157,12 +4164,12 @@ class WorkoutViewModel @Inject constructor(
                 actions = actions
             )
         )
-        if (scheduleAlarm && countdownEndsAt != null) timerNotificationHelper.scheduleEmomBoundaryAlarm(countdownEndsAt)
+        if (scheduleAlarm && countdownEndsAt != null) workoutTimers.scheduleEmomBoundaryAlarm(countdownEndsAt)
     }
 
     override fun onCleared() {
         // A run left behind no longer ticks, so its notification and round alarm must not outlive the screen.
-        timerNotificationHelper.cancelEmom()
+        workoutTimers.cancelEmom()
         super.onCleared()
     }
 
