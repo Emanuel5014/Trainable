@@ -18,10 +18,14 @@ struct TrainableTimerAttributes: ActivityAttributes {
         var showSkip: Bool
         var skipLabel: String
         var finishedText: String
+        var exercise: String = ""
+        var setLine: String = ""
+        var accentARGB: Int64 = 0
 
         enum CodingKeys: String, CodingKey {
             case instanceID, title, detail, startedAt, endsAt, sessionID, sessionStartedAtMillis
             case addSeconds, subtractSeconds, showAdd, showSubtract, showSkip, skipLabel, finishedText
+            case exercise, setLine, accentARGB
         }
     }
     var kind: String
@@ -45,5 +49,8 @@ extension TrainableTimerAttributes.ContentState {
         showSkip = try c.decodeIfPresent(Bool.self, forKey: .showSkip) ?? false
         skipLabel = try c.decodeIfPresent(String.self, forKey: .skipLabel) ?? ""
         finishedText = try c.decodeIfPresent(String.self, forKey: .finishedText) ?? ""
+        exercise = try c.decodeIfPresent(String.self, forKey: .exercise) ?? ""
+        setLine = try c.decodeIfPresent(String.self, forKey: .setLine) ?? ""
+        accentARGB = try c.decodeIfPresent(Int64.self, forKey: .accentARGB) ?? 0
     }
 }

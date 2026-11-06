@@ -8,6 +8,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -229,6 +231,11 @@ private fun IosTheme(paletteIndex: Int, seedColor: Int?, themeStyle: Int, darkTh
     val colorScheme = remember(paletteIndex, seedColor, themeStyle, darkTheme) {
         IosPaletteColors.colorScheme(paletteIndex, seedColor, themeStyle, darkTheme)
     }
+    // The Live Activity card is always dark, so it takes the dark scheme's primary whatever the app's mode.
+    val liveAccent = remember(paletteIndex, seedColor, themeStyle) {
+        IosPaletteColors.colorScheme(paletteIndex, seedColor, themeStyle, true).primary.toArgb().toLong() and 0xFFFFFFFFL
+    }
+    SideEffect { IosLiveActivityStyle.accentArgb = liveAccent }
     MaterialTheme(colorScheme = colorScheme, typography = appTypography(), shapes = Shapes, content = content)
 }
 

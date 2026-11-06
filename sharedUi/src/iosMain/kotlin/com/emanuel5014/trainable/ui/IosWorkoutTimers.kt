@@ -58,6 +58,8 @@ internal class IosWorkoutTimers(
         val text = words() ?: return
         val detail = text.nextSet(exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit,
             nextSetRepsLabel, nextSetDetail, nextSetText)
+        val (exercise, setLine) = text.nextSetParts(exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps,
+            weightUnit, nextSetRepsLabel, nextSetDetail, nextSetText)
         val endsAt = now() + remainingSeconds.coerceAtLeast(0) * 1000L
         scheduler.schedule(listOf(IosNotice(REST_NOTICE, text.restTitle,
             text.restBody + if (detail.isEmpty()) "" else " — $detail", endsAt)), prompt = true)
@@ -65,7 +67,8 @@ internal class IosWorkoutTimers(
         if (remainingSeconds > 0) {
             val instance = restLiveInstance ?: Uuid.random().toString().also { restLiveInstance = it }
             publish(context().apply(IosLiveTimer(REST_NOTICE, instance, text.restTitle, detail,
-                endsAt, (totalSeconds ?: remainingSeconds).coerceAtLeast(remainingSeconds), finishedText = text.restBody), text.skipLabel))
+                endsAt, (totalSeconds ?: remainingSeconds).coerceAtLeast(remainingSeconds), finishedText = text.restBody,
+                exercise = exercise, setLine = setLine), text.skipLabel))
         }
     }
     override fun startOrUpdateWarmupTimerNotification(remainingSeconds: Int, totalSeconds: Int?, scheduleAlarm: Boolean) {
@@ -80,7 +83,8 @@ internal class IosWorkoutTimers(
                 endsAt, (totalSeconds ?: remainingSeconds).coerceAtLeast(remainingSeconds), finishedText = text.warmupBody), text.skipLabel))
         }
     }
-    private fun publish(timer: IosLiveTimer) {
+    private fun publish(original: IosLiveTimer) {
+        val timer = IosLiveActivityStyle.accentArgb.takeIf { it != 0L }?.let { original.copy(accentArgb = it) } ?: original
         IosLiveTimerSnapshots.remember(timer)
         live()?.takeIf { it.isAvailable() }?.update(timer)
     }

@@ -22,7 +22,9 @@ final class WorkoutLiveActivityService: NSObject, IosWorkoutLiveActivities {
             endsAt: endsAt, sessionID: Int(timer.sessionId), sessionStartedAtMillis: timer.sessionStartedAtMillis,
             addSeconds: Int(timer.addSeconds), subtractSeconds: Int(timer.subtractSeconds),
             showAdd: timer.showAdd, showSubtract: timer.showSubtract, showSkip: timer.showSkip,
-            skipLabel: String(timer.skipLabel.prefix(50)), finishedText: String(timer.finishedText.prefix(160)))
+            skipLabel: String(timer.skipLabel.prefix(50)), finishedText: String(timer.finishedText.prefix(160)),
+            exercise: String(timer.exercise.prefix(120)), setLine: String(timer.setLine.prefix(200)),
+            accentARGB: timer.accentArgb)
         let kind = timer.kind
         DispatchQueue.main.async { TimerLiveActivityCoordinator.shared.set(kind: kind, state: state) }
     }
@@ -101,7 +103,8 @@ final class TimerLiveActivityCoordinator {
             sessionId: Int32(clamping: state.sessionID), sessionStartedAtMillis: state.sessionStartedAtMillis,
             addSeconds: Int32(clamping: state.addSeconds), subtractSeconds: Int32(clamping: state.subtractSeconds),
             showAdd: state.showAdd, showSubtract: state.showSubtract, showSkip: state.showSkip,
-            skipLabel: state.skipLabel, finishedText: state.finishedText)
+            skipLabel: state.skipLabel, finishedText: state.finishedText,
+            exercise: state.exercise, setLine: state.setLine, accentArgb: state.accentARGB)
         _ = try? await IosWorkoutTimerActions.shared.perform(request: request, action: action)
         // Kotlin forwards ActivityKit mutations through the serial main queue. Drain it before the intent exits.
         await withCheckedContinuation { continuation in

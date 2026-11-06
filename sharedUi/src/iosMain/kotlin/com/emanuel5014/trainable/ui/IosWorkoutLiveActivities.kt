@@ -24,8 +24,18 @@ data class IosLiveTimer(
     val showSubtract: Boolean = true,
     val showSkip: Boolean = true,
     val skipLabel: String = "Skip",
-    val finishedText: String = ""
+    val finishedText: String = "",
+    /** The next set split in two lines for the native card; empty when it cannot be split safely. */
+    val exercise: String = "",
+    val setLine: String = "",
+    /** 0xAARRGGBB of the app theme's dark-scheme primary; 0 lets the card use its own default. */
+    val accentArgb: Long = 0
 )
+
+/** Updated by the iOS theme, read whenever a countdown is published. */
+object IosLiveActivityStyle {
+    var accentArgb: Long = 0
+}
 
 /** Installed by Swift before the Compose root starts, following the existing CryptoKit bridge pattern. */
 object IosWorkoutLiveActivityBridge {

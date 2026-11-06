@@ -153,6 +153,20 @@ internal data class IosNotificationWords(val restTitle: String, val restBody: St
         } else fill(nextSetTemplate, exercise, number, load, reps!!)
         return if (previousReps != null && previousReps != reps && repsLabel == null) "$base ${fill(lastRepsTemplate, previousReps)}" else base
     }
+    /** [nextSet] as (exercise, rest of the line), using the same template; ("", "") when there is no next set. */
+    fun nextSetParts(exercise: String?, number: Int?, weight: Float?, reps: Int?, previousReps: Int?, unit: String?,
+        repsLabel: String?, detail: String?, timedText: String?): Pair<String, String> {
+        val full = nextSet(exercise, number, weight, reps, previousReps, unit, repsLabel, detail, timedText)
+        if (full.isEmpty() || exercise == null) return "" to ""
+        val template = when {
+            timedText != null -> nextSetTextTemplate
+            repsLabel != null || detail != null -> nextSetDetailTemplate
+            else -> nextSetTemplate
+        }
+        val lead = template.substringBefore("%1\$s", missingDelimiterValue = "\u0000") + exercise
+        if (!full.startsWith(lead)) return "" to ""
+        return exercise to full.removePrefix(lead).trimStart(' ', '-', '\u2013', '\u2014', ':', '\u00B7')
+    }
     fun membership(days: Int) = membershipTemplate.replace("%1\$d", days.toString())
     fun round(round: Int, rounds: Int) = emomRoundTemplate.replace("%1\$d", round.toString()).replace("%2\$d", rounds.toString())
 }
