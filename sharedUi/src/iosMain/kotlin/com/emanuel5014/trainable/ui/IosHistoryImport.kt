@@ -68,7 +68,7 @@ import platform.posix.memcpy
 
 /**
  * Settings -> Import CSV on iOS: the shared screen with the Files app's chooser for the history and its export sheet
- * for the example file. The language is the phone's until the app's own choice reaches iOS.
+ * for the example file. Uses the language chosen in the app's settings.
  */
 @Composable
 internal fun IosHistoryImportScreen(onNavigateBack: () -> Unit) {
@@ -171,12 +171,13 @@ private fun NSData.toByteArray(): ByteArray {
     return bytes
 }
 
-/** Settings' data section: native backup export/restore and the shared CSV import entry. */
+/** Settings' data section: native backup export/restore and CSV export/import. */
 @Composable
 internal fun IosDataSection(onNavigateToImportHistory: () -> Unit) {
     SettingsSection(title = stringResource(Res.string.data_backup)) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             IosBackupButtons()
+            IosHistoryExportButton()
             GymButton(
                 onClick = onNavigateToImportHistory,
                 modifier = Modifier.fillMaxWidth(),
