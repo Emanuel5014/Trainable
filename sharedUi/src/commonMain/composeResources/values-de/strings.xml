@@ -1216,4 +1216,12 @@
     <string name="import_plan_summary">%1$s (%2$d Übungen)</string>
     <string name="import_plans_message">Du bist dabei, die folgenden Routinen zu importieren:</string>
     <string name="import_plans_title">Routinen importieren?</string>
+    <string name="share_duration">Dauer</string>
+    <string name="share_footer_message">VERFOLGE DEINE FORTSCHRITTE MIT TRAINABLE</string>
+    <string name="share_sets">Sätze</string>
+    <string name="share_volume">Tonnage</string>
+    <string name="preparing_share">Trainingskarte wird vorbereitet...</string>
+    <string name="share_preview">Teilen Vorschau</string>
+    <string name="image_saved_gallery">Bild in der Galerie gespeichert!</string>
+    <string name="failed_save_image">Fehler beim Speichern des Bildes.</string>
 </resources>

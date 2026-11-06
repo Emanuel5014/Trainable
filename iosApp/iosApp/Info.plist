@@ -40,6 +40,8 @@
 	<!-- Compose draws at the full refresh rate of ProMotion screens (120 Hz) only with this -->
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save the workout images you choose to export to Photos.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Take photos for your physical checks.</string>
 	<key>NSFaceIDUsageDescription</key>

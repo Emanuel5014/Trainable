@@ -92,7 +92,6 @@ import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsState
 import com.emanuel5014.trainable.ui.navigation.OneRepMaxes
 import com.emanuel5014.trainable.ui.screens.history.HistoryContent
 import com.emanuel5014.trainable.ui.screens.history.HistoryState
-import com.emanuel5014.trainable.ui.screens.history.NoHistoryShare
 import com.emanuel5014.trainable.ui.navigation.RoutineDetail
 import com.emanuel5014.trainable.ui.navigation.Settings
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
@@ -357,8 +356,7 @@ private fun IosMainTabs(
             2 -> HistoryContent(
                 state = history,
                 languageCode = com.emanuel5014.trainable.platform.IosAppLocale.language(),
-                // Sharing a workout as an image is not on iOS yet
-                share = NoHistoryShare,
+                share = rememberIosHistoryShareUi(),
                 onEditSession = { sessionId -> navController.navigate(EditWorkoutSession(sessionId)) },
                 onCompareSessions = { first, second -> navController.navigate(CompareSessions(first, second)) },
                 isVisible = pagerState.currentPage == 2

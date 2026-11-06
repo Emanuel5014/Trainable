@@ -5,9 +5,8 @@ import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 
 /**
- * Sharing a workout of the history as an image: Android only for now (it draws the card into a bitmap, previews it,
- * saves it to the gallery or shares it), so the shared screen asks the platform for it and [NoHistoryShare] leaves
- * it out.
+ * Each platform captures the shared workout card, previews it and saves/shares its image.
+ * [NoHistoryShare] hides the entry on hosts without an image exporter.
  */
 interface HistoryShareUi {
     /** Whether the history offers to share a workout. */

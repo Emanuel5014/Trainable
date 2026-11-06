@@ -1219,4 +1219,12 @@
     <string name="import_plan_summary">%1$s (%2$d exercícios)</string>
     <string name="import_plans_message">Você está prestes a importar as seguintes rotinas:</string>
     <string name="import_plans_title">Importar Rotinas?</string>
+    <string name="share_duration">Duração</string>
+    <string name="share_footer_message">ACOMPANHE SEU PROGRESSO COM TRAINABLE</string>
+    <string name="share_sets">Séries</string>
+    <string name="share_volume">Tonelagem</string>
+    <string name="preparing_share">Preparando cartão de treino...</string>
+    <string name="share_preview">Visualizar Compartilhamento</string>
+    <string name="image_saved_gallery">Imagem salva na Galeria!</string>
+    <string name="failed_save_image">Falha ao salvar imagem.</string>
 </resources>

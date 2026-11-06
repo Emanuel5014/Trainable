@@ -1219,4 +1219,12 @@
     <string name="import_plan_summary">%1$s (%2$d esercizi)</string>
     <string name="import_plans_message">Stai per importare le seguenti schede:</string>
     <string name="import_plans_title">Importare le Schede?</string>
+    <string name="share_duration">Durata</string>
+    <string name="share_footer_message">TRACCIA I TUOI PROGRESSI CON TRAINABLE</string>
+    <string name="share_sets">Serie</string>
+    <string name="share_volume">Tonnellaggio</string>
+    <string name="preparing_share">Preparazione scheda allenamento...</string>
+    <string name="share_preview">Anteprima Condivisione</string>
+    <string name="image_saved_gallery">Immagine salvata in Galleria!</string>
+    <string name="failed_save_image">Impossibile salvare l'immagine.</string>
 </resources>
