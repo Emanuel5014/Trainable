@@ -32,7 +32,7 @@ import kotlin.math.max
  * the same title position, margins and type scale on a compact phone, a tall phone, a tablet or with
  * a large system font.
  */
-internal object OnboardingMetrics {
+object OnboardingMetrics {
     /** Widest the content gets; on tablets and landscape it is centered instead of stretched. */
     val maxContentWidth: Dp = 560.dp
 
@@ -93,7 +93,7 @@ internal object OnboardingMetrics {
  * @param centered centers the content in the free space instead of starting at the top (the welcome step).
  */
 @Composable
-internal fun OnboardingPage(
+fun OnboardingPage(
     modifier: Modifier = Modifier,
     centered: Boolean = false,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
@@ -125,7 +125,7 @@ internal fun OnboardingPage(
 
 /** Big step title, sized for the window and the system font scale. */
 @Composable
-internal fun OnboardingTitle(text: String, modifier: Modifier = Modifier) {
+fun OnboardingTitle(text: String, modifier: Modifier = Modifier) {
     val size = OnboardingMetrics.titleSize
     Text(
         text = text,

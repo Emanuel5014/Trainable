@@ -85,7 +85,7 @@ class IosBackupManager(
     }
 
     /** No changes to live app data. Call only after the user confirms replacing the current data. */
-    suspend fun stageRestore(archive: String) {
+    suspend fun stageRestore(archive: String, completeOnboarding: Boolean = false) {
         fs.createDirectories(workspace)
         val staging = workspace / ("import-" + NSUUID().UUIDString)
         fs.createDirectories(staging)
@@ -104,6 +104,7 @@ class IosBackupManager(
             snapshot(database, compact)
             fs.atomicMove(compact, database)
             listOf("-wal", "-shm", "-journal").forEach { fs.delete(staging / (BackupFormat.DATABASE + it)) }
+            if (completeOnboarding) writeSynced(staging / "complete-onboarding", "1")
             writeSynced(staging / "validated", "1")
             // Replacing a previous pending restore is explicit: stageRestore is only called from confirmation.
             fs.deleteRecursively(pending)
@@ -181,6 +182,7 @@ class IosBackupManager(
                 readText(pending, BackupFormat.SETTINGS)?.let { text ->
                     BackupSettingsCodec.membershipExpiry(text)?.let { values[P.GYM_MEMBERSHIP_EXPIRY_DATE] = it }
                 }
+                if (fs.exists(pending / "complete-onboarding")) values[P.HAS_COMPLETED_ONBOARDING] = true
                 // Keys wrapped on this device belong to its previous vault, never to the imported one.
                 values.remove(P.PHYSICAL_CHECK_WRAPPED_KEY_KEYSTORE)
                 values.remove(P.PHYSICAL_CHECK_WRAPPED_KEY_IV)

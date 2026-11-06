@@ -72,7 +72,7 @@ import org.jetbrains.compose.resources.Font
 import platform.UIKit.UIViewController
 
 /** The iOS app's root, shown by the Xcode project: the app's navigation on the device's own data. */
-fun MainViewController(): UIViewController = ComposeUIViewController { IosBackupStartup { IosLanguageRoot { TrainableIosApp() } } }
+fun MainViewController(): UIViewController = ComposeUIViewController { IosBackupStartup { IosLanguageRoot { IosOnboardingRoot { TrainableIosApp() } } } }
 
 /** One database and one settings file for the whole process, and the repositories over them. */
 internal object IosAppGraph {
@@ -108,6 +108,35 @@ internal object IosAppGraph {
 
     fun routineDetail(planId: Int, scope: CoroutineScope) =
         RoutineDetailState(planId, workouts, exercises, preferences, oneRepMaxes, scope)
+}
+
+/** Read the first-launch flag before creating navigation or dashboard models. */
+@Composable
+private fun IosOnboardingRoot(content: @Composable () -> Unit) {
+    val preferences = IosAppGraph.preferences
+    val completed by preferences.hasCompletedOnboarding.collectAsState(initial = null)
+    if (completed == true) {
+        content()
+        return
+    }
+    val palette by preferences.themePalette.collectAsState(initial = 0)
+    val seed by preferences.dynamicColorSeed.collectAsState(initial = null)
+    val style by preferences.themeStyle.collectAsState(initial = 0)
+    val mode by preferences.themeMode.collectAsState(initial = null)
+    val dark = when (mode) { 1 -> false; 2 -> true; 0 -> isSystemInDarkTheme(); else -> true }
+    IosTheme(palette, seed, style, dark) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            if (completed == false && mode != null) {
+                CompositionLocalProvider(
+                    LocalPaletteColors provides IosPaletteColors,
+                    com.emanuel5014.trainable.ui.components.LocalShowMessage provides rememberIosShowMessage()
+                ) {
+                    IosOnboarding()
+                    IosBackupDialogs()
+                }
+            }
+        }
+    }
 }
 
 /** The advanced editor's environment on iOS: units, rounding and 1RMs of the device; no AI yet. */

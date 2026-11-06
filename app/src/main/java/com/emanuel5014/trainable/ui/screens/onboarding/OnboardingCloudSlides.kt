@@ -71,55 +71,6 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import java.text.DateFormat
 import java.util.Locale
 
-/** What the advanced programming features are, with the switch that turns them on. */
-@Composable
-internal fun AdvancedSlide(
-    advancedProgramming: Boolean,
-    onAdvancedProgrammingChange: (Boolean) -> Unit
-) {
-    OnboardingPage {
-        OnboardingTitle(stringResource(R.string.onboarding_advanced_title))
-
-        CustomizeToggleItem(
-            icon = Icons.Rounded.Percent,
-            title = stringResource(R.string.advanced_programming),
-            desc = stringResource(R.string.advanced_programming_desc),
-            checked = advancedProgramming,
-            onCheckedChange = onAdvancedProgrammingChange
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            FeatureItemExpressive(
-                icon = Icons.Rounded.EmojiEvents,
-                title = stringResource(R.string.onboarding_advanced_percent_title),
-                desc = stringResource(R.string.onboarding_advanced_percent_desc)
-            )
-            FeatureItemExpressive(
-                icon = Icons.Rounded.Tune,
-                title = stringResource(R.string.onboarding_advanced_techniques_title),
-                desc = stringResource(R.string.onboarding_advanced_techniques_desc)
-            )
-            FeatureItemExpressive(
-                icon = Icons.Rounded.CalendarMonth,
-                title = stringResource(R.string.onboarding_advanced_weeks_title),
-                desc = stringResource(R.string.onboarding_advanced_weeks_desc)
-            )
-            FeatureItemExpressive(
-                icon = Icons.Rounded.AutoAwesome,
-                title = stringResource(R.string.onboarding_advanced_scan_title),
-                desc = stringResource(R.string.onboarding_advanced_scan_desc)
-            )
-        }
-
-        Text(
-            text = stringResource(R.string.onboarding_setup_footer),
-            style = MaterialTheme.typography.bodySmall,
-            color = OnSurfaceVariant
-        )
-
-    }
-}
-
 /** Connect an own Nextcloud, choose how often to back up to it, or restore a backup from it (new phone). */
 @Composable
 internal fun NextcloudSlide(

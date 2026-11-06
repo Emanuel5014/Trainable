@@ -170,7 +170,7 @@ internal fun IosBackupDialogs() {
 }
 
 @Composable
-internal fun IosBackupButtons() {
+internal fun IosBackupButtons(restoreOnly: Boolean = false, completeOnboarding: Boolean = false) {
     val scope = rememberCoroutineScope()
     val presenter = LocalUIViewController.current
     val show by rememberUpdatedState(LocalShowMessage.current)
@@ -217,7 +217,7 @@ internal fun IosBackupButtons() {
         }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        GymButton(onClick = { includeImages = true }, enabled = !busy, modifier = Modifier.weight(1f),
+        if (!restoreOnly) GymButton(onClick = { includeImages = true }, enabled = !busy, modifier = Modifier.weight(1f),
             containerColor = SurfaceContainerHigh, contentColor = OnSurface) {
             if (busy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Primary)
             else Icon(Icons.Rounded.CloudUpload, null, tint = Primary)
@@ -250,7 +250,7 @@ internal fun IosBackupButtons() {
             scope.launch {
                 val access = selected.startAccessingSecurityScopedResource()
                 try {
-                    withContext(Dispatchers.IO) { IosBackups.manager.stageRestore(requireNotNull(selected.path)) }
+                    withContext(Dispatchers.IO) { IosBackups.manager.stageRestore(requireNotNull(selected.path), completeOnboarding) }
                     picked = null
                     IosBackups.restartRequired = true
                 } catch (error: CancellationException) { throw error }

@@ -193,6 +193,10 @@ internal object IosNotifications {
         }
     }
     private fun schedulerPermission(result: (Boolean) -> Unit) = delivery.authorize(true, result)
+    /** First-launch opt-in: denial simply keeps the selected alerts off, without opening Settings. */
+    suspend fun authorizeForOnboarding(): Boolean = suspendCancellableCoroutine { continuation ->
+        delivery.authorize(true) { granted -> if (continuation.isActive) continuation.resume(granted) }
+    }
     fun refreshPermission() = delivery.authorize(false) {}
 }
 
