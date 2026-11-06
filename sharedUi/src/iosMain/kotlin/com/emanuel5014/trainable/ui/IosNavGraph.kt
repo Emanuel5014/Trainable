@@ -212,7 +212,11 @@ internal fun IosNavGraph(
                 val scope = rememberCoroutineScope()
                 val state = remember { SettingsState(IosAppGraph.users, IosAppGraph.preferences, scope) }
                 PersonalizationSettingsContent(onNavigateBack = { navController.popBackStack() }, state = state,
-                    dynamicColorUnsupportedText = Res.string.wallpaper_colors_unavailable)
+                    dynamicColorUnsupportedText = Res.string.wallpaper_colors_unavailable,
+                    glassSupported = true,
+                    // No blur behind sheets and dialogs on iOS yet (spec §5): that switch stays hidden
+                    glassParts = com.emanuel5014.trainable.data.model.GlassPart.entries.toSet() -
+                        com.emanuel5014.trainable.data.model.GlassPart.Overlays)
             }
             composable<NotificationSettings> {
                 val scope = rememberCoroutineScope()

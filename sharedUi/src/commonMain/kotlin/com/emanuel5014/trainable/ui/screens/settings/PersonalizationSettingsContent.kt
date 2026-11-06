@@ -149,6 +149,8 @@ fun PersonalizationSettingsContent(
     wallpaperColors: List<Int> = emptyList(),
     dynamicColorSupported: Boolean = false,
     glassSupported: Boolean = false,
+    /** The glass parts this platform draws; the others get no switch (iOS: no blur behind sheets yet). */
+    glassParts: Set<GlassPart> = GlassPart.entries.toSet(),
     dynamicColorUnsupportedText: org.jetbrains.compose.resources.StringResource = Res.string.dynamic_color_not_supported
 ) {
     val dynamicColor by state.dynamicColor.collectAsState()
@@ -521,6 +523,7 @@ fun PersonalizationSettingsContent(
             LiquidGlassCard(
                 settings = glassSettings,
                 supported = glassSupported,
+                parts = glassParts,
                 floatingNavBar = navBarStyle == NavBarStyle.Floating,
                 onEnabledChange = state::setLiquidGlassEnabled,
                 onIntensityChange = state::setGlassIntensity,
@@ -537,6 +540,7 @@ fun PersonalizationSettingsContent(
 private fun LiquidGlassCard(
     settings: GlassSettings,
     supported: Boolean,
+    parts: Set<GlassPart>,
     floatingNavBar: Boolean,
     onEnabledChange: (Boolean) -> Unit,
     onIntensityChange: (Float) -> Unit,
@@ -624,7 +628,7 @@ private fun LiquidGlassCard(
                     checked = GlassPart.WorkoutNav in settings.parts,
                     onCheckedChange = { onPartChange(GlassPart.WorkoutNav, it) }
                 )
-                GlassSwitchRow(
+                if (GlassPart.Overlays in parts) GlassSwitchRow(
                     icon = Icons.Rounded.Layers,
                     title = stringResource(Res.string.glass_part_overlays),
                     description = stringResource(Res.string.glass_part_overlays_desc),
