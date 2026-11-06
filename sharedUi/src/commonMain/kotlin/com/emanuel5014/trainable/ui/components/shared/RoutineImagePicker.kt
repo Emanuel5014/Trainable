@@ -1,13 +1,5 @@
 package com.emanuel5014.trainable.ui.components
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.provider.OpenableColumns
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -30,7 +22,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddPhotoAlternate
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PhotoCamera
@@ -57,46 +48,68 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
-import coil.compose.AsyncImage
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.add_photo
+import com.emanuel5014.trainable.sharedui.resources.camera
+import com.emanuel5014.trainable.sharedui.resources.gallery
+import com.emanuel5014.trainable.sharedui.resources.remove_photo
+import com.emanuel5014.trainable.sharedui.resources.select_photo_source
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import com.emanuel5014.trainable.util.UriMigrationHelper
-import com.emanuel5014.trainable.util.ImageStorageUtils
-import java.io.File
-import java.io.FileOutputStream
+import com.emanuel5014.trainable.ui.util.fullscreenDialogProperties
+import com.emanuel5014.trainable.ui.util.fullscreenDialogTopInset
+import org.jetbrains.compose.resources.stringResource
+
+/** The camera and gallery of one routine photo strip, from [RoutinePhotoPlatform.rememberSources]. */
+class RoutinePhotoSources(val takePhoto: () -> Unit, val pickFromGallery: () -> Unit)
+
+/** What the routine photos need from each platform: drawing a stored photo, adding one, deleting its file. */
+interface RoutinePhotoPlatform {
+    /** Draws the photo stored at [uri] (a path as saved in the database). */
+    @Composable
+    fun Image(uri: String, modifier: Modifier, contentScale: ContentScale)
+
+    /**
+     * Camera and gallery for one strip. [onAdded] gets the stored path of a new photo; [onFinished] runs when a
+     * picker or the camera closes (also without a photo), not when the camera permission is refused.
+     */
+    @Composable
+    fun rememberSources(onAdded: (String) -> Unit, onFinished: () -> Unit): RoutinePhotoSources
+
+    /** Removes the photo file at [uri] when it is one of the app's own files. */
+    fun deleteFile(uri: String)
+}
 
 @Composable
 fun RoutineImagePicker(
     images: List<WorkoutPlanImageEntity>,
     onImageAdd: (String) -> Unit,
     onImageRemove: (WorkoutPlanImageEntity) -> Unit,
+    platform: RoutinePhotoPlatform,
     modifier: Modifier = Modifier
 ) {
     var selectedImageIndex by remember { mutableStateOf<Int?>(null) }
-    val context = LocalContext.current
 
-    if (selectedImageIndex != null) {
+    // Read once: on iOS the dialog's content recomposes once more while it closes, after the index became null
+    val openIndex = selectedImageIndex
+    if (openIndex != null) {
         Dialog(
             onDismissRequest = { selectedImageIndex = null },
-            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+            properties = fullscreenDialogProperties()
         ) {
             FullscreenImageViewerContent(
                 images = images,
-                initialIndex = selectedImageIndex!!,
+                initialIndex = openIndex,
+                platform = platform,
                 onDismiss = { selectedImageIndex = null }
             )
         }
@@ -106,9 +119,10 @@ fun RoutineImagePicker(
         images = images,
         onImageAdd = onImageAdd,
         onImageRemove = onImageRemove,
-        onImageClick = { clickedImage -> 
+        onImageClick = { clickedImage ->
             selectedImageIndex = images.indexOf(clickedImage).takeIf { it != -1 }
         },
+        platform = platform,
         modifier = modifier
     )
 }
@@ -120,65 +134,12 @@ private fun ImagePickerContent(
     onImageAdd: (String) -> Unit,
     onImageRemove: (WorkoutPlanImageEntity) -> Unit,
     onImageClick: (WorkoutPlanImageEntity) -> Unit,
+    platform: RoutinePhotoPlatform,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     var showOptions by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            val savedPath = ImageStorageUtils.compressAndSaveImage(context, it)
-            if (savedPath != null) onImageAdd(savedPath)
-        }
-        showOptions = false
-    }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            tempImageUri?.let { uri ->
-                val compressedPath = ImageStorageUtils.compressAndSaveImage(context, uri)
-                if (compressedPath != null) {
-                    onImageAdd(compressedPath)
-                    // Delete the uncompressed temp file from cache
-                    try {
-                        context.contentResolver.delete(uri, null, null)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
-        }
-        showOptions = false
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            val uri = createTempImageUri(context)
-            tempImageUri = uri
-            cameraLauncher.launch(uri)
-        } else {
-            Toast.makeText(context, context.getString(R.string.camera_permission_denied), Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun handleCameraClick() {
-        val permission = Manifest.permission.CAMERA
-        if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-            val uri = createTempImageUri(context)
-            tempImageUri = uri
-            cameraLauncher.launch(uri)
-        } else {
-            permissionLauncher.launch(permission)
-        }
-    }
+    val sources = platform.rememberSources(onAdded = onImageAdd, onFinished = { showOptions = false })
 
     if (showOptions) {
         ModalBottomSheet(
@@ -204,7 +165,7 @@ private fun ImagePickerContent(
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.select_photo_source),
+                    text = stringResource(Res.string.select_photo_source),
                     style = MaterialTheme.typography.headlineSmall,
                     color = OnSurface,
                     fontWeight = FontWeight.Black
@@ -216,14 +177,14 @@ private fun ImagePickerContent(
                 ) {
                     OptionItem(
                         icon = Icons.Rounded.PhotoCamera,
-                        label = stringResource(R.string.camera),
-                        onClick = { handleCameraClick() },
+                        label = stringResource(Res.string.camera),
+                        onClick = { sources.takePhoto() },
                         modifier = Modifier.weight(1f)
                     )
                     OptionItem(
                         icon = Icons.Rounded.PhotoLibrary,
-                        label = stringResource(R.string.gallery),
-                        onClick = { imagePickerLauncher.launch("image/*") },
+                        label = stringResource(Res.string.gallery),
+                        onClick = { sources.pickFromGallery() },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -250,7 +211,7 @@ private fun ImagePickerContent(
                     modifier = Modifier.size(22.dp)
                 )
                 Text(
-                    text = stringResource(R.string.add_photo),
+                    text = stringResource(Res.string.add_photo),
                     style = MaterialTheme.typography.labelLarge,
                     color = OnSurface,
                     fontWeight = FontWeight.ExtraBold
@@ -272,9 +233,8 @@ private fun ImagePickerContent(
                     .clip(RoundedCornerShape(24.dp))
                     .clickable { onImageClick(image) }
             ) {
-                AsyncImage(
-                    model = UriMigrationHelper.fixPath(image.imageUri, context),
-                    contentDescription = null,
+                platform.Image(
+                    uri = image.imageUri,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -287,16 +247,13 @@ private fun ImagePickerContent(
                         .background(Surface.copy(alpha = 0.8f))
                         .clickable {
                             onImageRemove(image)
-                            val fixedPath = UriMigrationHelper.fixPath(image.imageUri, context)
-                            if (fixedPath?.startsWith("/") == true) {
-                                File(fixedPath).delete()
-                            }
+                            platform.deleteFile(image.imageUri)
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.remove_photo),
+                        contentDescription = stringResource(Res.string.remove_photo),
                         tint = OnSurface,
                         modifier = Modifier.size(16.dp)
                     )
@@ -318,12 +275,12 @@ private fun ImagePickerContent(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.AddPhotoAlternate,
-                        contentDescription = stringResource(R.string.add_photo),
+                        contentDescription = stringResource(Res.string.add_photo),
                         tint = Primary,
                         modifier = Modifier.size(28.dp)
                     )
                     Text(
-                        text = stringResource(R.string.add_photo),
+                        text = stringResource(Res.string.add_photo),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnSurfaceVariant
                     )
@@ -365,22 +322,13 @@ private fun OptionItem(
     }
 }
 
-private fun createTempImageUri(context: Context): Uri {
-    val tempFile = File(context.cacheDir, "routine_temp_${System.currentTimeMillis()}.jpg")
-    return FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.fileprovider",
-        tempFile
-    )
-}
-
 @Composable
 private fun FullscreenImageViewerContent(
     images: List<WorkoutPlanImageEntity>,
     initialIndex: Int,
+    platform: RoutinePhotoPlatform,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
     val pagerState = rememberPagerState(initialPage = initialIndex) { images.size }
     var isZoomed by remember { mutableStateOf(false) }
 
@@ -396,10 +344,10 @@ private fun FullscreenImageViewerContent(
             beyondViewportPageCount = 1
         ) { page ->
             val image = images[page]
-            val fixedPath = UriMigrationHelper.fixPath(image.imageUri, context) ?: ""
-            
+
             ZoomableImage(
-                imageUri = fixedPath,
+                imageUri = image.imageUri,
+                platform = platform,
                 onZoomChanged = { zoomed ->
                     if (pagerState.currentPage == page) {
                         isZoomed = zoomed
@@ -412,6 +360,7 @@ private fun FullscreenImageViewerContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .fullscreenDialogTopInset()
                 .padding(16.dp)
                 .align(Alignment.TopCenter),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -445,6 +394,7 @@ private fun FullscreenImageViewerContent(
 @Composable
 private fun ZoomableImage(
     imageUri: String,
+    platform: RoutinePhotoPlatform,
     onZoomChanged: (Boolean) -> Unit
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
@@ -481,9 +431,8 @@ private fun ZoomableImage(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        AsyncImage(
-            model = imageUri,
-            contentDescription = null,
+        platform.Image(
+            uri = imageUri,
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged { imageSize = it }
@@ -501,11 +450,3 @@ private fun ZoomableImage(
         )
     }
 }
-
-/** The routine photos of the shared routine screen (LocalRoutineImagePicker). */
-val AndroidRoutineImagePicker: @Composable (
-    images: List<WorkoutPlanImageEntity>,
-    onImageAdd: (String) -> Unit,
-    onImageRemove: (WorkoutPlanImageEntity) -> Unit,
-    modifier: Modifier
-) -> Unit = { images, onImageAdd, onImageRemove, modifier -> RoutineImagePicker(images, onImageAdd, onImageRemove, modifier) }

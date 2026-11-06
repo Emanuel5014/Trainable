@@ -73,9 +73,7 @@
     <string name="existing_workout_message">An unfinished workout for "%1$s" already exists. Resume it?</string>
 
     <!-- Routines -->
-    <string name="add_photo">ADD PHOTO</string>
     <string name="change_photo">CHANGE PHOTO</string>
-    <string name="remove_photo">REMOVE PHOTO</string>
     <string name="no_archived">No archived routines</string>
     <string name="swipe_for_archived">Swipe down for archived</string>
     <string name="swipe_for_active">Swipe down for active</string>
@@ -376,7 +374,6 @@
     <string name="update_now">Update now</string>
 
     <!-- Camera & Photos -->
-    <string name="select_photo_source">Select Photo Source</string>
     <string name="camera">Camera</string>
     <string name="gallery">Gallery</string>
     <string name="camera_permission_denied">Camera permission is required to take photos</string>

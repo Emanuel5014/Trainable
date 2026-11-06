@@ -1227,4 +1227,8 @@
     <string name="share_preview">Vista Previa</string>
     <string name="image_saved_gallery">¡Imagen guardada en la Galería!</string>
     <string name="failed_save_image">Error al guardar la imagen.</string>
+    <string name="add_photo">AÑADIR FOTO</string>
+    <string name="remove_photo">ELIMINAR FOTO</string>
+    <string name="select_photo_source">Seleccionar origen de foto</string>
+    <string name="camera_permission_denied">Permiso de cámara necesario para tomar fotos</string>
 </resources>

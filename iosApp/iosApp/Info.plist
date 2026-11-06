@@ -43,7 +43,7 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save the workout images you choose to export to Photos.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Take photos for your physical checks.</string>
+	<string>Take photos for your routines and physical checks.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Unlock your physical checks with Face ID.</string>
 </dict>

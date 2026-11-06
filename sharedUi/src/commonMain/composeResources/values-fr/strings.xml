@@ -1227,4 +1227,8 @@
     <string name="share_preview">Aperçu du Partage</string>
     <string name="image_saved_gallery">Image enregistrée dans la Galerie !</string>
     <string name="failed_save_image">Échec de l'enregistrement de l'image.</string>
+    <string name="add_photo">AJOUTER UNE PHOTO</string>
+    <string name="remove_photo">SUPPRIMER LA PHOTO</string>
+    <string name="select_photo_source">Choisir la source de la photo</string>
+    <string name="camera_permission_denied">L'autorisation de l'appareil photo est requise pour prendre des photos</string>
 </resources>

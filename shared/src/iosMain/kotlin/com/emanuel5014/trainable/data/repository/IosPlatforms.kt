@@ -60,12 +60,43 @@ class IosWorkoutPlatform : WorkoutPlatform {
 }
 
 /** Backup paths can belong to Android or an old iOS container. Resolve only photos in our own storage. */
-internal fun readIosRoutineImage(uri: String, documents: String): NSData? {
+fun readIosRoutineImage(uri: String, documents: String): NSData? =
+    iosRoutineImagePaths(uri, documents).firstNotNullOfOrNull { NSData.dataWithContentsOfFile(it) }
+
+/** Where a stored routine photo path can be in this app's Documents, by its file name; empty for non-photos. */
+private fun iosRoutineImagePaths(uri: String, documents: String): List<String> {
     val name = NSURL(string = uri)?.lastPathComponent ?: uri.substringAfterLast('/')
     if (name.isNullOrBlank() || name.substringAfterLast('.', "").lowercase() !in
-        setOf("jpg", "jpeg", "png", "webp", "heic", "gif")) return null
+        setOf("jpg", "jpeg", "png", "webp", "heic", "gif")) return emptyList()
     return listOf("$documents/routine_images/$name", "$documents/$name")
-        .firstNotNullOfOrNull { NSData.dataWithContentsOfFile(it) }
+}
+
+/** The app's Documents folder path. */
+@OptIn(ExperimentalForeignApi::class)
+fun iosDocumentsPath(): String? = NSFileManager.defaultManager.URLForDirectory(
+    NSDocumentDirectory, NSUserDomainMask, null, false, null
+)?.path
+
+/**
+ * Stores a routine photo (bytes already a small upright JPEG) as Android does: Documents/routine_images/
+ * routine_<millis>.jpg. Returns the path saved in the database, or null when it cannot be written.
+ */
+fun saveIosRoutineImage(bytes: ByteArray): String? {
+    val folder = documentsFolder("routine_images")
+    val millis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+    val path = generateSequence(0) { it + 1 }
+        .map { n -> if (n == 0) "$folder/routine_$millis.jpg" else "$folder/routine_${millis}_$n.jpg" }
+        .first { !NSFileManager.defaultManager.fileExistsAtPath(it) }
+    return if (bytes.toNSData().writeToFile(path, atomically = true)) path else null
+}
+
+/** Deletes a routine photo's file, only inside Documents/routine_images (like Android, which deletes only its own files). */
+@OptIn(ExperimentalForeignApi::class)
+fun deleteIosRoutineImage(uri: String) {
+    val documents = iosDocumentsPath() ?: return
+    iosRoutineImagePaths(uri, documents).firstOrNull()
+        ?.takeIf { NSFileManager.defaultManager.fileExistsAtPath(it) }
+        ?.let { NSFileManager.defaultManager.removeItemAtPath(it, null) }
 }
 
 /** One write transaction of the iOS database, as Room's withTransaction is on Android. */

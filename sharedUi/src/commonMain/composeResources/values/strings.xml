@@ -1225,4 +1225,8 @@
     <string name="share_preview">Share Preview</string>
     <string name="image_saved_gallery">Image saved to Gallery!</string>
     <string name="failed_save_image">Failed to save image.</string>
+    <string name="add_photo">ADD PHOTO</string>
+    <string name="remove_photo">REMOVE PHOTO</string>
+    <string name="select_photo_source">Select Photo Source</string>
+    <string name="camera_permission_denied">Camera permission is required to take photos</string>
 </resources>

@@ -80,81 +80,13 @@ private object IosPhysicalCheckPlatform : PhysicalCheckPlatformUi {
         onPicked: (List<ByteArray>) -> Unit,
         onCameraResult: (success: Boolean, bytes: ByteArray?) -> Unit,
         onCameraDenied: () -> Unit
-    ): PhotoCapture {
-        val presenter = LocalUIViewController.current
-        val picked by rememberUpdatedState(onPicked)
-        val cameraResult by rememberUpdatedState(onCameraResult)
-        val denied by rememberUpdatedState(onCameraDenied)
-        val show = LocalShowMessage.current
-        val deniedText = stringResource(Res.string.physical_check_camera_denied)
-        val unavailableText = stringResource(Res.string.physical_check_camera_unavailable)
-        var alive by remember { mutableStateOf(true) }
-        DisposableEffect(presenter) { onDispose { alive = false } }
-
-        val galleryDelegate = remember {
-            object : NSObject(), PHPickerViewControllerDelegateProtocol {
-                override fun picker(picker: PHPickerViewController, didFinishPicking: List<*>) {
-                    val results = didFinishPicking.filterIsInstance<PHPickerResult>()
-                    picker.dismissViewControllerAnimated(true) {
-                        loadPhotos(results) { photos -> if (alive) picked(photos) }
-                    }
-                }
-            }
-        }
-        val cameraDelegate = remember {
-            object : NSObject(), UIImagePickerControllerDelegateProtocol, UINavigationControllerDelegateProtocol {
-                override fun imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo: Map<Any?, *>) {
-                    val image = didFinishPickingMediaWithInfo[UIImagePickerControllerOriginalImage] as? UIImage
-                    picker.dismissViewControllerAnimated(true) {
-                        val bytes = image?.let { UIImageJPEGRepresentation(it, 0.95) }?.toByteArray()
-                            ?.let { IosPhysicalCheckFiles().compressImage(it) }
-                        if (alive) cameraResult(true, bytes)
-                    }
-                }
-
-                override fun imagePickerControllerDidCancel(picker: UIImagePickerController) {
-                    picker.dismissViewControllerAnimated(true) { if (alive) cameraResult(false, null) }
-                }
-            }
-        }
-
-        return remember(presenter, galleryDelegate, cameraDelegate) {
-            fun presentCamera() {
-                val picker = UIImagePickerController().apply {
-                    sourceType = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
-                    delegate = cameraDelegate
-                }
-                topController(presenter).presentViewController(picker, animated = true, completion = null)
-            }
-            PhotoCapture(
-                takePhoto = {
-                    if (!UIImagePickerController.isSourceTypeAvailable(
-                            UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera)) {
-                        cameraResult(false, null)
-                        show(unavailableText)
-                    } else when (AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)) {
-                        AVAuthorizationStatusAuthorized -> presentCamera()
-                        AVAuthorizationStatusNotDetermined ->
-                            AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted ->
-                                dispatch_async(dispatch_get_main_queue()) {
-                                    if (granted) presentCamera() else { denied(); show(deniedText) }
-                                }
-                            }
-                        else -> { denied(); show(deniedText) }
-                    }
-                },
-                pickPhotos = {
-                    val configuration = PHPickerConfiguration().apply {
-                        filter = PHPickerFilter.imagesFilter
-                        selectionLimit = 0
-                        preferredAssetRepresentationMode = PHPickerConfigurationAssetRepresentationModeCurrent
-                    }
-                    val picker = PHPickerViewController(configuration).apply { delegate = galleryDelegate }
-                    topController(presenter).presentViewController(picker, animated = true, completion = null)
-                }
-            )
-        }
-    }
+    ): PhotoCapture = rememberIosPhotoCapture(
+        selectionLimit = 0,
+        deniedText = stringResource(Res.string.physical_check_camera_denied),
+        onPicked = onPicked,
+        onCameraResult = onCameraResult,
+        onCameraDenied = onCameraDenied
+    )
 
     @Composable
     override fun rememberBiometricPrompt(): ((onSuccess: () -> Unit, onError: () -> Unit) -> Unit)? =
@@ -165,6 +97,93 @@ private object IosPhysicalCheckPlatform : PhysicalCheckPlatformUi {
     override fun ImageEditor(imageBytes: ByteArray, onDismiss: () -> Unit, onConfirm: (ByteArray) -> Unit) {
         val confirm by rememberUpdatedState(onConfirm)
         LaunchedEffect(imageBytes) { confirm(imageBytes) }
+    }
+}
+
+/**
+ * Camera (asking for access first) and photo library. Photos arrive upright, JPEG, at most 1280 px.
+ * [selectionLimit] 0 lets the user pick many photos, 1 one. [deniedText] is shown when camera access is refused.
+ */
+@Composable
+internal fun rememberIosPhotoCapture(
+    selectionLimit: Long,
+    deniedText: String,
+    onPicked: (List<ByteArray>) -> Unit,
+    onCameraResult: (success: Boolean, bytes: ByteArray?) -> Unit,
+    onCameraDenied: () -> Unit
+): PhotoCapture {
+    val presenter = LocalUIViewController.current
+    val picked by rememberUpdatedState(onPicked)
+    val cameraResult by rememberUpdatedState(onCameraResult)
+    val denied by rememberUpdatedState(onCameraDenied)
+    val show = LocalShowMessage.current
+    val deniedMessage by rememberUpdatedState(deniedText)
+    val unavailableText = stringResource(Res.string.physical_check_camera_unavailable)
+    var alive by remember { mutableStateOf(true) }
+    DisposableEffect(presenter) { onDispose { alive = false } }
+
+    val galleryDelegate = remember {
+        object : NSObject(), PHPickerViewControllerDelegateProtocol {
+            override fun picker(picker: PHPickerViewController, didFinishPicking: List<*>) {
+                val results = didFinishPicking.filterIsInstance<PHPickerResult>()
+                picker.dismissViewControllerAnimated(true) {
+                    loadPhotos(results) { photos -> if (alive) picked(photos) }
+                }
+            }
+        }
+    }
+    val cameraDelegate = remember {
+        object : NSObject(), UIImagePickerControllerDelegateProtocol, UINavigationControllerDelegateProtocol {
+            override fun imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo: Map<Any?, *>) {
+                val image = didFinishPickingMediaWithInfo[UIImagePickerControllerOriginalImage] as? UIImage
+                picker.dismissViewControllerAnimated(true) {
+                    val bytes = image?.let { UIImageJPEGRepresentation(it, 0.95) }?.toByteArray()
+                        ?.let { IosPhysicalCheckFiles().compressImage(it) }
+                    if (alive) cameraResult(true, bytes)
+                }
+            }
+
+            override fun imagePickerControllerDidCancel(picker: UIImagePickerController) {
+                picker.dismissViewControllerAnimated(true) { if (alive) cameraResult(false, null) }
+            }
+        }
+    }
+
+    return remember(presenter, galleryDelegate, cameraDelegate) {
+        fun presentCamera() {
+            val picker = UIImagePickerController().apply {
+                sourceType = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
+                delegate = cameraDelegate
+            }
+            topController(presenter).presentViewController(picker, animated = true, completion = null)
+        }
+        PhotoCapture(
+            takePhoto = {
+                if (!UIImagePickerController.isSourceTypeAvailable(
+                        UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera)) {
+                    cameraResult(false, null)
+                    show(unavailableText)
+                } else when (AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)) {
+                    AVAuthorizationStatusAuthorized -> presentCamera()
+                    AVAuthorizationStatusNotDetermined ->
+                        AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted ->
+                            dispatch_async(dispatch_get_main_queue()) {
+                                if (granted) presentCamera() else { denied(); show(deniedMessage) }
+                            }
+                        }
+                    else -> { denied(); show(deniedMessage) }
+                }
+            },
+            pickPhotos = {
+                val configuration = PHPickerConfiguration().apply {
+                    filter = PHPickerFilter.imagesFilter
+                    this.selectionLimit = selectionLimit
+                    preferredAssetRepresentationMode = PHPickerConfigurationAssetRepresentationModeCurrent
+                }
+                val picker = PHPickerViewController(configuration).apply { delegate = galleryDelegate }
+                topController(presenter).presentViewController(picker, animated = true, completion = null)
+            }
+        )
     }
 }
 

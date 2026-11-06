@@ -216,7 +216,9 @@ private fun TrainableIosApp() {
             LocalNavBarStyle provides style,
             LocalRpeSettings provides rpeSettings,
             LocalPrescriptionText provides rememberIosPrescriptionText(),
-            LocalPrescriptionEnvironment provides IosPrescriptionEnvironment
+            LocalPrescriptionEnvironment provides IosPrescriptionEnvironment,
+            com.emanuel5014.trainable.ui.components.LocalPlanImage provides IosPlanImage,
+            com.emanuel5014.trainable.ui.components.LocalRoutineImagePicker provides IosRoutineImagePicker
         ) {
             IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, history = history, analytics = analytics, navBarStyle = style, isDark = isDark)
             IosBackupDialogs()

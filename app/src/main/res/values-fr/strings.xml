@@ -72,9 +72,7 @@
     <string name="existing_workout_message">Un entraînement non terminé pour "%1$s" existe déjà. Reprendre?</string>
 
     <!-- Routines -->
-    <string name="add_photo">AJOUTER UNE PHOTO</string>
     <string name="change_photo">CHANGER LA PHOTO</string>
-    <string name="remove_photo">SUPPRIMER LA PHOTO</string>
     <string name="no_archived">Aucune routine archivée</string>
     <string name="swipe_for_archived">Balaye vers le bas pour les archivées</string>
     <string name="swipe_for_active">Balaye vers le bas pour les actives</string>
@@ -375,7 +373,6 @@
     <string name="update_now">Mettre à jour maintenant</string>
 
     <!-- Camera & Photos -->
-    <string name="select_photo_source">Choisir la source de la photo</string>
     <string name="camera">Appareil photo</string>
     <string name="gallery">Galerie</string>
     <string name="camera_permission_denied">L\'autorisation de l\'appareil photo est requise pour prendre des photos</string>

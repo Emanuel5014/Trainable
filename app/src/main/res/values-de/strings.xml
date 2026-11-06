@@ -72,9 +72,7 @@
     <string name="existing_workout_message">Ein unerledigtes Training für "%1$s" ist bereits vorhanden. Fortsetzen?</string>
 
     <!-- Routines -->
-    <string name="add_photo">FOTO HINZUFÜGEN</string>
     <string name="change_photo">FOTO ÄNDERN</string>
-    <string name="remove_photo">FOTO ENTFERNEN</string>
     <string name="no_archived">Keine archivierten Routinen</string>
     <string name="swipe_for_archived">Nach unten wischen für Archiviertes</string>
     <string name="swipe_for_active">Nach unten wischen für Aktives</string>
@@ -375,7 +373,6 @@
     <string name="update_now">Jetzt aktualisieren</string>
 
     <!-- Camera & Photos -->
-    <string name="select_photo_source">Fotoquelle wählen</string>
     <string name="camera">Kamera</string>
     <string name="gallery">Galerie</string>
     <string name="camera_permission_denied">Kameraberechtigung ist erforderlich, um Fotos zu machen</string>

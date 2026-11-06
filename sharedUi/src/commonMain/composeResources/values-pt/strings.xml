@@ -1227,4 +1227,8 @@
     <string name="share_preview">Visualizar Compartilhamento</string>
     <string name="image_saved_gallery">Imagem salva na Galeria!</string>
     <string name="failed_save_image">Falha ao salvar imagem.</string>
+    <string name="add_photo">ADICIONAR FOTO</string>
+    <string name="remove_photo">REMOVER FOTO</string>
+    <string name="select_photo_source">Selecionar origem da foto</string>
+    <string name="camera_permission_denied">Permissão da câmera é necessária para tirar fotos</string>
 </resources>
