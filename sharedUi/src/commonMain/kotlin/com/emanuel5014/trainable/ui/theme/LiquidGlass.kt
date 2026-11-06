@@ -1,6 +1,5 @@
 package com.emanuel5014.trainable.ui.theme
 
-import android.os.Build
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.FloatingActionButtonElevation
 import androidx.compose.material3.MaterialTheme
@@ -48,7 +47,7 @@ import kotlin.math.tanh
 val LocalAppGlassBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
 
 /** Below Android 12 there is no blur, so glass needs a fuller body to keep its content readable. */
-val GlassCanBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+val GlassCanBlur = glassCanBlur
 
 /** The swell and the lean after the finger of a touched piece of glass, as on iOS 26. */
 private fun GraphicsLayerScope.followTouch(touch: GlassTouch) {
@@ -233,10 +232,25 @@ fun Modifier.panelGlass(source: Backdrop?, shape: Shape, tint: Color): Modifier 
     )
 }
 
-/** The shared workout panel's glass on Android: [panelGlass] over [source], with the continuous-corner outline. */
-class AndroidPanelGlass(private val source: LayerBackdrop) : com.emanuel5014.trainable.ui.glass.PanelGlass {
+/** The shared workout panel's glass: [panelGlass] over [source], with the continuous-corner outline. */
+class KyantPanelGlass(private val source: LayerBackdrop) : com.emanuel5014.trainable.ui.glass.PanelGlass {
     override val shape: Shape = com.kyant.shapes.RoundedRectangle(32.dp)
 
     @Composable
     override fun frost(modifier: Modifier, shape: Shape, tint: Color): Modifier = modifier.panelGlass(source, shape, tint)
+}
+
+/** The workout's exercise content recorded for its bottom panel ([rememberPanelGlassSource]). */
+class KyantWorkoutPanel(val source: LayerBackdrop) : com.emanuel5014.trainable.ui.screens.workout.WorkoutPanel {
+    override fun record(modifier: Modifier): Modifier = modifier.actionGlassSource(source)
+}
+
+/** Hands the workout panel's recording to the panel and its glass (LocalPanelGlassSource, LocalPanelGlass). */
+@Composable
+fun KyantPanelProvider(panel: com.emanuel5014.trainable.ui.screens.workout.WorkoutPanel?, content: @Composable () -> Unit) {
+    val source = (panel as? KyantWorkoutPanel)?.source
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalPanelGlassSource provides source,
+        com.emanuel5014.trainable.ui.glass.LocalPanelGlass provides remember(source) { source?.let { KyantPanelGlass(it) } }
+    ) { content() }
 }

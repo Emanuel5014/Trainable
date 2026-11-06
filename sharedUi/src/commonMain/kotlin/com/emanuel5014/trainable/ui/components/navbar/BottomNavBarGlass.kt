@@ -1,6 +1,5 @@
 package com.emanuel5014.trainable.ui.components
 
-import android.os.Build
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -39,7 +38,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
@@ -48,8 +46,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -67,7 +63,6 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
-import kotlinx.coroutines.flow.map
 
 // Same measures as BottomNavBarFlo, so the screens' floating buttons keep their distance from the bar
 private val GlassItemHeight = 64.dp
@@ -77,7 +72,7 @@ private val GlassBarHeight = GlassItemHeight + GlassBarPadding * 2
 private val GlassPillHeight = GlassBarHeight - GlassPillInset * 2
 
 /** Below Android 12 there is no blur, so the glass needs a fuller body to keep the labels readable. */
-private val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+private val canBlur = com.emanuel5014.trainable.ui.theme.glassCanBlur
 
 /**
  * The floating navigation in Liquid Glass, modelled on the iOS 26 tab bar.
@@ -105,10 +100,7 @@ fun BottomNavBarGlass(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val haptic = LocalHapticFeedback.current
-    val context = LocalContext.current
-    val hapticEnabled by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
-    }.collectAsState(initial = true)
+    val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
 
     val isOnMainTabs = currentRoute?.contains("MainTabs") == true || currentRoute == null
     val items = localizedNavItems()

@@ -43,6 +43,8 @@ kotlin {
             implementation(libs.jb.compose.resources)
             api(libs.jb.navigation.compose)
             implementation(libs.haze)
+            implementation(libs.backdrop)
+            implementation(libs.kyant.shapes)
             implementation(libs.kotlinx.serialization.json)
         }
         androidMain.dependencies {
