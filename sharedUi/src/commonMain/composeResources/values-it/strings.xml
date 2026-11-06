@@ -1214,4 +1214,9 @@
     <string name="language_german">Deutsch</string>
     <string name="language_portuguese">Português</string>
     <string name="export_csv">ESPORTA CSV</string>
+    <string name="import_confirm">IMPORTA</string>
+    <string name="import_includes_maximums">Include i massimali di %1$d esercizi</string>
+    <string name="import_plan_summary">%1$s (%2$d esercizi)</string>
+    <string name="import_plans_message">Stai per importare le seguenti schede:</string>
+    <string name="import_plans_title">Importare le Schede?</string>
 </resources>

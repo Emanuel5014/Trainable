@@ -220,6 +220,7 @@ private fun TrainableIosApp() {
         ) {
             IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, history = history, analytics = analytics, navBarStyle = style, isDark = isDark)
             IosBackupDialogs()
+            IosRoutineImportDialogs()
         }
     }
 }

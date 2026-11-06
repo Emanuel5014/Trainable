@@ -10,6 +10,7 @@ import platform.Foundation.NSDataBase64DecodingIgnoreUnknownCharacters
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUUID
+import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.base64EncodedStringWithOptions
 import platform.Foundation.create
@@ -32,14 +33,16 @@ internal fun documentsFolder(name: String): String {
 }
 
 /**
- * Routine photos as files in Documents/routine_images (like Android's filesDir/routine_images). The widgets and the
- * CSV export's own words are not on iOS yet: no refresh, and techniques by their stored code.
+ * Routine photos as files in Documents/routine_images (like Android's filesDir/routine_images).
+ * Widgets are not on iOS yet. CSV export supplies its own localized technique labels.
  */
 class IosWorkoutPlatform : WorkoutPlatform {
+    @OptIn(ExperimentalForeignApi::class)
     override fun encodeImage(uri: String): String? {
-        // A photo copied from an Android backup points to a path that does not exist here
-        val path = uri.removePrefix("file://")
-        return NSData.dataWithContentsOfFile(path)?.base64EncodedStringWithOptions(0u)
+        val documents = NSFileManager.defaultManager.URLForDirectory(
+            NSDocumentDirectory, NSUserDomainMask, null, false, null
+        )?.path ?: return null
+        return readIosRoutineImage(uri, documents)?.base64EncodedStringWithOptions(0u)
     }
 
     override fun saveImage(base64: String): String? {
@@ -54,6 +57,15 @@ class IosWorkoutPlatform : WorkoutPlatform {
     override fun techniqueLabel(technique: Technique): String = TechniqueCodec.encode(listOf(technique)).orEmpty()
 
     override val noTechniqueLabel: String get() = "-"
+}
+
+/** Backup paths can belong to Android or an old iOS container. Resolve only photos in our own storage. */
+internal fun readIosRoutineImage(uri: String, documents: String): NSData? {
+    val name = NSURL(string = uri)?.lastPathComponent ?: uri.substringAfterLast('/')
+    if (name.isNullOrBlank() || name.substringAfterLast('.', "").lowercase() !in
+        setOf("jpg", "jpeg", "png", "webp", "heic", "gif")) return null
+    return listOf("$documents/routine_images/$name", "$documents/$name")
+        .firstNotNullOfOrNull { NSData.dataWithContentsOfFile(it) }
 }
 
 /** One write transaction of the iOS database, as Room's withTransaction is on Android. */

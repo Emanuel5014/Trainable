@@ -9,10 +9,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.compare_cardio
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_advanced
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_time_and_reps
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_time_and_weight
+import com.emanuel5014.trainable.sharedui.resources.import_confirm
+import com.emanuel5014.trainable.sharedui.resources.import_includes_maximums
+import com.emanuel5014.trainable.sharedui.resources.import_plan_summary
+import com.emanuel5014.trainable.sharedui.resources.import_plans_message
+import com.emanuel5014.trainable.sharedui.resources.import_plans_title
+import com.emanuel5014.trainable.sharedui.resources.schedule_days
+import com.emanuel5014.trainable.sharedui.resources.superset
+import com.emanuel5014.trainable.sharedui.resources.week_of
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -22,24 +35,25 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 fun ImportConfirmationDialog(
     plans: List<WorkoutPlanExportDto>,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    contentModifier: Modifier = Modifier
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.import_plans_title)) },
+        title = { Text(stringResource(Res.string.import_plans_title)) },
         text = {
-            Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+            Column(modifier = contentModifier, verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = stringResource(R.string.import_plans_message),
+                    text = stringResource(Res.string.import_plans_message),
                     style = MaterialTheme.typography.bodyMedium,
                     color = OnSurfaceVariant
                 )
                 plans.forEach { plan ->
-                    val cardioLabel = stringResource(R.string.compare_cardio)
-                    val timedLabel = stringResource(R.string.exercise_type_time_and_weight)
-                    val timedRepsLabel = stringResource(R.string.exercise_type_time_and_reps)
-                    val supersetLabel = stringResource(R.string.superset).lowercase()
-                    val advancedLabel = stringResource(R.string.exercise_type_advanced)
+                    val cardioLabel = stringResource(Res.string.compare_cardio)
+                    val timedLabel = stringResource(Res.string.exercise_type_time_and_weight)
+                    val timedRepsLabel = stringResource(Res.string.exercise_type_time_and_reps)
+                    val supersetLabel = stringResource(Res.string.superset).lowercase()
+                    val advancedLabel = stringResource(Res.string.exercise_type_advanced)
                     val typeSummary = buildString {
                         val cardio = plan.exercises.count { it.exerciseType == "cardio" }
                         val timed = plan.exercises.count { it.exerciseType == "time_and_weight" }
@@ -52,10 +66,10 @@ fun ImportConfirmationDialog(
                         if (supersets > 0) append(" • $supersets $supersetLabel")
                         if (advanced > 0) append(" • $advanced $advancedLabel")
                     }
-                    val weeksLabel = if (plan.weeksCount > 1) " • " + stringResource(R.string.week_of, 1, plan.weeksCount) else ""
+                    val weeksLabel = if (plan.weeksCount > 1) " • " + stringResource(Res.string.week_of, 1, plan.weeksCount) else ""
                     Text(
                         text = "• " + stringResource(
-                            R.string.import_plan_summary,
+                            Res.string.import_plan_summary,
                             plan.nome,
                             plan.exercises.size
                         ) + typeSummary + weeksLabel,
@@ -66,14 +80,14 @@ fun ImportConfirmationDialog(
                     val maximums = plan.exercises.count { it.oneRepMaxKg != null }
                     if (maximums > 0) {
                         Text(
-                            text = stringResource(R.string.import_includes_maximums, maximums),
+                            text = stringResource(Res.string.import_includes_maximums, maximums),
                             style = MaterialTheme.typography.bodyMedium,
                             color = OnSurfaceVariant
                         )
                     }
                     if (plan.giorniSettimana != null) {
                         Text(
-                            text = stringResource(R.string.schedule_days) + ": " + plan.giorniSettimana,
+                            text = stringResource(Res.string.schedule_days) + ": " + plan.giorniSettimana,
                             style = MaterialTheme.typography.bodyMedium,
                             color = OnSurfaceVariant
                         )
@@ -88,7 +102,7 @@ fun ImportConfirmationDialog(
                 contentColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
             ) {
-                Text(stringResource(R.string.import_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.import_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
@@ -98,7 +112,7 @@ fun ImportConfirmationDialog(
                 contentColor = OnSurfaceVariant,
                 modifier = Modifier.height(48.dp)
             ) {
-                Text(stringResource(R.string.cancel).uppercase())
+                Text(stringResource(Res.string.cancel).uppercase())
             }
         },
         containerColor = SurfaceContainerHigh,

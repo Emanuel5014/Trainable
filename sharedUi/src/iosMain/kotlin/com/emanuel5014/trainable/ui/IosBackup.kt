@@ -54,6 +54,9 @@ private object IosBackups {
     var startupResult by mutableStateOf(IosBackupManager.RestoreResult.None)
 }
 
+/** Other document imports must wait until a staged backup restore has been applied or cancelled. */
+internal val iosBackupRestartRequired: Boolean get() = IosBackups.restartRequired
+
 /** No Room/DataStore access from a cold App Intent until safe startup has run. */
 internal suspend fun prepareIosTimerAction(): Boolean = withContext(Dispatchers.IO) { IosBackups.prepareTimerAction() }
 

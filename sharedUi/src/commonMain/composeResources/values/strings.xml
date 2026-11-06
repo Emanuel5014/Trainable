@@ -1211,4 +1211,9 @@
     <string name="language_german">Deutsch</string>
     <string name="language_portuguese">Português</string>
     <string name="export_csv">EXPORT CSV</string>
+    <string name="import_confirm">IMPORT</string>
+    <string name="import_includes_maximums">Includes the maximums of %1$d exercises</string>
+    <string name="import_plan_summary">%1$s (%2$d exercises)</string>
+    <string name="import_plans_message">You are about to import the following routines:</string>
+    <string name="import_plans_title">Import Routines?</string>
 </resources>

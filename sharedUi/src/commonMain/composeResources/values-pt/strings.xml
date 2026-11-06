@@ -1214,4 +1214,9 @@
     <string name="language_german">Deutsch</string>
     <string name="language_portuguese">Português</string>
     <string name="export_csv">EXPORTAR CSV</string>
+    <string name="import_confirm">IMPORTAR</string>
+    <string name="import_includes_maximums">Inclui os 1RM de %1$d exercícios</string>
+    <string name="import_plan_summary">%1$s (%2$d exercícios)</string>
+    <string name="import_plans_message">Você está prestes a importar as seguintes rotinas:</string>
+    <string name="import_plans_title">Importar Rotinas?</string>
 </resources>

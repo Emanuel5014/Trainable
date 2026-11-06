@@ -13,6 +13,7 @@ struct TrainableApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onOpenURL { url in IosRoutineFiles.shared.open(url: url) }
         }
     }
 }

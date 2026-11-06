@@ -348,10 +348,8 @@ private fun IosMainTabs(
             )
             1 -> RoutineListContent(
                 state = routines,
-                // The exercise categories in the phone's language until the app's own choice reaches iOS
                 languageCode = com.emanuel5014.trainable.platform.IosAppLocale.language(),
-                // Sharing a routine file is not on iOS yet
-                sharePlans = { _, _, _, _ -> },
+                sharePlans = rememberIosRoutineSharing(),
                 isVisible = pagerState.currentPage == 1,
                 onNavigateToDetail = { planId -> navController.navigate(RoutineDetail(planId)) },
                 onGenerateReport = { planIds -> navController.navigate(Report(planIds.joinToString(","))) }
