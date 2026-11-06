@@ -112,6 +112,19 @@ class IosBackupManager(
     }
 
     fun hasPendingRestore(): Boolean = fs.exists(pending / "validated")
+
+    /** Stage a reset without touching an open Room database or DataStore. It stays cancellable until cold startup. */
+    fun stageReset() {
+        fs.createDirectories(workspace)
+        val staging = workspace / ("import-" + NSUUID().UUIDString)
+        fs.createDirectories(staging)
+        try {
+            writeSynced(staging / "reset", "1")
+            writeSynced(staging / "validated", "1")
+            fs.deleteRecursively(pending)
+            fs.atomicMove(staging, pending)
+        } finally { fs.deleteRecursively(staging) }
+    }
     /** Background App Intents must leave pending replacement/recovery to the normal cold startup. */
     fun hasPendingRestoreOrRecovery(): Boolean = hasPendingRestore() || fs.exists(journal)
     fun cancelPendingRestore() { fs.deleteRecursively(pending) }
@@ -123,14 +136,16 @@ class IosBackupManager(
             .forEach { fs.deleteRecursively(it) }
         if (fs.exists(journal)) {
             val committed = fs.exists(journal / "committed")
+            val reset = fs.exists(journal / "reset")
             recoverJournal()
-            return if (committed) RestoreResult.Restored else RestoreResult.Failed
+            return if (!committed) RestoreResult.Failed else if (reset) RestoreResult.Reset else RestoreResult.Restored
         }
         if (!hasPendingRestore()) return RestoreResult.None
         try {
+            val reset = fs.exists(pending / "reset")
             prepareReplacement()
             installReplacement()
-            return RestoreResult.Restored
+            return if (reset) RestoreResult.Reset else RestoreResult.Restored
         } catch (error: CancellationException) {
             if (fs.exists(journal)) recoverJournal()
             throw error
@@ -145,6 +160,13 @@ class IosBackupManager(
     private suspend fun prepareReplacement() {
         fs.deleteRecursively(ready)
         fs.createDirectories(ready)
+        if (fs.exists(pending / "reset")) {
+            // Preserve the per-app language, as Android's LocaleManager does after clearing DataStore.
+            // Remove application-owned defaults, including old timer commands and presentation snapshots.
+            val language = currentDomain()["AppleLanguages"]
+            writeDomain(ready / "defaults.plist", if (language == null) emptyMap() else mapOf("AppleLanguages" to language))
+            return
+        }
         fs.copy(pending / BackupFormat.DATABASE, ready / BackupFormat.DATABASE)
         val preferences = ready / "settings.preferences_pb"
         if (fs.exists(documents / preferences.name)) fs.copy(documents / preferences.name, preferences)
@@ -185,12 +207,14 @@ class IosBackupManager(
     private fun installReplacement() {
         val targets = listOf(BackupFormat.DATABASE, BackupFormat.DATABASE + "-wal",
             BackupFormat.DATABASE + "-shm", BackupFormat.DATABASE + "-journal", "settings.preferences_pb") +
-            imageFolders.map { it.second }.filter { fs.exists(ready / it) }
+            (if (fs.exists(pending / "reset")) listOf(BackupFormat.DATABASE + ".lck") else emptyList()) +
+            imageFolders.map { it.second }.filter { fs.exists(pending / "reset") || fs.exists(ready / it) }
         val preparing = workspace / "journal-preparing"
         fs.deleteRecursively(preparing)
         fs.createDirectories(preparing / "old")
         writeDomain(preparing / "defaults.plist", currentDomain())
         writeSynced(preparing / "manifest", targets.joinToString("") { "$it\t${fs.exists(documents / it)}\n" })
+        if (fs.exists(pending / "reset")) writeSynced(preparing / "reset", "1")
         fs.atomicMove(preparing, journal)
         for (name in targets) {
             val target = documents / name
@@ -292,11 +316,11 @@ class IosBackupManager(
         return NSPropertyListSerialization.propertyListWithData(data, options = 0u, format = null, error = null) as Map<String, Any>
     }
 
-    enum class RestoreResult { None, Restored, Failed }
+    enum class RestoreResult { None, Restored, Reset, Failed }
     companion object {
         private val imageFolders = listOf("images" to "routine_images", "exercise_media" to "exercise_media", "physical_checks" to "physical_checks")
         private val allowedTargets = setOf(BackupFormat.DATABASE, BackupFormat.DATABASE + "-wal", BackupFormat.DATABASE + "-shm",
-            BackupFormat.DATABASE + "-journal", "settings.preferences_pb", "routine_images", "exercise_media", "physical_checks")
+            BackupFormat.DATABASE + "-journal", BackupFormat.DATABASE + ".lck", "settings.preferences_pb", "routine_images", "exercise_media", "physical_checks")
     }
 }
 

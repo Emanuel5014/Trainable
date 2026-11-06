@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudUpload
+import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.util.backup.IosBackupManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -50,6 +52,7 @@ private object IosBackups {
         }
         true
     }
+    var resetPending by mutableStateOf(false)
     var restartRequired by mutableStateOf(false)
     var startupResult by mutableStateOf(IosBackupManager.RestoreResult.None)
 }
@@ -71,7 +74,13 @@ internal fun IosBackupStartup(content: @Composable () -> Unit) {
         try {
             val result = withContext(Dispatchers.IO) { IosBackups.startup() }
             if (result != IosBackupManager.RestoreResult.None) {
-                IosBackups.startupResult = result
+                if (result != IosBackupManager.RestoreResult.Reset) IosBackups.startupResult = result
+                if (result == IosBackupManager.RestoreResult.Reset) {
+                    platform.UserNotifications.UNUserNotificationCenter.currentNotificationCenter().apply {
+                        removeAllPendingNotificationRequests()
+                        removeAllDeliveredNotifications()
+                    }
+                }
                 IosWorkoutLiveActivityBridge.service?.cancelAll()
             }
             ready = true
@@ -90,6 +99,40 @@ internal fun IosBackupStartup(content: @Composable () -> Unit) {
     }
 }
 
+/** The destructive action uses the same cold-start journal and cancellation path as backup restore. */
+@Composable
+internal fun IosResetButton() {
+    val scope = rememberCoroutineScope()
+    val show = LocalShowMessage.current
+    var confirm by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    GymButton(onClick = { confirm = true }, enabled = !busy,
+        modifier = Modifier.fillMaxWidth(), containerColor = Error.copy(alpha = 0.15f), contentColor = Error) {
+        Icon(Icons.Rounded.RestartAlt, null, tint = Error)
+        Spacer(Modifier.width(12.dp))
+        Text(stringResource(Res.string.reset_app_button), fontWeight = FontWeight.ExtraBold, color = Error)
+    }
+    if (confirm) AlertDialog(onDismissRequest = { if (!busy) confirm = false }, containerColor = SurfaceContainerHigh,
+        title = { Text(stringResource(Res.string.reset_app_dialog), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+        text = { Text(stringResource(Res.string.reset_app_message), color = OnSurfaceVariant) },
+        confirmButton = { TextButton(enabled = !busy, onClick = {
+            busy = true
+            scope.launch {
+                try {
+                    withContext(Dispatchers.IO) { IosBackups.manager.stageReset() }
+                    confirm = false
+                    IosBackups.resetPending = true
+                    IosBackups.restartRequired = true
+                } catch (error: CancellationException) { throw error }
+                catch (_: Exception) { show(getString(Res.string.reset_failed)) }
+                finally { busy = false }
+            }
+        }) { Text(stringResource(Res.string.reset_app_button).uppercase(), color = Error) } },
+        dismissButton = { TextButton(enabled = !busy, onClick = { confirm = false }) {
+            Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+        } })
+}
+
 /** A confirmed restore remains cancellable until the next process launch; the live database stays open and intact. */
 @Composable
 internal fun IosBackupDialogs() {
@@ -98,8 +141,8 @@ internal fun IosBackupDialogs() {
     var cancelling by remember { mutableStateOf(false) }
     if (IosBackups.restartRequired) {
         AlertDialog(onDismissRequest = {}, containerColor = SurfaceContainerHigh,
-            title = { Text(stringResource(Res.string.backup_reopen_title), color = OnSurface, fontWeight = FontWeight.ExtraBold) },
-            text = { Text(stringResource(Res.string.backup_reopen_description), color = OnSurfaceVariant) },
+            title = { Text(stringResource(if (IosBackups.resetPending) Res.string.reset_reopen_title else Res.string.backup_reopen_title), color = OnSurface, fontWeight = FontWeight.ExtraBold) },
+            text = { Text(stringResource(if (IosBackups.resetPending) Res.string.reset_reopen_description else Res.string.backup_reopen_description), color = OnSurfaceVariant) },
             confirmButton = {}, dismissButton = {
                 TextButton(enabled = !cancelling, onClick = {
                     cancelling = true

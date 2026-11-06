@@ -188,6 +188,7 @@ internal fun IosDataSection(onNavigateToImportHistory: () -> Unit) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(stringResource(Res.string.import_csv), fontWeight = FontWeight.ExtraBold)
             }
+            IosResetButton()
         }
     }
 }

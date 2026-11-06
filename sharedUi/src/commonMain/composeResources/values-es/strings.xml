@@ -1231,4 +1231,10 @@
     <string name="remove_photo">ELIMINAR FOTO</string>
     <string name="select_photo_source">Seleccionar origen de foto</string>
     <string name="camera_permission_denied">Permiso de cámara necesario para tomar fotos</string>
+    <string name="reset_app_button">REINICIAR APP</string>
+    <string name="reset_app_dialog">¿Reiniciar App?</string>
+    <string name="reset_app_message">Esto eliminará todos tus datos incluidos entrenamientos, rutinas y ajustes. Esta acción no se puede deshacer.</string>
+    <string name="reset_reopen_title">Restablecimiento listo</string>
+    <string name="reset_reopen_description">Cierra Trainable desde el selector de apps y vuelve a abrirla para completar el restablecimiento. Puedes cancelar para conservar tus datos actuales.</string>
+    <string name="reset_failed">No se pudo preparar el restablecimiento de la app.</string>
 </resources>
