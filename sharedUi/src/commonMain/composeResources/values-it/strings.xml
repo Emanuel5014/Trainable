@@ -1200,4 +1200,9 @@
     <string name="warmup_timer_finished">Timer riscaldamento finito!</string>
     <string name="gym_membership_expiring">Abbonamento in Scadenza</string>
     <string name="gym_membership_expiring_desc">Il tuo abbonamento in palestra scadrà tra %1$d giorni. Non dimenticare di rinnovarlo!</string>
+    <string name="notification_next_set">Prossima: %1$s - %2$dª serie: %3$s × %4$d</string>
+    <string name="notification_next_set_detail">Prossima: %1$s - %2$dª serie: %3$s × %4$s</string>
+    <string name="notification_next_set_text">Prossima: %1$s - %2$dª serie: %3$s</string>
+    <string name="notification_last_reps">(ultima: %1$d)</string>
+    <string name="skip_rest">Salta</string>
 </resources>

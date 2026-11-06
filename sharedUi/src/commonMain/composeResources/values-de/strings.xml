@@ -1197,4 +1197,9 @@
     <string name="warmup_timer_finished">Aufwärmen beendet!</string>
     <string name="gym_membership_expiring">Mitgliedschaft läuft ab</string>
     <string name="gym_membership_expiring_desc">Deine Fitnessstudio-Mitgliedschaft läuft in %1$d Tagen ab. Vergiss nicht zu verlängern!</string>
+    <string name="notification_next_set">Nächste: %1$s - Satz %2$d: %3$s × %4$d</string>
+    <string name="notification_next_set_detail">Nächste: %1$s - Satz %2$d: %3$s × %4$s</string>
+    <string name="notification_next_set_text">Nächste: %1$s - Satz %2$d: %3$s</string>
+    <string name="notification_last_reps">(letzte: %1$d)</string>
+    <string name="skip_rest">Überspringen</string>
 </resources>

@@ -10,6 +10,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import com.emanuel5014.trainable.ui.screens.workout.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import platform.Foundation.NSUserDefaults
 import platform.UIKit.UIApplication
 
@@ -33,12 +36,27 @@ private class IosWorkoutOwner(planId: Int?, sessionId: Int?, quickStart: Boolean
     words: WorkoutText, language: String) : ViewModel() {
     private var currentWords = words
     private val languages = MutableStateFlow(language)
+    private val timers = IosWorkoutTimers(context = ::timerContext)
     val model = WorkoutModel(IosAppGraph.workouts, IosAppGraph.preferences, IosAppGraph.exercises,
-        IosWorkoutTimers(), { currentWords }, IosWorkoutMiniSetStore(), IosAppGraph.oneRepMaxes,
+        timers, { currentWords }, IosWorkoutMiniSetStore(), IosAppGraph.oneRepMaxes,
         IosAppGraph.journal, languages, viewModelScope, planId, sessionId, quickStart, workoutName)
 
+    init {
+        IosWorkoutTimerActions.bind(model)
+        viewModelScope.launch {
+            model.state.map { timerContext() }.distinctUntilChanged().collect { timers.refreshControls() }
+        }
+    }
+
+    private fun timerContext(): IosLiveTimerContext = model.state.value.let { state ->
+        IosLiveTimerContext(state.sessionId ?: -1, state.sessionStartTime ?: 0,
+            state.timerAddSeconds, state.timerSubtractSeconds,
+            state.timerShowTimeButtons && state.timerAddEnabled,
+            state.timerShowTimeButtons && state.timerSubtractEnabled, state.timerShowSkipButton)
+    }
+
     fun updateText(words: WorkoutText, language: String) { currentWords = words; languages.value = language }
-    override fun onCleared() { model.close(); super.onCleared() }
+    override fun onCleared() { IosWorkoutTimerActions.unbind(model); model.close(); super.onCleared() }
 }
 
 private object IosWorkoutScreenPlatform : WorkoutScreenPlatform {

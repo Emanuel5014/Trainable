@@ -42,9 +42,20 @@ private object IosBackups {
         if (started) return@withLock IosBackupManager.RestoreResult.None
         manager.finishPendingRestore().also { started = true }
     }
+    suspend fun prepareTimerAction(): Boolean = startupLock.withLock {
+        if (manager.hasPendingRestoreOrRecovery()) return@withLock false
+        if (!started) {
+            if (manager.finishPendingRestore() != IosBackupManager.RestoreResult.None) return@withLock false
+            started = true
+        }
+        true
+    }
     var restartRequired by mutableStateOf(false)
     var startupResult by mutableStateOf(IosBackupManager.RestoreResult.None)
 }
+
+/** No Room/DataStore access from a cold App Intent until safe startup has run. */
+internal suspend fun prepareIosTimerAction(): Boolean = withContext(Dispatchers.IO) { IosBackups.prepareTimerAction() }
 
 /** Restores/recovery finish before a single repository, model, Room or DataStore instance is created. */
 @Composable
@@ -56,7 +67,10 @@ internal fun IosBackupStartup(content: @Composable () -> Unit) {
         failed = false
         try {
             val result = withContext(Dispatchers.IO) { IosBackups.startup() }
-            if (result != IosBackupManager.RestoreResult.None) IosBackups.startupResult = result
+            if (result != IosBackupManager.RestoreResult.None) {
+                IosBackups.startupResult = result
+                IosWorkoutLiveActivityBridge.service?.cancelAll()
+            }
             ready = true
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { failed = true }

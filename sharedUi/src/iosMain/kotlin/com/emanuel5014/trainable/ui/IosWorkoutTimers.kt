@@ -6,31 +6,47 @@ import com.emanuel5014.trainable.domain.emom.EmomClock
 import com.emanuel5014.trainable.util.notification.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import platform.UIKit.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /** The model owns in-app clocks. iOS owns pre-scheduled alerts, including while the app is suspended. */
+@OptIn(ExperimentalUuidApi::class)
 internal class IosWorkoutTimers(
     private val scheduler: IosNotificationScheduler = IosNotifications.scheduler,
     private val words: () -> IosNotificationWords? = { IosNotifications.words },
-    private val now: () -> Long = ::nowMillis
+    private val now: () -> Long = ::nowMillis,
+    private val live: () -> IosWorkoutLiveActivities? = { IosWorkoutLiveActivityBridge.service },
+    private val context: () -> IosLiveTimerContext = { IosLiveTimerContext() }
 ) : WorkoutTimers {
     override val timerEvents = MutableSharedFlow<TimerAction>(extraBufferCapacity = 1)
     override val warmupTimerEvents = MutableSharedFlow<WarmupTimerAction>(extraBufferCapacity = 1)
     override val emomEvents = MutableSharedFlow<EmomAction>(extraBufferCapacity = 4)
+    private var restLiveInstance: String? = null
+    private var warmupLiveInstance: String? = null
     private var restScheduled = false
     private var warmupScheduled = false
     private var emomInfo: EmomNotificationInfo? = null
     private var emomIds = emptyList<String>()
     private var emomFinishedScheduled = false
 
-    override fun hasNotificationPermission() = scheduler.canAuthorize
+    override fun hasNotificationPermission() = scheduler.canAuthorize || live()?.isAvailable() == true
+    // ActivityKit renders date-based countdowns; it does not need the Android per-second update path.
     override fun isLiveNotificationSupported() = false
     override fun cancelCustomVibration() = Unit // iOS controls notification sound/haptics.
     // The shared model calls these immediately before show*Finished. Keep the pre-scheduled alert: cancelling it
     // can race its delivery, and posting another on resume would duplicate an alert already delivered in background.
     override fun cancelFinishAlarm() = Unit
     override fun cancelWarmupFinishAlarm() = Unit
-    override fun cancelTimer() { scheduler.cancel(listOf(REST_NOTICE)); restScheduled = false }
-    override fun cancelWarmupTimer() { scheduler.cancel(listOf(WARMUP_NOTICE)); warmupScheduled = false }
+    override fun cancelTimer() {
+        scheduler.cancel(listOf(REST_NOTICE)); restScheduled = false
+        IosLiveTimerSnapshots.forget(REST_NOTICE, restLiveInstance)
+        live()?.cancel(REST_NOTICE); restLiveInstance = null
+    }
+    override fun cancelWarmupTimer() {
+        scheduler.cancel(listOf(WARMUP_NOTICE)); warmupScheduled = false
+        IosLiveTimerSnapshots.forget(WARMUP_NOTICE, warmupLiveInstance)
+        live()?.cancel(WARMUP_NOTICE); warmupLiveInstance = null
+    }
     override fun cancelEmom() { cancelEmomBoundaryAlarm(); emomInfo = null; emomFinishedScheduled = false }
     override fun cancelEmomBoundaryAlarm() {
         scheduler.cancel(emomIds); emomIds = emptyList(); emomFinishedScheduled = false
@@ -40,23 +56,53 @@ internal class IosWorkoutTimers(
         totalSeconds: Int?, scheduleAlarm: Boolean, nextSetRepsLabel: String?, nextSetDetail: String?, nextSetText: String?) {
         if (!scheduleAlarm) return
         val text = words() ?: return
-        val detail = listOfNotNull(exerciseName, nextSetText ?: nextSetDetail ?: nextSetRepsLabel).joinToString(" · ")
+        val detail = text.nextSet(exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit,
+            nextSetRepsLabel, nextSetDetail, nextSetText)
+        val endsAt = now() + remainingSeconds.coerceAtLeast(0) * 1000L
         scheduler.schedule(listOf(IosNotice(REST_NOTICE, text.restTitle,
-            text.restBody + if (detail.isEmpty()) "" else " — $detail", now() + remainingSeconds.coerceAtLeast(0) * 1000L)), prompt = true)
+            text.restBody + if (detail.isEmpty()) "" else " — $detail", endsAt)), prompt = true)
         restScheduled = true
+        if (remainingSeconds > 0) {
+            val instance = restLiveInstance ?: Uuid.random().toString().also { restLiveInstance = it }
+            publish(context().apply(IosLiveTimer(REST_NOTICE, instance, text.restTitle, detail,
+                endsAt, (totalSeconds ?: remainingSeconds).coerceAtLeast(remainingSeconds), finishedText = text.restBody), text.skipLabel))
+        }
     }
     override fun startOrUpdateWarmupTimerNotification(remainingSeconds: Int, totalSeconds: Int?, scheduleAlarm: Boolean) {
         if (!scheduleAlarm) return
         val text = words() ?: return
-        scheduler.schedule(listOf(IosNotice(WARMUP_NOTICE, text.warmupTitle, text.warmupBody,
-            now() + remainingSeconds.coerceAtLeast(0) * 1000L)), prompt = true)
+        val endsAt = now() + remainingSeconds.coerceAtLeast(0) * 1000L
+        scheduler.schedule(listOf(IosNotice(WARMUP_NOTICE, text.warmupTitle, text.warmupBody, endsAt)), prompt = true)
         warmupScheduled = true
+        if (remainingSeconds > 0) {
+            val instance = warmupLiveInstance ?: Uuid.random().toString().also { warmupLiveInstance = it }
+            publish(context().apply(IosLiveTimer(WARMUP_NOTICE, instance, text.warmupTitle, "",
+                endsAt, (totalSeconds ?: remainingSeconds).coerceAtLeast(remainingSeconds), finishedText = text.warmupBody), text.skipLabel))
+        }
     }
+    private fun publish(timer: IosLiveTimer) {
+        IosLiveTimerSnapshots.remember(timer)
+        live()?.takeIf { it.isAvailable() }?.update(timer)
+    }
+
+    fun refreshControls() {
+        val label = words()?.skipLabel ?: return
+        listOf(REST_NOTICE to restLiveInstance, WARMUP_NOTICE to warmupLiveInstance).forEach { (kind, instance) ->
+            val current = IosLiveTimerSnapshots.get(kind)?.takeIf { it.instanceId == instance } ?: return@forEach
+            val updated = context().apply(current, label)
+            if (updated != current) publish(updated)
+        }
+    }
+
     override fun showRestFinished() {
+        IosLiveTimerSnapshots.forget(REST_NOTICE, restLiveInstance)
+        live()?.cancel(REST_NOTICE); restLiveInstance = null
         val text = words() ?: return
         if (!restScheduled) scheduler.schedule(listOf(IosNotice(REST_NOTICE, text.restTitle, text.restBody, now())))
     }
     override fun showWarmupTimerFinished() {
+        IosLiveTimerSnapshots.forget(WARMUP_NOTICE, warmupLiveInstance)
+        live()?.cancel(WARMUP_NOTICE); warmupLiveInstance = null
         val text = words() ?: return
         if (!warmupScheduled) scheduler.schedule(listOf(IosNotice(WARMUP_NOTICE, text.warmupTitle, text.warmupBody, now())))
     }

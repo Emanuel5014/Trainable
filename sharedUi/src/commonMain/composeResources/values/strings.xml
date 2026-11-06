@@ -1197,4 +1197,9 @@
     <string name="warmup_timer_finished">Warmup timer finished!</string>
     <string name="gym_membership_expiring">Membership Expiring</string>
     <string name="gym_membership_expiring_desc">Your gym membership will expire in %1$d days. Don't forget to renew!</string>
+    <string name="notification_next_set">Next: %1$s - Set %2$d: %3$s × %4$d</string>
+    <string name="notification_next_set_detail">Next: %1$s - Set %2$d: %3$s × %4$s</string>
+    <string name="notification_next_set_text">Next: %1$s - Set %2$d: %3$s</string>
+    <string name="notification_last_reps">(last: %1$d)</string>
+    <string name="skip_rest">Skip</string>
 </resources>

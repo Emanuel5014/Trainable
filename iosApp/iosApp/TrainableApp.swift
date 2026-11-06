@@ -7,6 +7,7 @@ struct TrainableApp: App {
     init() {
         // AES-GCM for the physical checks: CryptoKit is Swift only, Kotlin calls it through this bridge
         IosCryptoBridge.shared.aesGcm = CryptoKitAesGcm()
+        IosWorkoutLiveActivityBridge.shared.service = WorkoutLiveActivityService()
     }
 
     var body: some Scene {

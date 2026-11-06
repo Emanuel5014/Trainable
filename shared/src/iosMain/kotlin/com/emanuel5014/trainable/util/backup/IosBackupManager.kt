@@ -112,6 +112,8 @@ class IosBackupManager(
     }
 
     fun hasPendingRestore(): Boolean = fs.exists(pending / "validated")
+    /** Background App Intents must leave pending replacement/recovery to the normal cold startup. */
+    fun hasPendingRestoreOrRecovery(): Boolean = hasPendingRestore() || fs.exists(journal)
     fun cancelPendingRestore() { fs.deleteRecursively(pending) }
 
     /** Must run once at startup, before constructing the application's database/settings graph. */

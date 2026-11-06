@@ -4,6 +4,7 @@ package com.emanuel5014.trainable.ui
 
 import androidx.compose.runtime.*
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.sharedui.resources.*
 import com.emanuel5014.trainable.ui.screens.settings.NotificationSettingsContent
 import com.emanuel5014.trainable.ui.screens.settings.SettingsState
@@ -133,7 +134,25 @@ private class AppleNotificationDelivery : IosNotificationDelivery {
 
 internal data class IosNotificationWords(val restTitle: String, val restBody: String, val warmupTitle: String,
     val warmupBody: String, val membershipTitle: String, val membershipTemplate: String,
-    val emomRoundTemplate: String, val emomFinished: String, val emomReady: String) {
+    val emomRoundTemplate: String, val emomFinished: String, val emomReady: String,
+    val nextSetTemplate: String = "Next: %1\$s - Set %2\$d: %3\$s × %4\$d",
+    val nextSetDetailTemplate: String = "Next: %1\$s - Set %2\$d: %3\$s × %4\$s",
+    val nextSetTextTemplate: String = "Next: %1\$s - Set %2\$d: %3\$s",
+    val lastRepsTemplate: String = "(last: %1\$d)", val skipLabel: String = "Skip") {
+    private fun fill(template: String, vararg args: Any): String =
+        Regex("%(\\d+)\\$[sd]").replace(template) { match -> args[match.groupValues[1].toInt() - 1].toString() }
+
+    /** Same branches and wording as Android main's TimerNotificationHelper.nextSetLabel. */
+    fun nextSet(exercise: String?, number: Int?, weight: Float?, reps: Int?, previousReps: Int?, unit: String?,
+        repsLabel: String?, detail: String?, timedText: String?): String {
+        if (exercise != null && number != null && timedText != null) return fill(nextSetTextTemplate, exercise, number, timedText)
+        if (exercise == null || number == null || weight == null || (reps == null && repsLabel == null) || unit == null) return ""
+        val load = WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(weight, unit), unit)
+        val base = if (repsLabel != null || detail != null) {
+            fill(nextSetDetailTemplate, exercise, number, load, repsLabel ?: reps.toString()) + (detail?.let { " · $it" } ?: "")
+        } else fill(nextSetTemplate, exercise, number, load, reps!!)
+        return if (previousReps != null && previousReps != reps && repsLabel == null) "$base ${fill(lastRepsTemplate, previousReps)}" else base
+    }
     fun membership(days: Int) = membershipTemplate.replace("%1\$d", days.toString())
     fun round(round: Int, rounds: Int) = emomRoundTemplate.replace("%1\$d", round.toString()).replace("%2\$d", rounds.toString())
 }
@@ -145,7 +164,11 @@ internal object IosNotifications {
     var words: IosNotificationWords? = null
     private val emomIds = (0..59).map { "workout.emom.$it" }
     fun cancelEmom() = scheduler.cancel(emomIds)
-    fun cancelTimers() = scheduler.cancel(listOf(REST_NOTICE, WARMUP_NOTICE) + emomIds)
+    fun cancelTimers() {
+        scheduler.cancel(listOf(REST_NOTICE, WARMUP_NOTICE) + emomIds)
+        IosLiveTimerSnapshots.clear()
+        IosWorkoutLiveActivityBridge.service?.cancelAll()
+    }
     fun permissionFromSettings(enabled: Boolean, save: (Boolean) -> Unit) {
         if (!enabled) { save(false); return }
         schedulerPermission { granted ->
@@ -175,7 +198,9 @@ internal fun IosNotificationEffects(preferences: UserPreferencesRepository) {
     val words = IosNotificationWords(stringResource(Res.string.rest_timer), stringResource(Res.string.rest_end),
         stringResource(Res.string.warmup_timer), stringResource(Res.string.warmup_timer_finished),
         stringResource(Res.string.gym_membership_expiring), stringResource(Res.string.gym_membership_expiring_desc),
-        stringResource(Res.string.emom_round_progress), stringResource(Res.string.emom_notification_finished_title), stringResource(Res.string.emom_notification_title_get_ready))
+        stringResource(Res.string.emom_round_progress), stringResource(Res.string.emom_notification_finished_title), stringResource(Res.string.emom_notification_title_get_ready),
+        stringResource(Res.string.notification_next_set), stringResource(Res.string.notification_next_set_detail),
+        stringResource(Res.string.notification_next_set_text), stringResource(Res.string.notification_last_reps), stringResource(Res.string.skip_rest))
     SideEffect { IosNotifications.words = words }
     var activation by remember { mutableIntStateOf(0) }
     DisposableEffect(Unit) {

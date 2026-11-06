@@ -1200,4 +1200,9 @@
     <string name="warmup_timer_finished">¡Calentamiento terminado!</string>
     <string name="gym_membership_expiring">Membresía por Vencer</string>
     <string name="gym_membership_expiring_desc">Tu membresía del gym vencerá en %1$d días. ¡No olvides renovarla!</string>
+    <string name="notification_next_set">Siguiente: %1$s - Serie %2$d: %3$s × %4$d</string>
+    <string name="notification_next_set_detail">Siguiente: %1$s - Serie %2$d: %3$s × %4$s</string>
+    <string name="notification_next_set_text">Siguiente: %1$s - Serie %2$d: %3$s</string>
+    <string name="notification_last_reps">(última: %1$d)</string>
+    <string name="skip_rest">Saltar</string>
 </resources>

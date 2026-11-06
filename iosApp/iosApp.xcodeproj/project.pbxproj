@@ -9,12 +9,24 @@
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* TrainableApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* TrainableApp.swift */; };
 		A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* ContentView.swift */; };
+		B10000000000000000000001 /* WorkoutLiveActivityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001; };
+		B10000000000000000000002 /* Timer attributes in app */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002; };
+		B10000000000000000000003 /* Timer attributes in extension */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002; };
+		B10000000000000000000004 /* TrainableTimerWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003; };
+		B10000000000000000000005 /* TrainableTimers.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B20000000000000000000004; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B10000000000000000000006 = {isa = PBXBuildFile; fileRef = B20000000000000000000005; };
+		B10000000000000000000007 = {isa = PBXBuildFile; fileRef = B20000000000000000000005; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A20000000000000000000001 /* TrainableApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainableApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A20000000000000000000003 /* Trainable.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Trainable.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B20000000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLiveActivityService.swift; sourceTree = "<group>"; };
+		B20000000000000000000002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainableTimerAttributes.swift; sourceTree = "<group>"; };
+		B20000000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainableTimerWidget.swift; sourceTree = "<group>"; };
+		B20000000000000000000004 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TrainableTimers.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B20000000000000000000005 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerControlIntent.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -25,6 +37,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B60000000000000000000002 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -32,6 +45,7 @@
 			isa = PBXGroup;
 			children = (
 				A40000000000000000000002 /* iosApp */,
+				B40000000000000000000001 /* LiveActivities */,
 				A40000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +55,7 @@
 			children = (
 				A20000000000000000000001 /* TrainableApp.swift */,
 				A20000000000000000000002 /* ContentView.swift */,
+				B20000000000000000000001 /* WorkoutLiveActivityService.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -49,10 +64,12 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000003 /* Trainable.app */,
+				B20000000000000000000004 /* TrainableTimers.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
+		B40000000000000000000001 = {isa = PBXGroup; children = (B20000000000000000000002, B20000000000000000000003, B20000000000000000000005, ); path = LiveActivities; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -64,18 +81,30 @@
 				A60000000000000000000002 /* Sources */,
 				A30000000000000000000001 /* Frameworks */,
 				A60000000000000000000003 /* Resources */,
+				B60000000000000000000003 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B70000000000000000000002 /* Timer extension */,
 			);
 			name = iosApp;
 			productName = iosApp;
 			productReference = A20000000000000000000003 /* Trainable.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B50000000000000000000001 = {isa = PBXNativeTarget; buildConfigurationList = B90000000000000000000001; buildPhases = (B60000000000000000000001, B60000000000000000000002, ); buildRules = (); dependencies = (); name = TrainableTimers; productName = TrainableTimers; productReference = B20000000000000000000004; productType = "com.apple.product-type.app-extension"; };
 /* End PBXNativeTarget section */
 
+/* Begin PBXContainerItemProxy section */
+		B70000000000000000000001 = {isa = PBXContainerItemProxy; containerPortal = A70000000000000000000001; proxyType = 1; remoteGlobalIDString = B50000000000000000000001; remoteInfo = TrainableTimers; };
+/* End PBXContainerItemProxy section */
+/* Begin PBXTargetDependency section */
+		B70000000000000000000002 = {isa = PBXTargetDependency; target = B50000000000000000000001; targetProxy = B70000000000000000000001; };
+/* End PBXTargetDependency section */
+/* Begin PBXCopyFilesBuildPhase section */
+		B60000000000000000000003 = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (B10000000000000000000005, ); name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXCopyFilesBuildPhase section */
 /* Begin PBXProject section */
 		A70000000000000000000001 /* Project object */ = {
 			isa = PBXProject;
@@ -98,6 +127,7 @@
 			projectRoot = "";
 			targets = (
 				A50000000000000000000001 /* iosApp */,
+				B50000000000000000000001 /* TrainableTimers */,
 			);
 		};
 /* End PBXProject section */
@@ -140,9 +170,13 @@
 			files = (
 				A10000000000000000000001 /* TrainableApp.swift in Sources */,
 				A10000000000000000000002 /* ContentView.swift in Sources */,
+				B10000000000000000000001 /* Native Live Activity bridge */,
+				B10000000000000000000002 /* Timer attributes */,
+				B10000000000000000000006 /* TimerControlIntent in app */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B60000000000000000000001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B10000000000000000000003, B10000000000000000000004, B10000000000000000000007, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -230,6 +264,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) TRAINABLE_APP";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -279,11 +314,46 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) TRAINABLE_APP";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
+		B80000000000000000000001 = {isa = XCBuildConfiguration; buildSettings = {
+			APPLICATION_EXTENSION_API_ONLY = YES;
+			CODE_SIGN_STYLE = Automatic;
+			CURRENT_PROJECT_VERSION = 2;
+			GENERATE_INFOPLIST_FILE = YES;
+			INFOPLIST_FILE = LiveActivities/Info.plist;
+			INFOPLIST_KEY_CFBundleDisplayName = Trainable;
+			IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+			LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+			MARKETING_VERSION = 2.9.0;
+			PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable.timers;
+			PRODUCT_NAME = TrainableTimers;
+			SKIP_INSTALL = YES;
+			SWIFT_EMIT_LOC_STRINGS = YES;
+			SWIFT_VERSION = 5.0;
+			TARGETED_DEVICE_FAMILY = 1;
+		}; name = Debug; };
+		B80000000000000000000002 = {isa = XCBuildConfiguration; buildSettings = {
+			APPLICATION_EXTENSION_API_ONLY = YES;
+			CODE_SIGN_STYLE = Automatic;
+			CURRENT_PROJECT_VERSION = 2;
+			GENERATE_INFOPLIST_FILE = YES;
+			INFOPLIST_FILE = LiveActivities/Info.plist;
+			INFOPLIST_KEY_CFBundleDisplayName = Trainable;
+			IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+			LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+			MARKETING_VERSION = 2.9.0;
+			PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable.timers;
+			PRODUCT_NAME = TrainableTimers;
+			SKIP_INSTALL = YES;
+			SWIFT_EMIT_LOC_STRINGS = YES;
+			SWIFT_VERSION = 5.0;
+			TARGETED_DEVICE_FAMILY = 1;
+		}; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -305,6 +375,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		B90000000000000000000001 = {isa = XCConfigurationList; buildConfigurations = (B80000000000000000000001, B80000000000000000000002, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = A70000000000000000000001 /* Project object */;

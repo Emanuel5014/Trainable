@@ -1200,4 +1200,9 @@
     <string name="warmup_timer_finished">Aquecimento finalizado!</string>
     <string name="gym_membership_expiring">Assinatura a Vencer</string>
     <string name="gym_membership_expiring_desc">Sua assinatura da academia vencerá em %1$d dias. Não esqueça de renovar!</string>
+    <string name="notification_next_set">Próxima: %1$s - Série %2$d: %3$s × %4$d</string>
+    <string name="notification_next_set_detail">Próxima: %1$s - Série %2$d: %3$s × %4$s</string>
+    <string name="notification_next_set_text">Próxima: %1$s - Série %2$d: %3$s</string>
+    <string name="notification_last_reps">(última: %1$d)</string>
+    <string name="skip_rest">Pular</string>
 </resources>

@@ -262,6 +262,13 @@ interface WorkoutDao {
     @Query("UPDATE workout_sessions SET warmup_timer_end_time = :endTime, total_warmup_seconds = :totalSeconds WHERE id = :sessionId")
     suspend fun updateWarmupTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?)
 
+    /** A background native control must never overwrite a newer timer or a finished/replaced session. */
+    @Query("UPDATE workout_sessions SET rest_timer_end_time = :endTime, total_rest_seconds = :totalSeconds WHERE id = :sessionId AND timestamp = :startedAt AND is_finished = 0 AND rest_timer_end_time = :expectedEnd")
+    suspend fun compareAndSetRestTimer(sessionId: Int, startedAt: Long, expectedEnd: Long, endTime: Long?, totalSeconds: Int?): Int
+
+    @Query("UPDATE workout_sessions SET warmup_timer_end_time = :endTime, total_warmup_seconds = :totalSeconds WHERE id = :sessionId AND timestamp = :startedAt AND is_finished = 0 AND warmup_timer_end_time = :expectedEnd")
+    suspend fun compareAndSetWarmupTimer(sessionId: Int, startedAt: Long, expectedEnd: Long, endTime: Long?, totalSeconds: Int?): Int
+
     @Query("UPDATE workout_sessions SET cardio_timer_seconds = :seconds, cardio_timer_running = :running, cardio_timer_paused = :paused, cardio_timer_started_at = :startedAt WHERE id = :sessionId")
     suspend fun updateCardioTimer(sessionId: Int, seconds: Int, running: Boolean, paused: Boolean, startedAt: Long?)
 
