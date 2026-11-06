@@ -23,7 +23,7 @@ internal fun IosOneRepMaxesEntry(modifier: Modifier = Modifier, onClick: () -> U
                 .thenByDescending { it.entry.id }).first()
         }.sortedByDescending { it.entry.date }
     }
-    val language = Locale.current.language
+    val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
     val subtitle = if (current.isEmpty()) stringResource(Res.string.one_rep_maxes_empty_title)
     else current.take(3).joinToString(" · ") {
         "${ExerciseTranslations.translate(it.exerciseName, language)} ${formatWeight(it.entry.weightKg, unit)}"

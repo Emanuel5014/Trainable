@@ -21,7 +21,7 @@ import platform.UIKit.UIApplication
 internal fun IosWorkoutScreen(entry: NavBackStackEntry, planId: Int?, sessionId: Int?, quickStart: Boolean, workoutName: String?,
     onNavigateBack: () -> Unit, onNavigateToRoutine: (Int) -> Unit) {
     val words = rememberIosWorkoutText()
-    val language = Locale.current.language
+    val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
     val owner = viewModel<IosWorkoutOwner>(viewModelStoreOwner = entry) {
         IosWorkoutOwner(planId, sessionId, quickStart, workoutName, words, language)
     }

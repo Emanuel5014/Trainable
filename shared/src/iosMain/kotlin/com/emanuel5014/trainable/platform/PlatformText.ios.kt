@@ -18,7 +18,7 @@ internal actual fun formatDecimals(value: Double, decimals: Int, deviceLocale: B
         minimumFractionDigits = decimals.toULong()
         maximumFractionDigits = decimals.toULong()
         roundingMode = NSNumberFormatterRoundHalfUp
-        locale = if (deviceLocale) NSLocale.currentLocale else NSLocale(localeIdentifier = "en_US_POSIX")
+        locale = if (deviceLocale) IosAppLocale.formattingLocale() else NSLocale(localeIdentifier = "en_US_POSIX")
     }
     return formatter.stringFromNumber(NSNumber(double = value)) ?: value.toString()
 }

@@ -74,7 +74,7 @@ import platform.posix.memcpy
 internal fun IosHistoryImportScreen(onNavigateBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val model = remember { HistoryImportModel(IosAppGraph.historyImporter, IosAppGraph.preferences, scope) }
-    val language = Locale.current.language
+    val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
     val presenter = LocalUIViewController.current
     val showMessage by rememberUpdatedState(LocalShowMessage.current)
 

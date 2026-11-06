@@ -1202,4 +1202,12 @@
     <string name="notification_next_set_text">Nächste: %1$s - Satz %2$d: %3$s</string>
     <string name="notification_last_reps">(letzte: %1$d)</string>
     <string name="skip_rest">Überspringen</string>
+    <string name="language">Sprache</string>
+    <string name="language_system_default">Systemstandard</string>
+    <string name="language_english">English</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_portuguese">Português</string>
 </resources>

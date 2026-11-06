@@ -1205,4 +1205,12 @@
     <string name="notification_next_set_text">Prochaine: %1$s - Série %2$d: %3$s</string>
     <string name="notification_last_reps">(dernière: %1$d)</string>
     <string name="skip_rest">Passer</string>
+    <string name="language">Langue</string>
+    <string name="language_system_default">Par Défaut du Système</string>
+    <string name="language_english">English</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_portuguese">Português</string>
 </resources>

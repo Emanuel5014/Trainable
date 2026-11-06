@@ -67,7 +67,7 @@ internal fun IosReportScreen(planIdsString: String, onNavigateBack: () -> Unit) 
             planIds = ReportModel.planIdsOf(planIdsString),
             reportGenerator = ReportGenerator(IosAppGraph.workouts, IosAppGraph.preferences) { text },
             htmlReportFormatter = HtmlReportFormatter(),
-            languageCode = { Locale.current.language },
+            languageCode = { com.emanuel5014.trainable.platform.IosAppLocale.language() },
             scope = scope
         )
     }

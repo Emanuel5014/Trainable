@@ -35,7 +35,7 @@ internal object IosExercisePlatformUi : ExercisePlatformUi {
     @Composable
     override fun ExerciseDetail(exerciseId: Int, onDismiss: () -> Unit) {
         val scope = rememberCoroutineScope()
-        val language = Locale.current.language
+        val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
         val controller = remember(language) {
             ExerciseDetailState(IosAppGraph.exercises, IosAppGraph.workouts, IosAppGraph.merges,
                 IosAppGraph.preferences, flowOf(language), scope)

@@ -72,7 +72,7 @@ import org.jetbrains.compose.resources.Font
 import platform.UIKit.UIViewController
 
 /** The iOS app's root, shown by the Xcode project: the app's navigation on the device's own data. */
-fun MainViewController(): UIViewController = ComposeUIViewController { IosBackupStartup { TrainableIosApp() } }
+fun MainViewController(): UIViewController = ComposeUIViewController { IosBackupStartup { IosLanguageRoot { TrainableIosApp() } } }
 
 /** One database and one settings file for the whole process, and the repositories over them. */
 internal object IosAppGraph {
@@ -175,7 +175,7 @@ private fun TrainableIosApp() {
         HistoryState(IosAppGraph.workouts, IosAppGraph.exercises, preferences, IosAppGraph.journal, scope)
     }
     val analyticsText = rememberIosAnalyticsText()
-    val language = Locale.current.language
+    val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
     val analytics = remember(analyticsText, language) {
         AnalyticsState(IosAppGraph.analytics, IosAppGraph.workouts, preferences, IosAppGraph.merges,
             IosAppGraph.analyticsPreferences, analyticsText, flowOf(language), scope)

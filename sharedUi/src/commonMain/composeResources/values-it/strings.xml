@@ -1205,4 +1205,12 @@
     <string name="notification_next_set_text">Prossima: %1$s - %2$dª serie: %3$s</string>
     <string name="notification_last_reps">(ultima: %1$d)</string>
     <string name="skip_rest">Salta</string>
+    <string name="language">Lingua</string>
+    <string name="language_system_default">Predefinita Sistema</string>
+    <string name="language_english">English</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_portuguese">Português</string>
 </resources>

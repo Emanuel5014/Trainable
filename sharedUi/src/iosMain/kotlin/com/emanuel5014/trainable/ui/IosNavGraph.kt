@@ -148,7 +148,7 @@ internal fun IosNavGraph(
             }
             composable<OneRepMaxes> {
                 val scope = rememberCoroutineScope()
-                val language = Locale.current.language
+                val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
                 val state = remember(language) { OneRepMaxState(IosAppGraph.oneRepMaxes, IosAppGraph.exercises,
                     IosAppGraph.preferences, flowOf(language), scope) }
                 OneRepMaxContent(onNavigateBack = { navController.popBackStack() }, controller = state)
@@ -164,6 +164,7 @@ internal fun IosNavGraph(
                     onNavigateToAiSettings = { navController.navigate(AiSettings) },
                     onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
                     onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) },
+                    languageUi = { IosLanguageSetting() },
                     platformSections = { IosDataSection(onNavigateToImportHistory = { navController.navigate(ImportHistory) }) },
                     aboutSection = {
                         AboutSettingsSection(
@@ -198,7 +199,7 @@ internal fun IosNavGraph(
             }
             composable<Exercises> {
                 val scope = rememberCoroutineScope()
-                val language = Locale.current.language
+                val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
                 val controller = remember(language) {
                     com.emanuel5014.trainable.ui.screens.exercises.ExercisesState(
                         IosAppGraph.exercises, IosAppGraph.merges, IosAppGraph.preferences, flowOf(language), scope)
@@ -256,7 +257,7 @@ internal fun IosNavGraph(
                 RoutineDetailContent(
                     state = detail,
                     // The exercise categories in the phone's language until the app's own choice reaches iOS
-                    languageCode = Locale.current.language,
+                    languageCode = com.emanuel5014.trainable.platform.IosAppLocale.language(),
                     // Scanning a routine sheet with AI is not on iOS yet
                     scan = NoRoutineScan,
                     onNavigateBack = { navController.popBackStack() },
@@ -269,7 +270,7 @@ internal fun IosNavGraph(
             composable<EditWorkoutSession> { entry ->
                 val sessionId = entry.toRoute<EditWorkoutSession>().sessionId
                 val scope = rememberCoroutineScope()
-                val language = Locale.current.language
+                val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
                 val model = remember(sessionId) {
                     com.emanuel5014.trainable.ui.screens.history.EditWorkoutModel(
                         sessionId, IosAppGraph.workouts, IosAppGraph.exercises, IosAppGraph.preferences,
@@ -282,7 +283,7 @@ internal fun IosNavGraph(
             composable<CompareSessions> { entry ->
                 val route = entry.toRoute<CompareSessions>()
                 val scope = rememberCoroutineScope()
-                val language = Locale.current.language
+                val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
                 val model = remember {
                     com.emanuel5014.trainable.ui.screens.compare.CompareSessionsModel(
                         IosAppGraph.workouts, IosAppGraph.preferences, flowOf(language), scope)
@@ -348,7 +349,7 @@ private fun IosMainTabs(
             1 -> RoutineListContent(
                 state = routines,
                 // The exercise categories in the phone's language until the app's own choice reaches iOS
-                languageCode = Locale.current.language,
+                languageCode = com.emanuel5014.trainable.platform.IosAppLocale.language(),
                 // Sharing a routine file is not on iOS yet
                 sharePlans = { _, _, _, _ -> },
                 isVisible = pagerState.currentPage == 1,
@@ -357,7 +358,7 @@ private fun IosMainTabs(
             )
             2 -> HistoryContent(
                 state = history,
-                languageCode = Locale.current.language,
+                languageCode = com.emanuel5014.trainable.platform.IosAppLocale.language(),
                 // Sharing a workout as an image is not on iOS yet
                 share = NoHistoryShare,
                 onEditSession = { sessionId -> navController.navigate(EditWorkoutSession(sessionId)) },

@@ -86,7 +86,7 @@ internal fun rememberIosPrescriptionText(): PrescriptionText {
         assisted = pluralStringResource(Res.plurals.assisted_reps_badge, 1) to pluralStringResource(Res.plurals.assisted_reps_badge, 2),
         partial = pluralStringResource(Res.plurals.partial_reps_badge, 1) to pluralStringResource(Res.plurals.partial_reps_badge, 2)
     )
-    val language = Locale.current.language
+    val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
     return remember(templates.max, templates.performed, language) { IosPrescriptionText(templates, language) }
 }
 
