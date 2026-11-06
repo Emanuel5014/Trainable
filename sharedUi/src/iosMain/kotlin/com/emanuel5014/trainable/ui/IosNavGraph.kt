@@ -100,6 +100,7 @@ import com.emanuel5014.trainable.ui.screens.dashboard.DashboardState
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardUiState
 import com.emanuel5014.trainable.ui.screens.routines.RoutineListContent
 import com.emanuel5014.trainable.ui.screens.routines.RoutinesState
+import com.kyant.backdrop.backdrops.layerBackdrop
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
@@ -132,11 +133,24 @@ internal fun IosNavGraph(
     val hazeState = rememberHazeState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
+    // As MainActivity: the floating bar turns to glass when the user wants glass on the navigation, and the
+    // expressive navbar's action button bends the same copy of the screens
+    val glassSettings = com.emanuel5014.trainable.ui.theme.LocalGlassSettings.current
+    val glassNavBar = navBarStyle == NavBarStyle.Floating && glassSettings.isOn(com.emanuel5014.trainable.data.model.GlassPart.NavBar)
+    val glassNavAction = navBarStyle == NavBarStyle.Expressive && glassSettings.isOn(com.emanuel5014.trainable.data.model.GlassPart.ActionButtons)
+    val recordScreens = glassNavBar || glassNavAction
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val glassBackdrop = com.kyant.backdrop.backdrops.rememberLayerBackdrop {
+        drawRect(backgroundColor)
+        drawContent()
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         NavHost(
             navController = navController,
             startDestination = MainTabs,
-            modifier = Modifier.fillMaxSize().hazeSource(state = hazeState),
+            modifier = Modifier.fillMaxSize().hazeSource(state = hazeState)
+                .then(if (recordScreens) Modifier.layerBackdrop(glassBackdrop) else Modifier),
             enterTransition = { fadeIn() + slideInHorizontally { it } },
             exitTransition = { fadeOut() + slideOutHorizontally { -it } },
             popEnterTransition = { fadeIn() + slideInHorizontally { -it } },
@@ -303,8 +317,20 @@ internal fun IosNavGraph(
             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
         ) {
             when (navBarStyle) {
-                NavBarStyle.Floating -> BottomNavBarFlo(navController, pagerState, hazeState, isDark)
-                NavBarStyle.Expressive -> BottomNavBarExpressive(navController, pagerState)
+                NavBarStyle.Floating -> if (glassNavBar) {
+                    com.emanuel5014.trainable.ui.components.BottomNavBarGlass(
+                        navController = navController,
+                        pagerState = pagerState,
+                        backdrop = glassBackdrop,
+                        isDark = isDark,
+                        intensity = glassSettings.intensity
+                    )
+                } else {
+                    BottomNavBarFlo(navController, pagerState, hazeState, isDark)
+                }
+                NavBarStyle.Expressive -> androidx.compose.runtime.CompositionLocalProvider(
+                    com.emanuel5014.trainable.ui.theme.LocalAppGlassBackdrop provides (if (glassNavAction) glassBackdrop else null)
+                ) { BottomNavBarExpressive(navController, pagerState) }
                 else -> BottomNavBar(navController, pagerState)
             }
         }

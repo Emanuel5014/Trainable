@@ -190,6 +190,7 @@ private fun TrainableIosApp() {
     val rpeEnabled by preferences.rpeEnabled.collectAsState(initial = false)
     val rpeScale by preferences.rpeScale.collectAsState(initial = RpeScale.BASIC)
     val rpeSettings = remember(rpeEnabled, rpeScale) { RpeSettings(rpeEnabled, rpeScale) }
+    val glassSettings by preferences.glassSettings.collectAsState(initial = com.emanuel5014.trainable.data.model.GlassSettings())
     // Same choice as the Android app: dark unless the user picked light or the system's
     val isDark = when (themeMode) {
         null -> true
@@ -217,6 +218,8 @@ private fun TrainableIosApp() {
             LocalRpeSettings provides rpeSettings,
             LocalPrescriptionText provides rememberIosPrescriptionText(),
             LocalPrescriptionEnvironment provides IosPrescriptionEnvironment,
+            com.emanuel5014.trainable.ui.theme.LocalGlassSettings provides glassSettings,
+            com.emanuel5014.trainable.ui.glass.LocalPlatformGlass provides IosPlatformGlass,
             com.emanuel5014.trainable.ui.components.LocalPlanImage provides IosPlanImage,
             com.emanuel5014.trainable.ui.components.LocalRoutineImagePicker provides IosRoutineImagePicker
         ) {
@@ -226,6 +229,9 @@ private fun TrainableIosApp() {
         }
     }
 }
+
+/** The shared Kyant Liquid Glass; iOS has no blur behind sheets yet, so NoOverlayBlur stays a no-op. */
+private val IosPlatformGlass = com.emanuel5014.trainable.ui.theme.KyantPlatformGlass()
 
 /** The selected fixed/custom palette on iOS; wallpaper colors remain an Android capability. */
 @Composable
