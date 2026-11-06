@@ -70,6 +70,19 @@ private object IosWorkoutScreenPlatform : WorkoutScreenPlatform {
         }
     }
     // Completing a workout returns to the dashboard without any completion message.
+
+    /** The exercise content recorded for the glass panel, as on Android; null while the panel part is off. */
+    @Composable
+    override fun rememberPanel(): com.emanuel5014.trainable.ui.screens.workout.WorkoutPanel? {
+        val source = com.emanuel5014.trainable.ui.theme.rememberPanelGlassSource()
+        return androidx.compose.runtime.remember(source) {
+            source?.let { com.emanuel5014.trainable.ui.theme.KyantWorkoutPanel(it) }
+        }
+    }
+
+    @Composable
+    override fun PanelProvider(panel: com.emanuel5014.trainable.ui.screens.workout.WorkoutPanel?, content: @Composable () -> Unit) =
+        com.emanuel5014.trainable.ui.theme.KyantPanelProvider(panel, content)
 }
 
 /** Store one dictionary in a single defaults write, so a partially written mini-set cannot be resumed. */
