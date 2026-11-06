@@ -30,8 +30,7 @@ struct TrainableTimerWidget: Widget {
                         if done {
                             Image(systemName: "checkmark.circle.fill")
                         } else {
-                            TimerCountdown(interval: state.clock(kind: context.attributes.kind, isStale: context.isStale),
-                                           overtimeFrom: state.overtimeFrom(kind: context.attributes.kind))
+                            TimerCountdown(interval: state.clock(kind: context.attributes.kind, isStale: context.isStale))
                         }
                     }
                     .font(.system(.title2, design: .rounded, weight: .semibold))
@@ -49,8 +48,7 @@ struct TrainableTimerWidget: Widget {
                         HStack(alignment: .center, spacing: 12) {
                             NextSetText(state: state, compact: true)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            TimerRing(interval: state.clock(kind: context.attributes.kind, isStale: context.isStale), accent: accent,
-                                      overtimeFrom: state.overtimeFrom(kind: context.attributes.kind))
+                            TimerRing(interval: state.clock(kind: context.attributes.kind, isStale: context.isStale), accent: accent)
                                 .frame(width: 28, height: 28)
                         }
                         ControlRow(kind: context.attributes.kind, activityID: context.activityID, state: state,
@@ -62,8 +60,7 @@ struct TrainableTimerWidget: Widget {
             } compactLeading: {
                 Group {
                     if done { DoneBadge(accent: accent, lineWidth: 2.5) }
-                    else { TimerRing(interval: state.clock(kind: kind, isStale: context.isStale), accent: accent,
-                                     overtimeFrom: state.overtimeFrom(kind: kind)) }
+                    else { TimerRing(interval: state.clock(kind: kind, isStale: context.isStale), accent: accent) }
                 }
                 .frame(width: 20, height: 20)
                 .padding(.leading, 2)
@@ -73,8 +70,7 @@ struct TrainableTimerWidget: Widget {
                         // Rest is over: time to lift.
                         Image(systemName: kind == emomKind ? "flag.checkered" : "figure.strengthtraining.traditional")
                     } else {
-                        TimerCountdown(interval: state.clock(kind: kind, isStale: context.isStale),
-                                       overtimeFrom: state.overtimeFrom(kind: kind))
+                        TimerCountdown(interval: state.clock(kind: kind, isStale: context.isStale))
                     }
                 }
                 .font(.system(.footnote, design: .rounded, weight: .semibold))
@@ -83,8 +79,7 @@ struct TrainableTimerWidget: Widget {
             } minimal: {
                 Group {
                     if done { DoneBadge(accent: accent, lineWidth: 2.5) }
-                    else { TimerRing(interval: state.clock(kind: kind, isStale: context.isStale), accent: accent,
-                                     overtimeFrom: state.overtimeFrom(kind: kind)) }
+                    else { TimerRing(interval: state.clock(kind: kind, isStale: context.isStale), accent: accent) }
                 }
                 .frame(width: 20, height: 20)
             }
@@ -100,6 +95,7 @@ private struct LockScreenTimerView: View {
     let activityID: String
     let state: TrainableTimerAttributes.ContentState
     let isStale: Bool
+    @Environment(\.isLuminanceReduced) private var luminanceReduced
 
     var body: some View {
         let accent = TimerPalette.accent(state.accentARGB)
@@ -119,9 +115,13 @@ private struct LockScreenTimerView: View {
         } else {
         HStack(alignment: .center, spacing: 16) {
             ZStack {
-                TimerRing(interval: clock, accent: accent, overtimeFrom: state.overtimeFrom(kind: kind))
+                TimerRing(interval: clock, accent: accent)
                 VStack(spacing: 1) {
-                    TimerCountdown(interval: clock, overtimeFrom: state.overtimeFrom(kind: kind))
+                    if luminanceReduced && clock != nil {
+                        // Dimmed Lock Screen: the time below is when the countdown ends, not a countdown.
+                        Image(systemName: "bell.fill").font(.caption2).foregroundStyle(accent)
+                    }
+                    TimerCountdown(interval: clock)
                         .font(.system(size: 21, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
@@ -201,27 +201,16 @@ private struct FinishedText: View {
 
 /// System-driven ring: it empties as the time runs out, with no per-second app updates.
 /// Only the built-in circular style is animated by the system for timer progress in Live Activities.
-/// A nil interval is a paused EMOM run: a still ring with a pause glyph.
-/// With [overtimeFrom] (rest/warmup) an inner ring fills once the time is up, with no app update needed: iOS
-/// redraws an expired card only later (about 100 s on the simulator), so the card must not freeze meanwhile.
+/// System-driven ring: it empties as the time runs out. A nil interval is a paused EMOM run: a still ring.
 private struct TimerRing: View {
     let interval: ClosedRange<Date>?
     let accent: Color
-    var overtimeFrom: Date? = nil
 
     var body: some View {
         if let interval {
-            ZStack {
-                ProgressView(timerInterval: interval, countsDown: true) { EmptyView() } currentValueLabel: { EmptyView() }
-                    .progressViewStyle(.circular)
-                    .tint(accent)
-                if let from = overtimeFrom {
-                    ProgressView(timerInterval: from...from.addingTimeInterval(60), countsDown: false) { EmptyView() } currentValueLabel: { EmptyView() }
-                        .progressViewStyle(.circular)
-                        .tint(TimerPalette.go)
-                        .scaleEffect(0.8)
-                }
-            }
+            ProgressView(timerInterval: interval, countsDown: true) { EmptyView() } currentValueLabel: { EmptyView() }
+                .progressViewStyle(.circular)
+                .tint(accent)
         } else {
             ProgressView(value: 0.0) { EmptyView() } currentValueLabel: { EmptyView() }
                 .progressViewStyle(.circular)
@@ -230,19 +219,24 @@ private struct TimerRing: View {
     }
 }
 
-/// Counts down; with [overtimeFrom] it keeps going after zero, counting the time since the end, instead of 0:00.
+/// A seconds countdown. With the dimmed Lock Screen (Always-On) iOS stops per-second updates and timer texts turn
+/// into "<1 minute"-like labels, so there the end time is shown instead ("⏱ 11:42"), which stays exact.
 private struct TimerCountdown: View {
     let interval: ClosedRange<Date>?
-    var overtimeFrom: Date? = nil
+    @Environment(\.isLuminanceReduced) private var luminanceReduced
 
     var body: some View {
-        if let end = overtimeFrom {
-            Text(end, style: .timer)
-                .monospacedDigit()
-        } else if let interval {
-            Text(timerInterval: interval, countsDown: true, showsHours: false)
-                .monospacedDigit()
-                .contentTransition(.numericText(countsDown: true))
+        if let interval {
+            if luminanceReduced {
+                Text(interval.upperBound, style: .time)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+            } else {
+                Text(timerInterval: interval, countsDown: true, showsHours: false)
+                    .monospacedDigit()
+                    .contentTransition(.numericText(countsDown: true))
+            }
         } else {
             Image(systemName: "pause.fill")
         }
@@ -269,9 +263,6 @@ extension TrainableTimerAttributes.ContentState {
         if kind == emomKind { return endsAt <= Date() }
         return isStale || endsAt <= Date()
     }
-
-    /// Rest and warmup keep counting past their end (see TimerRing); EMOM has its own fallback.
-    func overtimeFrom(kind: String) -> Date? { kind == emomKind ? nil : endsAt }
 
     func showsRunEnd(kind: String, isStale: Bool) -> Bool {
         kind == emomKind && !paused && clock(kind: kind, isStale: isStale) == startedAt...endsAt
@@ -422,8 +413,6 @@ private struct EmomButtons: View {
 /// The card is always dark. The accent comes from the app theme (its dark-scheme primary) when known.
 enum TimerPalette {
     static let background = Color(red: 0x14 / 255, green: 0x13 / 255, blue: 0x17 / 255)
-    /// "Time to lift": the inner ring that fills once the rest is over.
-    static let go = Color(red: 0x5D / 255, green: 0xD3 / 255, blue: 0x8A / 255)
     /// Trainable's default blue, lifted for a dark surface.
     private static let fallback: Int64 = 0xFF8EA4F5
 
