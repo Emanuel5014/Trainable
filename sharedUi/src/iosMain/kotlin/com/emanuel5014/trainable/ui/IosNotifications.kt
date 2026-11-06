@@ -24,6 +24,7 @@ import kotlin.time.Instant
 
 internal const val REST_NOTICE = "workout.rest"
 internal const val WARMUP_NOTICE = "workout.warmup"
+internal const val EMOM_NOTICE = "workout.emom"
 internal const val MEMBERSHIP_NOTICE = "membership.expiry"
 internal fun nowMillis(): Long = Clock.System.now().toEpochMilliseconds()
 

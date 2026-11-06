@@ -41,6 +41,41 @@ class IosLiveActivitiesTest {
             assertTrue(timer.detail.startsWith("Next: Squat - Set 2"))
         } finally { IosLiveActivityStyle.accentArgb = 0 }
     }
+    private fun emomInfo(title: String, endsAt: Long?, elapsed: Int, rounds: Int = 5) = com.emanuel5014.trainable.util.notification.EmomNotificationInfo(
+        title, "Squat - set 2: 60 kg", "then 60 kg", endsAt, elapsed, rounds, listOf(
+            com.emanuel5014.trainable.util.notification.EmomNotificationAction(com.emanuel5014.trainable.util.notification.EmomAction.DONE, "DONE"),
+            com.emanuel5014.trainable.util.notification.EmomNotificationAction(com.emanuel5014.trainable.util.notification.EmomAction.PAUSE, "Pause")))
+    @Test fun emomCardCarriesMinuteRunEndAndButtons() {
+        val d = FakeNotificationDelivery(); val live = FakeLiveActivities(); val t = timers(d, live)
+        // Round 2 of 5 at clock 75 s: the next round (clock 120) is at 1_045_000, clock zero at 925_000.
+        t.showEmomNotification(emomInfo("Round 2/5", 1_045_000, 75))
+        val card = live.timers.getValue(EMOM_NOTICE)
+        assertEquals(985_000, card.roundStartsAtMillis); assertEquals(1_045_000, card.roundEndsAtMillis)
+        assertEquals(925_000 + 300_000L, card.endsAtMillis)
+        assertEquals((300 + 10), card.totalSeconds)
+        assertEquals(listOf("emom.done", "emom.pause"), card.actionKeys); assertEquals(listOf("DONE", "Pause"), card.actionLabels)
+        assertEquals("Squat - set 2: 60 kg", card.exercise); assertEquals("then 60 kg", card.setLine); assertFalse(card.paused)
+        // Lead-in: the countdown ends at clock zero, a 10 s minute.
+        t.showEmomNotification(emomInfo("Get ready", 1_010_000, 0))
+        val leadIn = live.timers.getValue(EMOM_NOTICE)
+        assertEquals(card.instanceId, leadIn.instanceId)
+        assertEquals(1_000_000, leadIn.roundStartsAtMillis); assertEquals(1_010_000 + 300_000L, leadIn.endsAtMillis)
+        // Paused: nothing counts, the card stays.
+        t.showEmomNotification(emomInfo("Paused", null, 75))
+        val paused = live.timers.getValue(EMOM_NOTICE)
+        assertTrue(paused.paused); assertEquals(0, paused.roundEndsAtMillis); assertTrue(paused.endsAtMillis > 1_000_000)
+        // Stop / end of run removes it and a new run gets a new identity.
+        t.cancelEmom(); assertFalse(EMOM_NOTICE in live.timers)
+        t.showEmomNotification(emomInfo("Round 1/5", 1_060_000, 0))
+        assertNotEquals(card.instanceId, live.timers.getValue(EMOM_NOTICE).instanceId)
+        t.showEmomFinished("Complete", "Squat"); assertFalse(EMOM_NOTICE in live.timers)
+    }
+    @Test fun emomButtonKeysMapToModelActions() {
+        assertEquals(com.emanuel5014.trainable.util.notification.EmomAction.DONE, emomActionOf("emom.done"))
+        assertEquals(com.emanuel5014.trainable.util.notification.EmomAction.RESUME, emomActionOf("emom.resume"))
+        assertEquals(com.emanuel5014.trainable.util.notification.EmomAction.STOP, emomActionOf("emom.stop"))
+        assertNull(emomActionOf("skip"))
+    }
     @Test fun activityAndNotificationUseOneDeadlineEvenIfClockMovesBetweenCalls() {
         val delivery = FakeNotificationDelivery(); val live = FakeLiveActivities(); var now = 1_000_000L
         val timers = timers(delivery, live) { now++ }

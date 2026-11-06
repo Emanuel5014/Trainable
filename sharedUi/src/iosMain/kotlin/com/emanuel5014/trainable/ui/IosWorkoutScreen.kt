@@ -42,7 +42,7 @@ private class IosWorkoutOwner(planId: Int?, sessionId: Int?, quickStart: Boolean
         IosAppGraph.journal, languages, viewModelScope, planId, sessionId, quickStart, workoutName)
 
     init {
-        IosWorkoutTimerActions.bind(model)
+        IosWorkoutTimerActions.bind(model, timers)
         viewModelScope.launch {
             model.state.map { timerContext() }.distinctUntilChanged().collect { timers.refreshControls() }
         }

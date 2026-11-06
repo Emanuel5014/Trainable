@@ -9,6 +9,8 @@ import platform.UIKit.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+private const val PAUSED_CARD_MILLIS = 4 * 60 * 60 * 1000L
+
 /** The model owns in-app clocks. iOS owns pre-scheduled alerts, including while the app is suspended. */
 @OptIn(ExperimentalUuidApi::class)
 internal class IosWorkoutTimers(
@@ -28,6 +30,9 @@ internal class IosWorkoutTimers(
     private var emomInfo: EmomNotificationInfo? = null
     private var emomIds = emptyList<String>()
     private var emomFinishedScheduled = false
+    /** One logical EMOM Live Activity per run; actions from an older run are refused. */
+    internal var emomLiveInstance: String? = null
+        private set
 
     override fun hasNotificationPermission() = scheduler.canAuthorize || live()?.isAvailable() == true
     // ActivityKit renders date-based countdowns; it does not need the Android per-second update path.
@@ -47,7 +52,15 @@ internal class IosWorkoutTimers(
         IosLiveTimerSnapshots.forget(WARMUP_NOTICE, warmupLiveInstance)
         live()?.cancel(WARMUP_NOTICE); warmupLiveInstance = null
     }
-    override fun cancelEmom() { cancelEmomBoundaryAlarm(); emomInfo = null; emomFinishedScheduled = false }
+    override fun cancelEmom() {
+        cancelEmomBoundaryAlarm(); emomInfo = null; emomFinishedScheduled = false
+        endEmomLive()
+    }
+    private fun endEmomLive() {
+        IosLiveTimerSnapshots.forget(EMOM_NOTICE, emomLiveInstance)
+        if (emomLiveInstance != null) live()?.cancel(EMOM_NOTICE)
+        emomLiveInstance = null
+    }
     override fun cancelEmomBoundaryAlarm() {
         scheduler.cancel(emomIds); emomIds = emptyList(); emomFinishedScheduled = false
     }
@@ -89,6 +102,12 @@ internal class IosWorkoutTimers(
         live()?.takeIf { it.isAvailable() }?.update(timer)
     }
 
+    /** A Live Activity button: catch the clock up first, so DONE/PAUSE act on the minute really on the clock. */
+    internal fun sendEmom(action: EmomAction?) {
+        emomEvents.tryEmit(EmomAction.BOUNDARY)
+        if (action != null) emomEvents.tryEmit(action)
+    }
+
     fun refreshControls() {
         val label = words()?.skipLabel ?: return
         listOf(REST_NOTICE to restLiveInstance, WARMUP_NOTICE to warmupLiveInstance).forEach { (kind, instance) ->
@@ -113,6 +132,39 @@ internal class IosWorkoutTimers(
     override fun showEmomNotification(info: EmomNotificationInfo) {
         emomInfo = info
         if (info.countdownEndsAt == null) cancelEmomBoundaryAlarm()
+        publishEmom(info)
+    }
+
+    /**
+     * The card shows the round, a countdown to the next minute and the time left in the whole run. iOS runs no
+     * app code while suspended, so a new round only reaches the card when the lifter taps a button or reopens
+     * the app; the run-end countdown stays right meanwhile (the minute alerts are scheduled separately).
+     */
+    private fun publishEmom(info: EmomNotificationInfo) {
+        val text = words() ?: return
+        val instance = emomLiveInstance ?: Uuid.random().toString().also { emomLiveInstance = it }
+        val ctx = context()
+        val keys = info.actions.map { "emom." + it.action.name.lowercase() }
+        val labels = info.actions.map { it.label }
+        val roundEnd = info.countdownEndsAt
+        val base = IosLiveTimer(EMOM_NOTICE, instance, info.title, listOfNotNull(info.text, info.detail).joinToString(" · "),
+            0, 0, sessionId = ctx.sessionId, sessionStartedAtMillis = ctx.sessionStartedAtMillis,
+            showAdd = false, showSubtract = false, showSkip = false, skipLabel = "", finishedText = text.emomFinished,
+            exercise = info.text, setLine = info.detail ?: "", actionKeys = keys, actionLabels = labels)
+        val timer = if (roundEnd == null) {
+            // Paused: nothing counts; keep the card for a long while, the app replaces it on resume or stop.
+            base.copy(endsAtMillis = now() + PAUSED_CARD_MILLIS, totalSeconds = (PAUSED_CARD_MILLIS / 1000).toInt(), paused = true)
+        } else {
+            val leadIn = info.title == text.emomReady
+            val nextClock = if (leadIn) 0 else EmomClock.nextRoundAt(info.runElapsedSeconds)
+            val clockZero = roundEnd - nextClock * 1000L
+            val runStart = clockZero - EmomClock.LEAD_IN_SECONDS * 1000L
+            val runEnd = clockZero + info.rounds * EmomClock.MINUTE_SECONDS * 1000L
+            val roundLength = if (leadIn) EmomClock.LEAD_IN_SECONDS else EmomClock.MINUTE_SECONDS
+            base.copy(endsAtMillis = runEnd, totalSeconds = ((runEnd - runStart) / 1000L).toInt(),
+                roundStartsAtMillis = roundEnd - roundLength * 1000L, roundEndsAtMillis = roundEnd)
+        }
+        publish(timer)
     }
     override fun scheduleEmomBoundaryAlarm(triggerAtMillis: Long) {
         val info = emomInfo ?: return
@@ -133,6 +185,7 @@ internal class IosWorkoutTimers(
         scheduler.schedule(notices, prompt = true)
     }
     override fun showEmomFinished(title: String, text: String) {
+        endEmomLive()
         // The final alert was scheduled with all boundaries, so it also works after multiple suspended rounds.
         if (!emomFinishedScheduled) scheduler.schedule(listOf(IosNotice("workout.emom.0", title, text, now())))
     }

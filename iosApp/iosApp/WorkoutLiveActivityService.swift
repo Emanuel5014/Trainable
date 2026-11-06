@@ -24,7 +24,11 @@ final class WorkoutLiveActivityService: NSObject, IosWorkoutLiveActivities {
             showAdd: timer.showAdd, showSubtract: timer.showSubtract, showSkip: timer.showSkip,
             skipLabel: String(timer.skipLabel.prefix(50)), finishedText: String(timer.finishedText.prefix(160)),
             exercise: String(timer.exercise.prefix(120)), setLine: String(timer.setLine.prefix(200)),
-            accentARGB: timer.accentArgb)
+            accentARGB: timer.accentArgb,
+            roundStartsAt: timer.roundStartsAtMillis > 0 ? Date(timeIntervalSince1970: Double(timer.roundStartsAtMillis) / 1000) : nil,
+            roundEndsAt: timer.roundEndsAtMillis > 0 ? Date(timeIntervalSince1970: Double(timer.roundEndsAtMillis) / 1000) : nil,
+            paused: timer.paused,
+            actionKeys: Array(timer.actionKeys.prefix(4)), actionLabels: Array(timer.actionLabels.prefix(4)).map { String($0.prefix(30)) })
         let kind = timer.kind
         DispatchQueue.main.async { TimerLiveActivityCoordinator.shared.set(kind: kind, state: state) }
     }
@@ -45,7 +49,7 @@ final class TimerLiveActivityCoordinator {
     static let shared = TimerLiveActivityCoordinator()
     typealias TimerActivity = Activity<TrainableTimerAttributes>
     typealias State = TrainableTimerAttributes.ContentState
-    private let kinds: Set<String> = ["workout.rest", "workout.warmup"]
+    private let kinds: Set<String> = ["workout.rest", "workout.warmup", "workout.emom"]
     private var desired: [String: State] = [:]
     private var knownInstances: [String: String] = [:]
     private var dismissedInstances: [String: String] = [:]
@@ -104,7 +108,10 @@ final class TimerLiveActivityCoordinator {
             addSeconds: Int32(clamping: state.addSeconds), subtractSeconds: Int32(clamping: state.subtractSeconds),
             showAdd: state.showAdd, showSubtract: state.showSubtract, showSkip: state.showSkip,
             skipLabel: state.skipLabel, finishedText: state.finishedText,
-            exercise: state.exercise, setLine: state.setLine, accentArgb: state.accentARGB)
+            exercise: state.exercise, setLine: state.setLine, accentArgb: state.accentARGB,
+            roundStartsAtMillis: state.roundStartsAt.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0,
+            roundEndsAtMillis: state.roundEndsAt.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0,
+            paused: state.paused, actionKeys: state.actionKeys, actionLabels: state.actionLabels)
         _ = try? await IosWorkoutTimerActions.shared.perform(request: request, action: action)
         // Kotlin forwards ActivityKit mutations through the serial main queue. Drain it before the intent exits.
         await withCheckedContinuation { continuation in
@@ -149,8 +156,9 @@ final class TimerLiveActivityCoordinator {
             for duplicate in candidates where duplicate.id != existing?.id {
                 await duplicate.end(nil, dismissalPolicy: .immediate)
             }
-            let content = ActivityContent(state: state, staleDate: state.endsAt,
-                relevanceScore: kind == "workout.rest" ? 100 : 50)
+            // An EMOM card turns stale when its minute ends without the app awake; it then shows the run's end.
+            let content = ActivityContent(state: state, staleDate: state.roundEndsAt ?? state.endsAt,
+                relevanceScore: kind == "workout.warmup" ? 50 : 100)
             if let existing {
                 if existing.content.state != state { await existing.update(content) }
                 knownInstances[kind] = state.instanceID

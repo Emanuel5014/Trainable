@@ -29,7 +29,14 @@ data class IosLiveTimer(
     val exercise: String = "",
     val setLine: String = "",
     /** 0xAARRGGBB of the app theme's dark-scheme primary; 0 lets the card use its own default. */
-    val accentArgb: Long = 0
+    val accentArgb: Long = 0,
+    /** EMOM only: the minute (or lead-in) on the clock; 0 when paused or not an EMOM run. */
+    val roundStartsAtMillis: Long = 0,
+    val roundEndsAtMillis: Long = 0,
+    val paused: Boolean = false,
+    /** EMOM only: buttons in order, keys "emom.done|pause|resume|stop" with labels in the app language. */
+    val actionKeys: List<String> = emptyList(),
+    val actionLabels: List<String> = emptyList()
 )
 
 /** Updated by the iOS theme, read whenever a countdown is published. */

@@ -21,11 +21,18 @@ struct TrainableTimerAttributes: ActivityAttributes {
         var exercise: String = ""
         var setLine: String = ""
         var accentARGB: Int64 = 0
+        /** EMOM only: the minute on the clock (nil while paused), pause flag and buttons. */
+        var roundStartsAt: Date? = nil
+        var roundEndsAt: Date? = nil
+        var paused: Bool = false
+        var actionKeys: [String] = []
+        var actionLabels: [String] = []
 
         enum CodingKeys: String, CodingKey {
             case instanceID, title, detail, startedAt, endsAt, sessionID, sessionStartedAtMillis
             case addSeconds, subtractSeconds, showAdd, showSubtract, showSkip, skipLabel, finishedText
             case exercise, setLine, accentARGB
+            case roundStartsAt, roundEndsAt, paused, actionKeys, actionLabels
         }
     }
     var kind: String
@@ -52,5 +59,10 @@ extension TrainableTimerAttributes.ContentState {
         exercise = try c.decodeIfPresent(String.self, forKey: .exercise) ?? ""
         setLine = try c.decodeIfPresent(String.self, forKey: .setLine) ?? ""
         accentARGB = try c.decodeIfPresent(Int64.self, forKey: .accentARGB) ?? 0
+        roundStartsAt = try c.decodeIfPresent(Date.self, forKey: .roundStartsAt)
+        roundEndsAt = try c.decodeIfPresent(Date.self, forKey: .roundEndsAt)
+        paused = try c.decodeIfPresent(Bool.self, forKey: .paused) ?? false
+        actionKeys = try c.decodeIfPresent([String].self, forKey: .actionKeys) ?? []
+        actionLabels = try c.decodeIfPresent([String].self, forKey: .actionLabels) ?? []
     }
 }

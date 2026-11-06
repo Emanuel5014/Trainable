@@ -7,6 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import com.emanuel5014.trainable.util.notification.EmomAction
 import kotlin.math.abs
 
 /** Latest logical timer identity, also rejects actions from an old Dynamic Island presentation. */
@@ -117,12 +118,17 @@ internal class IosTimerActionProcessor(
 object IosWorkoutTimerActions {
     private val lock = Mutex()
     private val models = mutableListOf<WorkoutModel>()
-    internal fun bind(model: WorkoutModel) { models += model }
-    internal fun unbind(model: WorkoutModel) { models.remove(model) }
+    private val emomTimers = mutableMapOf<WorkoutModel, IosWorkoutTimers>()
+    internal fun bind(model: WorkoutModel, timers: IosWorkoutTimers? = null) {
+        models += model
+        if (timers != null) emomTimers[model] = timers
+    }
+    internal fun unbind(model: WorkoutModel) { models.remove(model); emomTimers.remove(model) }
 
     suspend fun perform(request: IosLiveTimer, action: String): Boolean = withContext(Dispatchers.Main) {
         lock.withLock {
             try {
+                if (request.kind == EMOM_NOTICE) return@withLock performEmom(request, action)
                 if (!prepareIosTimerAction()) return@withLock false
                 IosTimerActionProcessor(IosAppTimerActionStore, IosNotifications.scheduler,
                     { IosWorkoutLiveActivityBridge.service },
@@ -131,6 +137,35 @@ object IosWorkoutTimerActions {
             catch (_: Exception) { false }
         }
     }
+
+    /**
+     * An EMOM run only lives in the open workout (a reopened workout parks it, paused, before the next set), so
+     * a button pressed after the app was terminated just removes the card.
+     */
+    private suspend fun performEmom(request: IosLiveTimer, action: String): Boolean {
+        val model = models.lastOrNull { it.state.value.sessionId == request.sessionId }
+        val timers = model?.let { emomTimers[it] }
+        if (model == null || timers == null || timers.emomLiveInstance != request.instanceId || model.state.value.emomRun == null) {
+            IosLiveTimerSnapshots.forget(EMOM_NOTICE, request.instanceId)
+            IosWorkoutLiveActivityBridge.service?.cancel(EMOM_NOTICE)
+            // The run comes back paused on reopen, so the remaining minute alerts would only mislead.
+            if (model == null) IosNotifications.cancelEmom()
+            return false
+        }
+        timers.sendEmom(emomActionOf(action))
+        // Let the model handle the events on this (main) dispatcher before the intent returns.
+        repeat(5) { yield() }
+        delay(100)
+        return true
+    }
+}
+
+internal fun emomActionOf(key: String): EmomAction? = when (key) {
+    "emom.done" -> EmomAction.DONE
+    "emom.pause" -> EmomAction.PAUSE
+    "emom.resume" -> EmomAction.RESUME
+    "emom.stop" -> EmomAction.STOP
+    else -> null
 }
 
 private object IosAppTimerActionStore : IosTimerActionStore {
