@@ -1,7 +1,5 @@
 package com.emanuel5014.trainable.data.ai
 
-import org.json.JSONArray
-import org.json.JSONObject
 
 object RoutineScanParser {
 
@@ -28,7 +26,7 @@ object RoutineScanParser {
     private fun tryParseJsonArray(raw: String): List<ParsedExercise> {
         val jsonArrayStr = extractJsonArrayString(raw) ?: return emptyList()
         return try {
-            val jsonArray = JSONArray(jsonArrayStr)
+            val jsonArray = LenientJson.parseArray(jsonArrayStr)
             val list = mutableListOf<ParsedExercise>()
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.optJSONObject(i) ?: continue
@@ -47,7 +45,7 @@ object RoutineScanParser {
 
         for (match in matches) {
             try {
-                val obj = JSONObject(match.value)
+                val obj = LenientJson.parseObject(match.value)
                 parseExerciseObject(obj)?.let { list.add(it) }
             } catch (_: Exception) {
                 // Ignore individual malformed objects
@@ -56,7 +54,7 @@ object RoutineScanParser {
         return list
     }
 
-    private fun parseExerciseObject(obj: JSONObject): ParsedExercise? {
+    private fun parseExerciseObject(obj: LenientJsonObject): ParsedExercise? {
         val rawName = obj.optString("name")
             .ifBlank { obj.optString("exercise") }
             .ifBlank { obj.optString("esercizio") }
@@ -178,7 +176,7 @@ object RoutineScanParser {
             .trim(' ', '"', '\'', '`', ',', '.', ';')
     }
 
-    private fun parseSets(obj: JSONObject, reps: String): Int {
+    private fun parseSets(obj: LenientJsonObject, reps: String): Int {
         var explicitSets: Int? = null
         if (obj.has("sets")) {
             val v = obj.opt("sets")
@@ -210,12 +208,12 @@ object RoutineScanParser {
         return (explicitSets ?: 3).coerceIn(1, 30)
     }
 
-    private fun uncleanedReps(obj: JSONObject): String? =
+    private fun uncleanedReps(obj: LenientJsonObject): String? =
         listOf("reps", "ripetizioni").firstNotNullOfOrNull { key ->
             (obj.opt(key) as? String)?.trim()?.takeIf { it.isNotBlank() }
         }
 
-    private fun parseReps(obj: JSONObject): String {
+    private fun parseReps(obj: LenientJsonObject): String {
         val raw = if (obj.has("reps")) {
             val v = obj.opt("reps")
             if (v is String && v.isNotBlank()) v.trim()
@@ -252,7 +250,7 @@ object RoutineScanParser {
             .replace(Regex("""\s*/\s*"""), "-")
     }
 
-    private fun parseRest(obj: JSONObject): Int {
+    private fun parseRest(obj: LenientJsonObject): Int {
         val keys = listOf("rest_seconds", "restSeconds", "rest", "recupero", "pausa")
         for (k in keys) {
             if (!obj.has(k)) continue
@@ -284,7 +282,7 @@ object RoutineScanParser {
         return 120
     }
 
-    private fun parseCardioMinutes(obj: JSONObject, name: String): Int? {
+    private fun parseCardioMinutes(obj: LenientJsonObject, name: String): Int? {
         val keys = listOf("cardio_minutes", "cardioMinutes", "cardio", "duration", "durata")
         for (k in keys) {
             if (!obj.has(k)) continue

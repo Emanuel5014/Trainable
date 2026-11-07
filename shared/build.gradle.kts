@@ -43,6 +43,10 @@ kotlin {
             // Android keeps the system SQLite (Room without a driver); iOS brings its own
             implementation(libs.sqlite.bundled)
         }
+        getByName("androidHostTest").dependencies {
+            // Real org.json for JVM host tests (the Android stub only throws); the device keeps the system one
+            implementation("org.json:json:20260814")
+        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)

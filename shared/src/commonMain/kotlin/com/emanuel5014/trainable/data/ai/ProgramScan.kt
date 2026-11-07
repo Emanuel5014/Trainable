@@ -2,8 +2,7 @@ package com.emanuel5014.trainable.data.ai
 
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionNotationParser
-import org.json.JSONObject
-import java.util.Locale
+import com.emanuel5014.trainable.util.sortedByKeys
 
 /** The prescription of one exercise read from a photographed program page. */
 data class ScannedProgram(
@@ -57,10 +56,10 @@ object ProgramScanParser {
         val start = text.indexOf('{')
         val end = text.lastIndexOf('}')
         if (start < 0 || end <= start) return null
-        val obj = try { JSONObject(text.substring(start, end + 1)) } catch (_: Exception) { return null }
+        val obj = try { LenientJson.parseObject(text.substring(start, end + 1)) } catch (_: Exception) { return null }
 
         val oneRepMax = obj.optDouble("one_rep_max_kg").takeIf { !it.isNaN() && it > 0 }?.toFloat()
-        val weeks = sortedMapOf<Int, List<PrescriptionBlock>>()
+        val weeks = mutableMapOf<Int, List<PrescriptionBlock>>()
 
         obj.optJSONArray("weeks")?.let { array ->
             for (i in 0 until array.length()) {
@@ -81,7 +80,8 @@ object ProgramScanParser {
             }
         }
         if (weeks.isEmpty()) return null
-        return ScannedProgram(weeks = weeks, oneRepMaxKg = oneRepMax)
+        // In week order, as the TreeMap used before kept them
+        return ScannedProgram(weeks = weeks.sortedByKeys(), oneRepMaxKg = oneRepMax)
     }
 
     // ---- plain transcription ----------------------------------------------------------------------
@@ -182,7 +182,7 @@ object ProgramScanParser {
         }
     }
 
-    private fun nameTokens(name: String): Set<String> = name.lowercase(Locale.ROOT)
+    private fun nameTokens(name: String): Set<String> = name.lowercase()
         .replace(Regex("""\(.*?\)"""), " ")
         .split(Regex("""[^\p{L}]+"""))
         .filter { it.length >= 3 }

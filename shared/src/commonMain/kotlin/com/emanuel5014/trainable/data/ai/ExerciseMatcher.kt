@@ -2,7 +2,6 @@ package com.emanuel5014.trainable.data.ai
 
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
-import java.text.Normalizer
 
 class ExerciseMatcher(
     private val catalog: List<ExerciseEntity>,
@@ -66,8 +65,7 @@ class ExerciseMatcher(
         private const val CATEGORY_MATCH_THRESHOLD = 0.65
 
         fun normalizeAndExpand(value: String): String {
-            var text = Normalizer.normalize(value, Normalizer.Form.NFD)
-                .replace(Regex("\\p{Mn}+"), "")
+            var text = stripDiacritics(value)
                 .lowercase()
                 .replace(Regex("[^a-z0-9\\s]"), " ")
                 .replace(Regex("\\s+"), " ")
@@ -184,7 +182,7 @@ class ExerciseMatcher(
                         prev[j - 1] + if (a[i - 1] == b[j - 1]) 0 else 1
                     )
                 }
-                System.arraycopy(curr, 0, prev, 0, curr.size)
+                curr.copyInto(prev)
             }
             return prev[b.length]
         }
