@@ -3,6 +3,8 @@ import PhotosUI
 import UniformTypeIdentifiers
 import LiteRTLM
 import Darwin
+import CryptoKit
+import os
 
 @main
 struct GemmaSpikeApp: App {
@@ -46,6 +48,20 @@ private enum SpikeError: LocalizedError {
     }
 }
 
+private struct BenchmarkRequest: Decodable {
+    let id: String
+    let model: String
+    let backend: String
+    let imageFile: String?
+    let promptFile: String?
+    let transcription: Bool
+    let maxOutputTokens: Int?
+    let cancelAfterSeconds: Double?
+    let contextTokens: Int?
+    let visionBackend: String?
+    let freshCache: Bool?
+}
+
 private struct RunReport: Codable, Identifiable {
     var id = UUID()
     var startedAt = Date()
@@ -74,6 +90,18 @@ private struct RunReport: Codable, Identifiable {
     var thinking = ""
     var outcome = "running"
     var thermalState = ""
+    var benchmarkID: String?
+    var promptSHA256: String?
+    var imageSHA256: String?
+    var transcription: Bool?
+    var maxOutputTokens: Int?
+    var stage: String?
+    var initialThermalState: String?
+    var contextTokens: Int?
+    var visionBackend: String?
+    var freshCache: Bool?
+    var initialAvailableMemoryBytes: UInt64?
+    var minimumAvailableMemoryBytes: UInt64?
 }
 
 @MainActor
@@ -107,6 +135,42 @@ private final class SpikeState: ObservableObject {
             try? saveReports()
         }
         refreshModels()
+        if ProcessInfo.processInfo.arguments.contains("--benchmark") {
+            Task { runLaunchBenchmark() }
+        }
+    }
+
+    private func runLaunchBenchmark() {
+        do {
+            let arguments = ProcessInfo.processInfo.arguments
+            guard let index = arguments.firstIndex(of: "--benchmark"), index + 1 < arguments.count else {
+                throw SpikeError.message("Specifica il file JSON del benchmark.")
+            }
+            let request = try JSONDecoder().decode(BenchmarkRequest.self, from: Data(contentsOf: benchmarkFile(arguments[index + 1])))
+            guard let model = ModelVariant(rawValue: request.model), ["cpu", "gpu"].contains(request.backend),
+                  request.maxOutputTokens.map({ $0 > 0 && $0 <= 8192 }) ?? true,
+                  request.contextTokens.map({ $0 >= 1536 && $0 <= 32768 }) ?? true,
+                  request.visionBackend.map({ ["cpu", "gpu"].contains($0) }) ?? true,
+                  request.cancelAfterSeconds.map({ $0 > 0 }) ?? true else {
+                throw SpikeError.message("Configurazione benchmark non valida.")
+            }
+            variant = model
+            mode = request.backend == "cpu" ? .android : .metal
+            guard models.contains(model) else { throw SpikeError.message("Modello benchmark da importare.") }
+            selectedImage = try request.imageFile.map { try Self.prepareImage(Data(contentsOf: benchmarkFile($0))) }
+            let prompt = try request.promptFile.map { try String(contentsOf: benchmarkFile($0), encoding: .utf8) }
+            run(benchmark: request, promptOverride: prompt)
+        } catch {
+            phase = error.localizedDescription
+            print("SPIKE_SETUP_ERROR: \(phase)")
+        }
+    }
+
+    private func benchmarkFile(_ name: String) throws -> URL {
+        guard !name.isEmpty, name == URL(fileURLWithPath: name).lastPathComponent else {
+            throw SpikeError.message("Usa un nome file nella cartella benchmarks.")
+        }
+        return documents.appendingPathComponent("benchmarks", isDirectory: true).appendingPathComponent(name)
     }
 
     func refreshModels() {
@@ -154,7 +218,7 @@ private final class SpikeState: ObservableObject {
         }
     }
 
-    func run() {
+    func run(benchmark: BenchmarkRequest? = nil, promptOverride: String? = nil) {
         guard !busy, models.contains(variant) else { return }
         #if targetEnvironment(simulator)
         phase = "Esegui la prova su un iPhone fisico."
@@ -170,25 +234,45 @@ private final class SpikeState: ObservableObject {
         phase = "Caricamento…"
         let chosenVariant = variant
         let chosenMode = mode
+        let vision: Backend = benchmark?.visionBackend == "cpu" ? .cpu() : .gpu
         let image = selectedImage ?? Self.fixtureImage()
-        let source = selectedImage == nil ? "synthetic" : "photo-picker"
+        let source = benchmark?.imageFile ?? (selectedImage == nil ? "synthetic" : "photo-picker")
         let path = modelsDirectory.appendingPathComponent(chosenVariant.fileName)
         Task {
             let clock = ContinuousClock()
             let start = clock.now
             var report = RunReport()
             report.model = chosenVariant.rawValue
-            report.backend = chosenMode.rawValue
+            report.backend = chosenMode.decoder.rawValue.uppercased() + " + visione " + vision.rawValue.uppercased()
+            report.contextTokens = benchmark?.contextTokens
+            report.visionBackend = vision.rawValue
+            report.freshCache = benchmark?.freshCache ?? false
             report.imageSource = source
             report.imageBytes = image.count
+            report.benchmarkID = benchmark?.id
+            report.transcription = benchmark?.transcription ?? true
+            report.maxOutputTokens = benchmark == nil ? 1536 : benchmark?.maxOutputTokens
+            report.imageSHA256 = Self.digest(image)
+            report.initialThermalState = String(ProcessInfo.processInfo.thermalState.rawValue)
+            report.stage = "initialization"
             report.initialFootprintBytes = Self.footprint()
+            report.initialAvailableMemoryBytes = UInt64(os_proc_available_memory())
+            report.minimumAvailableMemoryBytes = report.initialAvailableMemoryBytes
             var peak = report.initialFootprintBytes
             let previousIdleTimer = UIApplication.shared.isIdleTimerDisabled
             UIApplication.shared.isIdleTimerDisabled = true
             // Sampling also runs during Engine.initialize(), on its own actor executor.
             let sampler = Task { @MainActor in
+                var lastCheckpoint = clock.now
                 while !Task.isCancelled {
                     peak = max(peak, Self.footprint())
+                    report.minimumAvailableMemoryBytes = min(report.minimumAvailableMemoryBytes ?? .max, UInt64(os_proc_available_memory()))
+                    if Self.seconds(lastCheckpoint.duration(to: clock.now)) >= 1 {
+                        report.sampledPeakFootprintBytes = peak
+                        report.totalSeconds = Self.seconds(start.duration(to: clock.now))
+                        try? updateReport(report)
+                        lastCheckpoint = clock.now
+                    }
                     try? await Task.sleep(for: .milliseconds(100))
                 }
             }
@@ -205,24 +289,41 @@ private final class SpikeState: ObservableObject {
                 try saveReports()
                 ExperimentalFlags.optIntoExperimentalAPIs()
                 ExperimentalFlags.enableBenchmark = true
+                var cacheName = chosenVariant.rawValue + "-" + chosenMode.decoder.rawValue
+                if vision == .cpu() { cacheName += "-vision-cpu" }
+                if let tokens = benchmark?.contextTokens { cacheName += "-context-\(tokens)" }
+                if benchmark?.freshCache == true { cacheName += "-" + UUID().uuidString }
                 let cache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-                    .appendingPathComponent(chosenVariant.rawValue + "-" + chosenMode.decoder.rawValue)
+                    .appendingPathComponent(cacheName)
                 try FileManager.default.createDirectory(at: cache, withIntermediateDirectories: true)
                 let config = try EngineConfig(
-                    modelPath: path.path, backend: chosenMode.decoder, visionBackend: .gpu,
+                    modelPath: path.path, backend: chosenMode.decoder, visionBackend: vision,
+                    maxNumTokens: benchmark?.contextTokens,
                     cacheDir: cache.path
                 )
                 let loaded = Engine(engineConfig: config)
                 try await loaded.initialize()
                 report.initializationSeconds = Self.seconds(start.duration(to: clock.now))
                 let sampling = try SamplerConfig(topK: 1, topP: 1, temperature: 0.1, seed: 0)
-                let session = try await loaded.createConversation(with: ConversationConfig(samplerConfig: sampling))
+                let session = try await loaded.createConversation(with: report.transcription == true
+                    ? ConversationConfig(samplerConfig: sampling) : ConversationConfig())
                 conversation = session
                 canCancel = true
                 phase = "Lettura della foto…"
-                let prompt = try Self.programPrompt()
+                report.stage = "inference"
+                let prompt = try promptOverride ?? Self.programPrompt()
+                report.promptSHA256 = Self.digest(Data(prompt.utf8))
+                try updateReport(report)
+                let cancelTimer = Task { @MainActor in
+                    guard let seconds = benchmark?.cancelAfterSeconds else { return }
+                    do {
+                        try await Task.sleep(for: .seconds(seconds))
+                        cancel()
+                    } catch { /* The run completed before the requested cancellation. */ }
+                }
+                defer { cancelTimer.cancel() }
                 let stream = session.sendMessageStream(
-                    Message(of: .imageData(image), .text(prompt)), maxOutputTokens: 1536
+                    Message(of: .imageData(image), .text(prompt)), maxOutputTokens: report.maxOutputTokens
                 )
                 for try await chunk in stream {
                     if report.firstChunkSeconds == nil {
@@ -247,8 +348,9 @@ private final class SpikeState: ObservableObject {
             report.sampledPeakFootprintBytes = peak
             report.totalSeconds = Self.seconds(start.duration(to: clock.now))
             report.thermalState = String(ProcessInfo.processInfo.thermalState.rawValue)
-            if let index = reports.firstIndex(where: { $0.id == report.id }) { reports[index] = report }
-            do { try saveReports() } catch { phase += "\nReport non salvato. " + error.localizedDescription }
+            report.stage = "finished"
+            do { try updateReport(report) } catch { phase += "\nReport non salvato. " + error.localizedDescription }
+            print("SPIKE_FINISHED: \(report.benchmarkID ?? report.id.uuidString) \(report.outcome)")
         }
         #endif
     }
@@ -269,6 +371,26 @@ private final class SpikeState: ObservableObject {
         let url = documents.appendingPathComponent("spike-results.json")
         try encoder.encode(reports).write(to: url, options: .atomic)
         reportURL = url
+    }
+
+    private func updateReport(_ report: RunReport) throws {
+        if let index = reports.firstIndex(where: { $0.id == report.id }) { reports[index] = report }
+        try saveReports()
+    }
+
+    private static func digest(_ data: Data) -> String {
+        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    static func prepareImage(_ data: Data) throws -> Data {
+        guard let image = UIImage(data: data) else { throw SpikeError.message("Foto non leggibile.") }
+        let ratio = min(1, 2048 / max(image.size.width, image.size.height))
+        let size = CGSize(width: image.size.width * ratio, height: image.size.height * ratio)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).jpegData(withCompressionQuality: 0.95) {
+            _ in image.draw(in: CGRect(origin: .zero, size: size))
+        }
     }
 
     private static func programPrompt() throws -> String {
@@ -360,16 +482,11 @@ private struct GemmaSpikeView: View {
                     guard let item else { return }
                     do {
                         let data = try await item.loadTransferable(type: Data.self)
-                        guard let data, let image = UIImage(data: data) else {
+                        guard let data else {
                             throw SpikeError.message("Foto non leggibile.")
                         }
-                        let ratio = min(1, 2048 / max(image.size.width, image.size.height))
-                        let size = CGSize(width: image.size.width * ratio, height: image.size.height * ratio)
-                        let format = UIGraphicsImageRendererFormat()
-                        format.scale = 1
-                        state.selectedImage = UIGraphicsImageRenderer(size: size, format: format).jpegData(withCompressionQuality: 0.95) {
-                            _ in image.draw(in: CGRect(origin: .zero, size: size))
-                        }
+                        guard photo == item else { return }
+                        state.selectedImage = try SpikeState.prepareImage(data)
                     } catch { state.phase = error.localizedDescription }
                 }
             }

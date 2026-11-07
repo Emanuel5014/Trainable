@@ -27,4 +27,24 @@ GIT_LFS_SKIP_SMUDGE=1 xcodebuild -project iosApp/GemmaSpike/GemmaSpike.xcodeproj
 
 La UI può essere ispezionata nel simulatore, mentre il pulsante Avvia prova richiede l'iPhone fisico. A5 prosegue con il bridge Kotlin/Swift, l'importazione e il download nell'app dopo la valutazione delle misure sul dispositivo.
 
+Per ripetere un benchmark dalla CLI Apple, trasferire i modelli in `Documents/models` e gli input in `Documents/benchmarks` del solo contenitore `com.emanuel5014.trainable.gemmaspike`. Avviare l'app con gli argomenti `--benchmark richiesta.json`. La richiesta usa questo formato:
+
+```json
+{
+  "id": "routine-e2b-cpu-first",
+  "model": "E2B",
+  "backend": "cpu",
+  "imageFile": "input.jpg",
+  "promptFile": "routine-prompt-it.txt",
+  "transcription": false,
+  "maxOutputTokens": 4096
+}
+```
+
+I percorsi sono nomi di file nella cartella `benchmarks`. Omettendo immagine e prompt si usa la pagina sintetica con il prompt programmi. `transcription: true` applica il sampler della trascrizione programmi, mentre `false` usa il sampler predefinito della scansione routine Android. Omettere `maxOutputTokens` per usare il limite predefinito del runtime. Cambiare `model` in `E4B` e `backend` in `gpu` per le altre configurazioni.
+
+`visionBackend` può essere `cpu` o `gpu` (predefinito). `contextTokens` imposta la dimensione del contesto e `freshCache: true` usa una nuova cartella cache. `cancelAfterSeconds` permette una prova di interruzione dopo l'inizializzazione.
+
+Il report salva anche ID del benchmark, hash del prompt e del JPEG normalizzato (lato massimo 2048 pixel), configurazione del runtime, stato termico iniziale e margine di memoria stimato da iOS. Un checkpoint ogni secondo conserva durata, testo parziale e memoria anche per le prove che si interrompono con il processo. Ogni avvio CLI ricarica il motore e riutilizza i file cache disponibili. La foto personale e gli input e risultati dei benchmark vanno conservati fuori da Git.
+
 [API Swift ufficiale](https://github.com/google-ai-edge/LiteRT-LM/tree/v0.18.1/swift)
