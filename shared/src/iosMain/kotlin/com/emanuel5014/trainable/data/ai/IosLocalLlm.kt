@@ -4,6 +4,7 @@ import com.emanuel5014.trainable.data.repository.toNSData
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSData
+import platform.Foundation.NSProcessInfo
 import kotlin.concurrent.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -50,6 +51,18 @@ object IosLocalLlmBridge {
 
 /** The model failed to load or to answer; [message] is LiteRT-LM's own. */
 class IosLocalLlmException(message: String) : Exception(message)
+
+/**
+ * Whether this iPhone can run Gemma E2B: 8 GB of RAM, as measured on an iPhone 15 Pro (checks/a5-local-gemma, about
+ * 1.2 GB used while reading a sheet next to the app). 6 GB phones report under 6.2e9 bytes, 8 GB ones about 8e9.
+ */
+object IosLocalAiDevice {
+    const val MIN_PHYSICAL_MEMORY = 7_000_000_000L
+
+    fun isSupported(physicalMemory: Long): Boolean = physicalMemory >= MIN_PHYSICAL_MEMORY
+
+    val isSupported: Boolean by lazy { isSupported(NSProcessInfo.processInfo.physicalMemory.toLong()) }
+}
 
 /** [IosLocalLlm] as a suspend call: the full answer, with [onStream] getting the text so far; cancelling stops the model. */
 class IosLocalLlmEngine(private val bridge: () -> IosLocalLlm? = { IosLocalLlmBridge.engine }) {

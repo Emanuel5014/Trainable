@@ -85,15 +85,22 @@ private object IosProgramScanBackend : ProgramScanBackend {
         onPhase: (ScanPhase) -> Unit,
         onStreamUpdate: (String, String) -> Unit
     ): ScannedProgram? {
-        val result = IosRemoteScan.read(
-            imagePath = imageUri,
-            prompt = ProgramScanPrompt.build(),
-            transcription = true,
-            maxOutputTokens = ProgramScanPrompt.MAX_OUTPUT_TOKENS,
-            onPhase = onPhase,
-            onStreamUpdate = onStreamUpdate
-        )
+        // The same prompt on the phone: Gemma E2B reads the program table well (checks/a5-local-gemma)
+        val result = if (IosRemoteScan.isLocal()) {
+            IosRemoteScan.readLocal(imageUri, ProgramScanPrompt.build(), ProgramScanPrompt.MAX_OUTPUT_TOKENS, onPhase, onStreamUpdate)
+        } else {
+            IosRemoteScan.read(
+                imagePath = imageUri,
+                prompt = ProgramScanPrompt.build(),
+                transcription = true,
+                maxOutputTokens = ProgramScanPrompt.MAX_OUTPUT_TOKENS,
+                onPhase = onPhase,
+                onStreamUpdate = onStreamUpdate
+            )
+        }
         onPhase(ScanPhase.PARSING)
         return RoutineScanResults.program(result, exerciseName)
     }
+
+    override suspend fun release() = IosRemoteScan.releaseLocal()
 }

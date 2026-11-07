@@ -493,7 +493,6 @@
     <string name="advanced_programming_desc" formatted="false">Series en %1RM, técnicas como pausas y cadenas, programas semanales, 1RM y RPE objetivo</string>
     <string name="ai_section_title">IA</string>
     <string name="ai_settings_desc">Escaneo sin conexión y modelo</string>
-    <string name="ai_settings_desc_ios">Escaneo de rutinas con proveedores de IA</string>
     <string name="auto_stop_cardio_at_target">Parada automática de cardio en el objetivo</string>
     <string name="auto_stop_cardio_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo objetivo</string>
     <string name="auto_stop_time_weight_at_target">Parada automática de series temporizadas en el objetivo</string>
@@ -1331,7 +1330,6 @@
     <string name="ai_scan_desc">Completa tu rutina automáticamente desde una foto</string>
     <string name="ai_scan_toggle">Escaneo de rutinas con IA</string>
     <string name="ai_where_title">Dónde se ejecuta la IA</string>
-    <string name="ai_local_not_on_ios">La IA en el teléfono aún no está disponible en iPhone</string>
     <string name="ai_scan_add_all">Añadir ejercicios</string>
     <string name="ai_scan_add_missing_exercise">Añadir ejercicio que falta</string>
     <string name="ai_scan_category_label">Categoría</string>
@@ -1397,4 +1395,22 @@
     <string name="ai_program_scan_title">Escanea la página de la programación</string>
     <string name="week_n">Semana %1$d</string>
     <string name="ai_program_scan_failed">No pude leer una programación en la foto. Prueba con una imagen más nítida y cercana.</string>
+    <string name="ai_download_cancel">Cancelar</string>
+    <string name="ai_import_error_busy">Este modelo ya se está descargando o importando.</string>
+    <string name="ai_import_error_format">Este no es un archivo de modelo LiteRT-LM (.litertlm).</string>
+    <string name="ai_import_error_read">No se pudo leer ni copiar el archivo. Inténtalo de nuevo.</string>
+    <string name="ai_import_error_space">No hay espacio libre suficiente: hacen falta unos %1$s.</string>
+    <string name="ai_model_delete">Eliminar</string>
+    <string name="ai_model_delete_confirm_desc">El modelo de IA se eliminará de tu dispositivo. Puedes descargarlo de nuevo más tarde.</string>
+    <string name="ai_model_delete_confirm_title">¿Eliminar modelo?</string>
+    <string name="ai_model_download">Descargar %1$s</string>
+    <string name="ai_model_download_retry">Reintentar descarga</string>
+    <string name="ai_model_downloading">Descargando modelo… %1$d%%</string>
+    <string name="ai_model_import">Importar un modelo que ya tienes</string>
+    <string name="ai_model_importing">Importando el modelo… %1$d%%</string>
+    <string name="ai_model_ready">Modelo listo</string>
+    <string name="ai_model_requirements">%1$s de descarga · requiere %2$d GB de RAM</string>
+    <string name="ai_model_import_note_ios">Elige un archivo Gemma 4 E2B .litertlm. Se copia dentro de la app, así que ocupa su tamaño otra vez hasta que borres el original.</string>
+    <string name="ai_import_error_unsupported_ios">Este archivo no es Gemma 4 E2B, el modelo que Trainable usa en iPhone. Las versiones para GPU, web o un chip concreto no funcionan.</string>
+    <string name="ai_model_variant">Modelo</string>
 </resources>

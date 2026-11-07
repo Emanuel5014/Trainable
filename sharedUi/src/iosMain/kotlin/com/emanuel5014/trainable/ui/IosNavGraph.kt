@@ -72,9 +72,7 @@ import com.emanuel5014.trainable.ui.navigation.CompareSessions
 import com.emanuel5014.trainable.ui.screens.settings.PersonalizationSettingsContent
 import com.emanuel5014.trainable.ui.screens.settings.NotificationSettingsContent
 import com.emanuel5014.trainable.sharedui.resources.Res
-import com.emanuel5014.trainable.sharedui.resources.ai_settings_desc_ios
 import com.emanuel5014.trainable.sharedui.resources.wallpaper_colors_unavailable
-import com.emanuel5014.trainable.sharedui.resources.ai_local_not_on_ios
 import com.emanuel5014.trainable.ui.screens.settings.AiProvidersModel
 import com.emanuel5014.trainable.ui.screens.settings.AiSettingsContent
 import com.emanuel5014.trainable.sharedui.resources.glass_part_overlays_desc_ios
@@ -183,7 +181,6 @@ internal fun IosNavGraph(
                     onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
                     onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) },
                     languageUi = { IosLanguageSetting() },
-                    aiDescription = Res.string.ai_settings_desc_ios,
                     platformSections = { IosDataSection(onNavigateToImportHistory = { navController.navigate(ImportHistory) }) },
                     aboutSection = {
                         AboutSettingsSection(
@@ -228,7 +225,7 @@ internal fun IosNavGraph(
             }
             composable<ImportHistory> { IosHistoryImportScreen(onNavigateBack = { navController.popBackStack() }) }
             composable<AiSettings> {
-                // Remote providers only: the on-device model is Android-only for now (A5)
+                // Remote providers, or Gemma E2B on an iPhone with 8 GB of RAM (A5-4)
                 val scope = rememberCoroutineScope()
                 val providers = remember { AiProvidersModel(IosAppGraph.aiProfiles, IosAppGraph.aiHttp, scope) }
                 val scanEnabled by IosAppGraph.preferences.aiScanEnabled.collectAsState(initial = false)
@@ -237,8 +234,8 @@ internal fun IosNavGraph(
                     scanEnabled = scanEnabled,
                     onScanEnabledChange = { enabled -> scope.launch { IosAppGraph.preferences.setAiScanEnabled(enabled) } },
                     providers = providers,
-                    deviceSupported = false,
-                    localUnavailableText = Res.string.ai_local_not_on_ios
+                    deviceSupported = com.emanuel5014.trainable.data.ai.IosLocalAiDevice.isSupported,
+                    localModelSection = { activeIsLocal -> IosLocalModelSection(activeIsLocal) }
                 )
             }
             composable<PersonalizationSettings> {

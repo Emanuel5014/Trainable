@@ -13,10 +13,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import com.emanuel5014.trainable.data.ai.AiModelStatus
+import com.emanuel5014.trainable.data.ai.IosLocalAiDevice
 import com.emanuel5014.trainable.data.ai.LlmScanResult
 import com.emanuel5014.trainable.data.ai.RoutineScanDraftStore
 import com.emanuel5014.trainable.data.ai.RoutineScanPrompt
 import com.emanuel5014.trainable.data.ai.RoutineScanResults
+import com.emanuel5014.trainable.data.ai.RoutineTranscriptionPrompt
 import com.emanuel5014.trainable.data.ai.ScanDraft
 import com.emanuel5014.trainable.data.ai.ScanDraftCodec
 import com.emanuel5014.trainable.data.ai.ScanPhase
@@ -161,6 +164,15 @@ private object IosRoutineScanBackend : RoutineScanBackend {
         onStreamUpdate: (String, String) -> Unit
     ): List<ScannedExerciseEntry> {
         val advanced = IosAppGraph.preferences.advancedProgrammingEnabled.first()
+        if (IosRemoteScan.isLocal()) {
+            // Gemma E2B on the phone only copies the sheet's table; the table parser makes the exercises (A5)
+            val result = IosRemoteScan.readLocal(
+                imageUri, RoutineTranscriptionPrompt.build(), RoutineTranscriptionPrompt.MAX_OUTPUT_TOKENS,
+                onPhase, onStreamUpdate
+            )
+            onPhase(ScanPhase.PARSING)
+            return RoutineScanResults.entriesFromTranscription(result, catalog, categories, languageCode, advanced)
+        }
         val result = IosRemoteScan.read(
             imageUri, RoutineScanPrompt.build(languageCode, categories, advanced),
             transcription = false, maxOutputTokens = null, onPhase, onStreamUpdate
@@ -168,16 +180,23 @@ private object IosRoutineScanBackend : RoutineScanBackend {
         onPhase(ScanPhase.PARSING)
         return RoutineScanResults.entries(result, catalog, categories, languageCode, advanced)
     }
+
+    override suspend fun release() = IosRemoteScan.releaseLocal()
 }
 
 internal object IosRemoteScan {
     private val profiles get() = IosAppGraph.aiProfiles
 
     val isReady = combine(
-        IosAppGraph.preferences.aiScanEnabled, profiles.activeId, profiles.profiles
-    ) { enabled, id, saved -> ScanReadiness.isReady(enabled, id, saved, localModelDownloaded = false) }
+        IosAppGraph.preferences.aiScanEnabled, profiles.activeId, profiles.profiles, IosAppGraph.localModels.status
+    ) { enabled, id, saved, model ->
+        ScanReadiness.isReady(enabled, id, saved, localModelDownloaded = IosLocalAiDevice.isSupported && model is AiModelStatus.Ready)
+    }
 
     private suspend fun activeProfile() = ScanReadiness.resolveActive(profiles.activeId.first(), profiles.profiles.first())
+
+    /** True when the scan runs on the phone (Gemma E2B) instead of a remote provider. */
+    suspend fun isLocal() = activeProfile() == null
 
     suspend fun consentRequired() = ScanReadiness.consentRequired(activeProfile())
 
@@ -210,6 +229,42 @@ internal object IosRemoteScan {
         }
         return session.run(RemoteScanPayload(prompt, image, transcription, maxOutputTokens), onStreamUpdate)
     }
+
+    /**
+     * The sheet read by Gemma E2B on the phone. The photo goes as it was captured (at most
+     * [ImageSizeFitter.START_SIDE], JPEG 95): LiteRT-LM's vision encoder scales it itself. Loading the model happens
+     * inside the first answer, so the phase moves on to reading when the first text arrives.
+     */
+    suspend fun readLocal(
+        imagePath: String,
+        prompt: String,
+        maxOutputTokens: Int,
+        onPhase: (ScanPhase) -> Unit,
+        onStreamUpdate: (String, String) -> Unit
+    ): LlmScanResult {
+        onPhase(ScanPhase.LOADING_MODEL)
+        val models = IosAppGraph.localModels
+        if (!IosLocalAiDevice.isSupported || models.status.value !is AiModelStatus.Ready || !models.isDownloaded()) {
+            throw ScanBackendException.ModelMissing()
+        }
+        val engine = IosAppGraph.localLlm
+        if (!engine.isInstalled) throw ScanBackendException.ModelMissing()
+        val jpeg = withContext(Dispatchers.IO) { readScanPhoto(imagePath) } ?: throw ScanBackendException.BadResponse()
+        var reading = false
+        // A model that fails to load or answer throws IosLocalLlmException, a plain failure for the scanner ("scan
+        // failed"), as on Android: the provider messages of ScanBackendException don't fit the phone.
+        val text = engine.generate(models.modelPath(), models.cacheDir(), jpeg, prompt, maxOutputTokens) { soFar ->
+            if (!reading) {
+                reading = true
+                onPhase(ScanPhase.READING_SHEET)
+            }
+            onStreamUpdate(soFar, "")
+        }
+        return LlmScanResult(text, "")
+    }
+
+    /** Frees the model's memory once a scanner closes; the next scan loads it again. */
+    fun releaseLocal() = IosAppGraph.localLlm.release()
 }
 
 private fun readScanPhoto(path: String) = NSData.dataWithContentsOfFile(path)?.toByteArray()

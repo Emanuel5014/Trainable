@@ -490,7 +490,6 @@
     <string name="advanced_programming_desc" formatted="false">%1RM sets, techniques like pauses and chains, weekly programs, 1RM tracking and RPE targets</string>
     <string name="ai_section_title">AI</string>
     <string name="ai_settings_desc">Offline sheet scan and model</string>
-    <string name="ai_settings_desc_ios">Sheet scanning with AI providers</string>
     <string name="auto_stop_cardio_at_target">Auto-stop cardio at target</string>
     <string name="auto_stop_cardio_at_target_desc">Pause the timer automatically when the time target is reached</string>
     <string name="auto_stop_time_weight_at_target">Auto-stop timed sets at target</string>
@@ -1329,7 +1328,6 @@
     <string name="ai_scan_desc">Fill your routine automatically from a photo of your training sheet</string>
     <string name="ai_scan_toggle">AI sheet scan</string>
     <string name="ai_where_title">Where the AI runs</string>
-    <string name="ai_local_not_on_ios">On-device AI isn't available on iPhone yet</string>
     <string name="ai_scan_add_all">Add exercises</string>
     <string name="ai_scan_add_missing_exercise">Add missing exercise</string>
     <string name="ai_scan_category_label">Category</string>
@@ -1395,4 +1393,22 @@
     <string name="ai_program_scan_title">Scan the program page</string>
     <string name="week_n">Week %1$d</string>
     <string name="ai_program_scan_failed">Couldn't read a prescription from the photo. Try a sharper, closer picture.</string>
+    <string name="ai_download_cancel">Cancel</string>
+    <string name="ai_import_error_busy">This model is already being downloaded or imported.</string>
+    <string name="ai_import_error_format">This isn't a LiteRT-LM model file (.litertlm).</string>
+    <string name="ai_import_error_read">Couldn't read or copy the file. Try again.</string>
+    <string name="ai_import_error_space">Not enough free space: about %1$s are needed.</string>
+    <string name="ai_model_delete">Delete</string>
+    <string name="ai_model_delete_confirm_desc">The AI model will be deleted from your device. You can download it again later.</string>
+    <string name="ai_model_delete_confirm_title">Delete model?</string>
+    <string name="ai_model_download">Download %1$s</string>
+    <string name="ai_model_download_retry">Retry download</string>
+    <string name="ai_model_downloading">Downloading model… %1$d%%</string>
+    <string name="ai_model_import">Import a model you already have</string>
+    <string name="ai_model_importing">Importing model… %1$d%%</string>
+    <string name="ai_model_ready">Model ready</string>
+    <string name="ai_model_requirements">%1$s download · requires %2$d GB of RAM</string>
+    <string name="ai_model_import_note_ios">Pick a Gemma 4 E2B .litertlm file. It is copied into the app, so it takes up its size again until you delete the original.</string>
+    <string name="ai_import_error_unsupported_ios">This file isn't Gemma 4 E2B, the model Trainable runs on iPhone. Builds for GPU, web or a specific chip don't work.</string>
+    <string name="ai_model_variant">Model</string>
 </resources>

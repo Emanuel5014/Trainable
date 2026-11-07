@@ -490,7 +490,6 @@
     <string name="advanced_programming_desc" formatted="false">%1RM-Sätze, Techniken wie Pausen und Ketten, Wochenprogramme, 1RM-Verwaltung und Ziel-RPE</string>
     <string name="ai_section_title">KI</string>
     <string name="ai_settings_desc">Offline-Scan und Modell</string>
-    <string name="ai_settings_desc_ios">Trainingspläne mit KI-Anbietern scannen</string>
     <string name="auto_stop_cardio_at_target">Cardio am Ziel automatisch stoppen</string>
     <string name="auto_stop_cardio_at_target_desc">Timer beim Erreichen des Zeitziels automatisch pausieren</string>
     <string name="auto_stop_time_weight_at_target">Zeitsätze am Ziel automatisch stoppen</string>
@@ -1328,7 +1327,6 @@
     <string name="ai_scan_desc">Erstelle deinen Trainingsplan automatisch aus einem Foto</string>
     <string name="ai_scan_toggle">KI-Plan-Scan</string>
     <string name="ai_where_title">Wo die KI läuft</string>
-    <string name="ai_local_not_on_ios">KI auf dem Gerät ist auf dem iPhone noch nicht verfügbar</string>
     <string name="ai_scan_add_all">Übungen hinzufügen</string>
     <string name="ai_scan_add_missing_exercise">Fehlende Übung hinzufügen</string>
     <string name="ai_scan_category_label">Kategorie</string>
@@ -1394,4 +1392,22 @@
     <string name="ai_program_scan_title">Programmseite scannen</string>
     <string name="week_n">Woche %1$d</string>
     <string name="ai_program_scan_failed">Auf dem Foto konnte keine Vorgabe gelesen werden. Versuche ein schärferes, näheres Bild.</string>
+    <string name="ai_download_cancel">Abbrechen</string>
+    <string name="ai_import_error_busy">Dieses Modell wird bereits heruntergeladen oder importiert.</string>
+    <string name="ai_import_error_format">Das ist keine LiteRT-LM-Modelldatei (.litertlm).</string>
+    <string name="ai_import_error_read">Die Datei konnte nicht gelesen oder kopiert werden. Versuche es erneut.</string>
+    <string name="ai_import_error_space">Nicht genug freier Speicher: etwa %1$s werden benötigt.</string>
+    <string name="ai_model_delete">Löschen</string>
+    <string name="ai_model_delete_confirm_desc">Das KI-Modell wird von deinem Gerät gelöscht. Du kannst es später erneut herunterladen.</string>
+    <string name="ai_model_delete_confirm_title">Modell löschen?</string>
+    <string name="ai_model_download">%1$s herunterladen</string>
+    <string name="ai_model_download_retry">Download wiederholen</string>
+    <string name="ai_model_downloading">Modell wird geladen… %1$d%%</string>
+    <string name="ai_model_import">Bereits vorhandenes Modell importieren</string>
+    <string name="ai_model_importing">Modell wird importiert… %1$d%%</string>
+    <string name="ai_model_ready">Modell bereit</string>
+    <string name="ai_model_requirements">%1$s Download · benötigt %2$d GB RAM</string>
+    <string name="ai_model_import_note_ios">Wähle eine Gemma 4 E2B-.litertlm-Datei. Sie wird in die App kopiert und belegt daher ihren Speicherplatz erneut, bis du das Original löschst.</string>
+    <string name="ai_import_error_unsupported_ios">Diese Datei ist nicht Gemma 4 E2B, das Modell, das Trainable auf dem iPhone nutzt. Versionen für GPU, Web oder einen bestimmten Chip funktionieren nicht.</string>
+    <string name="ai_model_variant">Modell</string>
 </resources>
