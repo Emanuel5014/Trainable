@@ -16,7 +16,12 @@ import platform.darwin.NSObject
  * The remote AI's API keys, AES-256-GCM with a device key kept in the Keychain (this device only, after first
  * unlock: never in backups or iCloud), like Android's Keystore key. A key saved elsewhere can't be read here.
  */
-class IosAiKeyCrypto(private val aes: () -> IosAesGcm? = { IosCryptoBridge.aesGcm }) : AiKeyCrypto {
+class IosAiKeyCrypto(
+    private val aes: () -> IosAesGcm? = { IosCryptoBridge.aesGcm },
+    /** Keychain item of the device key; Nextcloud uses its own (IosNextcloudVault). */
+    private val keychainService: String = "com.emanuel5014.trainable.ai",
+    private val keychainAccount: String = "ai_api_key"
+) : AiKeyCrypto {
 
     override fun encrypt(plain: String): Pair<ByteArray, ByteArray> {
         val gcm = aes() ?: error("AES-GCM bridge not installed")
@@ -54,8 +59,8 @@ class IosAiKeyCrypto(private val aes: () -> IosAesGcm? = { IosCryptoBridge.aesGc
         try {
             // Typed CF constants added one by one: a Kotlin map bridged to NSDictionary crashed here (see IosPhysicalCheck)
             CFDictionaryAddValue(dict, kSecClass, kSecClassGenericPassword)
-            CFDictionaryAddValue(dict, kSecAttrService, retain(NSString.create(string = KEYCHAIN_SERVICE)))
-            CFDictionaryAddValue(dict, kSecAttrAccount, retain(NSString.create(string = KEYCHAIN_ACCOUNT)))
+            CFDictionaryAddValue(dict, kSecAttrService, retain(NSString.create(string = keychainService)))
+            CFDictionaryAddValue(dict, kSecAttrAccount, retain(NSString.create(string = keychainAccount)))
             extra(dict, retain)
             return block(dict)
         } finally {
@@ -86,8 +91,6 @@ class IosAiKeyCrypto(private val aes: () -> IosAesGcm? = { IosCryptoBridge.aesGc
     private companion object {
         const val KEY_BYTES = 32
         const val IV_BYTES = 12
-        const val KEYCHAIN_SERVICE = "com.emanuel5014.trainable.ai"
-        const val KEYCHAIN_ACCOUNT = "ai_api_key"
 
         fun randomBytes(count: Int): ByteArray {
             val bytes = ByteArray(count)

@@ -36,7 +36,7 @@ import platform.UniformTypeIdentifiers.UTTypeData
 import platform.UniformTypeIdentifiers.UTTypeZIP
 import platform.darwin.NSObject
 
-private object IosBackups {
+internal object IosBackups {
     val manager by lazy { IosBackupManager() }
     private val startupLock = Mutex()
     private var started = false

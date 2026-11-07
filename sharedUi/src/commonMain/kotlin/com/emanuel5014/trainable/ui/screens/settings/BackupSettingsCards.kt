@@ -146,7 +146,9 @@ fun BackupSettingsCards(
     dateText: (NextcloudBackupFile) -> String,
     sizeText: (Long) -> String,
     /** Android passes its own vector (drawn by the platform, pixel-identical to before); iOS the shared copy. */
-    nextcloudIcon: androidx.compose.ui.graphics.painter.Painter = painterResource(Res.drawable.ic_nextcloud)
+    nextcloudIcon: androidx.compose.ui.graphics.painter.Painter = painterResource(Res.drawable.ic_nextcloud),
+    /** False hides the automatic local backup card (iOS until its Files folder support exists). */
+    localSupported: Boolean = true
 ) {
     val autoBackupEnabled = state.autoBackupEnabled
     val autoBackupFrequency = state.autoBackupFrequency
@@ -1103,6 +1105,7 @@ fun BackupSettingsCards(
     }
 
 
+                if (localSupported) {
                 GymCard(containerColor = SurfaceContainerHigh) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Row(
@@ -1158,6 +1161,7 @@ fun BackupSettingsCards(
                             }
                         }
                     }
+                }
                 }
 
                 GymCard(containerColor = SurfaceContainerHigh) {

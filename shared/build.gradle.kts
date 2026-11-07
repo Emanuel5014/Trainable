@@ -66,5 +66,6 @@ tasks.withType<KotlinNativeSimulatorTest>().configureEach {
     providers.gradleProperty("settingsFixture").orNull?.let { environment("SIMCTL_CHILD_SETTINGS_FIXTURE", it) }
     providers.gradleProperty("backupFixtures").orNull?.let { environment("SIMCTL_CHILD_BACKUP_FIXTURES", it) }
     providers.gradleProperty("aiFakeServer").orNull?.let { environment("SIMCTL_CHILD_AI_FAKE_SERVER", it) }
+    providers.gradleProperty("nextcloudFakeServer").orNull?.let { environment("SIMCTL_CHILD_NEXTCLOUD_FAKE_SERVER", it) }
     providers.gradleProperty("modelFileServer").orNull?.let { environment("SIMCTL_CHILD_MODEL_FILE_SERVER", it) }
 }

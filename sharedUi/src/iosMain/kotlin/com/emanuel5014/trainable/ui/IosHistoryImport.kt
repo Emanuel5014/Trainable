@@ -176,6 +176,7 @@ private fun NSData.toByteArray(): ByteArray {
 internal fun IosDataSection(onNavigateToImportHistory: () -> Unit) {
     SettingsSection(title = stringResource(Res.string.data_backup)) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            IosBackupSettingsCards()
             IosBackupButtons()
             IosHistoryExportButton()
             GymButton(
