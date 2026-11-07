@@ -490,6 +490,7 @@
     <string name="advanced_programming_desc" formatted="false">%1RM-Sätze, Techniken wie Pausen und Ketten, Wochenprogramme, 1RM-Verwaltung und Ziel-RPE</string>
     <string name="ai_section_title">KI</string>
     <string name="ai_settings_desc">Offline-Scan und Modell</string>
+    <string name="ai_settings_desc_ios">Trainingspläne mit KI-Anbietern scannen</string>
     <string name="auto_stop_cardio_at_target">Cardio am Ziel automatisch stoppen</string>
     <string name="auto_stop_cardio_at_target_desc">Timer beim Erreichen des Zeitziels automatisch pausieren</string>
     <string name="auto_stop_time_weight_at_target">Zeitsätze am Ziel automatisch stoppen</string>
@@ -1354,4 +1355,29 @@
     <string name="ai_scan_zoom_hint">Zum Zoomen zusammenziehen oder doppeltippen</string>
     <string name="scan_one_rep_max_found">1RM auf dem Blatt: %1$s · wird gespeichert</string>
     <string name="scan_programmed_hint">Die Vorgabe steht auf einem separaten Programmblatt: Wähle Erweitert, um die Blöcke hier hinzuzufügen, oder scanne die Programmseite nach dem Import.</string>
+    <string name="ai_consent_body">Das Foto des Plans wird an %1$s gesendet. Ein Cloud-Dienst folgt den Regeln seines Anbieters.</string>
+    <string name="ai_consent_continue">Weiter</string>
+    <string name="ai_consent_gemini_note">Mit einem kostenlosen Gemini-Schlüssel kann Google das Foto nutzen, um seine Produkte zu verbessern. Mit einem bezahlten nicht.</string>
+    <string name="ai_consent_title">Foto außerhalb des Telefons senden?</string>
+    <string name="ai_scan_continue">Scan fortsetzen</string>
+    <string name="ai_scan_failed">Plan konnte nicht analysiert werden. Versuche es erneut.</string>
+    <string name="ai_scan_hide_thinking">Gedanken ausblenden</string>
+    <string name="ai_scan_no_exercises">Keine Übungen im Foto erkannt</string>
+    <string name="ai_scan_phase_connecting">Verbindung wird hergestellt…</string>
+    <string name="ai_scan_phase_generating">Übungen werden extrahiert…</string>
+    <string name="ai_scan_phase_model">Modell wird geladen…</string>
+    <string name="ai_scan_phase_reading">Plan wird gelesen…</string>
+    <string name="ai_scan_show_thinking">Gedanken des Modells</string>
+    <string name="ai_scan_source_title">Trainingsplan scannen</string>
+    <string name="ai_scan_stop">Scan abbrechen</string>
+    <string name="ai_scan_stop_confirm_desc">Die Analyse des Trainingsplans wird abgebrochen.</string>
+    <string name="ai_scan_stop_confirm_title">Scan abbrechen?</string>
+    <string name="ai_scan_thinking_placeholder">Die Gedankengänge des Modells erscheinen hier…</string>
+    <string name="ai_scanning">Plan wird analysiert…</string>
+    <string name="scan_draft_discard">Verwerfen</string>
+    <string name="scan_draft_discard_desc">Die gescannten Übungen gehen verloren und du musst das Blatt erneut scannen.</string>
+    <string name="scan_draft_discard_title">Scan verwerfen?</string>
+    <string name="scan_draft_resume">Fortsetzen</string>
+    <string name="scan_draft_subtitle">%1$d Übungen warten auf die Prüfung</string>
+    <string name="scan_draft_title">Scan als Entwurf gespeichert</string>
 </resources>

@@ -207,20 +207,25 @@ class IosPhysicalCheckFiles(private val directory: () -> String = { documentsFol
         NSFileManager.defaultManager.removeItemAtPath(path(name), null)
     }
 
-    override fun compressImage(bytes: ByteArray): ByteArray = try {
-        val image = UIImage.imageWithData(bytes.toNSData())
-        if (image == null) bytes else {
-            val (width, height) = image.size.useContents { width to height }
-            val ratio = min(1.0, 1280.0 / max(width, height))
-            UIGraphicsBeginImageContextWithOptions(CGSizeMake(width * ratio, height * ratio), true, 1.0)
-            val scaled = try {
-                // drawInRect applies the photo's orientation, so the JPEG is stored upright
-                image.drawInRect(CGRectMake(0.0, 0.0, width * ratio, height * ratio))
-                UIGraphicsGetImageFromCurrentImageContext()
-            } finally { UIGraphicsEndImageContext() }
-            scaled?.let { UIImageJPEGRepresentation(it, 0.8) }?.toByteArray() ?: bytes
+    override fun compressImage(bytes: ByteArray): ByteArray = encodeIosJpeg(bytes, maxSide = 1280, quality = 80) ?: bytes
+}
+
+/** Encodes an upright JPEG without upscaling the source. */
+@OptIn(ExperimentalForeignApi::class)
+fun encodeIosJpeg(bytes: ByteArray, maxSide: Int, quality: Int): ByteArray? = try {
+    val image = UIImage.imageWithData(bytes.toNSData())
+    if (image == null) null else {
+        val (width, height) = image.size.useContents { width to height }
+        val ratio = min(1.0, maxSide.toDouble() / max(width, height))
+        UIGraphicsBeginImageContextWithOptions(CGSizeMake(width * ratio, height * ratio), true, 1.0)
+        val scaled = try {
+            image.drawInRect(CGRectMake(0.0, 0.0, width * ratio, height * ratio))
+            UIGraphicsGetImageFromCurrentImageContext()
+        } finally {
+            UIGraphicsEndImageContext()
         }
-    } catch (e: Exception) {
-        bytes
+        scaled?.let { UIImageJPEGRepresentation(it, quality / 100.0) }?.toByteArray()
     }
+} catch (_: Exception) {
+    null
 }

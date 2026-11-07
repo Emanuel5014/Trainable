@@ -490,6 +490,7 @@
     <string name="advanced_programming_desc" formatted="false">%1RM sets, techniques like pauses and chains, weekly programs, 1RM tracking and RPE targets</string>
     <string name="ai_section_title">AI</string>
     <string name="ai_settings_desc">Offline sheet scan and model</string>
+    <string name="ai_settings_desc_ios">Sheet scanning with AI providers</string>
     <string name="auto_stop_cardio_at_target">Auto-stop cardio at target</string>
     <string name="auto_stop_cardio_at_target_desc">Pause the timer automatically when the time target is reached</string>
     <string name="auto_stop_time_weight_at_target">Auto-stop timed sets at target</string>
@@ -1355,4 +1356,29 @@
     <string name="ai_scan_zoom_hint">Pinch or double tap to zoom</string>
     <string name="scan_one_rep_max_found">1RM on the sheet: %1$s · it will be saved</string>
     <string name="scan_programmed_hint">The prescription is on a separate program sheet: choose Advanced to add its blocks here, or scan the program page after importing.</string>
+    <string name="ai_consent_body">The photo of the sheet will be sent to %1$s. A cloud service follows its provider's rules.</string>
+    <string name="ai_consent_continue">Continue</string>
+    <string name="ai_consent_gemini_note">With a free Gemini key, Google may use the photo to improve its products. A paid key doesn't.</string>
+    <string name="ai_consent_title">Send the photo outside your phone?</string>
+    <string name="ai_scan_continue">Continue scan</string>
+    <string name="ai_scan_failed">Couldn't analyze the sheet. Try again.</string>
+    <string name="ai_scan_hide_thinking">Hide thinking</string>
+    <string name="ai_scan_no_exercises">No exercises detected in the photo</string>
+    <string name="ai_scan_phase_connecting">Connecting…</string>
+    <string name="ai_scan_phase_generating">Extracting exercises…</string>
+    <string name="ai_scan_phase_model">Loading model…</string>
+    <string name="ai_scan_phase_reading">Reading the sheet…</string>
+    <string name="ai_scan_show_thinking">Model thinking</string>
+    <string name="ai_scan_source_title">Scan training sheet</string>
+    <string name="ai_scan_stop">Stop scan</string>
+    <string name="ai_scan_stop_confirm_desc">The sheet analysis will be stopped and you will need to start a new one.</string>
+    <string name="ai_scan_stop_confirm_title">Stop scanning?</string>
+    <string name="ai_scan_thinking_placeholder">The model's reasoning will appear here…</string>
+    <string name="ai_scanning">Analyzing sheet…</string>
+    <string name="scan_draft_discard">Discard</string>
+    <string name="scan_draft_discard_desc">The scanned exercises will be lost and you'll have to scan the sheet again.</string>
+    <string name="scan_draft_discard_title">Discard the scan?</string>
+    <string name="scan_draft_resume">Resume</string>
+    <string name="scan_draft_subtitle">%1$d exercises waiting to be reviewed</string>
+    <string name="scan_draft_title">Scan saved as a draft</string>
 </resources>

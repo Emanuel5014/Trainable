@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import dev.chrisbanes.haze.HazeState
 
 /**
- * Scanning a routine sheet with AI from the routine screen: Android only for now, so the shared screen asks the
+ * Scanning a routine sheet with AI from the routine screen. The shared screen asks the
  * platform for it and [NoRoutineScan] leaves it out.
  */
 interface RoutineScanUi {

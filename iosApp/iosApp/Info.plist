@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Connect to the AI provider you set up on your local network to read routine sheets.</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>CFBundleDocumentTypes</key>
@@ -43,7 +50,7 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save the workout images you choose to export to Photos.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Take photos for your routines and physical checks.</string>
+	<string>Take photos for your routines, sheet scans, and physical checks.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Unlock your physical checks with Face ID.</string>
 </dict>

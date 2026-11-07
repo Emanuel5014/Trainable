@@ -493,6 +493,7 @@
     <string name="advanced_programming_desc" formatted="false">Series en %1RM, técnicas como pausas y cadenas, programas semanales, 1RM y RPE objetivo</string>
     <string name="ai_section_title">IA</string>
     <string name="ai_settings_desc">Escaneo sin conexión y modelo</string>
+    <string name="ai_settings_desc_ios">Escaneo de rutinas con proveedores de IA</string>
     <string name="auto_stop_cardio_at_target">Parada automática de cardio en el objetivo</string>
     <string name="auto_stop_cardio_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo objetivo</string>
     <string name="auto_stop_time_weight_at_target">Parada automática de series temporizadas en el objetivo</string>
@@ -1357,4 +1358,29 @@
     <string name="ai_scan_zoom_hint">Pellizca o toca dos veces para ampliar</string>
     <string name="scan_one_rep_max_found">1RM en la hoja: %1$s · se guardará</string>
     <string name="scan_programmed_hint">La prescripción está en una hoja de programación aparte: elige Avanzado para añadir aquí los bloques, o escanea la página de la programación tras importar.</string>
+    <string name="ai_consent_body">La foto de la hoja se enviará a %1$s. Un servicio en la nube sigue las reglas de su proveedor.</string>
+    <string name="ai_consent_continue">Continuar</string>
+    <string name="ai_consent_gemini_note">Con una clave Gemini gratuita, Google puede usar la foto para mejorar sus productos. Con una clave de pago, no.</string>
+    <string name="ai_consent_title">¿Enviar la foto fuera del teléfono?</string>
+    <string name="ai_scan_continue">Continuar escaneo</string>
+    <string name="ai_scan_failed">No se pudo analizar la hoja. Inténtalo de nuevo.</string>
+    <string name="ai_scan_hide_thinking">Ocultar pensamiento</string>
+    <string name="ai_scan_no_exercises">No se detectaron ejercicios en la foto</string>
+    <string name="ai_scan_phase_connecting">Conectando…</string>
+    <string name="ai_scan_phase_generating">Extrayendo ejercicios…</string>
+    <string name="ai_scan_phase_model">Cargando modelo…</string>
+    <string name="ai_scan_phase_reading">Leyendo la hoja…</string>
+    <string name="ai_scan_show_thinking">Pensamiento del modelo</string>
+    <string name="ai_scan_source_title">Escanear hoja de rutina</string>
+    <string name="ai_scan_stop">Detener escaneo</string>
+    <string name="ai_scan_stop_confirm_desc">El análisis de la rutina se detendrá y tendrás que iniciar uno nuevo.</string>
+    <string name="ai_scan_stop_confirm_title">¿Detener escaneo?</string>
+    <string name="ai_scan_thinking_placeholder">El razonamiento del modelo aparecerá aquí…</string>
+    <string name="ai_scanning">Analizando la hoja…</string>
+    <string name="scan_draft_discard">Descartar</string>
+    <string name="scan_draft_discard_desc">Se perderán los ejercicios escaneados y tendrás que volver a escanear la hoja.</string>
+    <string name="scan_draft_discard_title">¿Descartar el escaneo?</string>
+    <string name="scan_draft_resume">Continuar</string>
+    <string name="scan_draft_subtitle">%1$d ejercicios pendientes de revisar</string>
+    <string name="scan_draft_title">Escaneo guardado como borrador</string>
 </resources>

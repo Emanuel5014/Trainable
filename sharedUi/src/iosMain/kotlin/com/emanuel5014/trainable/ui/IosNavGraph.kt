@@ -54,7 +54,6 @@ import androidx.navigation.toRoute
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import com.emanuel5014.trainable.ui.screens.routines.NoRoutineScan
 import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailContent
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.BottomBarManager
@@ -73,6 +72,7 @@ import com.emanuel5014.trainable.ui.navigation.CompareSessions
 import com.emanuel5014.trainable.ui.screens.settings.PersonalizationSettingsContent
 import com.emanuel5014.trainable.ui.screens.settings.NotificationSettingsContent
 import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.ai_settings_desc_ios
 import com.emanuel5014.trainable.sharedui.resources.wallpaper_colors_unavailable
 import com.emanuel5014.trainable.sharedui.resources.ai_local_not_on_ios
 import com.emanuel5014.trainable.ui.screens.settings.AiProvidersModel
@@ -183,6 +183,7 @@ internal fun IosNavGraph(
                     onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
                     onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) },
                     languageUi = { IosLanguageSetting() },
+                    aiDescription = Res.string.ai_settings_desc_ios,
                     platformSections = { IosDataSection(onNavigateToImportHistory = { navController.navigate(ImportHistory) }) },
                     aboutSection = {
                         AboutSettingsSection(
@@ -289,12 +290,11 @@ internal fun IosNavGraph(
                 val planId = entry.toRoute<RoutineDetail>().planId
                 val scope = rememberCoroutineScope()
                 val detail = remember(planId) { IosAppGraph.routineDetail(planId, scope) }
+                val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
                 RoutineDetailContent(
                     state = detail,
-                    // The exercise categories in the phone's language until the app's own choice reaches iOS
-                    languageCode = com.emanuel5014.trainable.platform.IosAppLocale.language(),
-                    // Scanning a routine sheet with AI is not on iOS yet
-                    scan = NoRoutineScan,
+                    languageCode = language,
+                    scan = rememberIosRoutineScanUi(planId, detail, language),
                     onNavigateBack = { navController.popBackStack() },
                     onStartWorkout = { id, sessionId -> navController.navigate(WorkoutExecution(planId = id, sessionId = sessionId)) }
                 )

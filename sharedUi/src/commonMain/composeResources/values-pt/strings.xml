@@ -493,6 +493,7 @@
     <string name="advanced_programming_desc" formatted="false">Séries em %1RM, técnicas como pausas e correntes, programas semanais, 1RM e RPE alvo</string>
     <string name="ai_section_title">IA</string>
     <string name="ai_settings_desc">Digitalização offline e modelo</string>
+    <string name="ai_settings_desc_ios">Digitalização de rotinas com fornecedores de IA</string>
     <string name="auto_stop_cardio_at_target">Parada automática do cardio na meta</string>
     <string name="auto_stop_cardio_at_target_desc">Pausar o temporizador automaticamente ao atingir a meta de tempo</string>
     <string name="auto_stop_time_weight_at_target">Parada automática de séries cronometradas na meta</string>
@@ -1357,4 +1358,29 @@
     <string name="ai_scan_zoom_hint">Aperte ou toque duas vezes para ampliar</string>
     <string name="scan_one_rep_max_found">1RM na folha: %1$s · será salvo</string>
     <string name="scan_programmed_hint">A prescrição está em uma folha de programação à parte: escolha Avançado para adicionar os blocos aqui, ou escaneie a página da programação após importar.</string>
+    <string name="ai_consent_body">A foto da ficha será enviada para %1$s. Um serviço na nuvem segue as regras do seu fornecedor.</string>
+    <string name="ai_consent_continue">Continuar</string>
+    <string name="ai_consent_gemini_note">Com uma chave Gemini gratuita, o Google pode usar a foto para melhorar os seus produtos. Com uma chave paga, não.</string>
+    <string name="ai_consent_title">Enviar a foto para fora do telemóvel?</string>
+    <string name="ai_scan_continue">Continuar digitalização</string>
+    <string name="ai_scan_failed">Não foi possível analisar a ficha. Tenta novamente.</string>
+    <string name="ai_scan_hide_thinking">Ocultar raciocínio</string>
+    <string name="ai_scan_no_exercises">Nenhum exercício detetado na foto</string>
+    <string name="ai_scan_phase_connecting">A ligar…</string>
+    <string name="ai_scan_phase_generating">A extrair exercícios…</string>
+    <string name="ai_scan_phase_model">A carregar o modelo…</string>
+    <string name="ai_scan_phase_reading">A ler a ficha…</string>
+    <string name="ai_scan_show_thinking">Raciocínio do modelo</string>
+    <string name="ai_scan_source_title">Digitalizar ficha de treino</string>
+    <string name="ai_scan_stop">Parar digitalização</string>
+    <string name="ai_scan_stop_confirm_desc">A análise do treino será interrompida e terá de iniciar uma nova.</string>
+    <string name="ai_scan_stop_confirm_title">Parar digitalização?</string>
+    <string name="ai_scan_thinking_placeholder">O raciocínio do modelo aparecerá aqui…</string>
+    <string name="ai_scanning">A analisar a ficha…</string>
+    <string name="scan_draft_discard">Descartar</string>
+    <string name="scan_draft_discard_desc">Os exercícios digitalizados serão perdidos e você terá de digitalizar a ficha novamente.</string>
+    <string name="scan_draft_discard_title">Descartar a digitalização?</string>
+    <string name="scan_draft_resume">Continuar</string>
+    <string name="scan_draft_subtitle">%1$d exercícios aguardando revisão</string>
+    <string name="scan_draft_title">Digitalização salva como rascunho</string>
 </resources>

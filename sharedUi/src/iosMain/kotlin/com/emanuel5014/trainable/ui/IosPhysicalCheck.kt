@@ -101,7 +101,7 @@ private object IosPhysicalCheckPlatform : PhysicalCheckPlatformUi {
 }
 
 /**
- * Camera (asking for access first) and photo library. Photos arrive upright, JPEG, at most 1280 px.
+ * Camera (asking for access first) and photo library. By default photos arrive upright, JPEG, at most 1280 px.
  * [selectionLimit] 0 lets the user pick many photos, 1 one. [deniedText] is shown when camera access is refused.
  */
 @Composable
@@ -110,12 +110,14 @@ internal fun rememberIosPhotoCapture(
     deniedText: String,
     onPicked: (List<ByteArray>) -> Unit,
     onCameraResult: (success: Boolean, bytes: ByteArray?) -> Unit,
-    onCameraDenied: () -> Unit
+    onCameraDenied: () -> Unit,
+    preparePhoto: (ByteArray) -> ByteArray? = { IosPhysicalCheckFiles().compressImage(it) }
 ): PhotoCapture {
     val presenter = LocalUIViewController.current
     val picked by rememberUpdatedState(onPicked)
     val cameraResult by rememberUpdatedState(onCameraResult)
     val denied by rememberUpdatedState(onCameraDenied)
+    val prepare by rememberUpdatedState(preparePhoto)
     val show = LocalShowMessage.current
     val deniedMessage by rememberUpdatedState(deniedText)
     val unavailableText = stringResource(Res.string.physical_check_camera_unavailable)
@@ -127,7 +129,7 @@ internal fun rememberIosPhotoCapture(
             override fun picker(picker: PHPickerViewController, didFinishPicking: List<*>) {
                 val results = didFinishPicking.filterIsInstance<PHPickerResult>()
                 picker.dismissViewControllerAnimated(true) {
-                    loadPhotos(results) { photos -> if (alive) picked(photos) }
+                    loadPhotos(results, prepare) { photos -> if (alive) picked(photos) }
                 }
             }
         }
@@ -138,7 +140,7 @@ internal fun rememberIosPhotoCapture(
                 val image = didFinishPickingMediaWithInfo[UIImagePickerControllerOriginalImage] as? UIImage
                 picker.dismissViewControllerAnimated(true) {
                     val bytes = image?.let { UIImageJPEGRepresentation(it, 0.95) }?.toByteArray()
-                        ?.let { IosPhysicalCheckFiles().compressImage(it) }
+                        ?.let(prepare)
                     if (alive) cameraResult(true, bytes)
                 }
             }
@@ -188,17 +190,21 @@ internal fun rememberIosPhotoCapture(
 }
 
 /**
- * Each picked photo as an upright JPEG of at most 1280 px (HEIC and other formats included), in the picked order;
+ * Each picked photo after preparation, in the picked order;
  * photos that cannot be read are left out. [done] runs on the main thread.
  */
-private fun loadPhotos(results: List<PHPickerResult>, done: (List<ByteArray>) -> Unit) {
+private fun loadPhotos(
+    results: List<PHPickerResult>,
+    prepare: (ByteArray) -> ByteArray?,
+    done: (List<ByteArray>) -> Unit
+) {
     if (results.isEmpty()) { done(emptyList()); return }
     val photos = arrayOfNulls<ByteArray>(results.size)
     var pending = results.size
     results.forEachIndexed { index, result ->
         result.itemProvider.loadDataRepresentationForTypeIdentifier("public.image") { data, _ ->
             val bytes = data?.let { d ->
-                UIImage.imageWithData(d)?.let { IosPhysicalCheckFiles().compressImage(d.toByteArray()) }
+                UIImage.imageWithData(d)?.let { prepare(d.toByteArray()) }
             }
             dispatch_async(dispatch_get_main_queue()) {
                 photos[index] = bytes

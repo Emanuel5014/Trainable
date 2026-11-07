@@ -6,6 +6,7 @@ import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
 import com.emanuel5014.trainable.ui.util.PlatformBackHandler
 import com.emanuel5014.trainable.util.sortedByKeys
 import com.emanuel5014.trainable.ui.util.fullscreenDialogProperties
+import com.emanuel5014.trainable.ui.util.fullscreenDialogTopInset
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -926,6 +927,7 @@ private fun FullscreenPhotoDialog(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .fullscreenDialogTopInset()
                     .padding(16.dp)
                     .align(Alignment.TopCenter),
                 horizontalArrangement = Arrangement.SpaceBetween,

@@ -165,7 +165,8 @@ fun SettingsContent(
     platformSections: @Composable () -> Unit = {},
     aboutSection: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
-    scrollState: androidx.compose.foundation.ScrollState = rememberScrollState()
+    scrollState: androidx.compose.foundation.ScrollState = rememberScrollState(),
+    aiDescription: org.jetbrains.compose.resources.StringResource = Res.string.ai_settings_desc
 ) {
     val currentUser by state.currentUser.collectAsState()
     val weeklyGoal by state.weeklyGoal.collectAsState()
@@ -567,7 +568,7 @@ fun SettingsContent(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
                                     Text(stringResource(Res.string.ai_section_title), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(Res.string.ai_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    Text(stringResource(aiDescription), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)

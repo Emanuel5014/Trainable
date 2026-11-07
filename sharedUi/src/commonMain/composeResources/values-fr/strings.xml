@@ -493,6 +493,7 @@
     <string name="advanced_programming_desc" formatted="false">Séries en %1RM, techniques comme arrêts et chaînes, programmes hebdomadaires, 1RM et RPE cibles</string>
     <string name="ai_section_title">IA</string>
     <string name="ai_settings_desc">Scan hors ligne et modèle</string>
+    <string name="ai_settings_desc_ios">Scan de programmes avec des fournisseurs IA</string>
     <string name="auto_stop_cardio_at_target">Arrêt auto du cardio à l'objectif</string>
     <string name="auto_stop_cardio_at_target_desc">Mettre le minuteur en pause automatiquement à l'objectif de temps</string>
     <string name="auto_stop_time_weight_at_target">Arrêt auto des séries chronométrées à l'objectif</string>
@@ -1357,4 +1358,29 @@
     <string name="ai_scan_zoom_hint">Pincer ou appuyer deux fois pour zoomer</string>
     <string name="scan_one_rep_max_found">1RM sur la fiche : %1$s · il sera enregistré</string>
     <string name="scan_programmed_hint">La prescription est sur une fiche de programme à part : choisis Avancé pour ajouter les blocs ici, ou scanne la page du programme après l'import.</string>
+    <string name="ai_consent_body">La photo de la fiche sera envoyée à %1$s. Un service cloud suit les règles de son fournisseur.</string>
+    <string name="ai_consent_continue">Continuer</string>
+    <string name="ai_consent_gemini_note">Avec une clé Gemini gratuite, Google peut utiliser la photo pour améliorer ses produits. Pas avec une clé payante.</string>
+    <string name="ai_consent_title">Envoyer la photo hors du téléphone ?</string>
+    <string name="ai_scan_continue">Continuer l'analyse</string>
+    <string name="ai_scan_failed">Impossible d'analyser la fiche. Réessaie.</string>
+    <string name="ai_scan_hide_thinking">Masquer la réflexion</string>
+    <string name="ai_scan_no_exercises">Aucun exercice détecté sur la photo</string>
+    <string name="ai_scan_phase_connecting">Connexion…</string>
+    <string name="ai_scan_phase_generating">Extraction des exercices…</string>
+    <string name="ai_scan_phase_model">Chargement du modèle…</string>
+    <string name="ai_scan_phase_reading">Lecture de la fiche…</string>
+    <string name="ai_scan_show_thinking">Réflexion du modèle</string>
+    <string name="ai_scan_source_title">Scanner la fiche d'entraînement</string>
+    <string name="ai_scan_stop">Arrêter l'analyse</string>
+    <string name="ai_scan_stop_confirm_desc">L'analyse de la séance sera interrompue et vous devrez en recommencer une.</string>
+    <string name="ai_scan_stop_confirm_title">Arrêter l'analyse ?</string>
+    <string name="ai_scan_thinking_placeholder">Le raisonnement du modèle apparaîtra ici…</string>
+    <string name="ai_scanning">Analyse de la fiche…</string>
+    <string name="scan_draft_discard">Supprimer</string>
+    <string name="scan_draft_discard_desc">Les exercices scannés seront perdus et tu devras scanner à nouveau la fiche.</string>
+    <string name="scan_draft_discard_title">Supprimer le scan ?</string>
+    <string name="scan_draft_resume">Reprendre</string>
+    <string name="scan_draft_subtitle">%1$d exercices à vérifier</string>
+    <string name="scan_draft_title">Scan enregistré en brouillon</string>
 </resources>
