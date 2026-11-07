@@ -14,10 +14,10 @@ import com.emanuel5014.trainable.data.ai.ModelImportError
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConfig
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
-import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudWebDavClient
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudWebDav
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
-import com.emanuel5014.trainable.util.NextcloudCryptoManager
+import com.emanuel5014.trainable.data.backup.NextcloudBackupService
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.backup.BackupManager
 import com.emanuel5014.trainable.util.backup.NextcloudBackupManager
@@ -40,8 +40,8 @@ class OnboardingViewModel @Inject constructor(
     private val deviceCapabilityChecker: DeviceCapabilityChecker,
     private val modelFileManager: ModelFileManager,
     private val modelDownloadManager: ModelDownloadManager,
-    private val nextcloudWebDavClient: NextcloudWebDavClient,
-    private val nextcloudCryptoManager: NextcloudCryptoManager,
+    private val nextcloudWebDav: NextcloudWebDav,
+    private val nextcloudBackupService: NextcloudBackupService,
     private val nextcloudBackupManager: NextcloudBackupManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -180,18 +180,11 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             _isConnectingNextcloud.value = true
             _nextcloudConnectState.value = null
-            val result = nextcloudWebDavClient.testConnection(
+            val result = nextcloudWebDav.testConnection(
                 NextcloudConfig(serverUrl = serverUrl.trim(), username = username.trim(), passwordOrToken = passwordOrToken.trim())
             )
             if (result is NextcloudConnectionResult.Success) {
-                val (encrypted, iv) = nextcloudCryptoManager.encryptPassword(passwordOrToken.trim())
-                userPrefsRepository.setNextcloudConfig(
-                    serverUrl = serverUrl.trim(),
-                    username = username.trim(),
-                    encryptedPasswordHex = encrypted.toHex(),
-                    passwordIvHex = iv.toHex(),
-                    remoteFolder = remoteFolder.trim().ifEmpty { DEFAULT_NEXTCLOUD_FOLDER }
-                )
+                nextcloudBackupService.saveConfig(NextcloudConfig(serverUrl, username, passwordOrToken, remoteFolder))
             }
             _nextcloudConnectState.value = result
             _isConnectingNextcloud.value = false
@@ -235,7 +228,6 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
 
     fun persistFolderUri(uri: Uri) {
         try {

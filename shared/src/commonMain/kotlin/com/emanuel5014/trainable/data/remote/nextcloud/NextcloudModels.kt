@@ -1,7 +1,5 @@
 package com.emanuel5014.trainable.data.remote.nextcloud
 
-import java.util.Date
-
 data class NextcloudConfig(
     val serverUrl: String,
     val username: String,
@@ -13,7 +11,8 @@ data class NextcloudBackupFile(
     val name: String,
     val remotePath: String,
     val sizeBytes: Long,
-    val lastModified: Date
+    /** Last change on the server, epoch milliseconds (WebDAV getlastmodified). */
+    val lastModifiedMillis: Long
 )
 
 sealed interface NextcloudConnectionResult {

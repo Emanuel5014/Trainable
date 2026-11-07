@@ -880,7 +880,7 @@ fun SettingsScreen(
                             ) {
                                 items(nextcloudBackups) { backup ->
                                     val isAuto = backup.name.startsWith("Trainable_AutoBackup_")
-                                    val formattedDate = remember(backup.name, backup.lastModified) {
+                                    val formattedDate = remember(backup.name, backup.lastModifiedMillis) {
                                         formatNextcloudBackupDate(backup)
                                     }
 
@@ -1836,7 +1836,7 @@ private fun formatNextcloudBackupDate(backup: NextcloudBackupFile): String {
     }
     return try {
         val outFormat = SimpleDateFormat("d MMM yyyy • HH:mm", Locale.getDefault())
-        outFormat.format(backup.lastModified)
+        outFormat.format(java.util.Date(backup.lastModifiedMillis))
     } catch (e: Exception) {
         backup.name
     }

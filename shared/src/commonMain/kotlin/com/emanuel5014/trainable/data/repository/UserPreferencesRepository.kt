@@ -33,6 +33,8 @@ class UserPreferencesRepository(
         val AUTO_BACKUP_FOLDER_URI = stringPreferencesKey("auto_backup_folder_uri")
         val AUTO_BACKUP_MAX_COUNT = intPreferencesKey("auto_backup_max_count")
         val AUTO_BACKUP_INCLUDE_IMAGES = booleanPreferencesKey("auto_backup_include_images")
+        /** Last successful automatic backup (epoch millis): the iOS catch-up uses it. Device state, never in a backup. */
+        val AUTO_BACKUP_LAST_RUN = androidx.datastore.preferences.core.longPreferencesKey("auto_backup_last_run")
         val USER_LANGUAGE = stringPreferencesKey("user_language")
         val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
@@ -262,6 +264,12 @@ class UserPreferencesRepository(
         .map { preferences ->
             preferences[AUTO_BACKUP_INCLUDE_IMAGES] ?: false
         }
+
+    val autoBackupLastRun: Flow<Long?> = dataStore.data.map { preferences -> preferences[AUTO_BACKUP_LAST_RUN] }
+
+    suspend fun setAutoBackupLastRun(millis: Long) {
+        dataStore.edit { preferences -> preferences[AUTO_BACKUP_LAST_RUN] = millis }
+    }
 
     val userLanguage: Flow<String?> = dataStore.data
         .map { preferences ->

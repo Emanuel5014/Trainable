@@ -367,7 +367,7 @@ internal fun NextcloudRestoreDialog(
                         modifier = Modifier.heightIn(max = 320.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(backups.sortedByDescending { it.lastModified.time }, key = { it.remotePath }) { backup ->
+                        items(backups.sortedByDescending { it.lastModifiedMillis }, key = { it.remotePath }) { backup ->
                             BackupRow(backup, onClick = { onPick(backup) })
                         }
                     }
@@ -385,8 +385,8 @@ internal fun NextcloudRestoreDialog(
 
 @Composable
 private fun BackupRow(backup: NextcloudBackupFile, onClick: () -> Unit) {
-    val date = remember(backup.lastModified) {
-        DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(backup.lastModified)
+    val date = remember(backup.lastModifiedMillis) {
+        DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(java.util.Date(backup.lastModifiedMillis))
     }
     val size = String.format(Locale.getDefault(), "%.1f MB", backup.sizeBytes / 1_048_576f)
     Column(

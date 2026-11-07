@@ -46,8 +46,8 @@ import kotlinx.coroutines.launch
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConfig
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
-import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudWebDavClient
-import com.emanuel5014.trainable.util.NextcloudCryptoManager
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudWebDav
+import com.emanuel5014.trainable.data.backup.NextcloudBackupService
 import com.emanuel5014.trainable.util.backup.NextcloudBackupManager
 import javax.inject.Inject
 
@@ -59,8 +59,8 @@ class SettingsViewModel @Inject constructor(
     private val localeManager: AppLocaleManager,
     private val backupManager: BackupManager,
     private val nextcloudBackupManager: NextcloudBackupManager,
-    private val nextcloudWebDavClient: NextcloudWebDavClient,
-    private val nextcloudCryptoManager: NextcloudCryptoManager,
+    private val nextcloudWebDav: NextcloudWebDav,
+    private val nextcloudBackupService: NextcloudBackupService,
     private val updateManager: UpdateManager,
     private val webServerManager: WebServerManager,
     private val deviceCapabilityChecker: DeviceCapabilityChecker,
@@ -427,7 +427,7 @@ class SettingsViewModel @Inject constructor(
                 username = username.trim(),
                 passwordOrToken = passwordOrToken.trim()
             )
-            val result = nextcloudWebDavClient.testConnection(config)
+            val result = nextcloudWebDav.testConnection(config)
             _nextcloudTestState.value = result
             _isTestingConnection.value = false
         }
@@ -440,14 +440,7 @@ class SettingsViewModel @Inject constructor(
         remoteFolder: String
     ) {
         viewModelScope.launch {
-            val (encrypted, iv) = nextcloudCryptoManager.encryptPassword(passwordOrToken.trim())
-            userPrefsRepository.setNextcloudConfig(
-                serverUrl = serverUrl.trim(),
-                username = username.trim(),
-                encryptedPasswordHex = toHex(encrypted),
-                passwordIvHex = toHex(iv),
-                remoteFolder = remoteFolder.trim().ifEmpty { "Trainable/Backups" }
-            )
+            nextcloudBackupService.saveConfig(NextcloudConfig(serverUrl, username, passwordOrToken, remoteFolder))
             _backupStatus.value = "Nextcloud configured successfully"
             rescheduleAutoBackup()
         }
@@ -503,10 +496,6 @@ class SettingsViewModel @Inject constructor(
                 _backupStatus.value = "Restore failed: ${result.exceptionOrNull()?.localizedMessage}"
             }
         }
-    }
-
-    private fun toHex(byteArray: ByteArray): String {
-        return byteArray.joinToString("") { "%02x".format(it) }
     }
 
     fun setAutoBackupFolder(uri: Uri) {

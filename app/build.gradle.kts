@@ -158,6 +158,9 @@ dependencies {
     testImplementation(libs.junit)
     // Real org.json for JVM unit tests (the Android stub returns defaults)
     testImplementation("org.json:json:20260814")
+    // Nextcloud WebDAV over OkHttp against a local https server (same OkHttp version as the app)
+    testImplementation("com.squareup.okhttp3:mockwebserver3:${libs.versions.okhttp.get()}")
+    testImplementation("com.squareup.okhttp3:okhttp-tls:${libs.versions.okhttp.get()}")
 
     androidTestImplementation(libs.androidx.junit)
     // The shared UI's strings, for tests of the screens that use them
