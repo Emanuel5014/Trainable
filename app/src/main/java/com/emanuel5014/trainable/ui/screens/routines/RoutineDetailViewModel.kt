@@ -5,7 +5,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.ai.AiResourceTracker
-import com.emanuel5014.trainable.data.ai.DeviceResourceMetrics
 import com.emanuel5014.trainable.data.ai.RoutineScanner
 import com.emanuel5014.trainable.data.ai.ScanDraftStore
 import com.emanuel5014.trainable.data.ai.ScanPhase
@@ -27,8 +26,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-typealias AiScanStreamState = RoutineScanStream<DeviceResourceMetrics>
 
 @HiltViewModel
 class RoutineDetailViewModel @Inject constructor(

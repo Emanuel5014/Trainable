@@ -1383,4 +1383,18 @@
     <string name="scan_draft_resume">Reprendre</string>
     <string name="scan_draft_subtitle">%1$d exercices à vérifier</string>
     <string name="scan_draft_title">Scan enregistré en brouillon</string>
+    <string name="ai_program_found_max">1RM trouvé sur la page</string>
+    <string name="ai_program_import_count">Importer (%1$d)</string>
+    <string name="ai_program_not_matched">« %1$s » est introuvable sur cette page. Choisis le bon exercice :</string>
+    <string name="ai_program_other_exercises">Exercices trouvés sur la page</string>
+    <string name="ai_program_review_hint">Choisis les semaines à importer. Tu pourras tout modifier ensuite.</string>
+    <string name="ai_program_review_pick_week">Choisis la semaine à importer. Tu pourras la modifier ensuite.</string>
+    <string name="ai_program_review_summary">%1$d semaines · %2$d blocs</string>
+    <string name="ai_program_review_title">Programme reconnu</string>
+    <string name="ai_program_save_max_short">Enregistrer</string>
+    <string name="ai_program_scan_button">Scanner</string>
+    <string name="ai_program_scan_desc">Prends une photo ou choisis-en une : l'IA remplit les blocs et tu pourras les relire et les modifier.</string>
+    <string name="ai_program_scan_title">Scanner la page du programme</string>
+    <string name="week_n">Semaine %1$d</string>
+    <string name="ai_program_scan_failed">Impossible de lire un programme sur la photo. Essaie une image plus nette et plus proche.</string>
 </resources>

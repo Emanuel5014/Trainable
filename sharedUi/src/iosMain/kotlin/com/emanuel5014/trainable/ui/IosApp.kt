@@ -144,7 +144,7 @@ private fun IosOnboardingRoot(content: @Composable () -> Unit) {
     }
 }
 
-/** The advanced editor's environment on iOS: units, rounding and 1RMs of the device; no AI yet. */
+/** The advanced editor's units, rounding, saved 1RMs and remote scanner on iOS. */
 private val IosPrescriptionEnvironment: @Composable () -> PrescriptionEnvironment = {
     val preferences = IosAppGraph.preferences
     val maxes = IosAppGraph.oneRepMaxes
@@ -154,12 +154,13 @@ private val IosPrescriptionEnvironment: @Composable () -> PrescriptionEnvironmen
     val current by remember { maxes.currentByExercise().map { all -> all.mapValues { it.value.weightKg } } }
         .collectAsState(initial = emptyMap())
     val estimated by remember { maxes.estimatedByExercise() }.collectAsState(initial = emptyMap())
+    val aiReady by IosRemoteScan.isReady.collectAsState(initial = false)
     object : PrescriptionEnvironment {
         override val weightUnit: String get() = weightUnit
         override val roundingIncrement: Float get() = rounding
         override val oneRepMaxes: Map<Int, Float> get() = current
         override val estimatedOneRepMaxes: Map<Int, Float> get() = estimated
-        override val aiAvailable: Boolean get() = false
+        override val aiAvailable: Boolean get() = aiReady
 
         override fun saveOneRepMax(exerciseId: Int, weightKg: Float, source: String) {
             scope.launch { maxes.add(exerciseId = exerciseId, weightKg = weightKg, source = source) }
@@ -174,7 +175,9 @@ private val IosPrescriptionEnvironment: @Composable () -> PrescriptionEnvironmen
             onApply: (ProgramScanApplication) -> Unit,
             modifier: Modifier,
             scanKey: String?
-        ) {}
+        ) = IosProgramScanButton(
+            exerciseName, singleWeek, currentOneRepMaxKg, weightUnit, rounding, onApply, modifier, scanKey
+        )
     }
 }
 

@@ -22,6 +22,9 @@ data class ScannedProgram(
  * nested JSON with examples made it parrot the example. Structure comes from [ProgramScanParser].
  */
 object ProgramScanPrompt {
+    /** A whole program page is a few dozen tokens; anything longer is the model running on. */
+    const val MAX_OUTPUT_TOKENS = 1536
+
     fun build(): String = """
 This is a photo of a strength-training program page (powerlifting style), handwritten or printed.
 Copy the text exactly as it is written, line by line, in the same order. Do not explain, translate, correct or add anything.

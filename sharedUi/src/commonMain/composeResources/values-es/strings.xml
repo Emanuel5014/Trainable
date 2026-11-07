@@ -1383,4 +1383,18 @@
     <string name="scan_draft_resume">Continuar</string>
     <string name="scan_draft_subtitle">%1$d ejercicios pendientes de revisar</string>
     <string name="scan_draft_title">Escaneo guardado como borrador</string>
+    <string name="ai_program_found_max">1RM encontrado en la página</string>
+    <string name="ai_program_import_count">Importar (%1$d)</string>
+    <string name="ai_program_not_matched">“%1$s” no está en la página. Elige el ejercicio correcto:</string>
+    <string name="ai_program_other_exercises">Ejercicios encontrados en la página</string>
+    <string name="ai_program_review_hint">Elige las semanas a importar. Podrás editarlo todo después.</string>
+    <string name="ai_program_review_pick_week">Elige la semana a importar. Podrás editarla después.</string>
+    <string name="ai_program_review_summary">%1$d semanas · %2$d bloques</string>
+    <string name="ai_program_review_title">Programación reconocida</string>
+    <string name="ai_program_save_max_short">Guardar</string>
+    <string name="ai_program_scan_button">Escanear</string>
+    <string name="ai_program_scan_desc">Haz una foto o elige una: la IA rellena los bloques y podrás revisarlos y editarlos.</string>
+    <string name="ai_program_scan_title">Escanea la página de la programación</string>
+    <string name="week_n">Semana %1$d</string>
+    <string name="ai_program_scan_failed">No pude leer una programación en la foto. Prueba con una imagen más nítida y cercana.</string>
 </resources>

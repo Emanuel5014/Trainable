@@ -66,7 +66,7 @@ class RoutineScanner @Inject constructor(
                 prompt = ProgramScanPrompt.build(),
                 imageMode = ScanImageMode.HANDWRITING_BLOCK,
                 transcription = true,
-                maxOutputTokens = PROGRAM_MAX_OUTPUT_TOKENS
+                maxOutputTokens = ProgramScanPrompt.MAX_OUTPUT_TOKENS
             ),
             onPhase = onPhase,
             onStreamUpdate = onStreamUpdate
@@ -77,11 +77,6 @@ class RoutineScanner @Inject constructor(
     }
 
     internal fun splitNameQualifiers(name: String) = RoutineScanResults.splitNameQualifiers(name)
-
-    private companion object {
-        /** A whole program page is a few dozen tokens; anything longer is the model running on. */
-        const val PROGRAM_MAX_OUTPUT_TOKENS = 1536
-    }
 
     suspend fun release() {
         kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {

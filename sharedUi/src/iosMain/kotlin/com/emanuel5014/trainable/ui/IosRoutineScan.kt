@@ -38,6 +38,7 @@ import com.emanuel5014.trainable.sharedui.resources.ai_scan_failed
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_no_exercises
 import com.emanuel5014.trainable.sharedui.resources.camera_permission_denied
 import com.emanuel5014.trainable.ui.components.LocalShowMessage
+import com.emanuel5014.trainable.ui.screens.physicalcheck.PhotoCapture
 import com.emanuel5014.trainable.ui.screens.physicalcheck.decodePhotoBitmap
 import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailState
 import com.emanuel5014.trainable.ui.screens.routines.RoutineScanBackend
@@ -79,32 +80,13 @@ internal fun rememberIosRoutineScanUi(
             diskDispatcher = Dispatchers.IO
         )
     }
-    val path = remember(model) { NSTemporaryDirectory() + "routine-scan-" + NSUUID().UUIDString + ".jpg" }
-    DisposableEffect(model) {
-        onDispose {
-            model.close()
-            NSFileManager.defaultManager.removeItemAtPath(path, null)
-        }
-    }
-
+    DisposableEffect(model) { onDispose { model.close() } }
     val show = LocalShowMessage.current
     val scanFailed = stringResource(Res.string.ai_scan_failed)
     val noExercises = stringResource(Res.string.ai_scan_no_exercises)
-    fun scanPhoto(bytes: ByteArray) {
-        if (bytes.toNSData().writeToFile(path, atomically = true)) {
-            model.scanRoutineSheet(path)
-        } else {
-            show(scanFailed)
-        }
-    }
-
-    val capture = rememberIosPhotoCapture(
-        selectionLimit = 1,
-        deniedText = stringResource(Res.string.camera_permission_denied),
-        onPicked = { photos -> photos.firstOrNull()?.let(::scanPhoto) },
-        onCameraResult = { success, bytes -> if (success) bytes?.let(::scanPhoto) ?: show(scanFailed) },
-        onCameraDenied = {},
-        preparePhoto = { encodeIosJpeg(it, maxSide = ImageSizeFitter.START_SIDE, quality = 95) }
+    val capture = rememberIosScanPhotoCapture(
+        onPhoto = model::scanRoutineSheet,
+        onFailure = { show(scanFailed) }
     )
     val scan = rememberRoutineScanUi(
         model = model,
@@ -120,7 +102,42 @@ internal fun rememberIosRoutineScanUi(
             show(state.failure?.userMessage() ?: if (state.message == null) noExercises else scanFailed)
         }
     )
-    if (scan.isScanning) {
+    KeepIosScanScreenOn(scan.isScanning)
+    return scan
+}
+
+/** One temporary JPEG per scanner. The routine scanner copies it to its draft if needed. */
+@Composable
+internal fun rememberIosScanPhotoCapture(
+    onPhoto: (String) -> Unit,
+    onFailure: () -> Unit
+): PhotoCapture {
+    val path = remember { NSTemporaryDirectory() + "routine-scan-" + NSUUID().UUIDString + ".jpg" }
+    DisposableEffect(path) {
+        onDispose { NSFileManager.defaultManager.removeItemAtPath(path, null) }
+    }
+
+    fun scanPhoto(bytes: ByteArray) {
+        if (bytes.toNSData().writeToFile(path, atomically = true)) {
+            onPhoto(path)
+        } else {
+            onFailure()
+        }
+    }
+
+    return rememberIosPhotoCapture(
+        selectionLimit = 1,
+        deniedText = stringResource(Res.string.camera_permission_denied),
+        onPicked = { photos -> photos.firstOrNull()?.let(::scanPhoto) },
+        onCameraResult = { success, bytes -> if (success) bytes?.let(::scanPhoto) ?: onFailure() },
+        onCameraDenied = {},
+        preparePhoto = { encodeIosJpeg(it, maxSide = ImageSizeFitter.START_SIDE, quality = 95) }
+    )
+}
+
+@Composable
+internal fun KeepIosScanScreenOn(scanning: Boolean) {
+    if (scanning) {
         DisposableEffect(Unit) {
             val application = UIApplication.sharedApplication
             val previous = application.idleTimerDisabled
@@ -128,7 +145,6 @@ internal fun rememberIosRoutineScanUi(
             onDispose { application.idleTimerDisabled = previous }
         }
     }
-    return scan
 }
 
 private object IosRoutineScanBackend : RoutineScanBackend {

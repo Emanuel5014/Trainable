@@ -1381,4 +1381,18 @@
     <string name="scan_draft_resume">Resume</string>
     <string name="scan_draft_subtitle">%1$d exercises waiting to be reviewed</string>
     <string name="scan_draft_title">Scan saved as a draft</string>
+    <string name="ai_program_found_max">1RM found on the page</string>
+    <string name="ai_program_import_count">Import (%1$d)</string>
+    <string name="ai_program_not_matched">“%1$s” wasn't found on this page. Pick the right exercise:</string>
+    <string name="ai_program_other_exercises">Exercises found on the page</string>
+    <string name="ai_program_review_hint">Choose the weeks to import. You can edit everything afterwards.</string>
+    <string name="ai_program_review_pick_week">Pick the week to import. You can edit it afterwards.</string>
+    <string name="ai_program_review_summary">%1$d weeks · %2$d blocks</string>
+    <string name="ai_program_review_title">Program recognised</string>
+    <string name="ai_program_save_max_short">Save</string>
+    <string name="ai_program_scan_button">Scan</string>
+    <string name="ai_program_scan_desc">Take a photo or pick one: the AI fills in the blocks and you can review and edit them.</string>
+    <string name="ai_program_scan_title">Scan the program page</string>
+    <string name="week_n">Week %1$d</string>
+    <string name="ai_program_scan_failed">Couldn't read a prescription from the photo. Try a sharper, closer picture.</string>
 </resources>

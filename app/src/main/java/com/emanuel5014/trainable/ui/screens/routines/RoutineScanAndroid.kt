@@ -54,7 +54,6 @@ import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.util.ImageStorageUtils
-import dev.chrisbanes.haze.HazeState
 
 @Composable
 fun rememberAndroidRoutineScanUi(viewModel: RoutineDetailViewModel): RoutineScanUi {
@@ -144,21 +143,7 @@ internal fun createScanTempImageUri(context: android.content.Context): android.n
 }
 
 @Composable
-internal fun AiScanningOverlay(
-    phase: com.emanuel5014.trainable.data.ai.ScanPhase,
-    stream: AiScanStreamState,
-    showResourceAnalytics: Boolean = false,
-    isDark: Boolean,
-    hazeState: HazeState?,
-    onCancel: () -> Unit
-) {
-    ScanProgressOverlay(phase, stream, isDark, hazeState, onCancel) {
-        if (showResourceAnalytics) stream.metrics?.let { DeviceResourceAnalyticsCard(it, isDark) }
-    }
-}
-
-@Composable
-private fun DeviceResourceAnalyticsCard(
+internal fun DeviceResourceAnalyticsCard(
     metrics: com.emanuel5014.trainable.data.ai.DeviceResourceMetrics,
     isDark: Boolean,
     modifier: Modifier = Modifier

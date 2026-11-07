@@ -1383,4 +1383,18 @@
     <string name="scan_draft_resume">Continuar</string>
     <string name="scan_draft_subtitle">%1$d exercícios aguardando revisão</string>
     <string name="scan_draft_title">Digitalização salva como rascunho</string>
+    <string name="ai_program_found_max">1RM encontrado na página</string>
+    <string name="ai_program_import_count">Importar (%1$d)</string>
+    <string name="ai_program_not_matched">“%1$s” não está na página. Escolha o exercício certo:</string>
+    <string name="ai_program_other_exercises">Exercícios encontrados na página</string>
+    <string name="ai_program_review_hint">Escolha as semanas a importar. Você poderá editar tudo depois.</string>
+    <string name="ai_program_review_pick_week">Escolha a semana a importar. Você poderá editá-la depois.</string>
+    <string name="ai_program_review_summary">%1$d semanas · %2$d blocos</string>
+    <string name="ai_program_review_title">Programação reconhecida</string>
+    <string name="ai_program_save_max_short">Salvar</string>
+    <string name="ai_program_scan_button">Escanear</string>
+    <string name="ai_program_scan_desc">Tire uma foto ou escolha uma: a IA preenche os blocos e você poderá revisá-los e editá-los.</string>
+    <string name="ai_program_scan_title">Escaneie a página da programação</string>
+    <string name="week_n">Semana %1$d</string>
+    <string name="ai_program_scan_failed">Não consegui ler uma programação na foto. Tente uma imagem mais nítida e próxima.</string>
 </resources>
