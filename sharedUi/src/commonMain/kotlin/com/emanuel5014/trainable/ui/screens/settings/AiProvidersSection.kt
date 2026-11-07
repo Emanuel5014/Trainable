@@ -29,10 +29,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.ai_backend_local
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_add
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_cloud_subtitle
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_delete
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_delete_body
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_delete_title
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_edit
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_hint_weak
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_key_reenter
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_pc_subtitle
+import com.emanuel5014.trainable.sharedui.resources.ai_where_title
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.delete
 import com.emanuel5014.trainable.data.ai.remote.AiProfileList
 import com.emanuel5014.trainable.data.ai.remote.HostKind
 import com.emanuel5014.trainable.data.ai.remote.KeyState
@@ -52,19 +66,20 @@ internal fun AiProvidersSection(
     activeId: String,
     activeIsLocal: Boolean,
     deviceSupported: Boolean,
-    viewModel: AiProvidersViewModel
+    localUnavailableText: StringResource,
+    viewModel: AiProvidersModel
 ) {
     var editor by remember { mutableStateOf<EditorTarget?>(null) }
     var deleteTarget by remember { mutableStateOf<ProviderRow?>(null) }
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.ai_where_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
+        Text(stringResource(Res.string.ai_where_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
 
         ChoiceRow(
             selected = activeIsLocal,
             enabled = deviceSupported,
-            title = stringResource(R.string.ai_backend_local),
-            subtitle = if (deviceSupported) null else stringResource(R.string.ai_device_unsupported),
+            title = stringResource(Res.string.ai_backend_local),
+            subtitle = if (deviceSupported) null else stringResource(localUnavailableText),
             subtitleColor = OnSurfaceVariant,
             onClick = { viewModel.select(AiProfileList.LOCAL) }
         )
@@ -73,11 +88,11 @@ internal fun AiProvidersSection(
             val subtitle: String
             val subtitleColor: Color
             if (row.keyState == KeyState.UNREADABLE) {
-                subtitle = stringResource(R.string.ai_provider_key_reenter)
+                subtitle = stringResource(Res.string.ai_provider_key_reenter)
                 subtitleColor = Error
             } else {
                 subtitle = stringResource(
-                    if (row.kind == HostKind.PRIVATE) R.string.ai_provider_pc_subtitle else R.string.ai_provider_cloud_subtitle,
+                    if (row.kind == HostKind.PRIVATE) Res.string.ai_provider_pc_subtitle else Res.string.ai_provider_cloud_subtitle,
                     row.host.orEmpty()
                 )
                 subtitleColor = OnSurfaceVariant
@@ -106,12 +121,12 @@ internal fun AiProvidersSection(
         ) {
             Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(12.dp))
-            Text(stringResource(R.string.ai_provider_add))
+            Text(stringResource(Res.string.ai_provider_add))
         }
 
         if (!deviceSupported && activeIsLocal) {
             Text(
-                stringResource(R.string.ai_provider_hint_weak),
+                stringResource(Res.string.ai_provider_hint_weak),
                 style = MaterialTheme.typography.bodySmall,
                 color = OnSurfaceVariant
             )
@@ -127,10 +142,10 @@ internal fun AiProvidersSection(
             onDismissRequest = { deleteTarget = null },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text(stringResource(R.string.ai_provider_delete_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
+                Text(stringResource(Res.string.ai_provider_delete_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
             },
             text = {
-                Text(stringResource(R.string.ai_provider_delete_body, row.profile.name), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.ai_provider_delete_body, row.profile.name), color = OnSurfaceVariant)
             },
             confirmButton = {
                 TextButton(
@@ -139,12 +154,12 @@ internal fun AiProvidersSection(
                         viewModel.delete(row.profile.id)
                     }
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
                 }
             }
         )
@@ -196,14 +211,14 @@ private fun RowMenu(onEdit: () -> Unit, onDelete: () -> Unit) {
     }
     DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.ai_provider_edit)) },
+            text = { Text(stringResource(Res.string.ai_provider_edit)) },
             onClick = {
                 open = false
                 onEdit()
             }
         )
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.ai_provider_delete), color = Error) },
+            text = { Text(stringResource(Res.string.ai_provider_delete), color = Error) },
             onClick = {
                 open = false
                 onDelete()

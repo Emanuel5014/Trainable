@@ -83,11 +83,6 @@ fun AiSettingsScreen(
     val aiModelImportError by viewModel.aiModelImportError.collectAsState()
     val aiDeviceSupported = viewModel.aiDeviceSupported
 
-    val providerRows by providersViewModel.rows.collectAsState()
-    val activeId by providersViewModel.activeId.collectAsState()
-    // A profile that no longer exists leaves the phone as the place the scan runs
-    val activeIsLocal = ScanReadiness.resolveActive(activeId, providerRows.map { it.profile }) == null
-
     // An error left by an earlier visit is no news now
     LaunchedEffect(Unit) { viewModel.clearAiModelImportError() }
 
@@ -128,171 +123,65 @@ fun AiSettingsScreen(
         )
     }
 
-    Scaffold(
-        containerColor = Surface,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.ai_section_title),
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                            tint = OnSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface,
-                    navigationIconContentColor = OnSurface
+    AiSettingsContent(
+        onNavigateBack = onNavigateBack,
+        scanEnabled = aiScanEnabled,
+        onScanEnabledChange = { viewModel.setAiScanEnabled(it) },
+        providers = providersViewModel.model,
+        deviceSupported = aiDeviceSupported,
+        localModelSection = { activeIsLocal ->
+            if (activeIsLocal && aiDeviceSupported) {
+                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                LocalModelControls(
+                    aiModelVariant = aiModelVariant,
+                    aiModelStatus = aiModelStatus,
+                    aiModelImportError = aiModelImportError,
+                    viewModel = viewModel,
+                    onDeleteModelClick = { showDeleteModelDialog = true }
                 )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            GymCard(containerColor = SurfaceContainerHigh) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Icon(Icons.Rounded.DocumentScanner, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column {
-                                Text(stringResource(R.string.ai_scan_toggle), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                Text(
-                                    stringResource(R.string.ai_scan_desc),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant
-                                )
-                            }
-                        }
+            }
+
+            // The phone's metrics only mean something where the on-device model can run
+            if (activeIsLocal && aiDeviceSupported) {
+                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            Icons.Rounded.Analytics,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(24.dp)
+                        )
                         Spacer(modifier = Modifier.width(16.dp))
-                        SettingsSwitch(
-                            checked = aiScanEnabled,
-                            onCheckedChange = { viewModel.setAiScanEnabled(it) }
-                        )
-                    }
-
-                    if (aiScanEnabled) {
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        AiProvidersSection(
-                            rows = providerRows,
-                            activeId = activeId,
-                            activeIsLocal = activeIsLocal,
-                            deviceSupported = aiDeviceSupported,
-                            viewModel = providersViewModel
-                        )
-
-                        if (activeIsLocal && aiDeviceSupported) {
-                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                            LocalModelControls(
-                                aiModelVariant = aiModelVariant,
-                                aiModelStatus = aiModelStatus,
-                                aiModelImportError = aiModelImportError,
-                                viewModel = viewModel,
-                                onDeleteModelClick = { showDeleteModelDialog = true }
-                            )
-                        }
-
-                        // The phone's metrics only mean something where the on-device model can run
-                        if (activeIsLocal && aiDeviceSupported) {
-                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                    Icon(
-                                        Icons.Rounded.Analytics,
-                                        contentDescription = null,
-                                        tint = Primary,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column {
-                                        Text(
-                                            stringResource(R.string.ai_resource_analytics_toggle),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = OnSurface,
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                        Text(
-                                            stringResource(R.string.ai_resource_analytics_desc),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = OnSurfaceVariant
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.width(16.dp))
-                                SettingsSwitch(
-                                    checked = aiResourceAnalyticsEnabled,
-                                    onCheckedChange = { viewModel.setAiResourceAnalyticsEnabled(it) }
-                                )
-                            }
-                        }
-                    }
-
-                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(SurfaceContainerHighest.copy(alpha = 0.5f))
-                            .border(1.dp, OutlineVariant.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
-                            .padding(12.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Primary.copy(alpha = 0.15f))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "BETA",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Primary
-                                )
-                            }
+                        Column {
                             Text(
-                                text = stringResource(R.string.ai_disclaimer_beta),
+                                stringResource(R.string.ai_resource_analytics_toggle),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                stringResource(R.string.ai_resource_analytics_desc),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = OnSurfaceVariant,
-                                modifier = Modifier.weight(1f)
+                                color = OnSurfaceVariant
                             )
                         }
                     }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    SettingsSwitch(
+                        checked = aiResourceAnalyticsEnabled,
+                        onCheckedChange = { viewModel.setAiResourceAnalyticsEnabled(it) }
+                    )
                 }
             }
         }
-    }
+    )
 }
 
 /** Which Gemma model runs on the phone, and getting it onto the phone (download or import). */

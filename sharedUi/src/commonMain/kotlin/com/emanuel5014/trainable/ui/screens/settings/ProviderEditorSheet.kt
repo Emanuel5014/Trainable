@@ -35,15 +35,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_editor_add_title
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_editor_edit_title
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_key
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_key_host_changed
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_key_invalid
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_key_keep
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_key_optional
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_key_remove
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_key_required
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_key_will_remove
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_model
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_model_hint
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_models_load
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_models_none
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_name
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_protocol_claude
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_protocol_openai
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_save
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_test
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_test_ok
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_url
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_url_cleartext
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_url_example
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_url_invalid
+import com.emanuel5014.trainable.sharedui.resources.ai_provider_url_scheme
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
 import com.emanuel5014.trainable.data.ai.remote.AiProfileList
 import com.emanuel5014.trainable.data.ai.remote.AiProtocol
@@ -55,7 +80,6 @@ import com.emanuel5014.trainable.data.ai.remote.UrlCheck
 import com.emanuel5014.trainable.data.ai.remote.UrlRejection
 import com.emanuel5014.trainable.data.ai.remote.requiresKey
 import com.emanuel5014.trainable.ui.components.GymButton
-import com.emanuel5014.trainable.ui.screens.routines.userText
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -68,10 +92,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProviderEditorSheet(
     editing: ProviderRow?,
-    viewModel: AiProvidersViewModel,
+    viewModel: AiProvidersModel,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val profile = editing?.profile
 
@@ -113,8 +136,8 @@ fun ProviderEditorSheet(
         }
     )
 
-    fun describe(error: Throwable): String =
-        (error as? ScanBackendException)?.userText(context) ?: error.message.orEmpty()
+    suspend fun describe(error: Throwable): String =
+        (error as? ScanBackendException)?.userMessage() ?: error.message.orEmpty()
 
     fun applyPreset(preset: ProviderPreset) {
         if (name.isBlank()) name = preset.name
@@ -152,7 +175,7 @@ fun ProviderEditorSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = stringResource(if (editing == null) R.string.ai_provider_editor_add_title else R.string.ai_provider_editor_edit_title),
+                text = stringResource(if (editing == null) Res.string.ai_provider_editor_add_title else Res.string.ai_provider_editor_edit_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = OnSurface,
                 fontWeight = FontWeight.Black
@@ -172,7 +195,7 @@ fun ProviderEditorSheet(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(stringResource(R.string.ai_provider_name)) },
+                label = { Text(stringResource(Res.string.ai_provider_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = fieldColors
@@ -182,13 +205,13 @@ fun ProviderEditorSheet(
                 FilterChip(
                     selected = protocol == AiProtocol.OPENAI_COMPAT,
                     onClick = { protocol = AiProtocol.OPENAI_COMPAT },
-                    label = { Text(stringResource(R.string.ai_provider_protocol_openai), maxLines = 1) },
+                    label = { Text(stringResource(Res.string.ai_provider_protocol_openai), maxLines = 1) },
                     colors = chipColors
                 )
                 FilterChip(
                     selected = protocol == AiProtocol.ANTHROPIC,
                     onClick = { protocol = AiProtocol.ANTHROPIC },
-                    label = { Text(stringResource(R.string.ai_provider_protocol_claude), maxLines = 1) },
+                    label = { Text(stringResource(Res.string.ai_provider_protocol_claude), maxLines = 1) },
                     colors = chipColors
                 )
             }
@@ -201,22 +224,22 @@ fun ProviderEditorSheet(
                     models = emptyList()
                     status = null
                 },
-                label = { Text(stringResource(R.string.ai_provider_url)) },
+                label = { Text(stringResource(Res.string.ai_provider_url)) },
                 isError = rejection != null && urlTyped,
                 supportingText = if (rejection != null && urlTyped) {
                     {
                         Text(
                             stringResource(
                                 when (rejection) {
-                                    UrlRejection.CLEARTEXT_TO_PUBLIC_HOST -> R.string.ai_provider_url_cleartext
-                                    UrlRejection.UNSUPPORTED_SCHEME -> R.string.ai_provider_url_scheme
-                                    UrlRejection.INVALID -> R.string.ai_provider_url_invalid
+                                    UrlRejection.CLEARTEXT_TO_PUBLIC_HOST -> Res.string.ai_provider_url_cleartext
+                                    UrlRejection.UNSUPPORTED_SCHEME -> Res.string.ai_provider_url_scheme
+                                    UrlRejection.INVALID -> Res.string.ai_provider_url_invalid
                                 }
                             )
                         )
                     }
                 } else if (urlHint != null) {
-                    { Text(stringResource(R.string.ai_provider_url_example, urlHint.orEmpty())) }
+                    { Text(stringResource(Res.string.ai_provider_url_example, urlHint.orEmpty())) }
                 } else null,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, keyboardType = KeyboardType.Uri),
@@ -227,19 +250,19 @@ fun ProviderEditorSheet(
             OutlinedTextField(
                 value = key,
                 onValueChange = { key = it },
-                label = { Text(stringResource(R.string.ai_provider_key)) },
+                label = { Text(stringResource(Res.string.ai_provider_key)) },
                 placeholder = { Text(if (savedKeyUsable) "••••••" else "") },
                 isError = keyInvalid,
                 supportingText = {
                     Text(
                         stringResource(
                             when {
-                                keyInvalid -> R.string.ai_provider_key_invalid
-                                clearKey -> R.string.ai_provider_key_will_remove
-                                savedKeyExists && hostChanged -> R.string.ai_provider_key_host_changed
-                                savedKeyUsable -> R.string.ai_provider_key_keep
-                                keyRequired -> R.string.ai_provider_key_required
-                                else -> R.string.ai_provider_key_optional
+                                keyInvalid -> Res.string.ai_provider_key_invalid
+                                clearKey -> Res.string.ai_provider_key_will_remove
+                                savedKeyExists && hostChanged -> Res.string.ai_provider_key_host_changed
+                                savedKeyUsable -> Res.string.ai_provider_key_keep
+                                keyRequired -> Res.string.ai_provider_key_required
+                                else -> Res.string.ai_provider_key_optional
                             }
                         )
                     )
@@ -262,15 +285,15 @@ fun ProviderEditorSheet(
 
             if (savedKeyExists && !clearKey) {
                 TextButton(onClick = { clearKey = true }) {
-                    Text(stringResource(R.string.ai_provider_key_remove).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.ai_provider_key_remove).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
                 }
             }
 
             OutlinedTextField(
                 value = model,
                 onValueChange = { model = it },
-                label = { Text(stringResource(R.string.ai_provider_model)) },
-                supportingText = { Text(stringResource(R.string.ai_provider_model_hint)) },
+                label = { Text(stringResource(Res.string.ai_provider_model)) },
+                supportingText = { Text(stringResource(Res.string.ai_provider_model_hint)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, keyboardType = KeyboardType.Uri),
                 modifier = Modifier.fillMaxWidth(),
@@ -285,7 +308,7 @@ fun ProviderEditorSheet(
                         viewModel.loadModels(draft()).fold(
                             onSuccess = { list ->
                                 models = list
-                                if (list.isEmpty()) status = false to context.getString(R.string.ai_provider_models_none)
+                                if (list.isEmpty()) status = false to getString(Res.string.ai_provider_models_none)
                             },
                             onFailure = { status = false to describe(it) }
                         )
@@ -294,7 +317,7 @@ fun ProviderEditorSheet(
                 },
                 enabled = !busy && urlCheck is UrlCheck.Ok && !keyInvalid
             ) {
-                Text(stringResource(R.string.ai_provider_models_load).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.ai_provider_models_load).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
 
             if (models.isNotEmpty()) {
@@ -321,7 +344,7 @@ fun ProviderEditorSheet(
                             busy = true
                             status = null
                             viewModel.test(draft()).fold(
-                                onSuccess = { status = true to context.getString(R.string.ai_provider_test_ok) },
+                                onSuccess = { status = true to getString(Res.string.ai_provider_test_ok) },
                                 onFailure = { status = false to describe(it) }
                             )
                             busy = false
@@ -332,7 +355,7 @@ fun ProviderEditorSheet(
                     contentColor = Primary,
                     enabled = !busy && urlCheck is UrlCheck.Ok && model.isNotBlank() && !keyMissing && !keyInvalid
                 ) {
-                    Text(stringResource(R.string.ai_provider_test).uppercase(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                    Text(stringResource(Res.string.ai_provider_test).uppercase(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
                 }
                 Spacer(Modifier.width(12.dp))
                 GymButton(
@@ -340,7 +363,7 @@ fun ProviderEditorSheet(
                     modifier = Modifier.weight(1f),
                     enabled = canSave && !busy
                 ) {
-                    Text(stringResource(R.string.ai_provider_save).uppercase(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                    Text(stringResource(Res.string.ai_provider_save).uppercase(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
                 }
             }
         }

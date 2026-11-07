@@ -53,6 +53,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.emanuel5014.trainable.ui.screens.routines.NoRoutineScan
 import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailContent
 import com.emanuel5014.trainable.data.model.NavBarStyle
@@ -73,6 +74,9 @@ import com.emanuel5014.trainable.ui.screens.settings.PersonalizationSettingsCont
 import com.emanuel5014.trainable.ui.screens.settings.NotificationSettingsContent
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.wallpaper_colors_unavailable
+import com.emanuel5014.trainable.sharedui.resources.ai_local_not_on_ios
+import com.emanuel5014.trainable.ui.screens.settings.AiProvidersModel
+import com.emanuel5014.trainable.ui.screens.settings.AiSettingsContent
 import com.emanuel5014.trainable.sharedui.resources.glass_part_overlays_desc_ios
 import com.emanuel5014.trainable.ui.screens.settings.SettingsContent
 import com.emanuel5014.trainable.ui.screens.settings.SettingsState
@@ -222,7 +226,20 @@ internal fun IosNavGraph(
                     onNavigateBack = { navController.popBackStack() }, controller = controller)
             }
             composable<ImportHistory> { IosHistoryImportScreen(onNavigateBack = { navController.popBackStack() }) }
-            composable<AiSettings> { NotOnIosYet("AI", onBack = { navController.popBackStack() }) }
+            composable<AiSettings> {
+                // Remote providers only: the on-device model is Android-only for now (A5)
+                val scope = rememberCoroutineScope()
+                val providers = remember { AiProvidersModel(IosAppGraph.aiProfiles, IosAppGraph.aiHttp, scope) }
+                val scanEnabled by IosAppGraph.preferences.aiScanEnabled.collectAsState(initial = false)
+                AiSettingsContent(
+                    onNavigateBack = { navController.popBackStack() },
+                    scanEnabled = scanEnabled,
+                    onScanEnabledChange = { enabled -> scope.launch { IosAppGraph.preferences.setAiScanEnabled(enabled) } },
+                    providers = providers,
+                    deviceSupported = false,
+                    localUnavailableText = Res.string.ai_local_not_on_ios
+                )
+            }
             composable<PersonalizationSettings> {
                 val scope = rememberCoroutineScope()
                 val state = remember { SettingsState(IosAppGraph.users, IosAppGraph.preferences, scope) }
@@ -398,34 +415,6 @@ private fun IosMainTabs(
                 oneRepMaxesEntry = { modifier ->
                     IosOneRepMaxesEntry(modifier = modifier, onClick = { navController.navigate(OneRepMaxes) })
                 }
-            )
-        }
-    }
-}
-
-/** Stand-in for a screen the iOS app does not have yet (development only, not translated). */
-@Composable
-private fun NotOnIosYet(title: String, onBack: (() -> Unit)?) {
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
-        if (onBack != null) {
-            GymIconButton(
-                icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                onClick = onBack,
-                description = "Back",
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-        Column(
-            modifier = Modifier.align(Alignment.Center).padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(title, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
-            Text(
-                "Not on iOS yet",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
             )
         }
     }
