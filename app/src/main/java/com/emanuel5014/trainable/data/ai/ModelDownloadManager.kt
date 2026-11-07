@@ -127,7 +127,7 @@ class ModelDownloadManager @Inject constructor(
             if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
         } ?: resolver.openAssetFileDescriptor(uri, "r")?.use { it.length }?.takeIf { it >= 0 }
             ?: throw IOException("Unknown size")
-        val header = resolver.openInputStream(uri)?.use { ModelFileValidator.readHeader(it) }
+        val header = resolver.openInputStream(uri)?.use { readModelHeader(it) }
             ?: throw IOException("Cannot open")
         return ImportSource(header, size)
     }

@@ -97,6 +97,11 @@ internal object IosAppGraph {
         com.emanuel5014.trainable.data.ai.remote.AiProfileStore(preferences, com.emanuel5014.trainable.data.ai.remote.IosAiKeyCrypto())
     }
     val aiHttp: com.emanuel5014.trainable.data.ai.remote.AiHttp by lazy { com.emanuel5014.trainable.data.ai.remote.IosAiHttp() }
+    // On-device Gemma E2B (A5): the model file (download / import / delete) and the LiteRT-LM engine from Swift
+    val localModels by lazy {
+        com.emanuel5014.trainable.data.ai.IosModelStore(scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default))
+    }
+    val localLlm by lazy { com.emanuel5014.trainable.data.ai.IosLocalLlmEngine() }
     val historyImporter by lazy {
         HistoryCsvImporter(
             IosTransactionRunner(database), database.workoutDao(), database.exerciseDao(), database.userDao(), journal,
