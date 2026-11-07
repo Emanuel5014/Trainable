@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.analytics
 
+import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -804,6 +805,7 @@ private fun AnalyticsHeaderFabMenu(
             expanded = expanded,
             onDismissRequest = { onExpandedChange(false) }
         ) {
+            LocalPlatformGlass.current.NotAnOverlay()
             DropdownMenuItem(
                 text = { Text(stringResource(Res.string.analytics_workout_calendar)) },
                 leadingIcon = { Icon(Icons.Rounded.DateRange, contentDescription = null) },

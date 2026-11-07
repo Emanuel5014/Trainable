@@ -359,7 +359,7 @@ private fun NavBarFab(
     val glass = rememberNavBarActionGlass()
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip { Text(action.label) } },
+        tooltip = { PlainTooltip { LocalPlatformGlass.current.NotAnOverlay(); Text(action.label) } },
         state = rememberTooltipState(),
         modifier = modifier
     ) {

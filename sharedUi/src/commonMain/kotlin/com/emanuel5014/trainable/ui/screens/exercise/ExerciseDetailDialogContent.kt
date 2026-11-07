@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.exercise
 
+import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.back
 import com.emanuel5014.trainable.sharedui.resources.cardio_dist_value
@@ -352,6 +353,7 @@ private fun ExerciseActionsMenu(
             )
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            LocalPlatformGlass.current.NotAnOverlay()
             if (actions.canEdit) {
                 DropdownMenuItem(
                     text = { Text(stringResource(Res.string.exercise_action_edit)) },

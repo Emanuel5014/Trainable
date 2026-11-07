@@ -624,6 +624,7 @@
     <string name="glass_part_nav_bar_needs_floating">Funciona con la barra de navegación Flotante (Ajustes)</string>
     <string name="glass_part_overlays">Hojas y diálogos</string>
     <string name="glass_part_overlays_desc">La pantalla detrás de ellos se difumina (Android 12+)</string>
+    <string name="glass_part_overlays_desc_ios">La pantalla detrás de ellos se difumina</string>
     <string name="glass_part_search_bars">Barras de búsqueda</string>
     <string name="glass_part_search_bars_desc">La búsqueda de las listas y selectores de ejercicios</string>
     <string name="glass_part_sliders">Controles deslizantes</string>

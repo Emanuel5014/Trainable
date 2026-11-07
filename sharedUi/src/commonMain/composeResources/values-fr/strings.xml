@@ -624,6 +624,7 @@
     <string name="glass_part_nav_bar_needs_floating">Fonctionne avec la barre de navigation Flottante (Paramètres)</string>
     <string name="glass_part_overlays">Feuilles et dialogues</string>
     <string name="glass_part_overlays_desc">L'écran derrière eux est flouté (Android 12+)</string>
+    <string name="glass_part_overlays_desc_ios">L'écran derrière eux est flouté</string>
     <string name="glass_part_search_bars">Barres de recherche</string>
     <string name="glass_part_search_bars_desc">La recherche des listes et sélecteurs d'exercices</string>
     <string name="glass_part_sliders">Curseurs</string>

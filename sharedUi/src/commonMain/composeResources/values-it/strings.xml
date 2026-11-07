@@ -624,6 +624,7 @@
     <string name="glass_part_nav_bar_needs_floating">Funziona con la barra di navigazione Fluttuante (Impostazioni)</string>
     <string name="glass_part_overlays">Pannelli e finestre</string>
     <string name="glass_part_overlays_desc">Lo schermo dietro di loro viene sfocato (Android 12+)</string>
+    <string name="glass_part_overlays_desc_ios">Lo schermo dietro di loro viene sfocato</string>
     <string name="glass_part_search_bars">Barre di ricerca</string>
     <string name="glass_part_search_bars_desc">La ricerca negli esercizi e nei selettori di esercizi</string>
     <string name="glass_part_sliders">Cursori</string>

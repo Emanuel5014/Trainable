@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.add
 import com.emanuel5014.trainable.sharedui.resources.cancel
@@ -230,6 +231,7 @@ private fun FormDropdown(label: String, value: String, items: @Composable (close
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
+            LocalPlatformGlass.current.NotAnOverlay()
             items { expanded = false }
         }
     }

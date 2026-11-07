@@ -621,6 +621,7 @@
     <string name="glass_part_nav_bar_needs_floating">Works with the Floating navigation bar (Settings)</string>
     <string name="glass_part_overlays">Sheets and dialogs</string>
     <string name="glass_part_overlays_desc">The screen behind them is blurred (Android 12+)</string>
+    <string name="glass_part_overlays_desc_ios">The screen behind them is blurred</string>
     <string name="glass_part_search_bars">Search bars</string>
     <string name="glass_part_search_bars_desc">The search of the exercise lists and pickers</string>
     <string name="glass_part_sliders">Sliders</string>

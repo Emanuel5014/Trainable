@@ -83,6 +83,13 @@ interface PlatformGlass {
     /** Put inside a sheet or dialog that should open without the blur behind it. */
     @Composable
     fun NoOverlayBlur() {}
+
+    /**
+     * Put inside menus and tooltips. Android tells them apart from sheets and dialogs by their window type, so
+     * this does nothing there; iOS cannot, and leaves the blur behind sheets off while one of these is open.
+     */
+    @Composable
+    fun NotAnOverlay() {}
 }
 
 /** Content recorded for the floating buttons above it; only the platform drawing the glass knows what is inside. */

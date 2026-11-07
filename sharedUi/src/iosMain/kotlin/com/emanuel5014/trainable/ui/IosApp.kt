@@ -252,15 +252,16 @@ private fun TrainableIosApp() {
             com.emanuel5014.trainable.ui.components.LocalPlanImage provides IosPlanImage,
             com.emanuel5014.trainable.ui.components.LocalRoutineImagePicker provides IosRoutineImagePicker
         ) {
-            IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, history = history, analytics = analytics, navBarStyle = style, isDark = isDark)
-            IosBackupDialogs()
-            IosRoutineImportDialogs()
+            // Blurred behind sheets and dialogs when the overlays glass part is on (IosOverlayGlass.kt)
+            Box(modifier = Modifier.fillMaxSize().iosOverlayGlassBlur()) {
+                IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, history = history, analytics = analytics, navBarStyle = style, isDark = isDark)
+                IosBackupDialogs()
+                IosRoutineImportDialogs()
+            }
         }
     }
 }
 
-/** The shared Kyant Liquid Glass; iOS has no blur behind sheets yet, so NoOverlayBlur stays a no-op. */
-private val IosPlatformGlass = com.emanuel5014.trainable.ui.theme.KyantPlatformGlass()
 
 /** The selected fixed/custom palette on iOS; wallpaper colors remain an Android capability. */
 @Composable

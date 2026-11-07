@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.ui.util.bodyPadding
 import com.emanuel5014.trainable.ui.util.scrollEndInset
 import com.emanuel5014.trainable.ui.util.plusBottom
@@ -432,6 +433,7 @@ private fun TagRow(
                 )
             }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            LocalPlatformGlass.current.NotAnOverlay()
                 DropdownMenuItem(
                     text = { Text(stringResource(Res.string.journal_tag_rename)) },
                     onClick = { menuOpen = false; onRename() }

@@ -621,6 +621,7 @@
     <string name="glass_part_nav_bar_needs_floating">Funktioniert mit der schwebenden Navigationsleiste (Einstellungen)</string>
     <string name="glass_part_overlays">Blätter und Dialoge</string>
     <string name="glass_part_overlays_desc">Der Bildschirm dahinter wird unscharf (Android 12+)</string>
+    <string name="glass_part_overlays_desc_ios">Der Bildschirm dahinter wird unscharf</string>
     <string name="glass_part_search_bars">Suchleisten</string>
     <string name="glass_part_search_bars_desc">Die Suche in den Übungslisten und -auswahlen</string>
     <string name="glass_part_sliders">Schieberegler</string>

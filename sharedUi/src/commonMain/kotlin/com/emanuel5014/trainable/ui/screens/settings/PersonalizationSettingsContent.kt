@@ -149,8 +149,10 @@ fun PersonalizationSettingsContent(
     wallpaperColors: List<Int> = emptyList(),
     dynamicColorSupported: Boolean = false,
     glassSupported: Boolean = false,
-    /** The glass parts this platform draws; the others get no switch (iOS: no blur behind sheets yet). */
+    /** The glass parts this platform draws; the others get no switch. */
     glassParts: Set<GlassPart> = GlassPart.entries.toSet(),
+    /** What the overlays switch says; Android names the version it needs, iOS has no such limit. */
+    overlaysDescription: org.jetbrains.compose.resources.StringResource = Res.string.glass_part_overlays_desc,
     dynamicColorUnsupportedText: org.jetbrains.compose.resources.StringResource = Res.string.dynamic_color_not_supported
 ) {
     val dynamicColor by state.dynamicColor.collectAsState()
@@ -524,6 +526,7 @@ fun PersonalizationSettingsContent(
                 settings = glassSettings,
                 supported = glassSupported,
                 parts = glassParts,
+                overlaysDescription = overlaysDescription,
                 floatingNavBar = navBarStyle == NavBarStyle.Floating,
                 onEnabledChange = state::setLiquidGlassEnabled,
                 onIntensityChange = state::setGlassIntensity,
@@ -541,6 +544,7 @@ private fun LiquidGlassCard(
     settings: GlassSettings,
     supported: Boolean,
     parts: Set<GlassPart>,
+    overlaysDescription: org.jetbrains.compose.resources.StringResource,
     floatingNavBar: Boolean,
     onEnabledChange: (Boolean) -> Unit,
     onIntensityChange: (Float) -> Unit,
@@ -631,7 +635,7 @@ private fun LiquidGlassCard(
                 if (GlassPart.Overlays in parts) GlassSwitchRow(
                     icon = Icons.Rounded.Layers,
                     title = stringResource(Res.string.glass_part_overlays),
-                    description = stringResource(Res.string.glass_part_overlays_desc),
+                    description = stringResource(overlaysDescription),
                     checked = GlassPart.Overlays in settings.parts,
                     onCheckedChange = { onPartChange(GlassPart.Overlays, it) }
                 )

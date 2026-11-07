@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.sharedui.resources.add
@@ -401,7 +402,7 @@ fun HistoryContent(
                                 positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
                                     if (fabMenuExpanded) TooltipAnchorPosition.Start else TooltipAnchorPosition.Above
                                 ),
-                                tooltip = { PlainTooltip { Text(stringResource(if (fabMenuExpanded) Res.string.close else Res.string.add)) } },
+                                tooltip = { PlainTooltip { LocalPlatformGlass.current.NotAnOverlay(); Text(stringResource(if (fabMenuExpanded) Res.string.close else Res.string.add)) } },
                                 state = rememberTooltipState()
                             ) {
                                 val onToggle = {
