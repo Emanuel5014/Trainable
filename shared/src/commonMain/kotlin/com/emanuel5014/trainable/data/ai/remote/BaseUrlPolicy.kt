@@ -1,16 +1,11 @@
 package com.emanuel5014.trainable.data.ai.remote
 
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.net.Inet4Address
-import java.net.InetAddress
-
 enum class HostKind { PRIVATE, PUBLIC }
 
 enum class UrlRejection { INVALID, UNSUPPORTED_SCHEME, CLEARTEXT_TO_PUBLIC_HOST }
 
 sealed interface UrlCheck {
-    data class Ok(val url: HttpUrl, val kind: HostKind) : UrlCheck
+    data class Ok(val url: AiUrl, val kind: HostKind) : UrlCheck
     data class Rejected(val reason: UrlRejection) : UrlCheck
 }
 
@@ -32,7 +27,7 @@ object BaseUrlPolicy {
             ?: return UrlCheck.Rejected(UrlRejection.INVALID)
         if (scheme != "http" && scheme != "https") return UrlCheck.Rejected(UrlRejection.UNSUPPORTED_SCHEME)
 
-        val url = text.toHttpUrlOrNull() ?: return UrlCheck.Rejected(UrlRejection.INVALID)
+        val url = AiUrl.parse(text) ?: return UrlCheck.Rejected(UrlRejection.INVALID)
         if (url.username.isNotEmpty() || url.password.isNotEmpty()) return UrlCheck.Rejected(UrlRejection.INVALID)
 
         val kind = hostKind(url.host)
@@ -65,15 +60,5 @@ object BaseUrlPolicy {
     }
 
     /** [text] holds a ':' so it is an IPv6 literal: parsing it does no DNS lookup. */
-    private fun isPrivateV6(text: String): Boolean {
-        val address = try {
-            InetAddress.getByName(text)
-        } catch (_: Exception) {
-            return false
-        }
-        if (address is Inet4Address) return isPrivateV4(address.address.map { it.toInt() and 0xff })
-        return address.isLoopbackAddress ||
-            address.isLinkLocalAddress ||
-            (address.address[0].toInt() and 0xfe) == 0xfc
-    }
+    private fun isPrivateV6(text: String): Boolean = isPrivateIpv6(text, ::isPrivateV4)
 }

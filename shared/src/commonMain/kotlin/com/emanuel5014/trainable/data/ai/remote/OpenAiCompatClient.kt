@@ -2,13 +2,15 @@ package com.emanuel5014.trainable.data.ai.remote
 
 import com.emanuel5014.trainable.data.ai.LlmScanResult
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.addJsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import okio.BufferedSource
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
 
 /**
  * The OpenAI chat-completions protocol, which OpenAI, OpenRouter, Groq, Ollama, LM Studio and llama.cpp's
@@ -21,22 +23,32 @@ class OpenAiCompatClient(
 ) : ProtocolClient {
 
     private val base = BaseUrlPolicy.normalize(baseUrl)
-    private val jsonType = "application/json".toMediaType()
     private val gemini = GeminiEndpoint.matches(baseUrl)
 
-    override fun buildScanRequest(payload: RemoteScanPayload, quirks: RequestQuirks): Request {
-        val text = JSONObject().put("type", "text").put("text", payload.prompt)
-        val image = JSONObject().put("type", "image_url")
-            .put("image_url", JSONObject().put("url", "data:image/jpeg;base64,${payload.imageBase64}"))
-        val message = JSONObject().put("role", "user").put("content", JSONArray().put(text).put(image))
-        val body = JSONObject()
-            .put("model", model)
-            .put("stream", true)
-            .put(tokenField(quirks), tokenLimit(payload.maxOutputTokens ?: DEFAULT_MAX_OUTPUT_TOKENS))
-            .put("messages", JSONArray().put(message))
-        // Gemini 3 asks to keep its default temperature: a low one can make it loop
-        if (payload.transcription && !quirks.omitTemperature && !gemini) body.put("temperature", TRANSCRIPTION_TEMPERATURE)
-        applyReasoning(body, quirks)
+    override fun buildScanRequest(payload: RemoteScanPayload, quirks: RequestQuirks): AiRequest {
+        val body = buildJsonObject {
+            put("model", model)
+            put("stream", true)
+            put(tokenField(quirks), tokenLimit(payload.maxOutputTokens ?: DEFAULT_MAX_OUTPUT_TOKENS))
+            putJsonArray("messages") {
+                addJsonObject {
+                    put("role", "user")
+                    putJsonArray("content") {
+                        addJsonObject {
+                            put("type", "text")
+                            put("text", payload.prompt)
+                        }
+                        addJsonObject {
+                            put("type", "image_url")
+                            putJsonObject("image_url") { put("url", "data:image/jpeg;base64,${payload.imageBase64}") }
+                        }
+                    }
+                }
+            }
+            // Gemini 3 asks to keep its default temperature: a low one can make it loop
+            if (payload.transcription && !quirks.omitTemperature && !gemini) put("temperature", TRANSCRIPTION_TEMPERATURE)
+            applyReasoning(quirks)
+        }
         return post("$base/chat/completions", body)
     }
 
@@ -53,14 +65,10 @@ class OpenAiCompatClient(
                 break
             }
             if (payload.isEmpty()) continue
-            val json = try {
-                JSONObject(payload)
-            } catch (_: JSONException) {
-                continue
-            }
+            val json = parseObject(payload) ?: continue
             sawData = true
             throwIfError(json)
-            val delta = json.optJSONArray("choices")?.optJSONObject(0)?.optJSONObject("delta") ?: continue
+            val delta = json.arr("choices")?.objAt(0)?.obj("delta") ?: continue
             output.append(delta.stringOrEmpty("content"))
             thinking.append(delta.stringOrEmpty("reasoning_content")).append(delta.stringOrEmpty("reasoning"))
             if (output.length + thinking.length > MAX_REMOTE_OUTPUT_CHARS) throw ScanBackendException.BadResponse("Answer too long")
@@ -71,13 +79,9 @@ class OpenAiCompatClient(
     }
 
     override fun readWhole(body: String): LlmScanResult {
-        val json = try {
-            JSONObject(body)
-        } catch (_: JSONException) {
-            throw ScanBackendException.BadResponse("Not JSON")
-        }
+        val json = parseObject(body) ?: throw ScanBackendException.BadResponse("Not JSON")
         throwIfError(json)
-        val message = json.optJSONArray("choices")?.optJSONObject(0)?.optJSONObject("message")
+        val message = json.arr("choices")?.objAt(0)?.obj("message")
             ?: throw ScanBackendException.BadResponse("No message")
         val output = message.stringOrEmpty("content")
         val thinking = message.stringOrEmpty("reasoning_content") + message.stringOrEmpty("reasoning")
@@ -108,26 +112,29 @@ class OpenAiCompatClient(
         return next.takeIf { it != current }
     }
 
-    override fun buildModelsRequest(): Request = authorized(Request.Builder().url("$base/models")).get().build()
+    override fun buildModelsRequest(): AiRequest = AiRequest.get("$base/models", authorization())
 
-    override fun parseModels(body: String): List<String> = try {
-        val data = JSONObject(body).optJSONArray("data")
-        if (data == null) emptyList() else (0 until data.length()).mapNotNull { index ->
+    override fun parseModels(body: String): List<String> {
+        val data = parseObject(body)?.arr("data") ?: return emptyList()
+        return data.indices.mapNotNull { index ->
             // Gemini lists "models/gemini-…"; the model field takes the bare name
-            data.optJSONObject(index)?.stringOrEmpty("id")?.removePrefix("models/")?.takeIf { it.isNotBlank() }
+            data.objAt(index)?.stringOrEmpty("id")?.removePrefix("models/")?.takeIf { it.isNotBlank() }
         }
-    } catch (_: JSONException) {
-        emptyList()
     }
 
-    override fun buildPingRequest(quirks: RequestQuirks): Request {
-        val message = JSONObject().put("role", "user").put("content", "Reply with OK")
-        val body = JSONObject()
-            .put("model", model)
-            .put("stream", false)
-            .put(tokenField(quirks), tokenLimit(PING_MAX_TOKENS))
-            .put("messages", JSONArray().put(message))
-        applyReasoning(body, quirks)
+    override fun buildPingRequest(quirks: RequestQuirks): AiRequest {
+        val body = buildJsonObject {
+            put("model", model)
+            put("stream", false)
+            put(tokenField(quirks), tokenLimit(PING_MAX_TOKENS))
+            putJsonArray("messages") {
+                addJsonObject {
+                    put("role", "user")
+                    put("content", "Reply with OK")
+                }
+            }
+            applyReasoning(quirks)
+        }
         return post("$base/chat/completions", body)
     }
 
@@ -137,8 +144,8 @@ class OpenAiCompatClient(
     private fun tokenLimit(answerTokens: Int) = if (gemini) answerTokens + GEMINI_THINKING_ALLOWANCE else answerTokens
 
     /** Gemini always thinks; reading a sheet needs little of it, and `low` is the one level every Gemini model accepts. */
-    private fun applyReasoning(body: JSONObject, quirks: RequestQuirks) {
-        if (gemini && !quirks.omitReasoningEffort) body.put("reasoning_effort", GEMINI_REASONING_EFFORT)
+    private fun JsonObjectBuilder.applyReasoning(quirks: RequestQuirks) {
+        if (gemini && !quirks.omitReasoningEffort) put("reasoning_effort", GEMINI_REASONING_EFFORT)
     }
 
     /** Gemini answers a wrong key with a 400 instead of a 401. */
@@ -147,22 +154,21 @@ class OpenAiCompatClient(
         return "api key not valid" in text || "api_key_invalid" in text
     }
 
-    private fun throwIfError(json: JSONObject) {
+    private fun throwIfError(json: JsonObject) {
         if (json.isNull("error")) return
-        val message = when (val error = json.opt("error")) {
-            is JSONObject -> error.stringOrEmpty("message")
+        val message = when (val error = json["error"]) {
+            is JsonObject -> error.stringOrEmpty("message")
+            is JsonPrimitive -> error.content
             else -> error.toString()
         }
         throw ScanBackendException.StreamError(ErrorDetail.clean(message, apiKey))
     }
 
-    private fun post(url: String, body: JSONObject): Request =
-        authorized(Request.Builder().url(url)).post(body.toString().toRequestBody(jsonType)).build()
+    private fun post(url: String, body: JsonObject): AiRequest = AiRequest.postJson(url, authorization(), body.toString())
 
-    private fun authorized(builder: Request.Builder): Request.Builder {
+    private fun authorization(): List<Pair<String, String>> {
         val key = apiKey?.trim()
-        if (!key.isNullOrEmpty()) builder.header("Authorization", "Bearer $key")
-        return builder
+        return if (key.isNullOrEmpty()) emptyList() else listOf("Authorization" to "Bearer $key")
     }
 
     private companion object {

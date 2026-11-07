@@ -35,12 +35,17 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.okio)
         }
+        androidMain.dependencies {
+            // The remote AI keeps OkHttp's own URL parser on Android (AiUrl.android.kt)
+            implementation(libs.okhttp)
+        }
         iosMain.dependencies {
             // Android keeps the system SQLite (Room without a driver); iOS brings its own
             implementation(libs.sqlite.bundled)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
@@ -56,4 +61,5 @@ tasks.withType<KotlinNativeSimulatorTest>().configureEach {
     providers.gradleProperty("migrationFixtures").orNull?.let { environment("SIMCTL_CHILD_MIGRATION_FIXTURES", it) }
     providers.gradleProperty("settingsFixture").orNull?.let { environment("SIMCTL_CHILD_SETTINGS_FIXTURE", it) }
     providers.gradleProperty("backupFixtures").orNull?.let { environment("SIMCTL_CHILD_BACKUP_FIXTURES", it) }
+    providers.gradleProperty("aiFakeServer").orNull?.let { environment("SIMCTL_CHILD_AI_FAKE_SERVER", it) }
 }

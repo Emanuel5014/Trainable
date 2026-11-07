@@ -1,7 +1,6 @@
 package com.emanuel5014.trainable.data.ai.remote
 
 import kotlinx.serialization.Serializable
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -87,6 +86,6 @@ object AiProfileList {
 
     private fun hostOf(url: String): String {
         val normalized = BaseUrlPolicy.normalize(url)
-        return normalized.toHttpUrlOrNull()?.host ?: normalized.lowercase()
+        return AiUrl.parse(normalized)?.host ?: normalized.lowercase()
     }
 }

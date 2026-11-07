@@ -8,6 +8,7 @@ import com.emanuel5014.trainable.data.ai.remote.AiProfileList
 import com.emanuel5014.trainable.data.ai.remote.AiProfileStore
 import com.emanuel5014.trainable.data.ai.remote.AiProtocol
 import com.emanuel5014.trainable.data.ai.remote.AiRemoteHttp
+import com.emanuel5014.trainable.data.ai.remote.OkHttpAiHttp
 import com.emanuel5014.trainable.data.ai.remote.BaseUrlPolicy
 import com.emanuel5014.trainable.data.ai.remote.HostKind
 import com.emanuel5014.trainable.data.ai.remote.KeyState
@@ -54,7 +55,7 @@ class AiProvidersViewModel @Inject constructor(
     baseClient: OkHttpClient
 ) : ViewModel() {
 
-    private val probe = RemoteProbe(AiRemoteHttp.client(baseClient))
+    private val probe = RemoteProbe(OkHttpAiHttp(AiRemoteHttp.client(baseClient)))
 
     val rows: StateFlow<List<ProviderRow>> = store.profiles
         .map { list -> list.map(::rowOf) }

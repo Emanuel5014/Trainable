@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.util
 
 import android.security.keystore.KeyGenParameterSpec
+import com.emanuel5014.trainable.data.ai.remote.AiKeyCrypto
 import android.security.keystore.KeyProperties
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -12,7 +13,7 @@ import javax.inject.Singleton
 
 /** Encrypts the API key of a remote AI provider with a Keystore key that never leaves the device. */
 @Singleton
-class AiKeyCryptoManager @Inject constructor() {
+class AiKeyCryptoManager @Inject constructor() : AiKeyCrypto {
 
     private val KEYSTORE_PROVIDER = "AndroidKeyStore"
     private val KEY_ALIAS = "ai_api_key"
@@ -36,14 +37,14 @@ class AiKeyCryptoManager @Inject constructor() {
     }
 
     /** Returns (ciphertext, iv). */
-    fun encrypt(plain: String): Pair<ByteArray, ByteArray> {
+    override fun encrypt(plain: String): Pair<ByteArray, ByteArray> {
         val cipher = Cipher.getInstance(AES_GCM_NOPADDING)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKeystoreKey())
         return Pair(cipher.doFinal(plain.toByteArray(Charsets.UTF_8)), cipher.iv)
     }
 
     /** Null when the key can't be decrypted (typically a restore onto another device). */
-    fun decrypt(ciphertext: ByteArray, iv: ByteArray): String? {
+    override fun decrypt(ciphertext: ByteArray, iv: ByteArray): String? {
         return try {
             val cipher = Cipher.getInstance(AES_GCM_NOPADDING)
             cipher.init(Cipher.DECRYPT_MODE, getOrCreateKeystoreKey(), GCMParameterSpec(GCM_TAG_LENGTH, iv))

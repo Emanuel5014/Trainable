@@ -1,18 +1,15 @@
 package com.emanuel5014.trainable.data.ai.remote
 
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.util.AiKeyCryptoManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /** The saved remote profiles and which one is active, with each API key kept encrypted. */
-@Singleton
-class AiProfileStore @Inject constructor(
+@OptIn(ExperimentalStdlibApi::class)
+class AiProfileStore(
     private val prefs: UserPreferencesRepository,
-    private val crypto: AiKeyCryptoManager
+    private val crypto: AiKeyCrypto
 ) {
     val profiles: Flow<List<AiProfile>> = prefs.aiProfilesJson.map(AiProfileList::decode)
 

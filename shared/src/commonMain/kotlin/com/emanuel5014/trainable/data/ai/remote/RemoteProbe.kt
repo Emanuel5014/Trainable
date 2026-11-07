@@ -1,16 +1,13 @@
 package com.emanuel5014.trainable.data.ai.remote
 
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
-import okhttp3.Call
 
 /** The two quick checks the provider editor offers: which models the server lists, and whether a request works. */
-class RemoteProbe(factory: Call.Factory) {
-
-    private val http = RemoteHttp(factory)
+class RemoteProbe(private val http: AiHttp) {
 
     suspend fun listModels(client: ProtocolClient): Result<List<String>> = outcome {
         http.call(client.buildModelsRequest()) { response ->
-            val body = response.body.string()
+            val body = response.bodyString()
             if (!response.isSuccessful) throw client.mapError(response.code, body)
             client.parseModels(body)
         }
@@ -22,7 +19,7 @@ class RemoteProbe(factory: Call.Factory) {
         var retried = false
         while (true) {
             val failure = http.call(client.buildPingRequest(quirks)) { response ->
-                if (response.isSuccessful) null else response.code to response.body.string()
+                if (response.isSuccessful) null else response.code to response.bodyString()
             } ?: return@outcome
             val next = if (retried) null else client.retryQuirks(failure.first, failure.second, quirks)
             if (next == null) throw client.mapError(failure.first, failure.second)
@@ -36,7 +33,7 @@ class RemoteProbe(factory: Call.Factory) {
         Result.success(block())
     } catch (e: ScanBackendException) {
         Result.failure(e)
-    } catch (_: IllegalArgumentException) {
+    } catch (_: AiRequestUnusable) {
         // A request that can't even be built: the address is malformed
         Result.failure(ScanBackendException.PolicyBlocked(UrlRejection.INVALID))
     }

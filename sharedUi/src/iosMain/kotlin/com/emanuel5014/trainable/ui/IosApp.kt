@@ -92,6 +92,11 @@ internal object IosAppGraph {
     val merges by lazy { ExerciseMergeRepository(database.exerciseMergeDao(), database.exerciseDao(), analyticsPreferences) }
     val analytics by lazy { AnalyticsRepository(database.analyticsDao(), database.weightLogDao()) }
     val journal by lazy { JournalRepository(database.journalDao(), IosTransactionRunner(database)) }
+    // Remote AI (A1): the profiles with their Keychain-encrypted keys, and the HTTP client the scan and probe use
+    val aiProfiles by lazy {
+        com.emanuel5014.trainable.data.ai.remote.AiProfileStore(preferences, com.emanuel5014.trainable.data.ai.remote.IosAiKeyCrypto())
+    }
+    val aiHttp: com.emanuel5014.trainable.data.ai.remote.AiHttp by lazy { com.emanuel5014.trainable.data.ai.remote.IosAiHttp() }
     val historyImporter by lazy {
         HistoryCsvImporter(
             IosTransactionRunner(database), database.workoutDao(), database.exerciseDao(), database.userDao(), journal,

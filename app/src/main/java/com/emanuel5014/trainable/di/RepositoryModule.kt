@@ -33,6 +33,15 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
 
+    /** The remote AI profiles; the API keys stay encrypted with the Keystore ([com.emanuel5014.trainable.util.AiKeyCryptoManager]). */
+    @Provides
+    @Singleton
+    fun provideAiProfileStore(
+        prefs: UserPreferencesRepository,
+        crypto: com.emanuel5014.trainable.util.AiKeyCryptoManager
+    ): com.emanuel5014.trainable.data.ai.remote.AiProfileStore =
+        com.emanuel5014.trainable.data.ai.remote.AiProfileStore(prefs, crypto)
+
     @Provides
     @Singleton
     fun providePhysicalCheckRepository(
