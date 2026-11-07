@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* TrainableApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* TrainableApp.swift */; };
 		A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* ContentView.swift */; };
+		A10000000000000000000003 /* LocalLlmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* LocalLlmService.swift */; };
+		A10000000000000000000004 /* LiteRTLM in Frameworks */ = {isa = PBXBuildFile; productRef = C80000000000000000000002 /* LiteRTLM */; };
 		B10000000000000000000001 /* WorkoutLiveActivityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001; };
 		B10000000000000000000002 /* Timer attributes in app */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002; };
 		B10000000000000000000003 /* Timer attributes in extension */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002; };
@@ -21,6 +23,7 @@
 /* Begin PBXFileReference section */
 		A20000000000000000000001 /* TrainableApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainableApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* LocalLlmService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLlmService.swift; sourceTree = "<group>"; };
 		A20000000000000000000003 /* Trainable.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Trainable.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B20000000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLiveActivityService.swift; sourceTree = "<group>"; };
 		B20000000000000000000002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainableTimerAttributes.swift; sourceTree = "<group>"; };
@@ -34,6 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000004 /* LiteRTLM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,6 +60,7 @@
 				A20000000000000000000001 /* TrainableApp.swift */,
 				A20000000000000000000002 /* ContentView.swift */,
 				B20000000000000000000001 /* WorkoutLiveActivityService.swift */,
+				A20000000000000000000004 /* LocalLlmService.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -89,6 +94,9 @@
 				B70000000000000000000002 /* Timer extension */,
 			);
 			name = iosApp;
+			packageProductDependencies = (
+				C80000000000000000000002 /* LiteRTLM */,
+			);
 			productName = iosApp;
 			productReference = A20000000000000000000003 /* Trainable.app */;
 			productType = "com.apple.product-type.application";
@@ -122,6 +130,9 @@
 				Base,
 			);
 			mainGroup = A40000000000000000000001;
+			packageReferences = (
+				C80000000000000000000001 /* XCRemoteSwiftPackageReference "LiteRT-LM" */,
+			);
 			productRefGroup = A40000000000000000000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -131,6 +142,14 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C80000000000000000000001 /* XCRemoteSwiftPackageReference "LiteRT-LM" */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/google-ai-edge/LiteRT-LM.git"; requirement = {kind = exactVersion; version = 0.18.1; }; };
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C80000000000000000000002 /* LiteRTLM */ = {isa = XCSwiftPackageProductDependency; package = C80000000000000000000001 /* XCRemoteSwiftPackageReference "LiteRT-LM" */; productName = LiteRTLM; };
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A60000000000000000000003 /* Resources */ = {
@@ -170,6 +189,7 @@
 			files = (
 				A10000000000000000000001 /* TrainableApp.swift in Sources */,
 				A10000000000000000000002 /* ContentView.swift in Sources */,
+				A10000000000000000000003 /* LocalLlmService.swift in Sources */,
 				B10000000000000000000001 /* Native Live Activity bridge */,
 				B10000000000000000000002 /* Timer attributes */,
 				B10000000000000000000006 /* TimerControlIntent in app */,

@@ -7,6 +7,8 @@ struct TrainableApp: App {
     init() {
         // AES-GCM for the physical checks: CryptoKit is Swift only, Kotlin calls it through this bridge
         IosCryptoBridge.shared.aesGcm = CryptoKitAesGcm()
+        // On-device Gemma E2B (LiteRT-LM is Swift only); used by the local scan backend (A5)
+        IosLocalLlmBridge.shared.engine = LocalLlmService()
         IosWorkoutLiveActivityBridge.shared.service = WorkoutLiveActivityService()
     }
 
