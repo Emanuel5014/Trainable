@@ -3,8 +3,8 @@ import LiteRTLM
 import Shared
 
 /// Gemma E2B on the iPhone through LiteRT-LM 0.18.1, for the Kotlin side (`IosLocalLlm`, A5).
-/// Configuration measured on an iPhone 15 Pro (docs/ios-port/checks/a5-local-gemma): decoder on the CPU, vision on the
-/// GPU, near-greedy sampler. The engine stays loaded between scans until `release()` or another model path.
+/// Configuration measured on an iPhone 15 Pro and an iPhone 17 (docs/ios-port/checks/a5-local-gemma): decoder on the GPU, vision on the
+/// CPU, near-greedy sampler. The engine stays loaded between scans until `release()` or another model path.
 final class LocalLlmService: NSObject, IosLocalLlm {
     private let state = LocalLlmState()
 
@@ -59,9 +59,14 @@ private actor LocalLlmState {
         if engine == nil || loadedPath != modelPath {
             engine = nil
             ExperimentalFlags.optIntoExperimentalAPIs()
-            try FileManager.default.createDirectory(atPath: cacheDir, withIntermediateDirectories: true)
+            // Decoder on the GPU, vision on the CPU: the CPU decoder (with GPU vision) fails in XNNPACK ("failed to reshape
+            // runtime", "Failed to allocate tensors") as soon as the prompt grows a little, on the iPhone 15 Pro spike and in
+            // the app on an iPhone 17 (A5-6); this pair read every prompt of the spike. Its compiled-kernel cache gets its
+            // own folder so a cache written by another configuration is never reused.
+            let cache = (cacheDir as NSString).appendingPathComponent("gpu-visioncpu")
+            try FileManager.default.createDirectory(atPath: cache, withIntermediateDirectories: true)
             let config = try EngineConfig(
-                modelPath: modelPath, backend: .cpu(), visionBackend: .gpu, maxNumTokens: nil, cacheDir: cacheDir
+                modelPath: modelPath, backend: .gpu, visionBackend: .cpu(), maxNumTokens: nil, cacheDir: cache
             )
             let loaded = Engine(engineConfig: config)
             try await loaded.initialize()
