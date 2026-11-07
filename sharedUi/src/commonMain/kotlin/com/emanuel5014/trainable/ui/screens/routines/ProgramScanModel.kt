@@ -96,8 +96,10 @@ class ProgramScanModel<Metrics>(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: ScanBackendException) {
+                ensureActive()
                 _state.value = ProgramScanState.Failed(e)
             } catch (_: Exception) {
+                ensureActive()
                 _state.value = ProgramScanState.Failed()
             }
         }

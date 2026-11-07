@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -173,8 +174,10 @@ class RoutineScanModel<Metrics>(
         } catch (e: CancellationException) {
             throw e
         } catch (e: ScanBackendException) {
+            currentCoroutineContext().ensureActive()
             _aiScanState.value = AiScanState.Error(e.message, e)
         } catch (e: Exception) {
+            currentCoroutineContext().ensureActive()
             _aiScanState.value = AiScanState.Error(e.message ?: "")
         }
     }
