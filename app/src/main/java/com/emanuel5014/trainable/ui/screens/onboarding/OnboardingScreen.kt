@@ -242,155 +242,16 @@ fun OnboardingScreen(onFinished: () -> Unit, viewModel: OnboardingViewModel = hi
             onDismiss = {
                 showNextcloudRestore = false
                 nextcloudBackupToRestore = null
-            }
+            },
+            dateText = { backup ->
+                java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT)
+                    .format(java.util.Date(backup.lastModifiedMillis))
+            },
+            sizeText = { bytes -> String.format(java.util.Locale.getDefault(), "%.1f MB", bytes / 1_048_576f) }
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun BackupSlide(
-    autoBackupEnabled: Boolean,
-    onAutoBackupChange: (Boolean) -> Unit,
-    autoBackupFrequency: Int,
-    onAutoBackupFrequencyChange: (Int) -> Unit,
-    autoBackupFolderUri: String?,
-    autoBackupMaxCount: Int,
-    onAutoBackupMaxCountChange: (Int) -> Unit,
-    autoBackupIncludeImages: Boolean,
-    onAutoBackupIncludeImagesChange: (Boolean) -> Unit,
-    onPickFolder: () -> Unit,
-    onImport: () -> Unit
-) {
-
-    OnboardingPage {
-        OnboardingTitle(stringResource(R.string.onboarding_backup_title))
-
-        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            // Auto Backup Toggle
-            CustomizeToggleItem(
-                icon = Icons.Rounded.Backup,
-                title = stringResource(R.string.auto_backup),
-                desc = if (autoBackupEnabled) stringResource(R.string.backup_enabled, autoBackupFrequency) else stringResource(R.string.backup_disabled),
-                checked = autoBackupEnabled,
-                onCheckedChange = onAutoBackupChange
-            )
-
-            if (autoBackupEnabled) {
-                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                // Frequency
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(R.string.frequency), style = MaterialTheme.typography.bodyMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { if (autoBackupFrequency > 1) onAutoBackupFrequencyChange(autoBackupFrequency - 1) }) {
-                            Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
-                        }
-                        Text(stringResource(R.string.day_s, autoBackupFrequency), style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Black)
-                        IconButton(onClick = { if (autoBackupFrequency < 7) onAutoBackupFrequencyChange(autoBackupFrequency + 1) }) {
-                            Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
-                        }
-                    }
-                }
-
-                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                // Max Count
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(R.string.keep_last), style = MaterialTheme.typography.bodyMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { if (autoBackupMaxCount > 1) onAutoBackupMaxCountChange(autoBackupMaxCount - 1) }) {
-                            Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
-                        }
-                        Text(stringResource(R.string.backup_s, autoBackupMaxCount), style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Black)
-                        IconButton(onClick = { if (autoBackupMaxCount < 10) onAutoBackupMaxCountChange(autoBackupMaxCount + 1) }) {
-                            Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
-                        }
-                    }
-                }
-
-                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                // Include Images
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.include_images), style = MaterialTheme.typography.bodyMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                    }
-                    Switch(
-                        checked = autoBackupIncludeImages,
-                        onCheckedChange = onAutoBackupIncludeImagesChange,
-                        thumbContent = if (autoBackupIncludeImages) {
-                            {
-                                Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize), tint = Primary)
-                            }
-                        } else null
-                    )
-                }
-
-                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                // Folder Picker
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.storage_location), style = MaterialTheme.typography.bodyMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                    GymButton(
-                        onClick = onPickFolder,
-                        containerColor = if (autoBackupFolderUri == null) Primary.copy(alpha = 0.1f) else SurfaceContainerHighest,
-                        contentColor = if (autoBackupFolderUri == null) Primary else OnSurface
-                    ) {
-                        Icon(Icons.Rounded.Folder, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            if (autoBackupFolderUri != null) "Folder selected"
-                            else stringResource(R.string.choose_folder)
-                        )
-                    }
-                    if (autoBackupFolderUri == null) {
-                        Text(
-                            stringResource(R.string.folder_required_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Error
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-            // Import Button
-            GymButton(
-                onClick = onImport,
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = SurfaceContainerHigh,
-                contentColor = OnSurface
-            ) {
-                Icon(Icons.Rounded.CloudDownload, contentDescription = null, tint = Primary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.import_database), fontWeight = FontWeight.ExtraBold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.onboarding_setup_footer),
-            style = MaterialTheme.typography.bodySmall,
-            color = OnSurfaceVariant
-        )
-
-    }
-}
 
 @Composable
 private fun LocalAiSlide(
