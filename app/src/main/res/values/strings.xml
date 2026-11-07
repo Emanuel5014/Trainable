@@ -88,10 +88,7 @@
 
     <!-- Exercises -->
     <string name="exercises_completed">exercises completed</string>
-    <string name="sets">Sets</string>
-    <string name="reps">Reps</string>
     <string name="weight_kg">Weight</string>
-    <string name="rest_seconds">Rest (Seconds)</string>
     <string name="select_exercise">Select Exercise</string>
     <string name="tap_to_change_exercise">Tap to change exercise</string>
     <string name="category">Category</string>
@@ -167,7 +164,6 @@
     <string name="compare_session_a">SESSION A</string>
     <string name="compare_session_b">SESSION B</string>
     <string name="compare_volume">Tonnage</string>
-    <string name="compare_exercises">Exercises</string>
     <string name="compare_cardio">Cardio</string>
     <string name="compare_no_cardio_session_a">No cardio in Session A</string>
     <string name="compare_no_cardio_session_b">No cardio in Session B</string>
@@ -387,7 +383,6 @@
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Free-form</string>
     <string name="cardio_duration_label">Target Duration (min)</string>
-    <string name="cardio_duration_slider">Duration (min)</string>
     <string name="cardio_custom_duration">Custom (min)</string>
 
     <!-- About -->
@@ -461,11 +456,6 @@
     <string name="ai_scanning">Analyzing sheet…</string>
     <string name="ai_scan_no_exercises">No exercises detected in the photo</string>
     <string name="ai_scan_failed">Couldn\'t analyze the sheet. Try again.</string>
-    <string name="ai_scan_preview_title">Review scanned exercises</string>
-    <string name="ai_scan_preview_subtitle">Check and fix anything the AI got wrong before adding</string>
-    <string name="ai_scan_add_all">Add exercises</string>
-    <string name="ai_scan_custom_label">Not in catalog — will be created as custom</string>
-    <string name="ai_scan_tap_to_change">Tap to change exercise</string>
     <string name="ai_scan_phase_model">Loading model…</string>
     <string name="ai_scan_phase_connecting">Connecting…</string>
     <string name="ai_scan_phase_reading">Reading the sheet…</string>
@@ -473,23 +463,8 @@
     <string name="ai_scan_show_thinking">Model thinking</string>
     <string name="ai_scan_hide_thinking">Hide thinking</string>
     <string name="ai_scan_thinking_placeholder">The model\'s reasoning will appear here…</string>
-    <string name="ai_scan_original_sheet">Original photo</string>
-    <string name="ai_scan_save_image_to_routine">Attach photo to routine</string>
-    <string name="ai_scan_add_missing_exercise">Add missing exercise</string>
-    <string name="ai_scan_fullscreen_photo">Fullscreen photo</string>
-    <string name="ai_scan_collapse_photo">Hide photo</string>
-    <string name="ai_scan_expand_photo">Show photo</string>
-    <string name="ai_scan_zoom_hint">Pinch or double tap to zoom</string>
-    <string name="ai_scan_custom_options_title">New Exercise Options</string>
-    <string name="ai_scan_custom_options_desc">This exercise isn\'t in your catalog yet. What would you like to do?</string>
     <string name="ai_scan_edit_name_and_category">Edit name &amp; category</string>
-    <string name="ai_scan_select_from_catalog">Link to existing exercise</string>
-    <string name="ai_scan_save_to_library_checkbox">Save to custom exercise library</string>
     <string name="ai_scan_edit_exercise_title">Edit Exercise</string>
-    <string name="ai_scan_custom_badge">NEW</string>
-    <string name="ai_scan_exercise_name_label">Exercise name</string>
-    <string name="ai_scan_category_label">Category</string>
-    <string name="ai_scan_save_changes">Save changes</string>
     <string name="ai_scan_stop">Stop scan</string>
     <string name="ai_scan_stop_confirm_title">Stop scanning?</string>
     <string name="ai_scan_stop_confirm_desc">The sheet analysis will be stopped and you will need to start a new one.</string>
@@ -521,10 +496,6 @@
     <string name="onboarding_ai_toggle_desc">Uses a local model to parse sets, reps, and exercises from photos.</string>
     <string name="onboarding_ai_unsupported_desc">Your device does not meet the hardware requirements (at least 6 GB RAM) for local AI execution. You can still create and manage routines manually.</string>
     <string name="onboarding_ai_download_note">You can download the model now or anytime later in Settings.</string>
-    <string name="ai_scan_confirm_dialog_title">Add scanned exercises?</string>
-    <string name="ai_scan_confirm_dialog_desc">Are you sure you want to add the %1$d scanned exercises to your routine?</string>
-    <string name="ai_scan_confirm_dialog_confirm">Confirm &amp; Add</string>
-    <string name="ai_scan_confirm_dialog_review">Review</string>
 
     <!-- Exercise Types -->
     <string name="exercise_type_time_and_weight">Time &amp; Weight</string>
@@ -605,9 +576,7 @@
     <string name="emom_action_pause">Pause</string>
     <string name="emom_action_resume">Resume</string>
     <string name="emom_action_stop">Stop</string>
-    <string name="scan_programmed_hint">The prescription is on a separate program sheet: choose Advanced to add its blocks here, or scan the program page after importing.</string>
     <string name="scan_use_simple">Use plain sets × reps</string>
-    <string name="scan_one_rep_max_found">1RM on the sheet: %1$s · it will be saved</string>
     <string name="one_rep_maxes_empty_title">Add your first 1RM</string>
     <string name="one_rep_maxes_card_desc">%1$d lifts tracked</string>
     <string name="ai_program_scan_button">Scan</string>

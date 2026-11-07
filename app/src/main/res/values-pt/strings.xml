@@ -87,10 +87,7 @@
 
     <!-- Exercises -->
     <string name="exercises_completed">exercícios concluídos</string>
-    <string name="sets">Séries</string>
-    <string name="reps">Repetições</string>
     <string name="weight_kg">Peso</string>
-    <string name="rest_seconds">Descanso (Segundos)</string>
     <string name="select_exercise">Selecionar Exercício</string>
     <string name="tap_to_change_exercise">Toque para mudar de exercício</string>
     <string name="category">Categoria</string>
@@ -166,7 +163,6 @@
     <string name="compare_session_a">SESSÃO A</string>
     <string name="compare_session_b">SESSÃO B</string>
     <string name="compare_volume">Tonelagem</string>
-    <string name="compare_exercises">Exercícios</string>
     <string name="compare_cardio">Cardio</string>
     <string name="compare_no_cardio_session_a">Sem cardio na Sessão A</string>
     <string name="compare_no_cardio_session_b">Sem cardio na Sessão B</string>
@@ -386,7 +382,6 @@
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Livre</string>
     <string name="cardio_duration_label">Duração alvo (min)</string>
-    <string name="cardio_duration_slider">Duração (min)</string>
     <string name="cardio_custom_duration">Personalizado (min)</string>
 
     <!-- About -->
@@ -460,11 +455,6 @@
     <string name="ai_scanning">A analisar a ficha…</string>
     <string name="ai_scan_no_exercises">Nenhum exercício detetado na foto</string>
     <string name="ai_scan_failed">Não foi possível analisar a ficha. Tenta novamente.</string>
-    <string name="ai_scan_preview_title">Revê os exercícios detetados</string>
-    <string name="ai_scan_preview_subtitle">Confere e corrige erros da IA antes de adicionar</string>
-    <string name="ai_scan_add_all">Adicionar exercícios</string>
-    <string name="ai_scan_custom_label">Não está no catálogo — será criado como personalizado</string>
-    <string name="ai_scan_tap_to_change">Toque para alterar o exercício</string>
     <string name="ai_scan_phase_model">A carregar o modelo…</string>
     <string name="ai_scan_phase_connecting">A ligar…</string>
     <string name="ai_scan_phase_reading">A ler a ficha…</string>
@@ -472,23 +462,8 @@
     <string name="ai_scan_show_thinking">Raciocínio do modelo</string>
     <string name="ai_scan_hide_thinking">Ocultar raciocínio</string>
     <string name="ai_scan_thinking_placeholder">O raciocínio do modelo aparecerá aqui…</string>
-    <string name="ai_scan_original_sheet">Foto original</string>
-    <string name="ai_scan_save_image_to_routine">Anexar foto ao treino</string>
-    <string name="ai_scan_add_missing_exercise">Adicionar exercício em falta</string>
-    <string name="ai_scan_fullscreen_photo">Foto em ecrã inteiro</string>
-    <string name="ai_scan_collapse_photo">Ocultar foto</string>
-    <string name="ai_scan_expand_photo">Mostrar foto</string>
-    <string name="ai_scan_zoom_hint">Aperte ou toque duas vezes para ampliar</string>
-    <string name="ai_scan_custom_options_title">Opções de novo exercício</string>
-    <string name="ai_scan_custom_options_desc">Este exercício ainda não está no seu catálogo. O que pretende fazer?</string>
     <string name="ai_scan_edit_name_and_category">Editar nome e categoria</string>
-    <string name="ai_scan_select_from_catalog">Associar a exercício existente</string>
-    <string name="ai_scan_save_to_library_checkbox">Guardar na biblioteca de exercícios personalizados</string>
     <string name="ai_scan_edit_exercise_title">Editar exercício</string>
-    <string name="ai_scan_custom_badge">NOVO</string>
-    <string name="ai_scan_exercise_name_label">Nome do exercício</string>
-    <string name="ai_scan_category_label">Categoria</string>
-    <string name="ai_scan_save_changes">Guardar alterações</string>
     <string name="ai_scan_stop">Parar digitalização</string>
     <string name="ai_scan_stop_confirm_title">Parar digitalização?</string>
     <string name="ai_scan_stop_confirm_desc">A análise do treino será interrompida e terá de iniciar uma nova.</string>
@@ -520,10 +495,6 @@
     <string name="onboarding_ai_toggle_desc">Usa um modelo local para extrair séries, repetições e exercícios de fotos.</string>
     <string name="onboarding_ai_unsupported_desc">O seu dispositivo não cumpre os requisitos mínimos (pelo menos 6 GB de RAM) para IA local. Pode criar e gerir rotinas manualmente.</string>
     <string name="onboarding_ai_download_note">Pode transferir o modelo agora ou mais tarde nas Definições.</string>
-    <string name="ai_scan_confirm_dialog_title">Adicionar exercícios digitalizados?</string>
-    <string name="ai_scan_confirm_dialog_desc">Quer adicionar os %1$d exercícios detetados ao teu plano?</string>
-    <string name="ai_scan_confirm_dialog_confirm">Confirmar e adicionar</string>
-    <string name="ai_scan_confirm_dialog_review">Rever</string>
 
     <!-- Exercise Types -->
     <string name="exercise_type_time_and_weight">Tempo &amp; Peso</string>
@@ -604,9 +575,7 @@
     <string name="emom_action_pause">Pausa</string>
     <string name="emom_action_resume">Retomar</string>
     <string name="emom_action_stop">Parar</string>
-    <string name="scan_programmed_hint">A prescrição está em uma folha de programação à parte: escolha Avançado para adicionar os blocos aqui, ou escaneie a página da programação após importar.</string>
     <string name="scan_use_simple">Usar séries × reps simples</string>
-    <string name="scan_one_rep_max_found">1RM na folha: %1$s · será salvo</string>
     <string name="one_rep_maxes_empty_title">Adicione seu primeiro 1RM</string>
     <string name="one_rep_maxes_card_desc">%1$d exercícios acompanhados</string>
     <string name="ai_program_scan_button">Escanear</string>

@@ -441,7 +441,8 @@ fun rememberAndroidRoutineScanUi(viewModel: RoutineDetailViewModel): RoutineScan
                 }
                 is AiScanState.Success -> {
                     AiScanPreviewSheet(
-                        imageUri = state.imageUri,
+                        imageUri = state.imageUri?.toString(),
+                        photo = AndroidScanPhoto,
                         entries = state.entries,
                         exercises = uiState.availableExercises,
                         categories = uiState.categories,

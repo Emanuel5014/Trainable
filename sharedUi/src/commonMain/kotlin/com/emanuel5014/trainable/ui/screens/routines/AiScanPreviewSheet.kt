@@ -3,8 +3,9 @@ package com.emanuel5014.trainable.ui.screens.routines
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
-import android.net.Uri
-import androidx.activity.compose.BackHandler
+import com.emanuel5014.trainable.ui.util.PlatformBackHandler
+import com.emanuel5014.trainable.util.sortedByKeys
+import com.emanuel5014.trainable.ui.util.fullscreenDialogProperties
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -97,9 +98,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -107,9 +107,39 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_add_all
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_add_missing_exercise
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_category_label
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_collapse_photo
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_confirm_dialog_confirm
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_confirm_dialog_desc
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_confirm_dialog_review
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_confirm_dialog_title
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_custom_badge
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_custom_label
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_custom_options_desc
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_custom_options_title
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_exercise_name_label
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_expand_photo
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_fullscreen_photo
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_original_sheet
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_preview_subtitle
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_preview_title
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_save_changes
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_save_image_to_routine
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_save_to_library_checkbox
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_select_from_catalog
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_tap_to_change
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_zoom_hint
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.cardio_duration_slider
+import com.emanuel5014.trainable.sharedui.resources.compare_exercises
+import com.emanuel5014.trainable.sharedui.resources.reps
+import com.emanuel5014.trainable.sharedui.resources.rest_seconds
+import com.emanuel5014.trainable.sharedui.resources.scan_one_rep_max_found
+import com.emanuel5014.trainable.sharedui.resources.scan_programmed_hint
+import com.emanuel5014.trainable.sharedui.resources.sets
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.ai.ScannedExerciseEntry
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
@@ -157,7 +187,9 @@ fun rememberZoomState(): ZoomState {
 @OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun AiScanPreviewSheet(
-    imageUri: Uri? = null,
+    imageUri: String? = null,
+    /** Draws the photo of the sheet (Android: coil at full resolution). */
+    photo: ScanPhotoUi,
     entries: List<ScannedExerciseEntry>,
     exercises: List<ExerciseEntity>,
     categories: List<String>,
@@ -190,7 +222,7 @@ fun AiScanPreviewSheet(
 
     // System BackHandler ensuring the back button always dismisses cleanly
     val isChildSheetOpen = pickingIndex != null || customEditIndex != null || showFullscreenPhoto || isAddingNewExercise || showConfirmDialog
-    BackHandler(enabled = !isChildSheetOpen) {
+    PlatformBackHandler(enabled = !isChildSheetOpen) {
         dismiss()
     }
 
@@ -247,7 +279,7 @@ fun AiScanPreviewSheet(
                                 ) {
                                     Icon(Icons.Rounded.Photo, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
                                     Text(
-                                        text = stringResource(R.string.ai_scan_original_sheet),
+                                        text = stringResource(Res.string.ai_scan_original_sheet),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = OnSurface
@@ -282,7 +314,7 @@ fun AiScanPreviewSheet(
                                     ) {
                                         Icon(
                                             Icons.Rounded.Fullscreen,
-                                            contentDescription = stringResource(R.string.ai_scan_fullscreen_photo),
+                                            contentDescription = stringResource(Res.string.ai_scan_fullscreen_photo),
                                             tint = OnSurfaceVariant,
                                             modifier = Modifier.size(20.dp)
                                         )
@@ -292,6 +324,7 @@ fun AiScanPreviewSheet(
 
                             ZoomablePhotoInspector(
                                 imageUri = imageUri,
+                                photo = photo,
                                 zoomState = tabletZoomState,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -349,6 +382,7 @@ fun AiScanPreviewSheet(
                         if (imageUri != null) {
                             CollapsiblePhotoInspector(
                                 imageUri = imageUri,
+                                photo = photo,
                                 onOpenFullscreen = { showFullscreenPhoto = true }
                             )
 
@@ -391,7 +425,7 @@ fun AiScanPreviewSheet(
             onDismissRequest = { showConfirmDialog = false },
             title = {
                 Text(
-                    text = stringResource(R.string.ai_scan_confirm_dialog_title),
+                    text = stringResource(Res.string.ai_scan_confirm_dialog_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = OnSurface
@@ -399,7 +433,7 @@ fun AiScanPreviewSheet(
             },
             text = {
                 Text(
-                    text = stringResource(R.string.ai_scan_confirm_dialog_desc, editableEntries.size),
+                    text = stringResource(Res.string.ai_scan_confirm_dialog_desc, editableEntries.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = OnSurfaceVariant
                 )
@@ -412,7 +446,7 @@ fun AiScanPreviewSheet(
                     }
                 ) {
                     Text(
-                        text = stringResource(R.string.ai_scan_confirm_dialog_confirm),
+                        text = stringResource(Res.string.ai_scan_confirm_dialog_confirm),
                         color = Primary,
                         fontWeight = FontWeight.Bold
                     )
@@ -423,7 +457,7 @@ fun AiScanPreviewSheet(
                     onClick = { showConfirmDialog = false }
                 ) {
                     Text(
-                        text = stringResource(R.string.ai_scan_confirm_dialog_review),
+                        text = stringResource(Res.string.ai_scan_confirm_dialog_review),
                         color = OnSurfaceVariant,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -438,6 +472,7 @@ fun AiScanPreviewSheet(
     if (showFullscreenPhoto && imageUri != null) {
         FullscreenPhotoDialog(
             imageUri = imageUri,
+            photo = photo,
             onDismiss = { showFullscreenPhoto = false }
         )
     }
@@ -550,7 +585,7 @@ private fun HeaderSection() {
         Spacer(modifier = Modifier.width(12.dp))
         Column {
             Text(
-                text = stringResource(R.string.ai_scan_preview_title),
+                text = stringResource(Res.string.ai_scan_preview_title),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineSmall.fontSize)
                 ),
@@ -558,7 +593,7 @@ private fun HeaderSection() {
                 fontWeight = FontWeight.Black
             )
             Text(
-                text = stringResource(R.string.ai_scan_preview_subtitle),
+                text = stringResource(Res.string.ai_scan_preview_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = OnSurfaceVariant
             )
@@ -596,7 +631,7 @@ private fun SaveImageToggleCard(
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
-                    text = stringResource(R.string.ai_scan_save_image_to_routine),
+                    text = stringResource(Res.string.ai_scan_save_image_to_routine),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = OnSurface
@@ -622,7 +657,8 @@ private fun SaveImageToggleCard(
 
 @Composable
 private fun CollapsiblePhotoInspector(
-    imageUri: Uri,
+    imageUri: String,
+    photo: ScanPhotoUi,
     onOpenFullscreen: () -> Unit
 ) {
     var isCollapsed by remember { mutableStateOf(false) }
@@ -656,7 +692,7 @@ private fun CollapsiblePhotoInspector(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = stringResource(R.string.ai_scan_original_sheet),
+                        text = stringResource(Res.string.ai_scan_original_sheet),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = OnSurface
@@ -691,7 +727,7 @@ private fun CollapsiblePhotoInspector(
                     ) {
                         Icon(
                             Icons.Rounded.Fullscreen,
-                            contentDescription = stringResource(R.string.ai_scan_fullscreen_photo),
+                            contentDescription = stringResource(Res.string.ai_scan_fullscreen_photo),
                             tint = OnSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -703,7 +739,7 @@ private fun CollapsiblePhotoInspector(
                     ) {
                         Icon(
                             imageVector = if (isCollapsed) Icons.Rounded.KeyboardArrowDown else Icons.Rounded.KeyboardArrowUp,
-                            contentDescription = if (isCollapsed) stringResource(R.string.ai_scan_expand_photo) else stringResource(R.string.ai_scan_collapse_photo),
+                            contentDescription = if (isCollapsed) stringResource(Res.string.ai_scan_expand_photo) else stringResource(Res.string.ai_scan_collapse_photo),
                             tint = OnSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -714,6 +750,7 @@ private fun CollapsiblePhotoInspector(
             AnimatedVisibility(visible = !isCollapsed) {
                 ZoomablePhotoInspector(
                     imageUri = imageUri,
+                    photo = photo,
                     zoomState = zoomState,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -727,21 +764,13 @@ private fun CollapsiblePhotoInspector(
 
 @Composable
 private fun ZoomablePhotoInspector(
-    imageUri: Uri,
+    imageUri: String,
+    photo: ScanPhotoUi,
     zoomState: ZoomState,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     var imageSize by remember { mutableStateOf(IntSize.Zero) }
 
-    // Load full original image resolution so text is sharp when zoomed
-    val imageRequest = remember(imageUri) {
-        ImageRequest.Builder(context)
-            .data(imageUri)
-            .size(coil.size.Size.ORIGINAL)
-            .crossfade(true)
-            .build()
-    }
 
     Box(
         modifier = modifier
@@ -787,9 +816,9 @@ private fun ZoomablePhotoInspector(
                 }
             }
     ) {
-        AsyncImage(
-            model = imageRequest,
-            contentDescription = stringResource(R.string.ai_scan_original_sheet),
+        photo.SheetPhoto(
+            uri = imageUri,
+            contentDescription = stringResource(Res.string.ai_scan_original_sheet),
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged { imageSize = it }
@@ -798,8 +827,7 @@ private fun ZoomablePhotoInspector(
                     scaleY = zoomState.scale,
                     translationX = zoomState.offsetX,
                     translationY = zoomState.offsetY
-                ),
-            contentScale = ContentScale.Fit
+                )
         )
 
         // Subtle Zoom hint at bottom when not zoomed in
@@ -812,7 +840,7 @@ private fun ZoomablePhotoInspector(
                 .padding(bottom = 6.dp)
         ) {
             Text(
-                text = stringResource(R.string.ai_scan_zoom_hint),
+                text = stringResource(Res.string.ai_scan_zoom_hint),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.9f),
                 modifier = Modifier
@@ -825,24 +853,17 @@ private fun ZoomablePhotoInspector(
 
 @Composable
 private fun FullscreenPhotoDialog(
-    imageUri: Uri,
+    imageUri: String,
+    photo: ScanPhotoUi,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
     val fullscreenZoomState = rememberZoomState()
     var imageSize by remember { mutableStateOf(IntSize.Zero) }
 
-    val imageRequest = remember(imageUri) {
-        ImageRequest.Builder(context)
-            .data(imageUri)
-            .size(coil.size.Size.ORIGINAL)
-            .crossfade(true)
-            .build()
-    }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = fullscreenDialogProperties()
     ) {
         Box(
             modifier = Modifier
@@ -887,9 +908,9 @@ private fun FullscreenPhotoDialog(
                     }
                 }
         ) {
-            AsyncImage(
-                model = imageRequest,
-                contentDescription = stringResource(R.string.ai_scan_original_sheet),
+            photo.SheetPhoto(
+                uri = imageUri,
+                contentDescription = stringResource(Res.string.ai_scan_original_sheet),
                 modifier = Modifier
                     .fillMaxSize()
                     .onSizeChanged { imageSize = it }
@@ -898,8 +919,7 @@ private fun FullscreenPhotoDialog(
                         scaleY = fullscreenZoomState.scale,
                         translationX = fullscreenZoomState.offsetX,
                         translationY = fullscreenZoomState.offsetY
-                    ),
-                contentScale = ContentScale.Fit
+                    )
             )
 
             // Top Bar Controls
@@ -916,7 +936,7 @@ private fun FullscreenPhotoDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.ai_scan_original_sheet),
+                        text = stringResource(Res.string.ai_scan_original_sheet),
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
@@ -958,7 +978,7 @@ private fun FullscreenPhotoDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
-                            contentDescription = stringResource(R.string.cancel),
+                            contentDescription = stringResource(Res.string.cancel),
                             tint = Color.White
                         )
                     }
@@ -1020,13 +1040,13 @@ private fun EditCustomExerciseSheet(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.ai_scan_custom_options_title),
+                            text = stringResource(Res.string.ai_scan_custom_options_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = OnSurface
                         )
                         Text(
-                            text = stringResource(R.string.ai_scan_custom_options_desc),
+                            text = stringResource(Res.string.ai_scan_custom_options_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
@@ -1037,14 +1057,14 @@ private fun EditCustomExerciseSheet(
                 GymInputField(
                     value = nameText,
                     onValueChange = { nameText = it },
-                    label = stringResource(R.string.ai_scan_exercise_name_label),
+                    label = stringResource(Res.string.ai_scan_exercise_name_label),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 // Category Selector
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = stringResource(R.string.ai_scan_category_label),
+                        text = stringResource(Res.string.ai_scan_category_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnSurfaceVariant
                     )
@@ -1100,7 +1120,7 @@ private fun EditCustomExerciseSheet(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = stringResource(R.string.ai_scan_save_to_library_checkbox),
+                            text = stringResource(Res.string.ai_scan_save_to_library_checkbox),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = OnSurface,
@@ -1141,7 +1161,7 @@ private fun EditCustomExerciseSheet(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(stringResource(R.string.ai_scan_save_changes).uppercase(), fontWeight = FontWeight.Black)
+                        Text(stringResource(Res.string.ai_scan_save_changes).uppercase(), fontWeight = FontWeight.Black)
                     }
 
                     OutlinedButton(
@@ -1157,7 +1177,7 @@ private fun EditCustomExerciseSheet(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(R.string.ai_scan_select_from_catalog),
+                            text = stringResource(Res.string.ai_scan_select_from_catalog),
                             color = Primary,
                             fontWeight = FontWeight.Bold
                         )
@@ -1184,7 +1204,7 @@ private fun ExerciseListSection(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "${stringResource(R.string.compare_exercises)} (${entries.size})",
+                text = "${stringResource(Res.string.compare_exercises)} (${entries.size})",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = OnSurface
@@ -1205,7 +1225,7 @@ private fun ExerciseListSection(
                     modifier = Modifier.size(18.dp)
                 )
                 Text(
-                    text = stringResource(R.string.ai_scan_add_missing_exercise),
+                    text = stringResource(Res.string.ai_scan_add_missing_exercise),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = Primary
@@ -1239,9 +1259,10 @@ private fun ScanEntryCard(
     val haptic = LocalHapticFeedback.current
     var setsText by remember(entry.rawName, index, entry.isAdvanced) { mutableStateOf(entry.sets.toString()) }
     var repsText by remember(entry.rawName, index, entry.isAdvanced) { mutableStateOf(entry.reps) }
-    val environment: com.emanuel5014.trainable.ui.components.PrescriptionEnvironmentViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
-    val storedMaxes by environment.oneRepMaxes.collectAsState()
-    val storedEstimates by environment.estimatedOneRepMaxes.collectAsState()
+    // Android: the same PrescriptionEnvironmentViewModel as before, from the current back stack entry
+    val environment = com.emanuel5014.trainable.ui.components.LocalPrescriptionEnvironment.current()
+    val storedMaxes = environment.oneRepMaxes
+    val storedEstimates = environment.estimatedOneRepMaxes
     var advancedWeeksCount by remember(entry.rawName, index) { mutableIntStateOf(entry.blocksByWeek.keys.maxOrNull() ?: 1) }
 
     val displayTitle = if (entry.exerciseId != null) {
@@ -1297,7 +1318,7 @@ private fun ScanEntryCard(
 
                     if (entry.exerciseId == null) {
                         Text(
-                            text = stringResource(R.string.ai_scan_custom_badge),
+                            text = stringResource(Res.string.ai_scan_custom_badge),
                             style = MaterialTheme.typography.labelSmall,
                             color = Primary,
                             fontWeight = FontWeight.Black,
@@ -1314,7 +1335,7 @@ private fun ScanEntryCard(
                 ) {
                     if (entry.exerciseId == null) {
                         Text(
-                            text = stringResource(R.string.ai_scan_custom_label),
+                            text = stringResource(Res.string.ai_scan_custom_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = Primary
                         )
@@ -1326,7 +1347,7 @@ private fun ScanEntryCard(
                         )
                     } else {
                         Text(
-                            text = stringResource(R.string.ai_scan_tap_to_change),
+                            text = stringResource(Res.string.ai_scan_tap_to_change),
                             style = MaterialTheme.typography.labelSmall,
                             color = OnSurfaceVariant
                         )
@@ -1337,7 +1358,7 @@ private fun ScanEntryCard(
             IconButton(onClick = onRemove) {
                 Icon(
                     Icons.Rounded.Close,
-                    contentDescription = stringResource(R.string.cancel),
+                    contentDescription = stringResource(Res.string.cancel),
                     tint = OnSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
@@ -1346,7 +1367,7 @@ private fun ScanEntryCard(
 
         if (entry.isProgrammed && !entry.isAdvanced) {
             Text(
-                text = stringResource(R.string.scan_programmed_hint),
+                text = stringResource(Res.string.scan_programmed_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = Primary,
                 fontWeight = FontWeight.Bold
@@ -1354,7 +1375,7 @@ private fun ScanEntryCard(
         }
         entry.oneRepMaxKg?.let { kg ->
             Text(
-                text = stringResource(R.string.scan_one_rep_max_found, com.emanuel5014.trainable.ui.components.formatWeight(kg, "kg")),
+                text = stringResource(Res.string.scan_one_rep_max_found, com.emanuel5014.trainable.ui.components.formatWeight(kg, "kg")),
                 style = MaterialTheme.typography.bodySmall,
                 color = OnSurfaceVariant
             )
@@ -1422,7 +1443,7 @@ private fun ScanEntryCard(
 
             if (entry.isAdvanced) {
                 fun withBlocks(blocks: Map<Int, List<PrescriptionBlock>>): ScannedExerciseEntry {
-                    val firstWeek = blocks.filterValues { it.isNotEmpty() }.toSortedMap().values.firstOrNull()
+                    val firstWeek = blocks.filterValues { it.isNotEmpty() }.sortedByKeys().values.firstOrNull()
                     val (sets, reps) = firstWeek?.let { PrescriptionExpander.legacyTargets(it) } ?: (entry.sets to entry.reps)
                     return entry.copy(blocksByWeek = blocks, sets = sets.coerceIn(1, 30), reps = reps)
                 }
@@ -1474,7 +1495,7 @@ private fun ScanEntryCard(
                         setsText = value
                         value.toIntOrNull()?.let { onUpdate(entry.copy(sets = it)) }
                     },
-                    label = stringResource(R.string.sets),
+                    label = stringResource(Res.string.sets),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -1500,7 +1521,7 @@ private fun ScanEntryCard(
                             setsText = value
                             value.toIntOrNull()?.let { onUpdate(entry.copy(sets = it)) }
                         },
-                        label = stringResource(R.string.sets),
+                        label = stringResource(Res.string.sets),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f)
                     )
@@ -1510,7 +1531,7 @@ private fun ScanEntryCard(
                             repsText = value
                             onUpdate(entry.copy(reps = value))
                         },
-                        label = stringResource(R.string.reps),
+                        label = stringResource(Res.string.reps),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -1544,7 +1565,7 @@ private fun RestSlider(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = stringResource(R.string.rest_seconds),
+            text = stringResource(Res.string.rest_seconds),
             style = MaterialTheme.typography.labelSmall,
             color = OnSurfaceVariant
         )
@@ -1604,7 +1625,7 @@ private fun CardioDurationSlider(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = stringResource(R.string.cardio_duration_slider),
+            text = stringResource(Res.string.cardio_duration_slider),
             style = MaterialTheme.typography.labelSmall,
             color = OnSurfaceVariant
         )
@@ -1684,7 +1705,7 @@ private fun ActionButtonsSection(
             containerColor = SurfaceContainerHigh,
             contentColor = OnSurfaceVariant
         ) {
-            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
         }
 
         GymButton(
@@ -1692,7 +1713,7 @@ private fun ActionButtonsSection(
             enabled = canConfirm,
             modifier = Modifier.weight(1f)
         ) {
-            Text(stringResource(R.string.ai_scan_add_all).uppercase(), fontWeight = FontWeight.Black)
+            Text(stringResource(Res.string.ai_scan_add_all).uppercase(), fontWeight = FontWeight.Black)
         }
     }
 }
