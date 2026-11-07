@@ -251,6 +251,7 @@ import com.emanuel5014.trainable.ui.components.ExerciseBadgeSize
 import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
 import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.GymButton
+import com.emanuel5014.trainable.ui.components.GymButtonText
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.SheetFormBody
@@ -1548,7 +1549,7 @@ fun RoutineDetailContent(
                             containerColor = SurfaceContainerHigh,
                             contentColor = OnSurfaceVariant
                         ) {
-                            Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                            GymButtonText(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                         }
                     
                         GymButton(
@@ -1701,7 +1702,7 @@ fun RoutineDetailContent(
                             modifier = Modifier.weight(1f),
                             enabled = canSaveExercise
                         ) {
-                            Text(
+                            GymButtonText(
                                 text = if (editingExercise == null) stringResource(Res.string.add).uppercase() else stringResource(Res.string.save).uppercase(),
                                 fontWeight = FontWeight.Black
                             )

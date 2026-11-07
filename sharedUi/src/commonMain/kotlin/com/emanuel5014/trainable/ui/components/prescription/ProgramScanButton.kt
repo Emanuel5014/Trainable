@@ -147,7 +147,7 @@ fun <Metrics> ProgramScanButton(
     ) {
         Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
-        Text(stringResource(Res.string.ai_program_scan_button).uppercase(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        GymButtonText(stringResource(Res.string.ai_program_scan_button).uppercase(), fontWeight = FontWeight.ExtraBold)
     }
 
     if (showSource) {

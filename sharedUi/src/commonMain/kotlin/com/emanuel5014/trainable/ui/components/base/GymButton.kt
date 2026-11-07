@@ -13,7 +13,12 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -90,3 +95,21 @@ fun GymButton(
 
 /** The corner radius of [com.emanuel5014.trainable.ui.theme.Shapes.large], where a pressed workout button starts tightening from. */
 private const val PRESS_MORPH_REST_DP = 32f
+
+/**
+ * A [GymButton] label on one line: at the button's own text size whenever it fits (so nothing changes where it already
+ * did), smaller only when the button is too narrow for it. Two buttons side by side on a 402 pt iPhone 17 wrapped
+ * "AGGIUNGI" and "ANNULLA" over two lines and clipped "SCANSIONA".
+ */
+@Composable
+fun GymButtonText(text: String, fontWeight: FontWeight? = null, modifier: Modifier = Modifier) {
+    val size = LocalTextStyle.current.fontSize
+    Text(
+        text = text,
+        modifier = modifier,
+        fontWeight = fontWeight,
+        maxLines = 1,
+        softWrap = false,
+        autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = size, stepSize = 0.5.sp)
+    )
+}
