@@ -304,6 +304,33 @@ object RoutineScanResults {
             parsed = RoutineScanParser.parse("${result.output}\n${result.thinking}")
         }
 
+        return mapParsed(parsed, catalog, categories, languageCode, advanced)
+    }
+
+    /**
+     * On-device iPhone scan (A5): the model only transcribed the sheet's table ([RoutineTranscriptionPrompt]); the
+     * table becomes exercises and goes through the same matching. Falls back to the usual parser for other answers.
+     */
+    fun entriesFromTranscription(
+        result: LlmScanResult,
+        catalog: List<ExerciseEntity>,
+        categories: List<String>,
+        languageCode: String,
+        advanced: Boolean
+    ): List<ScannedExerciseEntry> {
+        val parsed = RoutineTranscriptionParser.parse(result.output)
+            .ifEmpty { RoutineTranscriptionParser.parse(result.thinking) }
+        if (parsed.isEmpty()) return entries(result, catalog, categories, languageCode, advanced)
+        return mapParsed(parsed, catalog, categories, languageCode, advanced)
+    }
+
+    private fun mapParsed(
+        parsed: List<ParsedExercise>,
+        catalog: List<ExerciseEntity>,
+        categories: List<String>,
+        languageCode: String,
+        advanced: Boolean
+    ): List<ScannedExerciseEntry> {
         val matcher = ExerciseMatcher(catalog, languageCode)
         return parsed.map { item ->
             // Technique qualifiers in the name ("Panca Piana PIEDI SU") are matched away and become techniques

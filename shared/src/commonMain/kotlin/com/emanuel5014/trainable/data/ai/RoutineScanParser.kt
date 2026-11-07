@@ -169,7 +169,7 @@ object RoutineScanParser {
             Regex("""\bW\d+\s*:""").containsMatchIn(v)
     }
 
-    private fun cleanExerciseName(name: String): String {
+    internal fun cleanExerciseName(name: String): String {
         return name
             .replace(Regex("""^[\d+\.\-\)\*\#]+\s*"""), "") // Remove leading numbers/bullets like "1.", "A)", "* "
             .replace(Regex("""\s+"""), " ")
