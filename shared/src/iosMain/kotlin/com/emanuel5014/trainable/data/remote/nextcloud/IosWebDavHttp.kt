@@ -4,16 +4,13 @@ package com.emanuel5014.trainable.data.remote.nextcloud
 
 import com.emanuel5014.trainable.data.repository.toByteArray
 import com.emanuel5014.trainable.data.repository.toNSData
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.IOException
 import platform.Foundation.NSData
 import platform.Foundation.NSError
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSHTTPURLResponse
-import platform.Foundation.NSLock
 import platform.Foundation.NSMutableURLRequest
-import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLRequest
 import platform.Foundation.NSURLRequestReloadIgnoringLocalCacheData
@@ -35,29 +32,13 @@ import kotlin.coroutines.resumeWithException
 
 /**
  * Nextcloud over NSURLSession, held to Android's rules (OkHttpWebDavHttp + CleartextGuard): https only, a redirect is
- * followed only when it keeps the scheme (never https→http), 120 s without data, no cache or cookies. [wifiOnly] keeps
- * the call off mobile data and expensive networks. Network failures throw with the system's message.
- * With [backgroundUploads] a file upload (PUT from a file) goes through the shared background session, which iOS
- * finishes even while the app is suspended; cancelling the call then leaves the upload running.
+ * followed only on the same server (never https→http, never another host), 120 s without data, no cache or
+ * cookies. [wifiOnly] keeps the call off mobile data and expensive networks. Network failures throw with the system's message.
  */
-class IosWebDavHttp(private val wifiOnly: Boolean = false, private val backgroundUploads: Boolean = false) : WebDavHttp {
+class IosWebDavHttp(private val wifiOnly: Boolean = false) : WebDavHttp {
 
     override suspend fun send(request: WebDavRequest): WebDavResponse {
-        val url = NSURL.URLWithString(request.url) ?: throw IOException("Invalid URL")
-        if (url.scheme?.lowercase() == "http") {
-            throw IllegalStateException("CLEARTEXT communication to ${url.host} not permitted by network security policy")
-        }
-        val ns = NSMutableURLRequest.requestWithURL(url, NSURLRequestReloadIgnoringLocalCacheData, IDLE_SECONDS)
-        ns.setHTTPMethod(request.method)
-        ns.setHTTPShouldHandleCookies(false)
-        request.headers.forEach { (name, value) -> ns.setValue(value, forHTTPHeaderField = name) }
-        val upload = request.body as? WebDavBody.FilePath
-        if (backgroundUploads && upload != null) {
-            ns.setValue(upload.contentType, forHTTPHeaderField = "Content-Type")
-            ns.setAllowsCellularAccess(!wifiOnly)
-            ns.setAllowsExpensiveNetworkAccess(!wifiOnly)
-            return uploadSession.send(ns, upload.path)
-        }
+        val ns = nsRequest(request, IDLE_SECONDS)
         val config = NSURLSessionConfiguration.ephemeralSessionConfiguration.apply {
             timeoutIntervalForRequest = IDLE_SECONDS
             timeoutIntervalForResource = 7.0 * 24 * 3600
@@ -66,7 +47,7 @@ class IosWebDavHttp(private val wifiOnly: Boolean = false, private val backgroun
             allowsCellularAccess = !wifiOnly
             allowsExpensiveNetworkAccess = !wifiOnly
         }
-        val session = NSURLSession.sessionWithConfiguration(config, SameSchemeRedirects(), null)
+        val session = NSURLSession.sessionWithConfiguration(config, SameServerRedirects(), null)
         try {
             return suspendCancellableCoroutine { continuation ->
                 fun finish(data: NSData?, response: NSURLResponse?, error: NSError?) {
@@ -117,77 +98,40 @@ class IosWebDavHttp(private val wifiOnly: Boolean = false, private val backgroun
         }
     }
 
-    /** Like OkHttp with followSslRedirects(false): same-scheme hops only; otherwise the 3xx itself is the answer. */
-    private class SameSchemeRedirects : NSObject(), NSURLSessionTaskDelegateProtocol {
+    /** A refused redirect leaves the 3xx itself as the answer. */
+    private class SameServerRedirects : NSObject(), NSURLSessionTaskDelegateProtocol {
         override fun URLSession(session: NSURLSession, task: NSURLSessionTask, willPerformHTTPRedirection: NSHTTPURLResponse,
                                 newRequest: NSURLRequest, completionHandler: (NSURLRequest?) -> Unit) {
-            completionHandler(sameSchemeOnly(task, newRequest))
+            completionHandler(allowedRedirect(task, newRequest))
         }
     }
 
-    /** The one background session (`com.emanuel5014.trainable.autobackup.upload`): its delegate resumes the waiting call. */
-    private class BackgroundUploads : NSObject(), NSURLSessionTaskDelegateProtocol {
-        private val lock = NSLock()
-        private val waiting = mutableMapOf<ULong, CancellableContinuation<WebDavResponse>>()
-
-        val session: NSURLSession by lazy {
-            val config = NSURLSessionConfiguration.backgroundSessionConfigurationWithIdentifier(BACKGROUND_SESSION).apply {
-                sessionSendsLaunchEvents = true
-                discretionary = false
-                timeoutIntervalForRequest = IDLE_SECONDS
-                timeoutIntervalForResource = 7.0 * 24 * 3600
-                HTTPShouldSetCookies = false
-                URLCache = null
-            }
-            NSURLSession.sessionWithConfiguration(config, this, NSOperationQueue())
-        }
-
-        override fun URLSession(session: NSURLSession, task: NSURLSessionTask, willPerformHTTPRedirection: NSHTTPURLResponse,
-                                newRequest: NSURLRequest, completionHandler: (NSURLRequest?) -> Unit) {
-            completionHandler(sameSchemeOnly(task, newRequest))
-        }
-
-        override fun URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError: NSError?) {
-            lock.lock()
-            val continuation = waiting.remove(task.taskIdentifier)
-            lock.unlock()
-            continuation ?: return
-            val http = task.response as? NSHTTPURLResponse
-            when {
-                didCompleteWithError != null -> continuation.resumeWithException(IOException(didCompleteWithError.localizedDescription))
-                http == null -> continuation.resumeWithException(IOException("No response"))
-                else -> continuation.resume(WebDavResponse(http.statusCode.toInt(),
-                    NSHTTPURLResponse.localizedStringForStatusCode(http.statusCode), null))
-            }
-        }
-
-        suspend fun send(request: NSURLRequest, path: String): WebDavResponse = suspendCancellableCoroutine { continuation ->
-            val task = session.uploadTaskWithRequest(request, fromFile = NSURL.fileURLWithPath(path))
-            lock.lock()
-            waiting[task.taskIdentifier] = continuation
-            lock.unlock()
-            continuation.invokeOnCancellation {
-                lock.lock()
-                waiting.remove(task.taskIdentifier)
-                lock.unlock()
-            }
-            task.resume()
-        }
-
-    }
-
-    companion object {
-        private const val IDLE_SECONDS = 120.0
-        const val BACKGROUND_SESSION = "com.emanuel5014.trainable.autobackup.upload"
-
-        /** Recreates the background session when iOS wakes the app for its events. */
-        fun reconnectBackgroundUploads() { uploadSession.session }
-
-        private val uploadSession by lazy { BackgroundUploads() }
+    private companion object {
+        const val IDLE_SECONDS = 120.0
     }
 }
 
-private fun sameSchemeOnly(task: NSURLSessionTask, newRequest: NSURLRequest): NSURLRequest? {
-    val from = task.originalRequest?.URL?.scheme?.lowercase()
-    return if (from != null && newRequest.URL?.scheme?.lowercase() == from) newRequest else null
+/**
+ * A redirect is followed only on the same scheme, host and port, like OkHttp with followSslRedirects(false) dropping
+ * credentials on another host: never https→http, and the Authorization header never goes to another server.
+ */
+internal fun redirectAllowed(from: NSURL?, to: NSURL?): Boolean {
+    if (from == null || to == null) return false
+    return from.scheme?.lowercase() == to.scheme?.lowercase() && from.host?.lowercase() == to.host?.lowercase() && from.port == to.port
+}
+
+internal fun allowedRedirect(task: NSURLSessionTask, newRequest: NSURLRequest): NSURLRequest? =
+    newRequest.takeIf { redirectAllowed(task.originalRequest?.URL, newRequest.URL) }
+
+/** The request as NSURLSession sends it: https only (Android's CleartextGuard text), no cache, no cookies. */
+internal fun nsRequest(request: WebDavRequest, timeoutSeconds: Double): NSMutableURLRequest {
+    val url = NSURL.URLWithString(request.url) ?: throw IOException("Invalid URL")
+    if (url.scheme?.lowercase() == "http") {
+        throw IllegalStateException("CLEARTEXT communication to ${url.host} not permitted by network security policy")
+    }
+    val ns = NSMutableURLRequest.requestWithURL(url, NSURLRequestReloadIgnoringLocalCacheData, timeoutSeconds)
+    ns.setHTTPMethod(request.method)
+    ns.setHTTPShouldHandleCookies(false)
+    request.headers.forEach { (name, value) -> ns.setValue(value, forHTTPHeaderField = name) }
+    return ns
 }

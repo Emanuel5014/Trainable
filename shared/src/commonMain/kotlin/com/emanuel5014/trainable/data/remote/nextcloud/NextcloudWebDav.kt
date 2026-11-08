@@ -45,11 +45,14 @@ class NextcloudWebDav(private val http: WebDavHttp) {
 
     suspend fun upload(config: NextcloudConfig, localPath: String, name: String): Result<Unit> = attempt {
         ensureFolder(config).onFailure { return@attempt Result.failure(it) }
-        val response = http.send(WebDavRequest("PUT", NextcloudUrls.file(config, name), auth(config),
-            WebDavBody.FilePath(localPath, "application/zip")))
+        val response = http.send(uploadRequest(config, localPath, name))
         if (response.isSuccessful || response.code in 200..204) Result.success(Unit)
         else Result.failure(Exception("Upload failed with HTTP ${response.code}: ${response.message}"))
     }
+
+    /** The PUT of [upload], for a caller that sends it another way (iOS background session). */
+    fun uploadRequest(config: NextcloudConfig, localPath: String, name: String) =
+        WebDavRequest("PUT", NextcloudUrls.file(config, name), auth(config), WebDavBody.FilePath(localPath, "application/zip"))
 
     /** The backups in the folder, newest first; a missing folder is an empty list. */
     suspend fun list(config: NextcloudConfig): Result<List<NextcloudBackupFile>> = attempt {

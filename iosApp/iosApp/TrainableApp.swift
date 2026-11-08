@@ -27,8 +27,11 @@ struct TrainableApp: App {
         .onChange(of: scenePhase) { _, phase in
             if phase == .background { IosAutoBackup.shared.onEnteredBackground() }
         }
-        .backgroundTask(.urlSession(IosWebDavHttp.companion.BACKGROUND_SESSION)) {
-            IosAutoBackup.shared.reconnectUploads()
+        .backgroundTask(.urlSession(IosBackgroundUploads.shared.SESSION_ID)) {
+            // iOS suspends the app when this returns: wait for the finished uploads to be dealt with
+            await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+                IosAutoBackup.shared.reconnectUploads { done.resume() }
+            }
         }
     }
 }

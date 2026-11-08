@@ -7,8 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import com.emanuel5014.trainable.data.backup.BackupArchiver
 import com.emanuel5014.trainable.data.backup.IosLocalBackupFolder
@@ -28,6 +27,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -203,12 +203,22 @@ internal fun iosNextcloudBackupDate(backup: NextcloudBackupFile): String {
 /** Android's Formatter.formatFileSize counterpart. */
 internal fun iosFileSize(bytes: Long): String = NSByteCountFormatter.stringFromByteCount(bytes, NSByteCountFormatterCountStyleFile)
 
+/**
+ * The Settings model lives as long as the app: a backup or restore started there goes on, and reports its result, after
+ * the user leaves the screen (Android's view model call runs to the end too).
+ */
+internal object IosBackupSettingsHolder {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    var show: (String) -> Unit = {}
+    val model by lazy { IosBackupSettingsModel(scope, { show(it) }, reschedule = { IosAutoBackup.reschedule() }) }
+}
+
 /** Settings › Data: the shared automatic-backup and Nextcloud cards over [IosBackupSettingsModel]. */
 @Composable
 internal fun IosBackupSettingsCards() {
-    val scope = rememberCoroutineScope()
     val show = LocalShowMessage.current
-    val model = remember { IosBackupSettingsModel(scope, show, reschedule = { IosAutoBackup.reschedule() }) }
+    SideEffect { IosBackupSettingsHolder.show = show }
+    val model = IosBackupSettingsHolder.model
     val p = IosAppGraph.preferences
     val autoBackupEnabled by p.autoBackupEnabled.collectAsState(false)
     val autoBackupFrequency by p.autoBackupFrequency.collectAsState(1)

@@ -8,9 +8,8 @@ enum class AutoBackupOutcome { Nothing, Success, Retry }
 
 /**
  * One automatic backup run (formerly the body of Android's AutoBackupWorker): the local folder first, then
- * Nextcloud; retry only when something failed and nothing succeeded. A success is remembered for the iOS catch-up.
- * [skipNextcloud] (iOS, Wi-Fi only on mobile data) leaves Nextcloud out and does not remember the run, so the next
- * one is still due; Android never passes it.
+ * Nextcloud; retry only when something failed and nothing succeeded. Each destination's success is remembered on its
+ * own, for iOS to decide what is due; Android never reads these. [skipNextcloud] leaves Nextcloud out (iOS only).
  */
 class AutoBackupRunner(
     private val prefs: UserPreferencesRepository,
@@ -27,19 +26,21 @@ class AutoBackupRunner(
         if (localEnabled && folder != null && folder.isAvailable()) {
             if (folder.exportTo(BackupNames.automatic(clock()), prefs.autoBackupIncludeImages.first())) {
                 cleanUp(folder, prefs.autoBackupMaxCount.first())
+                prefs.setAutoBackupLastRun(clock())
                 anySuccess = true
             } else anyFailure = true
         }
-        val nextcloudOwed = nextcloudEnabled && skipNextcloud
         if (nextcloudEnabled && !skipNextcloud) {
             val result = nextcloud.performAutoBackup(prefs.nextcloudAutoBackupMaxCount.first(),
                 prefs.nextcloudAutoBackupIncludeImages.first())
-            if (result.isSuccess) anySuccess = true else anyFailure = true
+            if (result.isSuccess) {
+                prefs.setNextcloudAutoBackupLastRun(clock())
+                anySuccess = true
+            } else anyFailure = true
         }
-        if (anySuccess && !nextcloudOwed) prefs.setAutoBackupLastRun(clock())
         when {
             !localEnabled && !nextcloudEnabled -> AutoBackupOutcome.Nothing
-            (anyFailure || nextcloudOwed) && !anySuccess -> AutoBackupOutcome.Retry
+            anyFailure && !anySuccess -> AutoBackupOutcome.Retry
             else -> AutoBackupOutcome.Success
         }
     } catch (e: CancellationException) {

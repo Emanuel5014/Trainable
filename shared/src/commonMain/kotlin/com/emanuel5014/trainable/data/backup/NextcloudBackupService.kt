@@ -61,13 +61,18 @@ class NextcloudBackupService(
         val zip = archiver.createZip(name, includeImages) ?: return Result.failure(Exception("Failed to generate auto-backup archive"))
         return try {
             webDav.upload(config, zip, name).onFailure { return Result.failure(it) }
-            try {
-                val files = webDav.list(config).getOrNull()
-                if (files != null) BackupRetention.toDelete(files, { it.name }, { it.lastModifiedMillis }, max)
-                    .forEach { webDav.delete(config, it.name) }
-            } catch (e: CancellationException) { throw e } catch (_: Exception) {}
+            trimAutoBackups(config, max)
             Result.success(Unit)
         } finally { archiver.discard(zip) }
+    }
+
+    /** Keeps the newest [max] automatic backups on the server; manual and other files are never touched. */
+    suspend fun trimAutoBackups(config: NextcloudConfig, max: Int) {
+        try {
+            val files = webDav.list(config).getOrNull()
+            if (files != null) BackupRetention.toDelete(files, { it.name }, { it.lastModifiedMillis }, max)
+                .forEach { webDav.delete(config, it.name) }
+        } catch (e: CancellationException) { throw e } catch (_: Exception) {}
     }
 
     private fun <T> notConfigured(): Result<T> = Result.failure(Exception("Nextcloud not configured"))

@@ -35,6 +35,7 @@ class UserPreferencesRepository(
         val AUTO_BACKUP_INCLUDE_IMAGES = booleanPreferencesKey("auto_backup_include_images")
         /** Last successful automatic backup (epoch millis): the iOS catch-up uses it. Device state, never in a backup. */
         val AUTO_BACKUP_LAST_RUN = androidx.datastore.preferences.core.longPreferencesKey("auto_backup_last_run")
+        val NEXTCLOUD_AUTO_BACKUP_LAST_RUN = androidx.datastore.preferences.core.longPreferencesKey("nextcloud_auto_backup_last_run")
         val USER_LANGUAGE = stringPreferencesKey("user_language")
         val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
@@ -269,6 +270,13 @@ class UserPreferencesRepository(
 
     suspend fun setAutoBackupLastRun(millis: Long) {
         dataStore.edit { preferences -> preferences[AUTO_BACKUP_LAST_RUN] = millis }
+    }
+
+    /** The last successful automatic upload to Nextcloud (iOS decides what is due from it; never in a backup ZIP). */
+    val nextcloudAutoBackupLastRun: Flow<Long?> = dataStore.data.map { preferences -> preferences[NEXTCLOUD_AUTO_BACKUP_LAST_RUN] }
+
+    suspend fun setNextcloudAutoBackupLastRun(millis: Long) {
+        dataStore.edit { preferences -> preferences[NEXTCLOUD_AUTO_BACKUP_LAST_RUN] = millis }
     }
 
     val userLanguage: Flow<String?> = dataStore.data
@@ -1045,6 +1053,7 @@ class UserPreferencesRepository(
             preferences.remove(NEXTCLOUD_AUTO_BACKUP_MAX_COUNT)
             preferences.remove(NEXTCLOUD_AUTO_BACKUP_INCLUDE_IMAGES)
             preferences.remove(NEXTCLOUD_WIFI_ONLY)
+            preferences.remove(NEXTCLOUD_AUTO_BACKUP_LAST_RUN)
             preferences[NEXTCLOUD_BACKUP_ENABLED] = false
             preferences[NEXTCLOUD_AUTO_BACKUP_ENABLED] = false
         }
