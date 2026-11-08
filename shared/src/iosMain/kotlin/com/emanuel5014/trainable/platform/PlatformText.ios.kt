@@ -9,18 +9,37 @@ import platform.Foundation.NSNumberFormatterRoundHalfUp
 import platform.Foundation.NSString
 import platform.Foundation.currentLocale
 import platform.Foundation.decomposedStringWithCanonicalMapping
+import platform.Foundation.localeIdentifier
+
+/** A formatter is slow to build and a list of sets asks for one per number, so each kind is built once. */
+private object DecimalFormatters {
+    private val lock = NSLock()
+    private val formatters = HashMap<String, NSNumberFormatter>()
+
+    fun format(value: Double, decimals: Int, numberLocale: NSLocale): String? {
+        lock.lock()
+        try {
+            val formatter = formatters.getOrPut("$decimals|${numberLocale.localeIdentifier}") {
+                NSNumberFormatter().apply {
+                    numberStyle = NSNumberFormatterDecimalStyle
+                    usesGroupingSeparator = false
+                    minimumIntegerDigits = 1u
+                    minimumFractionDigits = decimals.toULong()
+                    maximumFractionDigits = decimals.toULong()
+                    roundingMode = NSNumberFormatterRoundHalfUp
+                    locale = numberLocale
+                }
+            }
+            return formatter.stringFromNumber(NSNumber(double = value))
+        } finally {
+            lock.unlock()
+        }
+    }
+}
 
 internal actual fun formatDecimals(value: Double, decimals: Int, deviceLocale: Boolean): String {
-    val formatter = NSNumberFormatter().apply {
-        numberStyle = NSNumberFormatterDecimalStyle
-        usesGroupingSeparator = false
-        minimumIntegerDigits = 1u
-        minimumFractionDigits = decimals.toULong()
-        maximumFractionDigits = decimals.toULong()
-        roundingMode = NSNumberFormatterRoundHalfUp
-        locale = if (deviceLocale) IosAppLocale.formattingLocale() else NSLocale(localeIdentifier = "en_US_POSIX")
-    }
-    return formatter.stringFromNumber(NSNumber(double = value)) ?: value.toString()
+    val numberLocale = if (deviceLocale) IosAppLocale.formattingLocale() else NSLocale(localeIdentifier = "en_US_POSIX")
+    return DecimalFormatters.format(value, decimals, numberLocale) ?: value.toString()
 }
 
 @Suppress("CAST_NEVER_SUCCEEDS")

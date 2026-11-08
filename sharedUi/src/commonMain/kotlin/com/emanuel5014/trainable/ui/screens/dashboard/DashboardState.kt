@@ -57,13 +57,21 @@ class DashboardState(
 
     private fun currentDay(): LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
+    /** Every change in the data asks for this, and reading the time zone is slow on iOS: kept until the next [refreshToday]. */
+    private var weekStartOfDay: Pair<LocalDate, Long>? = null
+
     private fun weekStartMillis(day: LocalDate): Long {
+        weekStartOfDay?.takeIf { it.first == day }?.let { return it.second }
         val firstDayOfWeek = firstDayOfWeek()
         val daysBack = (day.dayOfWeek.isoDayNumber - firstDayOfWeek.isoDayNumber + 7) % 7
-        return day.minus(daysBack, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        val millis = day.minus(daysBack, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        weekStartOfDay = day to millis
+        return millis
     }
 
     fun refreshToday() {
+        // Back in the app after a trip: the same day may start at another moment
+        weekStartOfDay = null
         today.value = currentDay()
     }
 
