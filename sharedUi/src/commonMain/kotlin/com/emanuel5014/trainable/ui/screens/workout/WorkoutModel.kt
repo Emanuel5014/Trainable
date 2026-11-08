@@ -1034,7 +1034,8 @@ class WorkoutModel(
 
     private suspend fun initializeQuickWorkout(name: String?) {
         val startTime = nowMillis()
-        val sessionId = workoutRepository.startQuickWorkoutSession(name).toInt()
+        // The same value as the saved session: iOS timer actions refuse a session whose start differs
+        val sessionId = workoutRepository.startQuickWorkoutSession(startTime, name).toInt()
         val sessionWithSets = workoutRepository.getSessionWithSets(sessionId).firstOrNull()
         val planId = sessionWithSets?.session?.planId
         val displayName = name ?: workoutText().quickWorkout

@@ -464,7 +464,7 @@ class WorkoutRepository(
         return sessionId
     }
 
-    suspend fun startQuickWorkoutSession(name: String? = null): Long {
+    suspend fun startQuickWorkoutSession(timestamp: Long, name: String? = null): Long {
         val user = userDao.getUser().first() ?: return -1
         val allPlans = workoutDao.getAllPlans().first()
         val quickWorkoutPlan = allPlans.find { it.nome == "Quick Workout" && it.note == "SYSTEM_PLAN" }
@@ -484,7 +484,7 @@ class WorkoutRepository(
         
         return startSession(
             planId = quickWorkoutPlan.id,
-            timestamp = Clock.System.now().toEpochMilliseconds(),
+            timestamp = timestamp,
             note = name
         )
     }
