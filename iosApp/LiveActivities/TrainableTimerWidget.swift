@@ -20,23 +20,26 @@ struct TrainableTimerWidget: Widget {
             let kind = context.attributes.kind
             let accent = TimerPalette.accent(state.accentARGB)
             let done = state.isFinished(kind: kind, isStale: context.isStale)
+            let clock = state.clock(kind: kind, isStale: context.isStale)
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    TimerCaption(kind: context.attributes.kind, title: state.title, accent: accent)
-                        .padding(.leading, 6).padding(.top, 4)
+                    // The leading region is narrow: the title shrinks instead of being cut ("Timer Recupe…").
+                    HStack(spacing: 6) {
+                        AppMark().frame(width: 20, height: 20)
+                        Text(state.title)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.65))
+                            .lineLimit(1).minimumScaleFactor(0.6)
+                    }
+                    .padding(.leading, 6).padding(.top, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Group {
-                        if done {
-                            Image(systemName: "checkmark.circle.fill")
-                        } else {
-                            TimerCountdown(interval: state.clock(kind: context.attributes.kind, isStale: context.isStale))
-                        }
+                        if done { DoneBadge(accent: accent, lineWidth: 3) }
+                        else { TimerRing(interval: clock, accent: accent) }
                     }
-                    .font(.system(.title2, design: .rounded, weight: .semibold))
-                    .foregroundStyle(accent)
-                    .frame(width: 84, alignment: .trailing)
-                    .padding(.trailing, 6)
+                    .frame(width: 26, height: 26)
+                    .padding(.trailing, 6).padding(.top, 2)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     if done {
@@ -44,38 +47,40 @@ struct TrainableTimerWidget: Widget {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 6)
                     } else {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(alignment: .center, spacing: 12) {
-                            NextSetText(state: state, compact: true)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            TimerRing(interval: state.clock(kind: context.attributes.kind, isStale: context.isStale), accent: accent)
-                                .frame(width: 28, height: 28)
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(alignment: .center, spacing: 12) {
+                                // A system timer text reserves extra width; a fixed box keeps the set text close.
+                                BigCountdown(interval: clock, size: 36)
+                                    .frame(width: 92, alignment: .leading)
+                                NextSetText(state: state, compact: true)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            ControlRow(kind: kind, activityID: context.activityID, state: state,
+                                       accent: accent, height: 30, isStale: context.isStale)
                         }
-                        ControlRow(kind: context.attributes.kind, activityID: context.activityID, state: state,
-                                   accent: accent, height: 30, isStale: context.isStale)
-                    }
-                    .padding(.horizontal, 6)
+                        .padding(.horizontal, 6)
                     }
                 }
             } compactLeading: {
-                Group {
-                    if done { DoneBadge(accent: accent, lineWidth: 2.5) }
-                    else { TimerRing(interval: state.clock(kind: kind, isStale: context.isStale), accent: accent) }
-                }
-                .frame(width: 20, height: 20)
-                .padding(.leading, 2)
+                AppMark()
+                    .frame(width: 20, height: 20)
+                    .padding(.leading, 2)
             } compactTrailing: {
                 Group {
                     if done {
                         // Rest is over: time to lift.
                         Image(systemName: kind == emomKind ? "flag.checkered" : "figure.strengthtraining.traditional")
                     } else {
-                        TimerCountdown(interval: state.clock(kind: kind, isStale: context.isStale))
+                        HStack(spacing: 5) {
+                            TimerCountdown(interval: clock)
+                                .frame(width: 38, alignment: .trailing)
+                            TimerRing(interval: clock, accent: accent)
+                                .frame(width: 15, height: 15)
+                        }
                     }
                 }
                 .font(.system(.footnote, design: .rounded, weight: .semibold))
                 .foregroundStyle(accent)
-                .frame(width: 44, alignment: .trailing)
             } minimal: {
                 Group {
                     if done { DoneBadge(accent: accent, lineWidth: 2.5) }
@@ -97,65 +102,57 @@ private struct LockScreenTimerView: View {
     let isStale: Bool
     @Environment(\.isLuminanceReduced) private var luminanceReduced
 
+    // The Lock Screen cuts a Live Activity taller than 160 pt: big time + two lines + buttons only fit with the
+    // caption under the ring (not in a row of its own on top).
     var body: some View {
         let accent = TimerPalette.accent(state.accentARGB)
         let clock = state.clock(kind: kind, isStale: isStale)
-        if state.isFinished(kind: kind, isStale: isStale) {
-            // The time ran out while the app could not end the card: say so instead of a frozen 0:00.
-            HStack(alignment: .center, spacing: 16) {
-                DoneBadge(accent: accent, lineWidth: 7).frame(width: 82, height: 82)
-                VStack(alignment: .leading, spacing: 3) {
-                    TimerCaption(kind: kind, title: state.title, accent: accent)
-                    FinishedText(state: state, compact: false, accent: accent)
+        let done = state.isFinished(kind: kind, isStale: isStale)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 1) {
+                    if done {
+                        // The time ran out while the app could not end the card: say so instead of a frozen 0:00.
+                        FinishedText(state: state, compact: false, accent: accent)
+                    } else {
+                        BigCountdown(interval: clock, size: 46, showsBell: luminanceReduced)
+                        NextSetText(state: state, compact: false)
+                        if kind == emomKind, !state.paused, !state.showsRunEnd(kind: kind, isStale: isStale) {
+                            Label {
+                                TimerCountdown(interval: state.startedAt...state.endsAt)
+                            } icon: { Image(systemName: "flag.checkered") }
+                            .font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.7))
+                            .labelStyle(.titleAndIcon).padding(.top, 2)
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 14)
-            .foregroundStyle(.white)
-        } else {
-        HStack(alignment: .center, spacing: 16) {
-            ZStack {
-                TimerRing(interval: clock, accent: accent)
-                VStack(spacing: 1) {
-                    if luminanceReduced && clock != nil {
-                        // Dimmed Lock Screen: the time below is when the countdown ends, not a countdown.
-                        Image(systemName: "bell.fill").font(.caption2).foregroundStyle(accent)
-                    }
-                    TimerCountdown(interval: clock)
-                        .font(.system(size: 21, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .multilineTextAlignment(.center)
-                        .minimumScaleFactor(0.6)
-                        .frame(width: 58)
-                    if state.showsRunEnd(kind: kind, isStale: isStale) {
-                        // The minute passed while the app slept: the ring now counts down to the end of the run.
-                        Image(systemName: "flag.checkered").font(.caption2).foregroundStyle(accent)
-                    }
-                }
-            }
-            .frame(width: 82, height: 82)
 
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 6) {
-                    TimerCaption(kind: kind, title: state.title, accent: accent)
-                    Spacer(minLength: 4)
-                    if kind == emomKind, !state.paused, !state.showsRunEnd(kind: kind, isStale: isStale) {
-                        Label {
-                            TimerCountdown(interval: state.startedAt...state.endsAt)
-                        } icon: { Image(systemName: "flag.checkered") }
-                        .font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.7))
-                        .labelStyle(.titleAndIcon).frame(maxWidth: 76, alignment: .trailing)
+                VStack(spacing: 5) {
+                    ZStack {
+                        if done {
+                            DoneBadge(accent: accent, lineWidth: 5)
+                        } else {
+                            TimerRing(interval: clock, accent: accent)
+                            if state.showsRunEnd(kind: kind, isStale: isStale) {
+                                // The minute passed while the app slept: the ring now counts down to the end of the run.
+                                Image(systemName: "flag.checkered").font(.callout.weight(.semibold)).foregroundStyle(accent)
+                            } else {
+                                AppMark().frame(width: 22, height: 22)
+                            }
+                        }
                     }
+                    .frame(width: 58, height: 58)
+                    TimerCaption(kind: kind, title: state.title, accent: accent, showsIcon: false)
+                        .frame(maxWidth: 84)
                 }
-                NextSetText(state: state, compact: false).padding(.top, 3)
-                Spacer(minLength: 8)
+            }
+            if !done {
                 ControlRow(kind: kind, activityID: activityID, state: state, accent: accent, height: 32, isStale: isStale)
             }
-            .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
         }
         .padding(.horizontal, 16).padding(.vertical, 14)
         .foregroundStyle(.white)
-        }
     }
 }
 
@@ -273,15 +270,56 @@ private struct TimerCaption: View {
     let kind: String
     let title: String
     let accent: Color
+    var showsIcon: Bool = true
 
     var body: some View {
         Label {
             Text(title).lineLimit(1).minimumScaleFactor(0.75)
         } icon: {
-            Image(systemName: kind == "workout.warmup" ? "flame.fill" : kind == emomKind ? "repeat" : "hourglass")
+            if showsIcon {
+                Image(systemName: kind == "workout.warmup" ? "flame.fill" : kind == emomKind ? "repeat" : "hourglass")
+            }
         }
+        .labelStyle(showsIcon ? AnyLabelStyle(.titleAndIcon) : AnyLabelStyle(.titleOnly))
         .font(.caption.weight(.semibold))
-        .foregroundStyle(accent)
+        .foregroundStyle(showsIcon ? accent : .white.opacity(0.65))
+    }
+}
+
+/// Type-erased label style, so the caption can drop its icon where the app mark already says what it is.
+private struct AnyLabelStyle: LabelStyle {
+    private let make: (Configuration) -> AnyView
+    init<S: LabelStyle>(_ style: S) { make = { AnyView(style.makeBody(configuration: $0)) } }
+    func makeBody(configuration: Configuration) -> some View { make(configuration) }
+}
+
+/// Trainable's TR mark (vector, from the Android launcher drawable), kept in its own gradient colours.
+private struct AppMark: View {
+    var body: some View {
+        Image("TrainableLogo").resizable().scaledToFit().accessibilityHidden(true)
+    }
+}
+
+/// The big seconds countdown, the hero of the card. On the dimmed Lock Screen it becomes bell + end time.
+private struct BigCountdown: View {
+    let interval: ClosedRange<Date>?
+    let size: CGFloat
+    var showsBell: Bool = false
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            if showsBell && interval != nil {
+                // Dimmed Lock Screen: the time is when the countdown ends, not a countdown.
+                Image(systemName: "bell.fill").font(.system(size: size * 0.42, weight: .semibold))
+            }
+            TimerCountdown(interval: interval)
+                .font(.system(size: showsBell ? size * 0.78 : size, weight: .semibold, design: .rounded))
+                .multilineTextAlignment(.leading)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+        .foregroundStyle(.white)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 

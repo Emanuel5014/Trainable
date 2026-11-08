@@ -18,6 +18,8 @@
 		B10000000000000000000005 /* TrainableTimers.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B20000000000000000000004; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B10000000000000000000006 = {isa = PBXBuildFile; fileRef = B20000000000000000000005; };
 		B10000000000000000000007 = {isa = PBXBuildFile; fileRef = B20000000000000000000005; };
+		D10000000000000000000001 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000001 /* AppIcon.icon */; };
+		D10000000000000000000002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000002 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +32,8 @@
 		B20000000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainableTimerWidget.swift; sourceTree = "<group>"; };
 		B20000000000000000000004 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TrainableTimers.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B20000000000000000000005 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerControlIntent.swift; sourceTree = "<group>"; };
+		D20000000000000000000001 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		D20000000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +65,7 @@
 				A20000000000000000000002 /* ContentView.swift */,
 				B20000000000000000000001 /* WorkoutLiveActivityService.swift */,
 				A20000000000000000000004 /* LocalLlmService.swift */,
+				D20000000000000000000001 /* AppIcon.icon */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -74,7 +79,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		B40000000000000000000001 = {isa = PBXGroup; children = (B20000000000000000000002, B20000000000000000000003, B20000000000000000000005, ); path = LiveActivities; sourceTree = "<group>"; };
+		B40000000000000000000001 = {isa = PBXGroup; children = (B20000000000000000000002, B20000000000000000000003, B20000000000000000000005, D20000000000000000000002, ); path = LiveActivities; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -101,7 +106,7 @@
 			productReference = A20000000000000000000003 /* Trainable.app */;
 			productType = "com.apple.product-type.application";
 		};
-		B50000000000000000000001 = {isa = PBXNativeTarget; buildConfigurationList = B90000000000000000000001; buildPhases = (B60000000000000000000001, B60000000000000000000002, ); buildRules = (); dependencies = (); name = TrainableTimers; productName = TrainableTimers; productReference = B20000000000000000000004; productType = "com.apple.product-type.app-extension"; };
+		B50000000000000000000001 = {isa = PBXNativeTarget; buildConfigurationList = B90000000000000000000001; buildPhases = (B60000000000000000000001, B60000000000000000000002, D60000000000000000000001, ); buildRules = (); dependencies = (); name = TrainableTimers; productName = TrainableTimers; productReference = B20000000000000000000004; productType = "com.apple.product-type.app-extension"; };
 /* End PBXNativeTarget section */
 
 /* Begin PBXContainerItemProxy section */
@@ -156,9 +161,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D10000000000000000000001 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D60000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (D10000000000000000000002 /* Assets.xcassets in Resources */, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -243,6 +250,7 @@
 		A80000000000000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -295,6 +303,7 @@
 		A80000000000000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				FRAMEWORK_SEARCH_PATHS = (
