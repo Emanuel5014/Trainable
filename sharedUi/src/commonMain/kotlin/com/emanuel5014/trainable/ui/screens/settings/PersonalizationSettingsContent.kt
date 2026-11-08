@@ -38,6 +38,8 @@ import com.emanuel5014.trainable.sharedui.resources.glass_part_workout_nav_desc
 import com.emanuel5014.trainable.sharedui.resources.glass_part_workout_panel
 import com.emanuel5014.trainable.sharedui.resources.glass_part_workout_panel_desc
 import com.emanuel5014.trainable.sharedui.resources.glass_parts
+import com.emanuel5014.trainable.sharedui.resources.glass_jiggle
+import com.emanuel5014.trainable.sharedui.resources.glass_jiggle_desc
 import com.emanuel5014.trainable.sharedui.resources.glass_stretch
 import com.emanuel5014.trainable.sharedui.resources.glass_stretch_desc
 import com.emanuel5014.trainable.sharedui.resources.liquid_glass
@@ -93,6 +95,7 @@ import androidx.compose.material.icons.rounded.OpenInFull
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Waves
 import androidx.compose.material.icons.rounded.Tab
 import androidx.compose.material.icons.rounded.ToggleOn
 import androidx.compose.material.icons.rounded.Layers
@@ -532,6 +535,7 @@ fun PersonalizationSettingsContent(
                 onIntensityChange = state::setGlassIntensity,
                 onBlurChange = state::setGlassBlur,
                 onStretchChange = state::setGlassStretch,
+                onJiggleChange = state::setGlassJiggle,
                 onPartChange = state::setGlassPart
             )
         }
@@ -550,6 +554,7 @@ private fun LiquidGlassCard(
     onIntensityChange: (Float) -> Unit,
     onBlurChange: (Float) -> Unit,
     onStretchChange: (Boolean) -> Unit,
+    onJiggleChange: (Boolean) -> Unit,
     onPartChange: (GlassPart, Boolean) -> Unit
 ) {
     GymCard(containerColor = SurfaceContainerHigh) {
@@ -585,6 +590,14 @@ private fun LiquidGlassCard(
                     description = stringResource(Res.string.glass_stretch_desc),
                     checked = settings.stretch,
                     onCheckedChange = onStretchChange
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.Waves,
+                    title = stringResource(Res.string.glass_jiggle),
+                    description = stringResource(Res.string.glass_jiggle_desc),
+                    checked = settings.jiggle,
+                    enabled = floatingNavBar && GlassPart.NavBar in settings.parts,
+                    onCheckedChange = onJiggleChange
                 )
 
                 HorizontalDivider(color = Surface.copy(alpha = 0.5f))

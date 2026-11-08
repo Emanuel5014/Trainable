@@ -637,6 +637,8 @@
     <string name="glass_parts">Wo verwenden</string>
     <string name="glass_stretch">Dehnen bei Berührung</string>
     <string name="glass_stretch_desc">Das Glas schwillt an und neigt sich mit dem Finger, wenn du es berührst</string>
+    <string name="glass_jiggle">Elastische Kapsel in der Leiste</string>
+    <string name="glass_jiggle_desc">Die Glaskapsel der Leiste dehnt sich beim Bewegen und schwingt beim Anhalten nach</string>
     <string name="gym_membership_notifications">Mitgliedschaftserinnerungen</string>
     <string name="gym_membership_notifications_desc">Benachrichtigen, bevor die Mitgliedschaft abläuft</string>
     <string name="liquid_glass">Liquid Glass</string>

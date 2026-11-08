@@ -44,6 +44,7 @@ class UserPreferencesRepository(
         val GLASS_INTENSITY = floatPreferencesKey("glass_intensity")
         val GLASS_BLUR = floatPreferencesKey("glass_blur")
         val GLASS_STRETCH = booleanPreferencesKey("glass_stretch")
+        val GLASS_JIGGLE = booleanPreferencesKey("glass_jiggle")
         val GLASS_NAV_BAR = booleanPreferencesKey("glass_nav_bar")
         val GLASS_HEADER_BUTTONS = booleanPreferencesKey("glass_header_buttons")
         val GLASS_ACTION_BUTTONS = booleanPreferencesKey("glass_action_buttons")
@@ -306,6 +307,7 @@ class UserPreferencesRepository(
                 intensity = (preferences[GLASS_INTENSITY] ?: GlassSettings.DEFAULT_INTENSITY).coerceIn(0f, 1f),
                 blur = (preferences[GLASS_BLUR] ?: GlassSettings.DEFAULT_BLUR).coerceIn(0f, 1f),
                 stretch = preferences[GLASS_STRETCH] ?: true,
+                jiggle = preferences[GLASS_JIGGLE] ?: true,
                 parts = GlassPart.entries.filter { preferences[glassPartKey(it)] ?: true }.toSet()
             )
         }
@@ -805,6 +807,12 @@ class UserPreferencesRepository(
     suspend fun setGlassStretch(on: Boolean) {
         dataStore.edit { preferences ->
             preferences[GLASS_STRETCH] = on
+        }
+    }
+
+    suspend fun setGlassJiggle(on: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[GLASS_JIGGLE] = on
         }
     }
 

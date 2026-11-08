@@ -124,6 +124,7 @@ fun BottomNavBarGlass(
         label = "glassPress"
     )
     val stretch = LocalGlassSettings.current.stretch
+    val jiggle = rememberNavPillJiggle(pillState, enabled = LocalGlassSettings.current.jiggle)
     val tabScale = { if (stretch) lerp(1f, 1.2f, press.value) else 1f }
 
     val tabsBackdrop = rememberLayerBackdrop()
@@ -265,8 +266,8 @@ fun BottomNavBarGlass(
                     innerShadow = { InnerShadow(radius = 8.dp * press.value, alpha = press.value) },
                     layerBlock = {
                         val scale = lerp(1f, 1.3f, press.value)
-                        scaleX = scale
-                        scaleY = scale
+                        scaleX = scale * jiggle.scaleX
+                        scaleY = scale * jiggle.scaleY
                     },
                     onDrawSurface = {
                         drawRect(restingPillColor, alpha = 1f - press.value)

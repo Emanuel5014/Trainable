@@ -640,6 +640,8 @@
     <string name="glass_parts">Onde usar</string>
     <string name="glass_stretch">Esticar ao tocar</string>
     <string name="glass_stretch_desc">O vidro incha e se inclina seguindo o dedo quando você toca</string>
+    <string name="glass_jiggle">Cápsula elástica na barra</string>
+    <string name="glass_jiggle_desc">A cápsula de vidro da barra estica ao se mover e oscila ao parar</string>
     <string name="gym_membership_notifications">Alertas de Assinatura</string>
     <string name="gym_membership_notifications_desc">Notificar antes do vencimento da assinatura</string>
     <string name="liquid_glass">Liquid Glass</string>

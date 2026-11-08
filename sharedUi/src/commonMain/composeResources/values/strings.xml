@@ -637,6 +637,8 @@
     <string name="glass_parts">Where to use it</string>
     <string name="glass_stretch">Stretch on touch</string>
     <string name="glass_stretch_desc">Glass swells and leans after your finger when you touch it</string>
+    <string name="glass_jiggle">Wobbly pill on the bar</string>
+    <string name="glass_jiggle_desc">The bar's glass pill stretches as it moves and wobbles when it stops</string>
     <string name="gym_membership_notifications">Membership Alerts</string>
     <string name="gym_membership_notifications_desc">Notify before your membership expires</string>
     <string name="liquid_glass">Liquid Glass</string>

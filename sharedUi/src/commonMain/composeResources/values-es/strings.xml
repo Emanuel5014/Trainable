@@ -640,6 +640,8 @@
     <string name="glass_parts">Dónde usarlo</string>
     <string name="glass_stretch">Estirar al tocar</string>
     <string name="glass_stretch_desc">El cristal se hincha y se inclina siguiendo el dedo al tocarlo</string>
+    <string name="glass_jiggle">Cápsula elástica en la barra</string>
+    <string name="glass_jiggle_desc">La cápsula de cristal de la barra se estira al moverse y oscila al detenerse</string>
     <string name="gym_membership_notifications">Alertas de Membresía</string>
     <string name="gym_membership_notifications_desc">Notificar antes de que venza la membresía</string>
     <string name="liquid_glass">Liquid Glass</string>

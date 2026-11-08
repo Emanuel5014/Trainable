@@ -493,6 +493,12 @@ class SettingsState(
         }
     }
 
+    fun setGlassJiggle(on: Boolean) {
+        scope.launch {
+            userPrefsRepository.setGlassJiggle(on)
+        }
+    }
+
     fun setGlassBlur(blur: Float) {
         scope.launch {
             userPrefsRepository.setGlassBlur(blur)

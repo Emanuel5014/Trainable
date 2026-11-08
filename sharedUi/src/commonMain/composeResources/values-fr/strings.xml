@@ -640,6 +640,8 @@
     <string name="glass_parts">Où l'utiliser</string>
     <string name="glass_stretch">Étirement au toucher</string>
     <string name="glass_stretch_desc">Le verre gonfle et se penche sous le doigt quand vous le touchez</string>
+    <string name="glass_jiggle">Pastille élastique sur la barre</string>
+    <string name="glass_jiggle_desc">La pastille de verre de la barre se déforme en bougeant et oscille à chaque arrêt</string>
     <string name="gym_membership_notifications">Alertes d'Abonnement</string>
     <string name="gym_membership_notifications_desc">Notifier avant l'expiration de l'abonnement</string>
     <string name="liquid_glass">Liquid Glass</string>
