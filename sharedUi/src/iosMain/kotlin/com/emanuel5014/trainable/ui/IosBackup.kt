@@ -170,26 +170,20 @@ internal fun IosBackupDialogs() {
 }
 
 @Composable
-internal fun IosBackupButtons(restoreOnly: Boolean = false, completeOnboarding: Boolean = false) {
+internal fun IosBackupButtons() {
     val scope = rememberCoroutineScope()
     val presenter = LocalUIViewController.current
     val show by rememberUpdatedState(LocalShowMessage.current)
-    var busy by remember { mutableStateOf(false) }
+    var exporting by remember { mutableStateOf(false) }
     var includeImages by remember { mutableStateOf(false) }
-    var picked by remember { mutableStateOf<NSURL?>(null) }
     var exported by remember { mutableStateOf<String?>(null) }
+    val restore = rememberIosBackupRestore(completeOnboarding = false)
+    val busy = exporting || restore.busy
 
     fun cleanupExport() {
         val path = exported ?: return
         exported = null
         scope.launch(Dispatchers.IO) { IosBackups.manager.removeExport(path) }
-    }
-    val openDelegate = remember {
-        object : NSObject(), UIDocumentPickerDelegateProtocol {
-            override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
-                picked = didPickDocumentsAtURLs.firstOrNull() as? NSURL
-            }
-        }
     }
     val saveDelegate = remember {
         object : NSObject(), UIDocumentPickerDelegateProtocol {
@@ -202,7 +196,7 @@ internal fun IosBackupButtons(restoreOnly: Boolean = false, completeOnboarding: 
     }
     fun export(images: Boolean) {
         includeImages = false
-        busy = true
+        exporting = true
         scope.launch {
             try {
                 val preferences = IosAppGraph.settingsStore.data.first()
@@ -213,23 +207,18 @@ internal fun IosBackupButtons(restoreOnly: Boolean = false, completeOnboarding: 
                 topBackupController(presenter).presentViewController(picker, true, null)
             } catch (error: CancellationException) { throw error }
             catch (_: Exception) { cleanupExport(); show(getString(Res.string.export_failed)) }
-            finally { busy = false }
+            finally { exporting = false }
         }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (!restoreOnly) GymButton(onClick = { includeImages = true }, enabled = !busy, modifier = Modifier.weight(1f),
+        GymButton(onClick = { includeImages = true }, enabled = !busy, modifier = Modifier.weight(1f),
             containerColor = SurfaceContainerHigh, contentColor = OnSurface) {
             if (busy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Primary)
             else Icon(Icons.Rounded.CloudUpload, null, tint = Primary)
             Spacer(Modifier.width(8.dp))
             Text(stringResource(Res.string.export_database), fontWeight = FontWeight.ExtraBold)
         }
-        GymButton(onClick = {
-            val picker = UIDocumentPickerViewController(forOpeningContentTypes = listOf(UTTypeZIP, UTTypeData), asCopy = true)
-            picker.delegate = openDelegate
-            picker.allowsMultipleSelection = false
-            topBackupController(presenter).presentViewController(picker, true, null)
-        }, enabled = !busy, modifier = Modifier.weight(1f), containerColor = SurfaceContainerHigh, contentColor = OnSurface) {
+        GymButton(onClick = restore.open, enabled = !busy, modifier = Modifier.weight(1f), containerColor = SurfaceContainerHigh, contentColor = OnSurface) {
             Icon(Icons.Rounded.CloudDownload, null, tint = Primary)
             Spacer(Modifier.width(8.dp))
             Text(stringResource(Res.string.import_database), fontWeight = FontWeight.ExtraBold)
@@ -240,6 +229,25 @@ internal fun IosBackupButtons(restoreOnly: Boolean = false, completeOnboarding: 
         text = { Text(stringResource(Res.string.include_images_description), color = OnSurfaceVariant) },
         confirmButton = { TextButton(onClick = { export(true) }) { Text(stringResource(Res.string.yes), color = Primary) } },
         dismissButton = { TextButton(onClick = { export(false) }) { Text(stringResource(Res.string.no), color = OnSurfaceVariant) } })
+}
+
+internal class IosBackupRestore(val open: () -> Unit, val busy: Boolean)
+
+/** Files picker for a backup ZIP and its confirmation; the restore is staged and applied on the next launch. */
+@Composable
+internal fun rememberIosBackupRestore(completeOnboarding: Boolean): IosBackupRestore {
+    val scope = rememberCoroutineScope()
+    val presenter = LocalUIViewController.current
+    val show by rememberUpdatedState(LocalShowMessage.current)
+    var busy by remember { mutableStateOf(false) }
+    var picked by remember { mutableStateOf<NSURL?>(null) }
+    val openDelegate = remember {
+        object : NSObject(), UIDocumentPickerDelegateProtocol {
+            override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
+                picked = didPickDocumentsAtURLs.firstOrNull() as? NSURL
+            }
+        }
+    }
     val selected = picked
     if (selected != null) AlertDialog(onDismissRequest = { if (!busy) { removePickedBackup(selected); picked = null } },
         containerColor = SurfaceContainerHigh,
@@ -265,6 +273,12 @@ internal fun IosBackupButtons(restoreOnly: Boolean = false, completeOnboarding: 
         dismissButton = { TextButton(enabled = !busy, onClick = { removePickedBackup(selected); picked = null }) {
             Text(stringResource(Res.string.cancel), color = OnSurfaceVariant)
         } })
+    return IosBackupRestore(open = {
+        val picker = UIDocumentPickerViewController(forOpeningContentTypes = listOf(UTTypeZIP, UTTypeData), asCopy = true)
+        picker.delegate = openDelegate
+        picker.allowsMultipleSelection = false
+        topBackupController(presenter).presentViewController(picker, true, null)
+    }, busy = busy)
 }
 
 private fun topBackupController(root: UIViewController): UIViewController {

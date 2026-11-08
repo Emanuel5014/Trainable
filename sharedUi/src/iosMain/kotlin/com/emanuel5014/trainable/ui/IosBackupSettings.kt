@@ -115,6 +115,29 @@ internal class IosBackupSettingsModel(
 
     override fun clearNextcloudTestState() { testState = null }
 
+    /** The onboarding's "connect": test first, save only when it works (Android's OnboardingViewModel). */
+    fun connectNextcloud(serverUrl: String, username: String, passwordOrToken: String, remoteFolder: String) {
+        scope.launch {
+            isTesting = true
+            testState = null
+            val result = webDav.testConnection(NextcloudConfig(serverUrl.trim(), username.trim(), passwordOrToken.trim()))
+            if (result is NextcloudConnectionResult.Success) {
+                service.saveConfig(NextcloudConfig(serverUrl, username, passwordOrToken, remoteFolder))
+            }
+            testState = result
+            isTesting = false
+        }
+    }
+
+    /** The onboarding's "disconnect": no message, as on Android. */
+    fun disconnectNextcloudSilently() {
+        scope.launch {
+            prefs.clearNextcloudConfig()
+            backups = emptyList()
+            testState = null
+        }
+    }
+
     override fun testNextcloudConnection(serverUrl: String, username: String, passwordOrToken: String) {
         scope.launch {
             isTesting = true
