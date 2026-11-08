@@ -42,6 +42,10 @@
 			</dict>
 		</dict>
 	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array><string>com.emanuel5014.trainable.autobackup</string></array>
+	<key>UIBackgroundModes</key>
+	<array><string>processing</string></array>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<!-- Compose draws at the full refresh rate of ProMotion screens (120 Hz) only with this -->

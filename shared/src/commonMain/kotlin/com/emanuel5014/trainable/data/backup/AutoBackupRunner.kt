@@ -9,6 +9,8 @@ enum class AutoBackupOutcome { Nothing, Success, Retry }
 /**
  * One automatic backup run (formerly the body of Android's AutoBackupWorker): the local folder first, then
  * Nextcloud; retry only when something failed and nothing succeeded. A success is remembered for the iOS catch-up.
+ * [skipNextcloud] (iOS, Wi-Fi only on mobile data) leaves Nextcloud out and does not remember the run, so the next
+ * one is still due; Android never passes it.
  */
 class AutoBackupRunner(
     private val prefs: UserPreferencesRepository,
@@ -17,7 +19,7 @@ class AutoBackupRunner(
     private val nextcloud: NextcloudBackupService,
     private val clock: () -> Long
 ) {
-    suspend fun run(): AutoBackupOutcome = try {
+    suspend fun run(skipNextcloud: Boolean = false): AutoBackupOutcome = try {
         val localEnabled = prefs.autoBackupEnabled.first()
         val nextcloudEnabled = prefs.nextcloudAutoBackupEnabled.first()
         var anySuccess = false
@@ -28,15 +30,16 @@ class AutoBackupRunner(
                 anySuccess = true
             } else anyFailure = true
         }
-        if (nextcloudEnabled) {
+        val nextcloudOwed = nextcloudEnabled && skipNextcloud
+        if (nextcloudEnabled && !skipNextcloud) {
             val result = nextcloud.performAutoBackup(prefs.nextcloudAutoBackupMaxCount.first(),
                 prefs.nextcloudAutoBackupIncludeImages.first())
             if (result.isSuccess) anySuccess = true else anyFailure = true
         }
-        if (anySuccess) prefs.setAutoBackupLastRun(clock())
+        if (anySuccess && !nextcloudOwed) prefs.setAutoBackupLastRun(clock())
         when {
             !localEnabled && !nextcloudEnabled -> AutoBackupOutcome.Nothing
-            anyFailure && !anySuccess -> AutoBackupOutcome.Retry
+            (anyFailure || nextcloudOwed) && !anySuccess -> AutoBackupOutcome.Retry
             else -> AutoBackupOutcome.Success
         }
     } catch (e: CancellationException) {

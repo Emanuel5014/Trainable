@@ -4,13 +4,16 @@ package com.emanuel5014.trainable.data.remote.nextcloud
 
 import com.emanuel5014.trainable.data.repository.toByteArray
 import com.emanuel5014.trainable.data.repository.toNSData
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.IOException
 import platform.Foundation.NSData
 import platform.Foundation.NSError
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSHTTPURLResponse
+import platform.Foundation.NSLock
 import platform.Foundation.NSMutableURLRequest
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLRequest
 import platform.Foundation.NSURLRequestReloadIgnoringLocalCacheData
@@ -34,8 +37,10 @@ import kotlin.coroutines.resumeWithException
  * Nextcloud over NSURLSession, held to Android's rules (OkHttpWebDavHttp + CleartextGuard): https only, a redirect is
  * followed only when it keeps the scheme (never https→http), 120 s without data, no cache or cookies. [wifiOnly] keeps
  * the call off mobile data and expensive networks. Network failures throw with the system's message.
+ * With [backgroundUploads] a file upload (PUT from a file) goes through the shared background session, which iOS
+ * finishes even while the app is suspended; cancelling the call then leaves the upload running.
  */
-class IosWebDavHttp(private val wifiOnly: Boolean = false) : WebDavHttp {
+class IosWebDavHttp(private val wifiOnly: Boolean = false, private val backgroundUploads: Boolean = false) : WebDavHttp {
 
     override suspend fun send(request: WebDavRequest): WebDavResponse {
         val url = NSURL.URLWithString(request.url) ?: throw IOException("Invalid URL")
@@ -46,6 +51,13 @@ class IosWebDavHttp(private val wifiOnly: Boolean = false) : WebDavHttp {
         ns.setHTTPMethod(request.method)
         ns.setHTTPShouldHandleCookies(false)
         request.headers.forEach { (name, value) -> ns.setValue(value, forHTTPHeaderField = name) }
+        val upload = request.body as? WebDavBody.FilePath
+        if (backgroundUploads && upload != null) {
+            ns.setValue(upload.contentType, forHTTPHeaderField = "Content-Type")
+            ns.setAllowsCellularAccess(!wifiOnly)
+            ns.setAllowsExpensiveNetworkAccess(!wifiOnly)
+            return uploadSession.send(ns, upload.path)
+        }
         val config = NSURLSessionConfiguration.ephemeralSessionConfiguration.apply {
             timeoutIntervalForRequest = IDLE_SECONDS
             timeoutIntervalForResource = 7.0 * 24 * 3600
@@ -109,12 +121,73 @@ class IosWebDavHttp(private val wifiOnly: Boolean = false) : WebDavHttp {
     private class SameSchemeRedirects : NSObject(), NSURLSessionTaskDelegateProtocol {
         override fun URLSession(session: NSURLSession, task: NSURLSessionTask, willPerformHTTPRedirection: NSHTTPURLResponse,
                                 newRequest: NSURLRequest, completionHandler: (NSURLRequest?) -> Unit) {
-            val from = task.originalRequest?.URL?.scheme?.lowercase()
-            completionHandler(if (from != null && newRequest.URL?.scheme?.lowercase() == from) newRequest else null)
+            completionHandler(sameSchemeOnly(task, newRequest))
         }
     }
 
-    private companion object {
-        const val IDLE_SECONDS = 120.0
+    /** The one background session (`com.emanuel5014.trainable.autobackup.upload`): its delegate resumes the waiting call. */
+    private class BackgroundUploads : NSObject(), NSURLSessionTaskDelegateProtocol {
+        private val lock = NSLock()
+        private val waiting = mutableMapOf<ULong, CancellableContinuation<WebDavResponse>>()
+
+        val session: NSURLSession by lazy {
+            val config = NSURLSessionConfiguration.backgroundSessionConfigurationWithIdentifier(BACKGROUND_SESSION).apply {
+                sessionSendsLaunchEvents = true
+                discretionary = false
+                timeoutIntervalForRequest = IDLE_SECONDS
+                timeoutIntervalForResource = 7.0 * 24 * 3600
+                HTTPShouldSetCookies = false
+                URLCache = null
+            }
+            NSURLSession.sessionWithConfiguration(config, this, NSOperationQueue())
+        }
+
+        override fun URLSession(session: NSURLSession, task: NSURLSessionTask, willPerformHTTPRedirection: NSHTTPURLResponse,
+                                newRequest: NSURLRequest, completionHandler: (NSURLRequest?) -> Unit) {
+            completionHandler(sameSchemeOnly(task, newRequest))
+        }
+
+        override fun URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError: NSError?) {
+            lock.lock()
+            val continuation = waiting.remove(task.taskIdentifier)
+            lock.unlock()
+            continuation ?: return
+            val http = task.response as? NSHTTPURLResponse
+            when {
+                didCompleteWithError != null -> continuation.resumeWithException(IOException(didCompleteWithError.localizedDescription))
+                http == null -> continuation.resumeWithException(IOException("No response"))
+                else -> continuation.resume(WebDavResponse(http.statusCode.toInt(),
+                    NSHTTPURLResponse.localizedStringForStatusCode(http.statusCode), null))
+            }
+        }
+
+        suspend fun send(request: NSURLRequest, path: String): WebDavResponse = suspendCancellableCoroutine { continuation ->
+            val task = session.uploadTaskWithRequest(request, fromFile = NSURL.fileURLWithPath(path))
+            lock.lock()
+            waiting[task.taskIdentifier] = continuation
+            lock.unlock()
+            continuation.invokeOnCancellation {
+                lock.lock()
+                waiting.remove(task.taskIdentifier)
+                lock.unlock()
+            }
+            task.resume()
+        }
+
     }
+
+    companion object {
+        private const val IDLE_SECONDS = 120.0
+        const val BACKGROUND_SESSION = "com.emanuel5014.trainable.autobackup.upload"
+
+        /** Recreates the background session when iOS wakes the app for its events. */
+        fun reconnectBackgroundUploads() { uploadSession.session }
+
+        private val uploadSession by lazy { BackgroundUploads() }
+    }
+}
+
+private fun sameSchemeOnly(task: NSURLSessionTask, newRequest: NSURLRequest): NSURLRequest? {
+    val from = task.originalRequest?.URL?.scheme?.lowercase()
+    return if (from != null && newRequest.URL?.scheme?.lowercase() == from) newRequest else null
 }

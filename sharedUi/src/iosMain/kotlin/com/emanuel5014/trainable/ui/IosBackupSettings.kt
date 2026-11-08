@@ -6,10 +6,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.emanuel5014.trainable.data.backup.BackupArchiver
+import com.emanuel5014.trainable.data.backup.IosLocalBackupFolder
 import com.emanuel5014.trainable.data.backup.IosNextcloudVault
 import com.emanuel5014.trainable.data.backup.NextcloudBackupService
 import com.emanuel5014.trainable.data.remote.nextcloud.IosWebDavHttp
@@ -39,6 +41,9 @@ import platform.Foundation.NSURL
 import platform.Foundation.NSUUID
 import platform.Foundation.dateWithTimeIntervalSince1970
 import kotlin.time.Clock
+import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.choose_folder
 
 /** iOS backup ZIP for the shared backup code: the G1 export, and a restore staged for the next launch. */
 internal class IosBackupArchiver(private val completeOnboarding: Boolean = false) : BackupArchiver {
@@ -180,11 +185,17 @@ internal fun iosFileSize(bytes: Long): String = NSByteCountFormatter.stringFromB
 internal fun IosBackupSettingsCards() {
     val scope = rememberCoroutineScope()
     val show = LocalShowMessage.current
-    val model = remember { IosBackupSettingsModel(scope, show) }
+    val model = remember { IosBackupSettingsModel(scope, show, reschedule = { IosAutoBackup.reschedule() }) }
     val p = IosAppGraph.preferences
     val autoBackupEnabled by p.autoBackupEnabled.collectAsState(false)
     val autoBackupFrequency by p.autoBackupFrequency.collectAsState(1)
     val autoBackupFolderUri by p.autoBackupFolderUri.collectAsState(null)
+    // The bookmarked folder's name; "" while it is read, null when it was removed or cannot be opened any more
+    val folderName by produceState<String?>("", autoBackupFolderUri) {
+        value = autoBackupFolderUri?.let { IosLocalBackupFolder(p, IosBackupArchiver()).folderLabel() }
+    }
+    val folderMissing = autoBackupFolderUri != null && folderName == null
+    val pickFolder = rememberIosBackupFolderPicker()
     val autoBackupMaxCount by p.autoBackupMaxCount.collectAsState(5)
     val autoBackupIncludeImages by p.autoBackupIncludeImages.collectAsState(false)
     val nextcloudBackupEnabled by p.nextcloudBackupEnabled.collectAsState(false)
@@ -200,8 +211,9 @@ internal fun IosBackupSettingsCards() {
         state = BackupSettingsUiState(
             autoBackupEnabled = autoBackupEnabled,
             autoBackupFrequency = autoBackupFrequency,
-            autoBackupFolderUri = autoBackupFolderUri,
-            autoBackupFolderLabel = null,
+            // A folder iOS cannot open any more reads as "no folder": the card offers "Choose folder" again
+            autoBackupFolderUri = autoBackupFolderUri.takeUnless { folderMissing },
+            autoBackupFolderLabel = if (folderMissing) stringResource(Res.string.choose_folder) else folderName,
             autoBackupMaxCount = autoBackupMaxCount,
             autoBackupIncludeImages = autoBackupIncludeImages,
             nextcloudBackupEnabled = nextcloudBackupEnabled,
@@ -222,10 +234,9 @@ internal fun IosBackupSettingsCards() {
             isLoadingNextcloudBackups = model.isLoadingBackups
         ),
         actions = model,
-        onPickFolder = {},
+        onPickFolder = pickFolder,
         onRestored = { IosBackups.restartRequired = true },
         dateText = ::iosNextcloudBackupDate,
-        sizeText = ::iosFileSize,
-        localSupported = false
+        sizeText = ::iosFileSize
     )
 }
