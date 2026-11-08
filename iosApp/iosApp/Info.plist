@@ -46,6 +46,12 @@
 	<array><string>com.emanuel5014.trainable.autobackup</string></array>
 	<key>UIBackgroundModes</key>
 	<array><string>processing</string></array>
+	<!-- The same background as the first frame of the animated splash (IosSplash.kt) -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<!-- Compose draws at the full refresh rate of ProMotion screens (120 Hz) only with this -->

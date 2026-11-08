@@ -84,8 +84,12 @@ internal fun IosBackupStartup(content: @Composable () -> Unit) {
                 IosWorkoutLiveActivityBridge.service?.cancelAll()
             }
             ready = true
+            IosSplashGate.startupFinished = true
         } catch (error: CancellationException) { throw error }
-        catch (_: Exception) { failed = true }
+        catch (_: Exception) {
+            failed = true
+            IosSplashGate.startupFailed = true
+        }
     }
     if (ready) content()
     else MaterialTheme(colorScheme = darkColorScheme()) {

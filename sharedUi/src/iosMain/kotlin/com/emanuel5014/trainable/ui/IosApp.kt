@@ -72,7 +72,7 @@ import org.jetbrains.compose.resources.Font
 import platform.UIKit.UIViewController
 
 /** The iOS app's root, shown by the Xcode project: the app's navigation on the device's own data. */
-fun MainViewController(): UIViewController = ComposeUIViewController { IosBackupStartup { IosLanguageRoot { IosOnboardingRoot { TrainableIosApp() } } } }
+fun MainViewController(): UIViewController = ComposeUIViewController { IosSplash { IosBackupStartup { IosLanguageRoot { IosOnboardingRoot { TrainableIosApp() } } } } }
 
 /** One database and one settings file for the whole process, and the repositories over them. */
 internal object IosAppGraph {
