@@ -42,6 +42,15 @@ class IosRoutineFilesTest {
         assertFails { readIosRoutineFile(NSURL.fileURLWithPath(path)) }
     }
 
+    // AltStore adds an "altstore-<bundle id>" scheme to the app and opens it with that URL: never an import.
+    @Test fun onlyFileUrlsAreTreatedAsRoutineFiles() {
+        assertFalse(isIosRoutineFileUrl(NSURL(string = "altstore-com.emanuel5014.trainable://")))
+        assertFalse(isIosRoutineFileUrl(NSURL(string = "https://example.invalid/test.trainableplan")))
+        assertTrue(isIosRoutineFileUrl(NSURL.fileURLWithPath(NSTemporaryDirectory() + "a.trainableplan")))
+        // A file with the wrong content or name still reaches the importer and is reported as a failure
+        assertTrue(isIosRoutineFileUrl(NSURL.fileURLWithPath(NSTemporaryDirectory() + "a.txt")))
+    }
+
     @Test fun aPreviewNeverWritesBeforeConfirmationAndCanBeCancelled() = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         var writes = 0

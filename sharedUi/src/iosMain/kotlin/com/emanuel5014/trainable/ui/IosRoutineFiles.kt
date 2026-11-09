@@ -115,6 +115,8 @@ object IosRoutineFiles {
     internal val model = IosRoutineImportModel(scope) { json -> IosAppGraph.workouts.importPlans(json) }
 
     fun open(url: NSURL) {
+        // Not a document: e.g. AltStore's "Open" launches the app with the altstore-<bundle id>:// scheme it adds
+        if (!isIosRoutineFileUrl(url)) return
         val access = url.startAccessingSecurityScopedResource()
         scope.launch {
             model.enqueue {
@@ -124,6 +126,9 @@ object IosRoutineFiles {
         }
     }
 }
+
+/** Only documents handed over by Files/share sheet are routine imports; any other URL opening the app is ignored. */
+internal fun isIosRoutineFileUrl(url: NSURL): Boolean = url.isFileURL()
 
 /** Coordinate provider downloads and bound reads before decoding the shared Android-compatible format. */
 internal fun readIosRoutineFile(url: NSURL, limit: Long = 50L * 1024 * 1024): IosRoutinePayload {
