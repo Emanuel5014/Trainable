@@ -45,6 +45,8 @@ data class GlassSettings(
     val blur: Float = DEFAULT_BLUR,
     /** Whether touched glass swells and leans after the finger; off keeps every piece at its own size. */
     val stretch: Boolean = true,
+    /** Whether the floating bar's pill stretches as it moves and wobbles when it stops. */
+    val jiggle: Boolean = true,
     val parts: Set<GlassPart> = GlassPart.entries.toSet()
 ) {
     fun isOn(part: GlassPart): Boolean = enabled && part in parts

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.OpenInFull
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Waves
 import androidx.compose.material.icons.rounded.Tab
 import androidx.compose.material.icons.rounded.ToggleOn
 import androidx.compose.material.icons.rounded.Layers
@@ -458,6 +459,7 @@ fun PersonalizationSettingsScreen(
                 onIntensityChange = viewModel::setGlassIntensity,
                 onBlurChange = viewModel::setGlassBlur,
                 onStretchChange = viewModel::setGlassStretch,
+                onJiggleChange = viewModel::setGlassJiggle,
                 onPartChange = viewModel::setGlassPart
             )
         }
@@ -473,6 +475,7 @@ private fun LiquidGlassCard(
     onIntensityChange: (Float) -> Unit,
     onBlurChange: (Float) -> Unit,
     onStretchChange: (Boolean) -> Unit,
+    onJiggleChange: (Boolean) -> Unit,
     onPartChange: (GlassPart, Boolean) -> Unit
 ) {
     GymCard(containerColor = SurfaceContainerHigh) {
@@ -507,6 +510,14 @@ private fun LiquidGlassCard(
                     description = stringResource(R.string.glass_stretch_desc),
                     checked = settings.stretch,
                     onCheckedChange = onStretchChange
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.Waves,
+                    title = stringResource(R.string.glass_jiggle),
+                    description = stringResource(R.string.glass_jiggle_desc),
+                    checked = settings.jiggle,
+                    enabled = floatingNavBar && GlassPart.NavBar in settings.parts,
+                    onCheckedChange = onJiggleChange
                 )
 
                 HorizontalDivider(color = Surface.copy(alpha = 0.5f))
@@ -633,7 +644,8 @@ private fun GlassSwitchRow(
     description: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    emphasized: Boolean = false
+    emphasized: Boolean = false,
+    enabled: Boolean = true
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -654,6 +666,6 @@ private fun GlassSwitchRow(
             }
         }
         Spacer(modifier = Modifier.width(16.dp))
-        SettingsSwitch(checked = checked, onCheckedChange = onCheckedChange)
+        SettingsSwitch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
 }

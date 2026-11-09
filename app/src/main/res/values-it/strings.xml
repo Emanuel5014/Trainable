@@ -22,6 +22,8 @@
     <string name="glass_blur_desc">Quanto è sfocato ciò che sta dietro il vetro, da limpido a smerigliato</string>
     <string name="glass_stretch">Deformazione al tocco</string>
     <string name="glass_stretch_desc">Il vetro si gonfia e si inclina seguendo il dito quando lo tocchi</string>
+    <string name="glass_jiggle">Pill della barra elastica</string>
+    <string name="glass_jiggle_desc">La pill di vetro della barra si allunga mentre si muove e oscilla quando si ferma</string>
     <string name="glass_parts">Dove usarlo</string>
     <string name="glass_part_nav_bar">Barra di navigazione</string>
     <string name="glass_part_nav_bar_desc">La barra fluttuante piega ciò che scorre sotto</string>

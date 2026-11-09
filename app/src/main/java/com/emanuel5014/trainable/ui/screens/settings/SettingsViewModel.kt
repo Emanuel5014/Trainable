@@ -932,6 +932,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setGlassJiggle(on: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setGlassJiggle(on)
+        }
+    }
+
     fun setGlassBlur(blur: Float) {
         viewModelScope.launch {
             userPrefsRepository.setGlassBlur(blur)

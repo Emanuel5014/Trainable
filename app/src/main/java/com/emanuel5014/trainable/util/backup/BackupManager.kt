@@ -239,6 +239,7 @@ class BackupManager @Inject constructor(
                 prefs[UserPreferencesRepository.GLASS_INTENSITY]?.let { json.put("glass_intensity", it.toDouble()) }
                 prefs[UserPreferencesRepository.GLASS_BLUR]?.let { json.put("glass_blur", it.toDouble()) }
                 prefs[UserPreferencesRepository.GLASS_STRETCH]?.let { json.put("glass_stretch", it) }
+                prefs[UserPreferencesRepository.GLASS_JIGGLE]?.let { json.put("glass_jiggle", it) }
                 GlassPart.entries.forEach { part ->
                     val key = UserPreferencesRepository.glassPartKey(part)
                     prefs[key]?.let { json.put(key.name, it) }
@@ -409,6 +410,8 @@ class BackupManager @Inject constructor(
                                                     jsonObject.getDouble("glass_intensity").toFloat().coerceIn(0f, 1f)
                                             if (jsonObject.has("glass_stretch"))
                                                 prefs[UserPreferencesRepository.GLASS_STRETCH] = jsonObject.getBoolean("glass_stretch")
+                                            if (jsonObject.has("glass_jiggle"))
+                                                prefs[UserPreferencesRepository.GLASS_JIGGLE] = jsonObject.getBoolean("glass_jiggle")
                                             if (jsonObject.has("glass_blur"))
                                                 prefs[UserPreferencesRepository.GLASS_BLUR] =
                                                     jsonObject.getDouble("glass_blur").toFloat().coerceIn(0f, 1f)
