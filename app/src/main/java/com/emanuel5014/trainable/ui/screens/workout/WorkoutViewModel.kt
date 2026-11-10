@@ -13,12 +13,13 @@ import com.emanuel5014.trainable.util.notification.AndroidWorkoutTimers
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class WorkoutViewModel @Inject constructor(
     workoutRepository: WorkoutRepository,
-    userPreferencesRepository: UserPreferencesRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
     exerciseRepository: ExerciseRepository,
     timerNotificationHelper: TimerNotificationHelper,
     localeManager: AppLocaleManager,
@@ -47,5 +48,11 @@ class WorkoutViewModel @Inject constructor(
     override fun onCleared() {
         model.close()
         super.onCleared()
+    }
+
+    val timerNotificationsEnabled = userPreferencesRepository.timerNotificationsEnabled
+
+    fun turnOffTimerNotifications() {
+        viewModelScope.launch { userPreferencesRepository.setTimerNotificationsEnabled(false) }
     }
 }

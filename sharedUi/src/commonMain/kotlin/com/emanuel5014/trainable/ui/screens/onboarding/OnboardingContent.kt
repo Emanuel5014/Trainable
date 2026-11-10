@@ -77,6 +77,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import com.emanuel5014.trainable.ui.util.PlatformBackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -123,6 +126,9 @@ import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.CalendarMonth
 
+/** Index of the notifications slide in `pages`. */
+const val NOTIFICATIONS_PAGE = 4
+
 @Composable
 fun OnboardingContent(
     model: OnboardingModel,
@@ -137,10 +143,17 @@ fun OnboardingContent(
         Icon(painterResource(Res.drawable.ic_app_logo), null, modifier, tint = tint)
     },
     prepareCompletion: suspend (OnboardingChoices) -> Unit = {},
+    /** Called when the user moves on from the notifications page; the platform may ask for its permission here. */
+    onNotificationsPageLeft: (timerEnabled: Boolean, membershipEnabled: Boolean) -> Unit = { _, _ -> },
     platformPage: @Composable (Int, OnboardingChoices) -> Unit
 ) {
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val coroutineScope = rememberCoroutineScope()
+
+    // Back goes to the previous page instead of leaving the app
+    PlatformBackHandler(enabled = pagerState.currentPage > 0) {
+        coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
+    }
     var completing by remember { mutableStateOf(false) }
     val showMessage = com.emanuel5014.trainable.ui.components.LocalShowMessage.current
     var username by choices.username
@@ -172,6 +185,18 @@ fun OnboardingContent(
     val themePalette by model.themePalette.collectAsState(initial = 0)
     val themeStyle by model.themeStyle.collectAsState(initial = 0)
     val themeMode by model.themeMode.collectAsState(initial = 0)
+
+    // Moving forward from the notifications page, by the button or by a swipe
+    val notificationsPageLeft by rememberUpdatedState(onNotificationsPageLeft)
+    LaunchedEffect(pagerState, pages) {
+        var previous = pagerState.currentPage
+        snapshotFlow { pagerState.currentPage }.collect { current ->
+            if (current > previous && pages.getOrNull(previous) == NOTIFICATIONS_PAGE) {
+                notificationsPageLeft(choices.timerNotificationsEnabled.value, choices.gymMembershipExpiryNotificationsEnabled.value)
+            }
+            previous = current
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -221,7 +246,7 @@ fun OnboardingContent(
                                 onThemeModeChange = { model.setThemeMode(it) },
                                 wallpaperSupported = wallpaperSupported
                             )
-                            4 -> NotificationsSlide(
+                            NOTIFICATIONS_PAGE -> NotificationsSlide(
                                 timerNotificationsEnabled = timerNotificationsEnabled,
                                 onTimerNotificationsChange = { timerNotificationsEnabled = it },
                                 gymMembershipExpiryNotificationsEnabled = gymMembershipExpiryNotificationsEnabled,

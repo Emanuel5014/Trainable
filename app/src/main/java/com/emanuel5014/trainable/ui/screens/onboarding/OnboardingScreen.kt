@@ -143,6 +143,18 @@ fun OnboardingScreen(onFinished: () -> Unit, viewModel: OnboardingViewModel = hi
         }
     }
 
+    // Android 13+ needs the notification permission; a refusal turns the switches off, as Settings does
+    var askedForTimer by remember { mutableStateOf(false) }
+    var askedForMembership by remember { mutableStateOf(false) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            if (askedForTimer) choices.timerNotificationsEnabled.value = false
+            if (askedForMembership) choices.gymMembershipExpiryNotificationsEnabled.value = false
+        }
+    }
+
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
@@ -159,6 +171,15 @@ fun OnboardingScreen(onFinished: () -> Unit, viewModel: OnboardingViewModel = hi
         pages = (0..10).toList(),
         selectedAiModelVariant = selectedAiModelVariant,
         logo = { modifier, tint -> Icon(painterResource(R.drawable.ic_app_logo), null, modifier, tint = tint) },
+        onNotificationsPageLeft = { timer, membership ->
+            if ((timer || membership) && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+                context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                askedForTimer = timer
+                askedForMembership = membership
+                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        },
         platformPage = { page, _ ->
             when (page) {
                             7 -> LocalAiSlide(
