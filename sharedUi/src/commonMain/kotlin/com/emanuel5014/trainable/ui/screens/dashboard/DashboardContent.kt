@@ -102,6 +102,7 @@ import com.emanuel5014.trainable.ui.components.NavBarAction
 import com.emanuel5014.trainable.ui.components.NavBarActionEffect
 import com.emanuel5014.trainable.ui.components.NavBarPage
 import com.emanuel5014.trainable.ui.components.navBarBottomClearance
+import com.emanuel5014.trainable.ui.components.floatingNavFabLift
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -544,7 +545,7 @@ fun DashboardContent(
                                     if (ResponsiveSize.isCompact) 2.dp else 8.dp
                                 } else 0.dp
                             )
-                            .padding(bottom = 80.dp)
+                            .padding(bottom = 80.dp + floatingNavFabLift())
                             .actionGlass(actionGlass, Primary)
                     ) {
 

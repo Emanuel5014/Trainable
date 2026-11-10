@@ -98,7 +98,7 @@ fun BottomNavBarFlo(
     Surface(
         modifier = modifier
             .padding(horizontal = if (ResponsiveSize.isCompact) 12.dp else 24.dp)
-            .padding(bottom = if (ResponsiveSize.isCompact) 12.dp else 20.dp),
+            .padding(bottom = (if (ResponsiveSize.isCompact) 12.dp else 20.dp) + floatingNavSystemInset()),
         shape = barShape,
         color = Color.Transparent,
         tonalElevation = 0.dp,

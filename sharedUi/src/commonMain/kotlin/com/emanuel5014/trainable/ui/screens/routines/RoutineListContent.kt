@@ -171,6 +171,7 @@ import com.emanuel5014.trainable.ui.components.NavBarAction
 import com.emanuel5014.trainable.ui.components.NavBarActionEffect
 import com.emanuel5014.trainable.ui.components.NavBarPage
 import com.emanuel5014.trainable.ui.components.navBarBottomClearance
+import com.emanuel5014.trainable.ui.components.floatingNavFabLift
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.SheetFormBody
 import com.emanuel5014.trainable.ui.components.SheetFormFooter
@@ -271,7 +272,7 @@ fun RoutineListContent(
                     elevation = actionGlassElevation(actionGlass),
                     modifier = Modifier
                         .padding(end = fabPadding)
-                        .padding(bottom = 80.dp)
+                        .padding(bottom = 80.dp + floatingNavFabLift())
                         .actionGlass(actionGlass, Primary)
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = stringResource(Res.string.share))
@@ -287,7 +288,7 @@ fun RoutineListContent(
                     elevation = actionGlassElevation(actionGlass),
                     modifier = Modifier
                         .padding(end = fabPadding)
-                        .padding(bottom = 80.dp)
+                        .padding(bottom = 80.dp + floatingNavFabLift())
                         .actionGlass(actionGlass, Primary)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.create))

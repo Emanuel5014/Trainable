@@ -132,7 +132,7 @@ fun BottomNavBarGlass(
     BoxWithConstraints(
         modifier = modifier
             .padding(horizontal = if (ResponsiveSize.isCompact) 12.dp else 24.dp)
-            .padding(bottom = if (ResponsiveSize.isCompact) 12.dp else 20.dp)
+            .padding(bottom = (if (ResponsiveSize.isCompact) 12.dp else 20.dp) + floatingNavSystemInset())
             .fillMaxWidth()
             .pointerInput(pillState) {
                 val barPadding = GlassBarPadding.toPx()

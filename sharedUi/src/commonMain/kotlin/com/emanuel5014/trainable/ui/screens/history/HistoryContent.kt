@@ -232,6 +232,7 @@ import com.emanuel5014.trainable.ui.components.NavBarActionEffect
 import com.emanuel5014.trainable.ui.components.NavBarMenuItem
 import com.emanuel5014.trainable.ui.components.NavBarPage
 import com.emanuel5014.trainable.ui.components.navBarBottomClearance
+import com.emanuel5014.trainable.ui.components.floatingNavFabLift
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.navigation.EditWorkoutSession
 import com.emanuel5014.trainable.ui.navigation.CompareSessions
@@ -395,7 +396,7 @@ fun HistoryContent(
             floatingActionButton = {
                 if (showOwnFab && !uiState.isSelectionMode) {
                     FloatingActionButtonMenu(
-                        modifier = Modifier.padding(bottom = 60.dp).offset(x = 12.dp).zIndex(10f),
+                        modifier = Modifier.padding(bottom = 60.dp + floatingNavFabLift()).offset(x = 12.dp).zIndex(10f),
                         expanded = fabMenuExpanded,
                         button = {
                             TooltipBox(

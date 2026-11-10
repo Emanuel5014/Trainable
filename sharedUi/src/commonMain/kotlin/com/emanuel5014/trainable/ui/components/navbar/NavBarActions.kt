@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.components
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.tappableElement
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
@@ -31,8 +32,23 @@ fun navBarBottomClearance(): Dp =
     if (LocalNavBarStyle.current == NavBarStyle.Expressive) {
         ExpressiveNavBarHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp
     } else {
-        100.dp
+        100.dp + floatingNavSystemInset()
     }
+
+/**
+ * Height of the system bar the floating navbar must stay above: the 3-button bar on Android. It is 0 with gesture
+ * navigation (the pill sits over the gesture handle on purpose) and on iOS, so those layouts don't move.
+ */
+@Composable
+fun floatingNavSystemInset(): Dp = WindowInsets.tappableElement.asPaddingValues().calculateBottomPadding()
+
+/** Gap kept between the floating navbar and the buttons above it when the bar is lifted over 3-button navigation. */
+private val FloatingNavFabGap = 24.dp
+
+/** Extra lift for the screens' floating buttons, so they stay clear of a floating navbar lifted over 3-button navigation. */
+@Composable
+fun floatingNavFabLift(): Dp =
+    if (LocalNavBarStyle.current == NavBarStyle.Floating && floatingNavSystemInset() > 0.dp) FloatingNavFabGap else 0.dp
 
 /** Index of each tab of the main pager. */
 object NavBarPage {
