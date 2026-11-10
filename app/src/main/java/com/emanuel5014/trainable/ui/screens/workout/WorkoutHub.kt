@@ -499,6 +499,8 @@ private fun SetPanel(
         lastEditor[0]
     }
 
+    val collapseEditor = { if (editsTappedSet) ui.editingSetIndex = null else ui.isEditingValues = false }
+
     Column {
         if (shownSet != null) {
             SetCard(
@@ -508,7 +510,8 @@ private fun SetPanel(
                 isActiveSet = !editsTappedSet,
                 expansion = expansion,
                 prescriptionLabels = prescriptionLabels,
-                onClick = if (editing) null else ({ ui.isEditingValues = true }),
+                // While the editor is open the whole card closes it, not only the arrow on its right
+                onClick = if (editing) collapseEditor else ({ ui.isEditingValues = true }),
                 showDetail = !editing,
                 trailing = {
                     if (editing) {
@@ -520,9 +523,7 @@ private fun SetPanel(
                                 .size(36.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(SurfaceContainerHighest)
-                                .clickable {
-                                    if (editsTappedSet) ui.editingSetIndex = null else ui.isEditingValues = false
-                                },
+                                .clickable { collapseEditor() },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
