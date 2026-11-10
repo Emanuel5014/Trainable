@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.navigationevent.DirectNavigationEventInput
 import androidx.navigationevent.NavigationEventDispatcher
 import androidx.navigationevent.NavigationEventDispatcher.Companion.PRIORITY_OVERLAY
@@ -99,35 +100,56 @@ internal class IosBackGestureBridge(
     }
 }
 
-/** Installs [IosBackGestureBridge] for the whole app (screens, dialogs, sheets, onboarding). */
+/**
+ * Installs [IosBackGestureBridge] for the whole app (screens, dialogs, sheets, onboarding) and [IosTapToHideKeyboard],
+ * so a tap outside the field being typed in hides the keyboard, as iOS apps do.
+ */
 @Composable
 internal fun IosBackGesture(content: @Composable () -> Unit) {
-    content()
-    val dispatcher = LocalNavigationEventDispatcherOwner.current?.navigationEventDispatcher ?: return
     val focusManager by rememberUpdatedState(LocalFocusManager.current)
     val keyboard by rememberUpdatedState(LocalSoftwareKeyboardController.current)
+    val hideKeyboard: () -> Unit = remember {
+        {
+            focusManager.clearFocus(force = true)
+            keyboard?.hide()
+            // A field inside a dialog or sheet lives in another Compose layer, out of reach of the two calls
+            // above: end editing in every window, as UIKit does for its own text fields
+            UIApplication.sharedApplication.connectedScenes
+                .flatMap { scene -> (scene as? UIWindowScene)?.windows.orEmpty() }
+                .filterIsInstance<UIWindow>()
+                .forEach { it.endEditing(true) }
+        }
+    }
+    val keyboardOpen = imeVisible()
+    val currentKeyboardOpen by rememberUpdatedState(keyboardOpen)
+
+    content()
+
+    // A tap outside the field being typed in hides the keyboard, also in dialogs and sheets (see IosTapToHideKeyboard)
+    val viewController = LocalUIViewController.current
+    val tapScope = rememberCoroutineScope()
+    DisposableEffect(viewController) {
+        val tap = IosTapToHideKeyboard(tapScope, keyboardOpen = { currentKeyboardOpen }, hideKeyboard = hideKeyboard)
+        val attach = tapScope.launch {
+            // The window exists only once the root view is on screen
+            while (viewController.view.window == null) delay(100)
+            tap.attach(viewController.view.window!!)
+        }
+        onDispose {
+            attach.cancel()
+            tap.detach()
+        }
+    }
+
+    val dispatcher = LocalNavigationEventDispatcherOwner.current?.navigationEventDispatcher ?: return
     val scope = rememberCoroutineScope()
     val bridge = remember(dispatcher) {
-        IosBackGestureBridge(
-            dispatcher,
-            post = { action -> scope.launch { action() } },
-            hideKeyboard = {
-                focusManager.clearFocus(force = true)
-                keyboard?.hide()
-                // A field inside a dialog or sheet lives in another Compose layer, out of reach of the two calls
-                // above: end editing in every window, as UIKit does for its own text fields
-                UIApplication.sharedApplication.connectedScenes
-                    .flatMap { scene -> (scene as? UIWindowScene)?.windows.orEmpty() }
-                    .filterIsInstance<UIWindow>()
-                    .forEach { it.endEditing(true) }
-            }
-        )
+        IosBackGestureBridge(dispatcher, post = { action -> scope.launch { action() } }, hideKeyboard = hideKeyboard)
     }
     DisposableEffect(bridge) {
         bridge.attach()
         onDispose { bridge.detach() }
     }
-    val keyboardOpen = imeVisible()
     LaunchedEffect(bridge, keyboardOpen) { bridge.keyboardOpen = keyboardOpen }
     // A dialog or sheet opening changes what the swipe would reach
     LaunchedEffect(bridge) { dispatcher.history.collect { bridge.refresh() } }
