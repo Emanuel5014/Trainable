@@ -1470,4 +1470,10 @@
     <string name="storage_location">Emplacement</string>
     <string name="with_images">Avec images</string>
     <string name="without_images">Sans images</string>
+    <string name="image_editor_title">Modifier la photo</string>
+    <string name="image_editor_rotate_cd">Pivoter</string>
+    <string name="crop_aspect_free">Libre</string>
+    <string name="crop_aspect_1_1">1:1</string>
+    <string name="crop_aspect_4_3">4:3</string>
+    <string name="crop_aspect_16_9">16:9</string>
 </resources>

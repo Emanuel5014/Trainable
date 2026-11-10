@@ -1,11 +1,5 @@
 package com.emanuel5014.trainable.ui.components.shared
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Matrix
-import android.graphics.Paint
-import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,34 +22,38 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.crop_aspect_16_9
+import com.emanuel5014.trainable.sharedui.resources.crop_aspect_1_1
+import com.emanuel5014.trainable.sharedui.resources.crop_aspect_4_3
+import com.emanuel5014.trainable.sharedui.resources.crop_aspect_free
+import com.emanuel5014.trainable.sharedui.resources.image_editor_rotate_cd
+import com.emanuel5014.trainable.sharedui.resources.image_editor_title
+import com.emanuel5014.trainable.sharedui.resources.reset
+import com.emanuel5014.trainable.sharedui.resources.save
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
-import kotlin.math.cos
-import kotlin.math.sin
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
-enum class CropAspectRatio(val ratio: Float?, @StringRes val labelRes: Int) {
-    FREE(null, R.string.crop_aspect_free),
-    ONE_ONE(1f, R.string.crop_aspect_1_1),
-    FOUR_THREE(4f/3f, R.string.crop_aspect_4_3),
-    SIXTEEN_NINE(16f/9f, R.string.crop_aspect_16_9)
+enum class CropAspectRatio(val ratio: Float?, val labelRes: StringResource) {
+    FREE(null, Res.string.crop_aspect_free),
+    ONE_ONE(1f, Res.string.crop_aspect_1_1),
+    FOUR_THREE(4f/3f, Res.string.crop_aspect_4_3),
+    SIXTEEN_NINE(16f/9f, Res.string.crop_aspect_16_9)
 }
 
 @Composable
@@ -64,25 +62,22 @@ fun ImageEditorDialog(
     onDismiss: () -> Unit,
     onConfirm: (ByteArray) -> Unit
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isProcessing by remember { mutableStateOf(false) }
+    // Keyed on the photo: when several photos are picked, the same dialog edits them one after the other and each
+    // must start fresh (before, the spinner of the first save stayed on for the second photo).
+    var bitmap by remember(imageBytes) { mutableStateOf<ImageBitmap?>(null) }
+    var isProcessing by remember(imageBytes) { mutableStateOf(false) }
 
     LaunchedEffect(imageBytes) {
         withContext(Dispatchers.Default) {
-            bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            bitmap = decodeEditorImage(imageBytes)
         }
     }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = false
-        )
+        properties = imageEditorDialogProperties()
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -95,7 +90,7 @@ fun ImageEditorDialog(
                 ) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
-            } else {
+            } else key(imageBytes) {
                 ImageEditorContent(
                     bitmap = bitmap!!,
                     onCancel = onDismiss,
@@ -131,7 +126,7 @@ fun ImageEditorDialog(
 
 @Composable
 fun ImageEditorContent(
-    bitmap: Bitmap,
+    bitmap: ImageBitmap,
     onCancel: () -> Unit,
     onSave: (scale: Float, offset: Offset, rotation: Float, aspect: CropAspectRatio, cropRect: Rect, containerSize: Size) -> Unit
 ) {
@@ -161,11 +156,11 @@ fun ImageEditorContent(
                 onClick = onCancel,
                 modifier = Modifier.background(Color.White.copy(alpha = 0.2f), CircleShape)
             ) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel), tint = Color.White)
+                Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.cancel), tint = Color.White)
             }
 
             Text(
-                text = stringResource(R.string.image_editor_title),
+                text = stringResource(Res.string.image_editor_title),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
@@ -181,7 +176,7 @@ fun ImageEditorContent(
                     },
                     modifier = Modifier.background(Color.White.copy(alpha = 0.2f), CircleShape)
                 ) {
-                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.reset), tint = Color.White)
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(Res.string.reset), tint = Color.White)
                 }
 
                 IconButton(
@@ -191,7 +186,7 @@ fun ImageEditorContent(
                     },
                     modifier = Modifier.background(MaterialTheme.colorScheme.primary, CircleShape)
                 ) {
-                    Icon(Icons.Default.Done, contentDescription = stringResource(R.string.save), tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(Icons.Default.Done, contentDescription = stringResource(Res.string.save), tint = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -235,7 +230,7 @@ fun ImageEditorContent(
 
                 // Render image with transformations
                 androidx.compose.foundation.Image(
-                    bitmap = bitmap.asImageBitmap(),
+                    bitmap = bitmap,
                     contentDescription = null,
                     modifier = Modifier
                         .size(
@@ -284,7 +279,7 @@ fun ImageEditorContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Rotate90DegreesCcw,
-                        contentDescription = stringResource(R.string.image_editor_rotate_cd),
+                        contentDescription = stringResource(Res.string.image_editor_rotate_cd),
                         tint = Color.White
                     )
                 }
@@ -429,76 +424,4 @@ private fun getCropRectForAspect(aspect: CropAspectRatio, containerSize: Size): 
     val left = (containerSize.width - w) / 2f
     val top = (containerSize.height - h) / 2f
     return Rect(left, top, left + w, top + h)
-}
-
-suspend fun cropAndRotateImage(
-    originalBitmap: Bitmap,
-    scale: Float,
-    offsetX: Float,
-    offsetY: Float,
-    rotationAngle: Float,
-    cropRect: Rect,
-    containerSize: Size
-): ByteArray = withContext(Dispatchers.Default) {
-    val originalWidth = originalBitmap.width
-    val originalHeight = originalBitmap.height
-
-    // 1. Calculate the base scale of the image when fit to container
-    val imageAspect = originalWidth.toFloat() / originalHeight
-    val containerAspect = containerSize.width / containerSize.height
-
-    val baseWidth: Float
-    if (imageAspect > containerAspect) {
-        baseWidth = containerSize.width
-    } else {
-        baseWidth = containerSize.height * imageAspect
-    }
-    val baseScale = baseWidth / originalWidth
-
-    // 2. We want to output a high-quality cropped bitmap.
-    // Let's target a max resolution based on crop bounds to preserve quality, up to 1280px max dimension.
-    val maxDimension = 1280f
-    val exportScale = if (cropRect.width > cropRect.height) {
-        (maxDimension / cropRect.width).coerceAtMost(2.0f)
-    } else {
-        (maxDimension / cropRect.height).coerceAtMost(2.0f)
-    }
-
-    val destWidth = (cropRect.width * exportScale).toInt()
-    val destHeight = (cropRect.height * exportScale).toInt()
-
-    val croppedBitmap = Bitmap.createBitmap(destWidth, destHeight, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(croppedBitmap)
-
-    // Paint to enable anti-aliasing and filter bitmap scaling
-    val paint = Paint().apply {
-        isAntiAlias = true
-        isFilterBitmap = true
-    }
-
-    val matrix = Matrix()
-
-    // Translate source image to have its origin at its center
-    matrix.postTranslate(-originalWidth / 2f, -originalHeight / 2f)
-
-    // Apply base scale + user zoom (scale) + export scale
-    val totalScale = baseScale * scale * exportScale
-    matrix.postScale(totalScale, totalScale)
-
-    // Rotate
-    matrix.postRotate(rotationAngle)
-
-    // Translate to center of output canvas, adding user pan offset (scaled to output coordinates)
-    matrix.postTranslate(destWidth / 2f + offsetX * exportScale, destHeight / 2f + offsetY * exportScale)
-
-    canvas.drawBitmap(originalBitmap, matrix, paint)
-
-    val outputStream = ByteArrayOutputStream()
-    croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
-    val bytes = outputStream.toByteArray()
-    
-    // Recycle bitmaps
-    croppedBitmap.recycle()
-
-    bytes
 }

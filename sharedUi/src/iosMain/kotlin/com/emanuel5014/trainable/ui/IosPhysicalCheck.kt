@@ -2,6 +2,7 @@
 
 package com.emanuel5014.trainable.ui
 
+import com.emanuel5014.trainable.ui.components.shared.ImageEditorDialog
 import androidx.compose.runtime.*
 import androidx.compose.ui.interop.LocalUIViewController
 import androidx.lifecycle.ViewModel
@@ -92,11 +93,10 @@ private object IosPhysicalCheckPlatform : PhysicalCheckPlatformUi {
     override fun rememberBiometricPrompt(): ((onSuccess: () -> Unit, onError: () -> Unit) -> Unit)? =
         rememberIosBiometricPrompt()
 
-    /** No crop editor on iOS yet: the photo is kept as picked (already upright and made smaller). */
+    /** The shared crop/rotate editor, as on Android. */
     @Composable
     override fun ImageEditor(imageBytes: ByteArray, onDismiss: () -> Unit, onConfirm: (ByteArray) -> Unit) {
-        val confirm by rememberUpdatedState(onConfirm)
-        LaunchedEffect(imageBytes) { confirm(imageBytes) }
+        ImageEditorDialog(imageBytes = imageBytes, onDismiss = onDismiss, onConfirm = onConfirm)
     }
 }
 
