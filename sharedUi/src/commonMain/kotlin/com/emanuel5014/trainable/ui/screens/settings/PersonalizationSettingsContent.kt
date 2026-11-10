@@ -178,10 +178,10 @@ fun PersonalizationSettingsContent(
             initialColor = savedSeedForRestore?.let { Color(it) },
             initialStyle = savedStyleForRestore,
             onDismiss = {
-                if (savedSeedForRestore != null) {
-                    state.setDynamicColorSeed(savedSeedForRestore)
-                    state.setThemeStyle(savedStyleForRestore)
-                }
+                // Opening the dialog cleared both values: put back what was there, a null seed included,
+                // otherwise a style saved without a custom colour would be lost.
+                state.setDynamicColorSeed(savedSeedForRestore)
+                state.setThemeStyle(savedStyleForRestore)
                 showCustomColorDialog = false
             },
             onApply = { colorSeed, style ->
