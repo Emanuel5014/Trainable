@@ -17,7 +17,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 2
-        versionName = "3.0.0"
+        versionName = "3.0.0-beta1"
 
         manifestPlaceholders["appName"] = "Trainable"
 
