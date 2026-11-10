@@ -44,7 +44,7 @@ class UpdateManager @Inject constructor(
                 val latestVersion = release.tagName.removePrefix("v")
                 val currentVersion = BuildConfig.VERSION_NAME
                 
-                if (isNewerVersion(currentVersion, latestVersion)) {
+                if (AppVersion.isNewer(currentVersion, latestVersion)) {
                     release
                 } else {
                     null
@@ -54,20 +54,6 @@ class UpdateManager @Inject constructor(
             e.printStackTrace()
             null
         }
-    }
-
-    private fun isNewerVersion(current: String, latest: String): Boolean {
-        val currentParts = current.split(".").mapNotNull { it.toIntOrNull() }
-        val latestParts = latest.split(".").mapNotNull { it.toIntOrNull() }
-        
-        val length = maxOf(currentParts.size, latestParts.size)
-        for (i in 0 until length) {
-            val curr = currentParts.getOrElse(i) { 0 }
-            val late = latestParts.getOrElse(i) { 0 }
-            if (late > curr) return true
-            if (late < curr) return false
-        }
-        return false
     }
 
     suspend fun downloadAndInstall(release: GitHubRelease, onProgress: (Float) -> Unit): Result<Unit> = withContext(Dispatchers.IO) {
