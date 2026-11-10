@@ -270,7 +270,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.9.1;
+				MARKETING_VERSION = 3.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
@@ -322,7 +322,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.9.1;
+				MARKETING_VERSION = 3.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
@@ -364,7 +364,7 @@
 			INFOPLIST_KEY_CFBundleDisplayName = Trainable;
 			IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 			LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
-			MARKETING_VERSION = 2.9.1;
+			MARKETING_VERSION = 3.0.0;
 			PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable.timers;
 			PRODUCT_NAME = TrainableTimers;
 			SKIP_INSTALL = YES;
@@ -381,7 +381,7 @@
 			INFOPLIST_KEY_CFBundleDisplayName = Trainable;
 			IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 			LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
-			MARKETING_VERSION = 2.9.1;
+			MARKETING_VERSION = 3.0.0;
 			PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable.timers;
 			PRODUCT_NAME = TrainableTimers;
 			SKIP_INSTALL = YES;
