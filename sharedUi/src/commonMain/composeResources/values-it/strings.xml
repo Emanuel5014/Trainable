@@ -1515,4 +1515,11 @@
     <string name="onboarding_ai_toggle_desc">Usa un modello locale per estrarre serie, ripetizioni ed esercizi dalle foto.</string>
     <string name="onboarding_ai_download_note">Puoi scaricare il modello ora oppure in qualsiasi momento dalle Impostazioni.</string>
     <string name="backup_enabled_short">Attivo</string>
+    <string name="onboarding_goal_less">Un allenamento in meno</string>
+    <string name="onboarding_goal_more">Un allenamento in più</string>
+    <string name="onboarding_goal_label">Allenamenti a settimana</string>
+    <string name="onboarding_ai_scan_title">Scansiona\nle tue schede.</string>
+    <string name="onboarding_ai_scan_desc">Legge serie, ripetizioni ed esercizi da una foto, sul telefono o con un tuo provider.</string>
+    <string name="onboarding_ai_local_unsupported_title">Niente IA sul dispositivo su questo telefono</string>
+    <string name="onboarding_ai_local_unsupported_desc">Il modello sul dispositivo richiede almeno %1$d GB di RAM. Puoi comunque scansionare con un provider: una chiave API cloud o un server sul tuo PC.</string>
 </resources>

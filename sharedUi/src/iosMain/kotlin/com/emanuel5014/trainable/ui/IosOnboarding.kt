@@ -18,6 +18,8 @@ import com.emanuel5014.trainable.ui.screens.onboarding.NextcloudConnection
 import com.emanuel5014.trainable.ui.screens.onboarding.NextcloudForm
 import com.emanuel5014.trainable.ui.screens.onboarding.NextcloudRestoreDialog
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingAi
+import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingLocalAi
+import com.emanuel5014.trainable.ui.screens.settings.AiProvidersModel
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingChoices
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingContent
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingModel
@@ -66,11 +68,12 @@ internal fun IosOnboarding() {
         disconnect = { backups.disconnectNextcloudSilently() }
     )
 
-    val ai = if (IosLocalAiDevice.isSupported) {
+    val providers = remember { AiProvidersModel(IosAppGraph.aiProfiles, IosAppGraph.aiHttp, scope) }
+    val local = if (IosLocalAiDevice.isSupported) {
         val store = IosAppGraph.localModels
         val status by store.status.collectAsState()
         val importError by store.importError.collectAsState()
-        OnboardingAi(
+        OnboardingLocalAi(
             variants = listOf(store.variant),
             selected = store.variant,
             onSelect = {},
@@ -85,6 +88,17 @@ internal fun IosOnboarding() {
             }
         )
     } else null
+    // An iPhone needs 8 GB for it (IosLocalAiDevice), not Android's 6
+    val ai = OnboardingAi(providers = providers, local = local, localRequiredRamGb = 8)
+
+    // Liquid Glass starts on for a new iPhone setup (the user can turn it off on Look); once per launch, so a
+    // language change (which rebuilds the tree) doesn't turn it back on
+    LaunchedEffect(Unit) {
+        if (!iosGlassDefaultApplied) {
+            iosGlassDefaultApplied = true
+            IosAppGraph.preferences.setLiquidGlassEnabled(true)
+        }
+    }
 
     val languageOptions = iosLanguageOptions()
     val selectedLanguage = language ?: "system"
@@ -182,3 +196,6 @@ internal fun IosOnboarding() {
         )
     }
 }
+
+/** Liquid Glass was switched on for this setup already (a process-wide flag: it survives the language rebuild). */
+private var iosGlassDefaultApplied = false

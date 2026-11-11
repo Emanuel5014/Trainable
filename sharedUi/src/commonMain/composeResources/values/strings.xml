@@ -1513,4 +1513,11 @@
     <string name="onboarding_ai_toggle_desc">Uses a local model to parse sets, reps, and exercises from photos.</string>
     <string name="onboarding_ai_download_note">You can download the model now or anytime later in Settings.</string>
     <string name="backup_enabled_short">On</string>
+    <string name="onboarding_goal_less">One workout fewer</string>
+    <string name="onboarding_goal_more">One workout more</string>
+    <string name="onboarding_goal_label">Workouts per week</string>
+    <string name="onboarding_ai_scan_title">Scan your\nworkout sheets.</string>
+    <string name="onboarding_ai_scan_desc">Reads sets, reps and exercises from a photo, on this phone or with your own provider.</string>
+    <string name="onboarding_ai_local_unsupported_title">No on-device AI on this phone</string>
+    <string name="onboarding_ai_local_unsupported_desc">The on-device model needs at least %1$d GB of RAM. You can still scan with a provider: a cloud API key or a server on your PC.</string>
 </resources>

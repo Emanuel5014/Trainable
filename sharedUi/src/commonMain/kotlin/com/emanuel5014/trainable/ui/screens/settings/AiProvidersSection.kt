@@ -67,7 +67,9 @@ internal fun AiProvidersSection(
     activeIsLocal: Boolean,
     deviceSupported: Boolean,
     localUnavailableText: StringResource,
-    viewModel: AiProvidersModel
+    viewModel: AiProvidersModel,
+    /** False leaves only the providers (the onboarding on a phone that can't run the on-device model). */
+    showLocal: Boolean = true
 ) {
     var editor by remember { mutableStateOf<EditorTarget?>(null) }
     var deleteTarget by remember { mutableStateOf<ProviderRow?>(null) }
@@ -75,7 +77,7 @@ internal fun AiProvidersSection(
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(stringResource(Res.string.ai_where_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
 
-        ChoiceRow(
+        if (showLocal) ChoiceRow(
             selected = activeIsLocal,
             enabled = deviceSupported,
             title = stringResource(Res.string.ai_backend_local),
@@ -113,6 +115,15 @@ internal fun AiProvidersSection(
             )
         }
 
+        // Without the phone row the hint ("add one below") goes above the button it points to
+        if (!showLocal && !deviceSupported && activeIsLocal) {
+            Text(
+                stringResource(Res.string.ai_provider_hint_weak),
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceVariant
+            )
+        }
+
         GymButton(
             onClick = { editor = EditorTarget(null) },
             modifier = Modifier.fillMaxWidth(),
@@ -124,7 +135,7 @@ internal fun AiProvidersSection(
             Text(stringResource(Res.string.ai_provider_add))
         }
 
-        if (!deviceSupported && activeIsLocal) {
+        if (showLocal && !deviceSupported && activeIsLocal) {
             Text(
                 stringResource(Res.string.ai_provider_hint_weak),
                 style = MaterialTheme.typography.bodySmall,

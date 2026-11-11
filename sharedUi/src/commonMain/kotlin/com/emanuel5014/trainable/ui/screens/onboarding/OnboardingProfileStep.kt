@@ -7,7 +7,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.ui.text.style.TextAlign
+import com.emanuel5014.trainable.domain.WeeklyGoal
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -65,13 +70,27 @@ fun ProfileStep(choices: OnboardingChoices, hero: @Composable () -> Unit) {
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OptionLabel(stringResource(Res.string.onboarding_setup_goal_label))
-                OptionGroup(
-                    options = (1..7).map { it.toString() },
-                    selected = goal.toIntOrNull()?.coerceIn(1, 7)?.toString() ?: "3",
-                    label = { it },
-                    onSelect = { goal = it }
-                )
+                OptionLabel(stringResource(Res.string.onboarding_goal_label))
+                // A count of workouts, not weekdays: it can go past 7
+                val count = WeeklyGoal.parse(goal)
+                JoinedRowSurface(JoinedPosition.Single) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        FilledTonalIconButton(onClick = { goal = WeeklyGoal.step(count, -1).toString() }, enabled = count > 1) {
+                            Icon(Icons.Rounded.Remove, contentDescription = stringResource(Res.string.onboarding_goal_less))
+                        }
+                        Text(
+                            count.toString(),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
+                        )
+                        FilledTonalIconButton(onClick = { goal = WeeklyGoal.step(count, +1).toString() }, enabled = count < WeeklyGoal.MAX) {
+                            Icon(Icons.Rounded.Add, contentDescription = stringResource(Res.string.onboarding_goal_more))
+                        }
+                    }
+                }
             }
 
             GymInputField(

@@ -1512,4 +1512,11 @@
     <string name="onboarding_ai_toggle_desc">Verwendet ein lokales Modell, um Sätze, Wdh. und Übungen aus Fotos zu extrahieren.</string>
     <string name="onboarding_ai_download_note">Du kannst das Modell jetzt oder jederzeit später in den Einstellungen herunterladen.</string>
     <string name="backup_enabled_short">An</string>
+    <string name="onboarding_goal_less">Ein Training weniger</string>
+    <string name="onboarding_goal_more">Ein Training mehr</string>
+    <string name="onboarding_goal_label">Trainings pro Woche</string>
+    <string name="onboarding_ai_scan_title">Scanne deine\nTrainingspläne.</string>
+    <string name="onboarding_ai_scan_desc">Liest Sätze, Wiederholungen und Übungen aus einem Foto, auf dem Telefon oder mit deinem Anbieter.</string>
+    <string name="onboarding_ai_local_unsupported_title">Keine KI auf diesem Telefon</string>
+    <string name="onboarding_ai_local_unsupported_desc">Das Modell auf dem Gerät braucht mindestens %1$d GB RAM. Du kannst trotzdem mit einem Anbieter scannen: einem Cloud-API-Schlüssel oder einem Server auf deinem PC.</string>
 </resources>

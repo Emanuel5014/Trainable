@@ -1515,4 +1515,11 @@
     <string name="onboarding_ai_toggle_desc">Utilise un modèle local pour extraire séries, répétitions et exercices des photos.</string>
     <string name="onboarding_ai_download_note">Vous pouvez télécharger le modèle maintenant ou plus tard dans les Paramètres.</string>
     <string name="backup_enabled_short">Activé</string>
+    <string name="onboarding_goal_less">Une séance de moins</string>
+    <string name="onboarding_goal_more">Une séance de plus</string>
+    <string name="onboarding_goal_label">Séances par semaine</string>
+    <string name="onboarding_ai_scan_title">Scannez\nvos programmes.</string>
+    <string name="onboarding_ai_scan_desc">Lit séries, répétitions et exercices sur une photo, sur ce téléphone ou avec votre fournisseur.</string>
+    <string name="onboarding_ai_local_unsupported_title">Pas d'IA sur l'appareil sur ce téléphone</string>
+    <string name="onboarding_ai_local_unsupported_desc">Le modèle sur l'appareil demande au moins %1$d Go de RAM. Vous pouvez scanner avec un fournisseur : une clé API cloud ou un serveur sur votre PC.</string>
 </resources>

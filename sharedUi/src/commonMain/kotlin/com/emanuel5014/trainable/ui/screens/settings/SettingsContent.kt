@@ -369,7 +369,7 @@ fun SettingsContent(
                                     fontWeight = FontWeight.Black,
                                     modifier = Modifier.padding(horizontal = 8.dp)
                                 )
-                                IconButton(onClick = { if (weeklyGoal < 7) state.setWeeklyGoal(weeklyGoal + 1) }) {
+                                IconButton(onClick = { if (weeklyGoal < com.emanuel5014.trainable.domain.WeeklyGoal.MAX) state.setWeeklyGoal(weeklyGoal + 1) }) {
                                     Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
                                 }
                             }

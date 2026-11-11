@@ -1515,4 +1515,11 @@
     <string name="onboarding_ai_toggle_desc">Usa um modelo local para extrair séries, repetições e exercícios de fotos.</string>
     <string name="onboarding_ai_download_note">Pode transferir o modelo agora ou mais tarde nas Definições.</string>
     <string name="backup_enabled_short">Ativo</string>
+    <string name="onboarding_goal_less">Um treino a menos</string>
+    <string name="onboarding_goal_more">Um treino a mais</string>
+    <string name="onboarding_goal_label">Treinos por semana</string>
+    <string name="onboarding_ai_scan_title">Digitalize\nsuas fichas.</string>
+    <string name="onboarding_ai_scan_desc">Lê séries, repetições e exercícios de uma foto, no telefone ou com seu próprio provedor.</string>
+    <string name="onboarding_ai_local_unsupported_title">Sem IA no dispositivo neste telefone</string>
+    <string name="onboarding_ai_local_unsupported_desc">O modelo no dispositivo precisa de pelo menos %1$d GB de RAM. Você ainda pode digitalizar com um provedor: uma chave de API na nuvem ou um servidor no seu PC.</string>
 </resources>

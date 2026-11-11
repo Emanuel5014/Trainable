@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.onboarding
 
+import com.emanuel5014.trainable.domain.WeeklyGoal
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 
@@ -69,7 +70,7 @@ fun OnboardingChoices.toSettings(theme: ThemeChoice, aiModelVariant: String) = O
     username = username.value,
     initialWeight = weightInput.value.replace(',', '.').toFloatOrNull() ?: 0f,
     weightUnit = weightUnit.value,
-    weeklyGoal = weeklyGoalInput.value.toIntOrNull() ?: 3,
+    weeklyGoal = WeeklyGoal.parse(weeklyGoalInput.value),
     membershipExpiryDate = membershipExpiryDate.value,
     rpeEnabled = rpeEnabled.value,
     rpeScale = rpeScale.value,

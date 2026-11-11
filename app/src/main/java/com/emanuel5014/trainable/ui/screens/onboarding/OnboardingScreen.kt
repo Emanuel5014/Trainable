@@ -21,12 +21,17 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
 import com.emanuel5014.trainable.ui.components.shared.ModelImportOption
+import com.emanuel5014.trainable.ui.screens.settings.AiProvidersViewModel
 import com.emanuel5014.trainable.ui.screens.settings.LanguageDialog
 import com.emanuel5014.trainable.ui.screens.settings.languageName
 import kotlin.system.exitProcess
 
 @Composable
-fun OnboardingScreen(onFinished: () -> Unit, viewModel: OnboardingViewModel = hiltViewModel()) {
+fun OnboardingScreen(
+    onFinished: () -> Unit,
+    viewModel: OnboardingViewModel = hiltViewModel(),
+    providersViewModel: AiProvidersViewModel = hiltViewModel()
+) {
     val choices = remember { OnboardingChoices() }
     val nextcloudForm = remember { NextcloudForm() }
     val context = LocalContext.current
@@ -119,8 +124,8 @@ fun OnboardingScreen(onFinished: () -> Unit, viewModel: OnboardingViewModel = hi
         disconnect = { viewModel.disconnectNextcloud() }
     )
 
-    val ai = if (viewModel.aiDeviceSupported) {
-        OnboardingAi(
+    val local = if (viewModel.aiDeviceSupported) {
+        OnboardingLocalAi(
             variants = AiModelVariant.entries,
             selected = AiModelVariant.fromId(selectedAiModelVariant),
             onSelect = { viewModel.setAiModelVariant(it.id) },
@@ -139,6 +144,8 @@ fun OnboardingScreen(onFinished: () -> Unit, viewModel: OnboardingViewModel = hi
             }
         )
     } else null
+    // The check allows 5.0 GB because a "6 GB" phone reports about 5.5; the user reads the box size
+    val ai = OnboardingAi(providers = providersViewModel.model, local = local, localRequiredRamGb = 6)
 
     OnboardingContent(
         model = viewModel.model,

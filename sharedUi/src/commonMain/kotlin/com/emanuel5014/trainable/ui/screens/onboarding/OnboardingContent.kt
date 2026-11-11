@@ -51,8 +51,8 @@ fun OnboardingContent(
     model: OnboardingModel,
     onFinished: () -> Unit,
     choices: OnboardingChoices,
-    /** The platform's AI model controls, or null when this phone can't run the on-device model. */
-    ai: OnboardingAi?,
+    /** Where the scan runs: providers, plus the on-device model when this phone can run it. */
+    ai: OnboardingAi,
     selectedAiModelVariant: String,
     languageLabel: String,
     onPickLanguage: () -> Unit,
@@ -69,8 +69,7 @@ fun OnboardingContent(
     /** Called when the user moves on from the Alerts step; the platform may ask for its permission here. */
     onNotificationsPageLeft: (timerEnabled: Boolean, membershipEnabled: Boolean) -> Unit = { _, _ -> }
 ) {
-    val advanced by choices.advancedProgramming
-    val steps = onboardingSteps(aiStepAvailable(ai != null, advanced))
+    val steps = onboardingSteps()
     val pagerState = rememberPagerState(pageCount = { steps.size })
     val scope = rememberCoroutineScope()
     val showMessage = LocalShowMessage.current
@@ -172,7 +171,7 @@ fun OnboardingContent(
                             OnboardingStep.Tweaks -> TweaksStep(choices, hero)
                             OnboardingStep.Look -> LookStep(model, wallpaperSupported, hero)
                             OnboardingStep.Alerts -> AlertsStep(choices, customVibrationSupported, hero)
-                            OnboardingStep.Ai -> ai?.let { AiStep(choices, it, hero) }
+                            OnboardingStep.Ai -> AiStep(choices, ai, hero)
                             OnboardingStep.Data -> DataStep(choices.autoBackupEnabled.value, nextcloudConnected, dataLocal, dataNextcloud, hero)
                             OnboardingStep.Ready -> ReadyStep(choices, themeLabel, goTo, hero)
                         }
