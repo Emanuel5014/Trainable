@@ -197,3 +197,18 @@ internal class IosWorkoutTimers(
         }
     }
 }
+
+/**
+ * A deleted workout takes its countdowns with it, also when its screen is gone and nothing ticks them any more:
+ * the alerts this process scheduled for it, and (in Swift, which also knows cards from before a relaunch) its
+ * Live Activities with their pending alerts.
+ */
+internal object IosWorkoutSessionEnd {
+    fun deleted(sessionId: Int, scheduler: IosNotificationScheduler = IosNotifications.scheduler,
+        live: IosWorkoutLiveActivities? = IosWorkoutLiveActivityBridge.service) {
+        val kinds = IosLiveTimerSnapshots.forgetSession(sessionId)
+        val ids = kinds.flatMap { kind -> if (kind == EMOM_NOTICE) (0..59).map { "$EMOM_NOTICE.$it" } else listOf(kind) }
+        if (ids.isNotEmpty()) scheduler.cancel(ids)
+        live?.cancelSession(sessionId)
+    }
+}

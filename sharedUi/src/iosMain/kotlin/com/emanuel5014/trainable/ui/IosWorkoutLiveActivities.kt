@@ -6,6 +6,8 @@ interface IosWorkoutLiveActivities {
     fun update(timer: IosLiveTimer)
     fun cancel(kind: String)
     fun cancelAll()
+    /** Ends every card of a workout that was deleted, with the alerts still pending for it. */
+    fun cancelSession(sessionId: Int)
 }
 
 /** One native date-based countdown, rather than a stream of per-second Kotlin updates. */

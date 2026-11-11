@@ -19,6 +19,12 @@ internal object IosLiveTimerSnapshots {
         if (instance == null || values[kind]?.instanceId == instance) values.remove(kind)
     }
     fun clear() = values.clear()
+    /** The kinds whose card belongs to [sessionId], now forgotten. */
+    fun forgetSession(sessionId: Int): List<String> {
+        val kinds = values.filterValues { it.sessionId == sessionId }.keys.toList()
+        kinds.forEach(values::remove)
+        return kinds
+    }
 }
 
 internal data class IosTimerControls(val enabled: Boolean, val addSeconds: Int, val subtractSeconds: Int,

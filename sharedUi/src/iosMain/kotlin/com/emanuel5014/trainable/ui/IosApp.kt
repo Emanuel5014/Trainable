@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.runtime.collectAsState
@@ -190,6 +191,10 @@ private val IosPrescriptionEnvironment: @Composable () -> PrescriptionEnvironmen
 private fun TrainableIosApp() {
     val preferences = IosAppGraph.preferences
     IosNotificationEffects(preferences)
+    // A workout deleted from any screen ends its rest card and alerts, even once its own screen is closed
+    LaunchedEffect(Unit) {
+        IosAppGraph.workouts.deletedSessions.collect { IosWorkoutSessionEnd.deleted(it) }
+    }
     val scope = rememberCoroutineScope()
     val state = remember {
         val db = IosAppGraph.database
@@ -201,7 +206,7 @@ private fun TrainableIosApp() {
                     db.workoutDao().getUnfinishedSessionsWithPlanName()
                 override fun cardioSessionCountSince(sinceTimestamp: Long): Flow<Int> =
                     db.workoutDao().getCardioSessionCountSince(sinceTimestamp)
-                override suspend fun deleteSession(sessionId: Int) = db.workoutDao().deleteSession(sessionId)
+                override suspend fun deleteSession(sessionId: Int) = IosAppGraph.workouts.deleteSession(sessionId)
             },
             analyticsRepository = AnalyticsRepository(db.analyticsDao(), db.weightLogDao()),
             userRepository = UserRepository(db.userDao(), db.weightLogDao()),

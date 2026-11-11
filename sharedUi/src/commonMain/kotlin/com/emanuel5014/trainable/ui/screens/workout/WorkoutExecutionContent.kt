@@ -235,11 +235,11 @@ fun WorkoutExecutionContent(
         when {
             // The set is gone (removed)
             editing == null -> ui.editingSetIndex = null
-            // The set being edited came up next: it moves to the panel of the active set, which can also log it
-            // (while a rest is running that panel waits for the rest to end, so it is not opened behind it)
+            // The set being edited came up next: it moves to the panel of the active set, which can also log it.
+            // During a rest this is how the lifter prepares the next set; the countdown stays on the card.
             ui.editingSetIndex == activeSetIndex && !editing.isCompleted -> {
                 ui.editingSetIndex = null
-                ui.isEditingValues = state.remainingRestSeconds <= 0
+                ui.isEditingValues = true
             }
         }
     }

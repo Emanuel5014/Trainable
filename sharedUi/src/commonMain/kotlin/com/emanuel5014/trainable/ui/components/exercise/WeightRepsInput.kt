@@ -48,8 +48,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.Velocity
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -348,7 +353,7 @@ private fun <T> WheelPickerBox(
             LazyColumn(
                 state = listState,
                 flingBehavior = rememberSnapFlingBehavior(lazyListState = listState),
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.nestedScroll(WheelEdgeStop).fillMaxSize(),
                 contentPadding = PaddingValues(vertical = 36.dp)
             ) {
                 items(
@@ -403,6 +408,15 @@ private fun <T> WheelPickerBox(
 
 /** Distance, in rows, past which a row is as small and faint as the lens makes it. */
 private const val WHEEL_FAR_ROWS = 2f
+
+/**
+ * A wheel at its first or last value keeps the rest of the drag: what holds the wheel (the workout hub, a sheet)
+ * must not move or close because the lifter scrolled past the end of a number.
+ */
+private object WheelEdgeStop : NestedScrollConnection {
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset = available
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
+}
 
 private fun <T> areEqual(a: T, b: T): Boolean =
     if (a is Float && b is Float) kotlin.math.abs(a - b) < 0.001f else a == b

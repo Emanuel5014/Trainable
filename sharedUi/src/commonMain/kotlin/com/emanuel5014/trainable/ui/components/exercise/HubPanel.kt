@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -50,8 +51,14 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.Velocity
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -125,8 +132,18 @@ class HubSheetState internal constructor(
         expansion = HubMotion.dragExpansion(expansion, deltaPx, travelPx, locked)
     }
 
-    /** The finger lifted at [velocityPxPerSec] (positive is down). */
-    internal fun settle(velocityPxPerSec: Float) {
+    /** Whether the finger pulled a locked hub down from open, so the rest of the gesture belongs to the hub. */
+    internal val pulledWhileLocked: Boolean
+        get() = locked && expansion < HubMotion.OPEN
+
+    /**
+     * The finger lifted at [velocityPxPerSec] (positive is down). A locked hub pulled down far enough, or flicked
+     * down, calls [onDismiss], which is expected to unlock it; it goes back open meanwhile.
+     */
+    internal fun settle(velocityPxPerSec: Float, onDismiss: (() -> Unit)? = null) {
+        if (locked && onDismiss != null && HubMotion.lockedReleaseDismisses(expansion, velocityPxPerSec, flingVelocityPx)) {
+            onDismiss()
+        }
         val target = HubMotion.releaseTarget(expansion, velocityPxPerSec, flingVelocityPx, locked)
         if (!locked) detent = target
         animateTo(target, initialVelocity = -velocityPxPerSec / travelPx)
@@ -196,6 +213,7 @@ private fun createHubSheetState(scope: CoroutineScope, detent: Float, density: D
  * The bottom hub: a sheet with a pill on top that the lifter drags between open and a thin strip. [content] gets
  * the live expansion (read it inside a layout or a small scope, it changes on every frame of a drag) and uses it
  * to reshape itself. [locked] opens the hub and holds it there, e.g. while the lifter types a weight.
+ * [onDismissInput] closes what a locked hub asks for: the lifter swipes down on the hub, on its pill or on its content.
  */
 @Composable
 fun HubPanel(
@@ -206,10 +224,23 @@ fun HubPanel(
     horizontalPadding: Dp,
     onHeightChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onDismissInput: (() -> Unit)? = null,
     content: @Composable ColumnScope.(expansion: () -> Float) -> Unit
 ) {
     LaunchedEffect(locked) { sheet.setLocked(locked) }
     val expansion: () -> Float = remember(sheet) { { sheet.expansion } }
+    val focusManager = LocalFocusManager.current
+    val currentDismiss by rememberUpdatedState(onDismissInput)
+    val closeEditor: () -> Unit = remember {
+        {
+            // The keyboard of a field in the editor goes with it
+            focusManager.clearFocus()
+            currentDismiss?.invoke()
+        }
+    }
+    val dismiss = if (onDismissInput == null) null else closeEditor
+    val pullToDismiss = remember(sheet) { HubPullToDismiss(sheet) }
+    SideEffect { pullToDismiss.onDismiss = dismiss }
 
     AnimatedVisibility(
         visible = visible,
@@ -238,12 +269,14 @@ fun HubPanel(
             shadowElevation = if (glass == null) 16.dp else 0.dp
         ) {
             Column(modifier = Modifier.fillMaxWidth().then(if (glass == null) Modifier.navigationBarsPadding() else Modifier)) {
-                HubGrabber(sheet = sheet, hapticEnabled = hapticEnabled)
+                HubGrabber(sheet = sheet, hapticEnabled = hapticEnabled, onDismiss = dismiss)
                 // The open hub takes the room it needs; only when that is more than the screen has does its content scroll under the pill
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f, fill = false)
+                        // A swipe down on the content of a locked hub pulls the hub, once the content is at its top
+                        .nestedScroll(pullToDismiss)
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = if (glass == null) horizontalPadding else (horizontalPadding - GLASS_PANEL_INSET).coerceAtLeast(8.dp))
                 ) {
@@ -255,9 +288,37 @@ fun HubPanel(
     }
 }
 
-/** The pill on top of the hub: drag it, or tap it to switch step. */
+/**
+ * Lets a swipe down on the content of a locked hub pull the hub as the pill does, and close its editor when the
+ * finger lifts far enough down ([HubSheetState.settle]). An open hub, or one without [onDismiss], leaves every
+ * gesture to its content.
+ */
+private class HubPullToDismiss(private val sheet: HubSheetState) : NestedScrollConnection {
+    var onDismiss: (() -> Unit)? = null
+
+    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+        // Back up first: the hub the finger pulled down returns before the content scrolls again
+        if (source != NestedScrollSource.UserInput || !sheet.pulledWhileLocked || available.y >= 0f) return Offset.Zero
+        sheet.dragBy(available.y)
+        return Offset(0f, available.y)
+    }
+
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+        if (source != NestedScrollSource.UserInput || onDismiss == null || !sheet.locked || available.y <= 0f) return Offset.Zero
+        sheet.dragBy(available.y)
+        return Offset(0f, available.y)
+    }
+
+    override suspend fun onPreFling(available: Velocity): Velocity {
+        if (!sheet.pulledWhileLocked) return Velocity.Zero
+        sheet.settle(available.y, onDismiss)
+        return available
+    }
+}
+
+/** The pill on top of the hub: drag it, or tap it to switch step. A locked hub pulled down closes its editor ([onDismiss]). */
 @Composable
-private fun HubGrabber(sheet: HubSheetState, hapticEnabled: Boolean) {
+private fun HubGrabber(sheet: HubSheetState, hapticEnabled: Boolean, onDismiss: (() -> Unit)?) {
     val haptic = LocalHapticFeedback.current
     val hapticOn by rememberUpdatedState(hapticEnabled)
     val dragState = rememberDraggableState { delta ->
@@ -278,7 +339,7 @@ private fun HubGrabber(sheet: HubSheetState, hapticEnabled: Boolean) {
                 state = dragState,
                 orientation = Orientation.Vertical,
                 onDragStarted = { sheet.dragStarted() },
-                onDragStopped = { velocity -> sheet.settle(velocity) }
+                onDragStopped = { velocity -> sheet.settle(velocity, onDismiss) }
             )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },

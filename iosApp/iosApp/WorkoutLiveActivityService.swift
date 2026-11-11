@@ -2,6 +2,7 @@ import ActivityKit
 import Foundation
 import Shared
 import UIKit
+import UserNotifications
 
 /// ActivityKit is Swift-only. This is the narrow adapter installed before the Kotlin UI starts.
 final class WorkoutLiveActivityService: NSObject, IosWorkoutLiveActivities {
@@ -39,6 +40,11 @@ final class WorkoutLiveActivityService: NSObject, IosWorkoutLiveActivities {
 
     func cancelAll() {
         DispatchQueue.main.async { TimerLiveActivityCoordinator.shared.cancelAll() }
+    }
+
+    func cancelSession(sessionId: Int32) {
+        let session = Int(sessionId)
+        DispatchQueue.main.async { TimerLiveActivityCoordinator.shared.cancel(session: session) }
     }
 }
 
@@ -92,6 +98,25 @@ final class TimerLiveActivityCoordinator {
     func cancelAll() {
         desired.removeAll()
         dismissedInstances.removeAll()
+        changed()
+    }
+
+    /// The workout was deleted: end its cards, also those restored after a relaunch, and the alerts still pending
+    /// for them. Cards of another workout stay.
+    func cancel(session: Int) {
+        var ended = Set(desired.filter { $0.value.sessionID == session }.keys)
+        for activity in TimerActivity.activities where kinds.contains(activity.attributes.kind)
+            && activity.content.state.sessionID == session {
+            ended.insert(activity.attributes.kind)
+        }
+        guard !ended.isEmpty else { return }
+        for kind in ended {
+            desired.removeValue(forKey: kind)
+            dismissedInstances.removeValue(forKey: kind)
+        }
+        var alerts = ended.filter { $0 != "workout.emom" }
+        if ended.contains("workout.emom") { alerts.formUnion((0..<60).map { "workout.emom.\($0)" }) }
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: Array(alerts))
         changed()
     }
 

@@ -9,6 +9,7 @@ private class ActionLive : IosWorkoutLiveActivities {
     override fun isAvailable() = true
     override fun update(timer: IosLiveTimer) { timers[timer.kind] = timer }
     override fun cancel(kind: String) { timers.remove(kind) }
+    override fun cancelSession(sessionId: Int) { timers.values.removeAll { it.sessionId == sessionId } }
     override fun cancelAll() { timers.clear() }
 }
 private class ActionStore : IosTimerActionStore {

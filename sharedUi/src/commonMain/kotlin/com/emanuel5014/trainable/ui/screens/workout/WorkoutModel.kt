@@ -204,6 +204,13 @@ class WorkoutModel(
             }
         }
 
+        // The workout was deleted from another screen (dashboard, history) while this model still runs its clocks
+        modelScope.launch {
+            workoutRepository.deletedSessions.collect { id ->
+                if (id == _state.value.sessionId) stopClocks()
+            }
+        }
+
         modelScope.launch {
             workoutTimers.emomEvents.collect { action ->
                 when (action) {
@@ -3089,14 +3096,20 @@ class WorkoutModel(
             _state.value.sessionId?.let { sessionId ->
                 workoutRepository.deleteSession(sessionId)
             }
-            stopRestTimer()
-            stopWarmupTimer()
-            cardioTimerJob?.cancel()
-            cardioTimerJob = null
-            setTimerJob?.cancel()
-            setTimerJob = null
+            stopClocks()
             onComplete()
         }
+    }
+
+    /** The session is gone: no countdown, notification or Live Activity of it may keep running. */
+    private fun stopClocks() {
+        stopRestTimer()
+        stopWarmupTimer()
+        workoutTimers.cancelEmom()
+        cardioTimerJob?.cancel()
+        cardioTimerJob = null
+        setTimerJob?.cancel()
+        setTimerJob = null
     }
 
     fun addCustomExercise(nome: String, categoria: String, onCreated: (ExerciseEntity) -> Unit = {}) {

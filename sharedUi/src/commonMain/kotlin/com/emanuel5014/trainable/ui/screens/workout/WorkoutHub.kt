@@ -130,11 +130,12 @@ fun BoxScope.WorkoutHub(
         state.miniSet?.awaitingReps == true -> HubMode.MiniSet
         // A set being edited wins over the rest card, which stays visible in a slim form
         setBeingEdited != null && !isCardioActive && !isEmomActive -> HubMode.EditingSet
+        // The next set can be prepared while the rest runs: its editor wins too, the countdown stays on its card
+        ui.isEditingValues && !isCardioActive && !isEmomActive && activeSet != null && !activeSet.isCompleted -> HubMode.Editing
         isResting -> HubMode.Resting
         // Cardio and the EMOM clock have their own screens: the hub only navigates.
         isCardioActive || isEmomActive -> HubMode.Cardio
         activeSet == null || activeSet.isCompleted -> HubMode.Completed
-        ui.isEditingValues -> HubMode.Editing
         else -> HubMode.Logging
     }
     // These ask the lifter to type something: the hub opens by itself and goes back to the strip afterwards
@@ -149,7 +150,13 @@ fun BoxScope.WorkoutHub(
         hapticEnabled = state.hapticEnabled,
         horizontalPadding = com.emanuel5014.trainable.ui.theme.ResponsiveSize.horizontalPadding,
         onHeightChanged = onHubHeightChanged,
-        modifier = Modifier.align(Alignment.BottomCenter)
+        modifier = Modifier.align(Alignment.BottomCenter),
+        // A swipe down on the hub closes the editor of a set; the reps of a mini-set still have to be given
+        onDismissInput = when (hubMode) {
+            HubMode.EditingSet -> ({ ui.editingSetIndex = null })
+            HubMode.Editing -> ({ ui.isEditingValues = false })
+            else -> null
+        }
     ) { expansion ->
             AnimatedVisibility(
                 visible = state.warmupTimerEnabled && state.warmupTimerRemaining > 0,
@@ -524,8 +531,8 @@ private fun SetPanel(
                 showDetail = !editing,
                 trailing = {
                     if (editing) {
-                        // The rest card is hidden while a tapped set is edited: keep the countdown in sight
-                        if (editsTappedSet && isResting) RestTimerPill(state.remainingRestSeconds)
+                        // The rest card is hidden while a set is edited: keep the countdown in sight
+                        if (isResting) RestTimerPill(state.remainingRestSeconds)
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier

@@ -8,6 +8,7 @@ private class FakeLiveActivities(var available: Boolean = true) : IosWorkoutLive
     override fun isAvailable() = available
     override fun update(timer: IosLiveTimer) { timers[timer.kind] = timer; updates++ }
     override fun cancel(kind: String) { timers.remove(kind) }
+    override fun cancelSession(sessionId: Int) { timers.values.removeAll { it.sessionId == sessionId } }
     override fun cancelAll() { timers.clear() }
 }
 

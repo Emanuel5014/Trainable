@@ -56,6 +56,9 @@ import com.emanuel5014.trainable.domain.prescription.WeekSetCodec
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.util.sortedByKeys
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -76,6 +79,14 @@ class WorkoutRepository(
 ) {
     /** The routine-list operations, shared with the iOS app. */
     private val planRepository = PlanRepository(workoutDao, userDao, oneRepMaxDao)
+
+    private val _deletedSessions = MutableSharedFlow<Int>(extraBufferCapacity = 16)
+
+    /**
+     * The ids of sessions just deleted, from any screen: whoever still runs a rest countdown, a notification or a
+     * Live Activity for one of them stops it.
+     */
+    val deletedSessions: SharedFlow<Int> = _deletedSessions.asSharedFlow()
 
     fun getAllPlans(): Flow<List<WorkoutPlanEntity>> = workoutDao.getAllPlans()
 
@@ -757,6 +768,7 @@ class WorkoutRepository(
 
     suspend fun deleteSession(sessionId: Int) {
         workoutDao.deleteSession(sessionId)
+        _deletedSessions.emit(sessionId)
         triggerWidgetUpdate()
     }
 

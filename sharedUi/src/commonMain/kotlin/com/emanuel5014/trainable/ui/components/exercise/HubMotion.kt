@@ -50,6 +50,16 @@ object HubMotion {
         else -> STRIP
     }
 
+    /** How much of [LOCKED_GIVE] the lifter has to pull a locked hub down for letting go to close its editor. */
+    const val LOCKED_DISMISS_SHARE = 0.6f
+
+    /**
+     * Whether letting go of a locked hub that was pulled down closes what it asks for (the editor of a set):
+     * pulled far enough, or flicked down fast. [velocityPxPerSec] is positive when the finger was moving down.
+     */
+    fun lockedReleaseDismisses(expansion: Float, velocityPxPerSec: Float, flingVelocityPxPerSec: Float): Boolean =
+        velocityPxPerSec >= flingVelocityPxPerSec || expansion <= OPEN - LOCKED_GIVE * LOCKED_DISMISS_SHARE
+
     /** The step chosen by tapping the pill: the other one, unless the hub is locked. */
     fun tapTarget(detent: Float, locked: Boolean): Float = when {
         locked -> detent

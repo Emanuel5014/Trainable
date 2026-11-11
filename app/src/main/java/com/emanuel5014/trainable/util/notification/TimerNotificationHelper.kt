@@ -31,11 +31,13 @@ import android.media.AudioAttributes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.emanuel5014.trainable.data.repository.WorkoutRepository
 
 @Singleton
 class TimerNotificationHelper @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val userPrefsRepository: UserPreferencesRepository
+    private val userPrefsRepository: UserPreferencesRepository,
+    workoutRepository: WorkoutRepository
 ) {
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -64,7 +66,24 @@ class TimerNotificationHelper @Inject constructor(
     @Volatile private var addEnabled = true
     @Volatile private var subtractEnabled = true
 
+    /**
+     * The session the rest, warm-up and EMOM notifications belong to, told by the open workout. Kept here, outside
+     * the workout screen, because the notifications outlive it: deleting that session from the dashboard or the
+     * history must end them too.
+     */
+    @Volatile var workoutSessionId: Int? = null
+
     init {
+        scope.launch {
+            workoutRepository.deletedSessions.collect { id ->
+                if (id == workoutSessionId) {
+                    cancelTimer()
+                    cancelWarmupTimer()
+                    cancelEmom()
+                    workoutSessionId = null
+                }
+            }
+        }
         scope.launch { userPrefsRepository.timerAddSeconds.collect { addSeconds = it } }
         scope.launch { userPrefsRepository.timerSubtractSeconds.collect { subtractSeconds = it } }
         scope.launch { userPrefsRepository.timerShowTimeButtons.collect { showTimeButtons = it } }

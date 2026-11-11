@@ -12,6 +12,7 @@ import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.notification.AndroidWorkoutTimers
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,7 +22,7 @@ class WorkoutViewModel @Inject constructor(
     workoutRepository: WorkoutRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     exerciseRepository: ExerciseRepository,
-    timerNotificationHelper: TimerNotificationHelper,
+    private val timerNotificationHelper: TimerNotificationHelper,
     localeManager: AppLocaleManager,
     oneRepMaxRepository: OneRepMaxRepository,
     journalRepository: JournalRepository,
@@ -44,6 +45,15 @@ class WorkoutViewModel @Inject constructor(
         workoutName = savedStateHandle.get<String>("workoutName"),
         nowMillis = System::currentTimeMillis
     )
+
+    init {
+        // The notifications of this workout outlive the screen: tell their helper which session they belong to
+        viewModelScope.launch {
+            model.state.map { it.sessionId }.distinctUntilChanged().collect { id ->
+                if (id != null) timerNotificationHelper.workoutSessionId = id
+            }
+        }
+    }
 
     override fun onCleared() {
         model.close()
