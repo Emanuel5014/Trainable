@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.ui.screens.history
 
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlin.time.Clock
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.isSystemPlan
@@ -146,8 +147,12 @@ class HistoryState(
         _uiState.update { it.copy(filteredSessions = state.filters.apply(state.sessions, state.journalEnabled)) }
     }
 
+    /** The collection of the opened workout's details; only one runs, so an earlier workout cannot overwrite it. */
+    private var detailsJob: Job? = null
+
     fun loadSessionDetails(sessionId: Int) {
-        scope.launch {
+        detailsJob?.cancel()
+        detailsJob = scope.launch {
             _uiState.update { it.copy(isLoading = true) }
             repository.getSessionWithDetails(sessionId)
                 .onEach { session ->
