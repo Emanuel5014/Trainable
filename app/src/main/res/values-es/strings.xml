@@ -362,6 +362,14 @@
 
     <!-- Updates -->
     <string name="check_for_updates">Buscar actualizaciones</string>
+    <string name="beta_updates_title">Actualizaciones beta</string>
+    <string name="beta_updates_desc">Recibe también las versiones de prueba, para usar antes las novedades.</string>
+    <string name="beta_updates_on_note">Las betas pueden tener errores. Haz una copia de seguridad antes de instalar una.</string>
+    <string name="beta_updates_off_note">Estás en una beta: se te ofrecerá la próxima versión estable cuando salga.</string>
+    <string name="beta_updates_dialog_title">¿Recibir actualizaciones beta?</string>
+    <string name="beta_updates_dialog_text">• Las betas son versiones de prueba: pueden tener errores, cierres o pantallas sin terminar.\n\n• Una beta puede cambiar cómo se guardan tus datos. Haz una copia de seguridad antes de instalar una.\n\n• Desactivar las betas no te devuelve atrás: sigues en la beta hasta que salga una versión estable más nueva. Volver antes significa desinstalar, y se pierde todo lo que no esté en una copia.\n\n• Informa de los problemas en GitHub para que se arreglen antes de la versión estable.</string>
+    <string name="beta_updates_enable">Recibir betas</string>
+    <string name="update_is_beta">Versión beta: puede tener errores. Haz una copia de seguridad antes de instalarla.</string>
     <string name="update_available">¡Nueva actualización disponible!</string>
     <string name="version">Versión: %s</string>
     <string name="changelog">Cambios:</string>

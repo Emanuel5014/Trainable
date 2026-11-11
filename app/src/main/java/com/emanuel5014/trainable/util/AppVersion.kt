@@ -18,6 +18,24 @@ object AppVersion {
         return compare(latestVersion, currentVersion) > 0
     }
 
+    /** Orders two versions (negative when [a] is older). Versions that cannot be read sort below every real one. */
+    fun compare(a: String, b: String): Int {
+        val pa = parse(a)
+        val pb = parse(b)
+        return when {
+            pa == null && pb == null -> 0
+            pa == null -> -1
+            pb == null -> 1
+            else -> compare(pa, pb)
+        }
+    }
+
+    /** True for a version that reads as one, such as "v3.0.0" or "3.0.0-beta1"; false for "ios-2.9.1" or "nightly". */
+    fun isValid(raw: String): Boolean = parse(raw) != null
+
+    /** True for a pre-release such as "3.0.0-beta1" (also with the "-debug" suffix); false for "3.0.0" or junk. */
+    fun isPreRelease(raw: String): Boolean = parse(raw)?.preRelease != null
+
     private class Parsed(val core: List<Int>, val preRelease: List<String>?)
 
     private fun parse(raw: String): Parsed? {

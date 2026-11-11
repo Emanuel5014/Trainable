@@ -363,6 +363,14 @@
 
     <!-- Updates -->
     <string name="check_for_updates">Check for Updates</string>
+    <string name="beta_updates_title">Beta updates</string>
+    <string name="beta_updates_desc">Also get pre-release versions, to try new features first.</string>
+    <string name="beta_updates_on_note">Betas can have bugs. Back up your data before installing one.</string>
+    <string name="beta_updates_off_note">You are on a beta: the next stable version will be offered when it comes out.</string>
+    <string name="beta_updates_dialog_title">Get beta updates?</string>
+    <string name="beta_updates_dialog_text">• Betas are test versions: they can have bugs, crashes or unfinished screens.\n\n• A beta can change how your data is stored. Make a backup before installing one.\n\n• Turning betas off does not take you back: you stay on the beta until a newer stable version comes out. Going back sooner means uninstalling, which erases everything not in a backup.\n\n• Report problems on GitHub, so they get fixed before the stable release.</string>
+    <string name="beta_updates_enable">Get betas</string>
+    <string name="update_is_beta">Beta version: it may have bugs. Back up your data before installing.</string>
     <string name="update_available">New update available!</string>
     <string name="version">Version: %s</string>
     <string name="changelog">Changelog:</string>

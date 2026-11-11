@@ -145,6 +145,11 @@ class UserPreferencesRepository(
     val TIMER_SUBTRACT_ENABLED = booleanPreferencesKey("timer_subtract_enabled")
     /** The rest countdown after each set of a workout. On by default; the warmup timer does not depend on it. */
     val REST_TIMER_ENABLED = booleanPreferencesKey("rest_timer_enabled")
+    /**
+     * Android updater: true = beta channel (pre-releases too), false = stable only, unset = follow the installed
+     * version (a beta install stays on beta). Device state like the last backup run: never in a backup.
+     */
+    val UPDATE_CHANNEL_BETA = booleanPreferencesKey("update_channel_beta")
     /** The last warmup the lifter started, in seconds: the warmup slider opens on it. */
     val LAST_WARMUP_SECONDS = intPreferencesKey("last_warmup_seconds")
     /** The last rest chosen when adding or swapping an exercise in a workout, in seconds: that slider opens on it. */
@@ -547,6 +552,16 @@ class UserPreferencesRepository(
     suspend fun setRestTimerEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[REST_TIMER_ENABLED] = enabled
+        }
+    }
+
+    /** The beta-updates choice, or null while the user never touched the switch (see [UPDATE_CHANNEL_BETA]). */
+    val updateChannelBeta: Flow<Boolean?> = dataStore.data
+        .map { preferences -> preferences[UPDATE_CHANNEL_BETA] }
+
+    suspend fun setUpdateChannelBeta(beta: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[UPDATE_CHANNEL_BETA] = beta
         }
     }
 

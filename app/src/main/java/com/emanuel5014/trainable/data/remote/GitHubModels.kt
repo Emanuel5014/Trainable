@@ -6,9 +6,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GitHubRelease(
     @SerialName("tag_name") val tagName: String,
-    @SerialName("name") val name: String,
-    @SerialName("body") val body: String, // Changelog
-    @SerialName("assets") val assets: List<GitHubAsset>
+    @SerialName("name") val name: String = "",
+    @SerialName("body") val body: String = "", // Changelog (null on GitHub when empty, see the Json setup)
+    @SerialName("assets") val assets: List<GitHubAsset> = emptyList(),
+    /** Marked "Pre-release" on GitHub: only the beta channel is offered it. */
+    @SerialName("prerelease") val prerelease: Boolean = false,
+    @SerialName("draft") val draft: Boolean = false
 )
 
 @Serializable

@@ -28,6 +28,9 @@ import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.TimerAdjustment
 import com.emanuel5014.trainable.util.UpdateManager
+import com.emanuel5014.trainable.util.UpdateChannel
+import com.emanuel5014.trainable.BuildConfig
+import kotlinx.coroutines.flow.map
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.backup.BackupManager
 import com.emanuel5014.trainable.util.notification.GymMembershipWorker
@@ -301,6 +304,19 @@ class SettingsViewModel @Inject constructor(
 
     private val _downloadProgress = MutableStateFlow(0f)
     val downloadProgress = _downloadProgress.asStateFlow()
+
+    /** Beta updates on or off; until the user chooses, a beta install counts as on (see [UpdateChannel.isBeta]). */
+    val betaUpdates = userPrefsRepository.updateChannelBeta
+        .map { UpdateChannel.isBeta(it, BuildConfig.VERSION_NAME) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UpdateChannel.isBeta(null, BuildConfig.VERSION_NAME))
+
+    /** Saves the channel, then looks for an update on it right away. */
+    fun setBetaUpdates(beta: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setUpdateChannelBeta(beta)
+            checkForUpdates()
+        }
+    }
 
     fun checkForUpdates() {
         viewModelScope.launch {

@@ -76,8 +76,17 @@ fun UpdateDialog(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (release.prerelease) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.update_is_beta),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Text(
                     text = stringResource(R.string.changelog),
                     style = MaterialTheme.typography.labelLarge,

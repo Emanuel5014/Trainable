@@ -5,8 +5,10 @@ import android.content.Intent
 import androidx.core.content.FileProvider
 import com.emanuel5014.trainable.BuildConfig
 import com.emanuel5014.trainable.data.remote.GitHubRelease
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -19,36 +21,37 @@ import javax.inject.Singleton
 @Singleton
 class UpdateManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val client: OkHttpClient
+    private val client: OkHttpClient,
+    private val preferences: UserPreferencesRepository
 ) {
     private val GITHUB_OWNER = "Emanuel5014"
     private val GITHUB_REPO = "Trainable"
-    private val GITHUB_API_URL = "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases/latest"
+    // The newest releases first; 50 reach well past the last final release even with many betas and iOS builds
+    private val GITHUB_API_URL = "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases?per_page=50"
 
-    private val json = Json { ignoreUnknownKeys = true }
+    // GitHub sends null for an empty name or changelog: coerceInputValues turns it into the field's default
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+
+    /** True when this phone takes beta updates (see [UpdateChannel.isBeta]). */
+    suspend fun isBetaChannel(): Boolean =
+        UpdateChannel.isBeta(preferences.updateChannelBeta.first(), BuildConfig.VERSION_NAME)
 
     suspend fun checkForUpdates(): GitHubRelease? = withContext(Dispatchers.IO) {
         // No update prompt in debug builds, only in release
         if (BuildConfig.DEBUG) return@withContext null
         try {
+            val beta = isBetaChannel()
             val request = Request.Builder()
                 .url(GITHUB_API_URL)
+                .header("Accept", "application/vnd.github+json")
                 .build()
-            
+
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return@withContext null
-                
-                val body = response.body?.string() ?: return@withContext null
-                val release = json.decodeFromString<GitHubRelease>(body)
 
-                val latestVersion = release.tagName.removePrefix("v")
-                val currentVersion = BuildConfig.VERSION_NAME
-                
-                if (AppVersion.isNewer(currentVersion, latestVersion)) {
-                    release
-                } else {
-                    null
-                }
+                val body = response.body?.string() ?: return@withContext null
+                val releases = json.decodeFromString<List<GitHubRelease>>(body)
+                UpdateChannel.pick(releases, BuildConfig.VERSION_NAME, beta)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -57,7 +60,7 @@ class UpdateManager @Inject constructor(
     }
 
     suspend fun downloadAndInstall(release: GitHubRelease, onProgress: (Float) -> Unit): Result<Unit> = withContext(Dispatchers.IO) {
-        val asset = release.assets.find { it.name.endsWith(".apk") } 
+        val asset = release.assets.find { it.name.endsWith(".apk", ignoreCase = true) }
             ?: return@withContext Result.failure(Exception("No APK found in release assets"))
 
         try {

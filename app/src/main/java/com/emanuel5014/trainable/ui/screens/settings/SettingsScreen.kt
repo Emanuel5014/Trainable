@@ -110,6 +110,7 @@ import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.UpdateDialog
+import com.emanuel5014.trainable.util.AppVersion
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -170,6 +171,7 @@ fun SettingsScreen(
     val latestRelease by viewModel.latestRelease.collectAsState()
     val isDownloading by viewModel.isDownloading.collectAsState()
     val downloadProgress by viewModel.downloadProgress.collectAsState()
+    val betaUpdates by viewModel.betaUpdates.collectAsState()
 
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -580,6 +582,11 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
+                    BetaUpdatesRow(
+                        betaOn = betaUpdates,
+                        installedIsBeta = AppVersion.isPreRelease(BuildConfig.VERSION_NAME),
+                        onChange = viewModel::setBetaUpdates
+                    )
                 }
             )
 
