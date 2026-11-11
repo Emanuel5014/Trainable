@@ -25,6 +25,8 @@ object BackupSettingsCodec {
         json.put("weight_unit", prefs[UserPreferencesRepository.WEIGHT_UNIT] ?: "kg")
         prefs[UserPreferencesRepository.USER_LANGUAGE]?.let { json.put("user_language", it) }
         json.put("swipe_actions_enabled", prefs[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true)
+        // Only when set: older backups and the legacy byte layout stay unchanged
+        prefs[UserPreferencesRepository.ROUTINES_WEEK_COLLAPSED]?.let { json.put("routines_week_collapsed", it) }
         json.put("dynamic_color", prefs[UserPreferencesRepository.DYNAMIC_COLOR] ?: true)
         prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED]?.let { json.put("dynamic_color_seed", it) }
         json.put("theme_palette", prefs[UserPreferencesRepository.THEME_PALETTE] ?: 0)
@@ -102,6 +104,8 @@ object BackupSettingsCodec {
             prefs[UserPreferencesRepository.USER_LANGUAGE] = jsonObject.getString("user_language")
         if (jsonObject.has("swipe_actions_enabled"))
             prefs[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] = jsonObject.getBoolean("swipe_actions_enabled")
+        if (jsonObject.has("routines_week_collapsed"))
+            prefs[UserPreferencesRepository.ROUTINES_WEEK_COLLAPSED] = jsonObject.getBoolean("routines_week_collapsed")
         if (jsonObject.has("dynamic_color"))
             prefs[UserPreferencesRepository.DYNAMIC_COLOR] = jsonObject.getBoolean("dynamic_color")
         if (jsonObject.has("dynamic_color_seed") && !jsonObject.isNull("dynamic_color_seed"))

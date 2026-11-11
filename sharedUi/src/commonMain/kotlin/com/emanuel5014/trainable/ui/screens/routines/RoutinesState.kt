@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 
@@ -24,13 +26,24 @@ typealias SharePlans = suspend (planIds: List<Int>, includeImages: Boolean, incl
 /** The routines list's state, the same on every platform; each one gives it its own lifetime ([scope]). */
 class RoutinesState(
     private val planRepository: PlanRepository,
-    userPrefsRepository: UserPreferencesRepository,
+    private val userPrefsRepository: UserPreferencesRepository,
     private val scope: CoroutineScope
 ) {
     private val _uiState = MutableStateFlow(RoutinesUiState(isLoading = true))
     val uiState: StateFlow<RoutinesUiState> = _uiState.asStateFlow()
 
     val swipeActionsEnabled: Flow<Boolean> = userPrefsRepository.swipeActionsEnabled
+
+    /**
+     * The "your week" card folded into one line; remembered across launches and in backups. Kept warm in [scope] and
+     * null until DataStore answers, so the screen never draws the card open and then folds it.
+     */
+    val weekCollapsed: StateFlow<Boolean?> =
+        userPrefsRepository.routinesWeekCollapsed.stateIn(scope, SharingStarted.Eagerly, null)
+
+    fun setWeekCollapsed(collapsed: Boolean) {
+        scope.launch { userPrefsRepository.setRoutinesWeekCollapsed(collapsed) }
+    }
 
     init {
         scope.launch {

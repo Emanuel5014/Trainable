@@ -60,6 +60,9 @@
     <string name="unarchive_routine">¿Restaurar Rutina?</string>
     <string name="unarchive_routine_message">Esta rutina será restaurada a tus rutinas activas.</string>
     <string name="your_routines">TUS RUTINAS</string>
+    <string name="routines_week_title">Tu semana</string>
+    <string name="routines_week_today">Hoy: %1$s</string>
+    <string name="routines_week_rest">Descanso</string>
     <string name="confirm">Confirmar</string>
     <string name="delete_routine">¿Eliminar Rutina?</string>
     <string name="delete_routine_message">Esto eliminará permanentemente esta rutina y todos sus ejercicios.</string>

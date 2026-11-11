@@ -95,6 +95,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -199,6 +202,7 @@ fun RoutineListContent(
     isVisible: Boolean = true
 ) {
     val uiState by state.uiState.collectAsState()
+    val weekCollapsed by state.weekCollapsed.collectAsState()
     val exportPrompt by state.exportPrompt.collectAsState()
 
     // La pagina resta composta quando si cambia tab (beyondViewportPageCount),
@@ -217,6 +221,15 @@ fun RoutineListContent(
     val swipeActionsEnabled by state.swipeActionsEnabled.collectAsState(initial = true)
     
     val pagerState = rememberPagerState(pageCount = { 2 })
+    // One scroll state per tab, so "Create routine" can shrink to its icon once the visible list leaves the top,
+    // like "Start" in the routine detail
+    val activeListState = rememberLazyListState()
+    val archivedListState = rememberLazyListState()
+    val createFabExpanded by remember {
+        derivedStateOf {
+            !(if (pagerState.currentPage == 0) activeListState else archivedListState).canScrollBackward
+        }
+    }
     val isCurrentlyArchived by remember { derivedStateOf { pagerState.currentPage == 1 } }
     val coroutineScope = rememberCoroutineScope()
 
@@ -282,6 +295,9 @@ fun RoutineListContent(
             } else if (showOwnFab) {
                 ExtendedFloatingActionButton(
                     onClick = { openCreateSheet() },
+                    expanded = createFabExpanded,
+                    icon = { Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.create)) },
+                    text = { Text(stringResource(Res.string.create_routine).replace("CREATE ", ""), fontWeight = FontWeight.ExtraBold) },
                     containerColor = actionGlassContainer(actionGlass, Primary),
                     contentColor = OnPrimary,
                     shape = Shapes.large,
@@ -290,11 +306,7 @@ fun RoutineListContent(
                         .padding(end = fabPadding)
                         .padding(bottom = 80.dp + floatingNavFabLift())
                         .actionGlass(actionGlass, Primary)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.create))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.create_routine).replace("CREATE ", ""), fontWeight = FontWeight.ExtraBold)
-                }
+                )
             }
         }
     ) { paddingValues ->
@@ -542,7 +554,21 @@ fun RoutineListContent(
                             swipeActionsEnabled = swipeActionsEnabled,
                             selectedPlanIds = uiState.selectedPlanIds,
                             onToggleSelection = { state.togglePlanSelection(it) },
-                            languageCode = languageCode
+                            languageCode = languageCode,
+                            listState = if (isArchivedPage) archivedListState else activeListState,
+                            // "Your week": active routines only, when some have days. It stays in the list while
+                            // selecting (only hidden), so the list does not lose its place when it comes back.
+                            header = if (!isArchivedPage && hasAssignedDays(plans) && weekCollapsed != null) {
+                                {
+                                    RoutineWeekCard(
+                                        plans = plans,
+                                        collapsed = weekCollapsed == true,
+                                        onToggle = { state.setWeekCollapsed(weekCollapsed != true) },
+                                        onOpenPlan = onNavigateToDetail
+                                    )
+                                }
+                            } else null,
+                            headerVisible = !uiState.isSelectionMode
                         )
                     }
                 }
@@ -1044,12 +1070,25 @@ private fun RoutineListPage(
     onToggleSelection: (Int) -> Unit = {},
     isFirst: Boolean = false,
     isLast: Boolean = false,
-    languageCode: String = "en"
+    languageCode: String = "en",
+    listState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState(),
+    /** Shown above the routines as the first list item (the week card on the Active tab). */
+    header: (@Composable () -> Unit)? = null,
+    /** False while [header] is hidden (selection mode): the first routine is then the top of the group. */
+    headerVisible: Boolean = true
 ) {
     val bottomClearance = navBarBottomClearance()
+    val hasHead = header != null && headerVisible
+    // A header that appears while the list sits at the top would be placed above the screen (the list keeps the
+    // first routine in place): scroll back up so it is seen.
+    val hasHeader = header != null
+    LaunchedEffect(hasHeader) {
+        if (hasHeader && listState.firstVisibleItemIndex == 1 && listState.firstVisibleItemScrollOffset == 0) {
+            listState.requestScrollToItem(0)
+        }
+    }
     val haptic = LocalHapticFeedback.current
     val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
-    val listState = rememberLazyListState()
     
     // Reordering State local to page
     val localPlans = remember(plans) { mutableStateListOf<PlanWithDetails>().apply { addAll(plans) } }
@@ -1071,8 +1110,18 @@ private fun RoutineListPage(
             state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(ResponsiveSize.horizontalPadding),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            // Rows joined into one group, Material 3 Expressive list style
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
+            if (header != null) item(key = "routines_week") {
+                Column {
+                    AnimatedVisibility(
+                        visible = headerVisible,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) { header() }
+                }
+            }
             itemsIndexed(localPlans, key = { _, planWithDetails -> planWithDetails.plan.id }) { index, planWithDetails ->
                 val plan = planWithDetails.plan
                 val isDragging = draggedItemIndex == index
@@ -1118,7 +1167,7 @@ private fun RoutineListPage(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clip(Shapes.extraLarge)
+                                .clip(routineRowCorners(index, localPlans.size, hasHead).toShape())
                                 .background(color)
                                 .padding(horizontal = 28.dp)
                         ) {
@@ -1147,13 +1196,16 @@ private fun RoutineListPage(
                             scaleX = if (isDragging) 1.02f else 1f
                             scaleY = if (isDragging) 1.02f else 1f
                             shadowElevation = if (isDragging) 12.dp.toPx() else 0f
-                            shape = Shapes.extraLarge
+                            shape = routineRowCorners(index, localPlans.size, hasHead).toShape()
                             clip = isDragging
                         }
                         // Reordering handled via buttons now to avoid gesture conflicts
                 ) {
-                    RoutineCard(
+                    RoutineRow(
                         planWithDetails = planWithDetails,
+                        position = index,
+                        count = localPlans.size,
+                        hasHead = hasHead,
                         languageCode = languageCode,
                         onClick = { 
                             if (isSelectionMode) {
@@ -1170,7 +1222,6 @@ private fun RoutineListPage(
                         },
                         isSelectionMode = isSelectionMode,
                         isSelected = isSelected,
-                        swipeActionsEnabled = swipeActionsEnabled,
                         isArchived = isArchived,
                         onMoveUp = if (index > 0) { { onReorder(index, index - 1) } } else null,
                         onMoveDown = if (index < localPlans.size - 1) { { onReorder(index, index + 1) } } else null
@@ -1178,204 +1229,6 @@ private fun RoutineListPage(
                 }
             }
             item { Spacer(modifier = Modifier.height(bottomClearance)) }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun RoutineCard(
-    planWithDetails: PlanWithDetails,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    isSelectionMode: Boolean,
-    isSelected: Boolean,
-    swipeActionsEnabled: Boolean = true,
-    isArchived: Boolean = false,
-    onMoveUp: (() -> Unit)? = null,
-    onMoveDown: (() -> Unit)? = null,
-    languageCode: String = "en"
-) {
-    val plan = planWithDetails.plan
-    // Where the platform cannot show photos yet, the card keeps its icon
-    val planImage = LocalPlanImage.current
-    val imageUri = (planWithDetails.images.firstOrNull()?.imageUri ?: plan.imageUri).takeIf { planImage != null }
-
-    val trainedMuscleGroups = remember(planWithDetails.exercises) {
-        planWithDetails.exercises.map { it.exercise.categoria }
-            .distinct()
-            .filter { it.isNotBlank() }
-    }
-
-    GymCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(Shapes.extraLarge)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
-        containerColor = if (isSelected) Primary.copy(alpha = 0.1f) else SurfaceContainerHigh
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) Primary else if (isSelectionMode) Primary.copy(alpha = 0.2f) else Surface),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isSelected) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = "Selected",
-                            tint = OnPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    } else if (imageUri != null && planImage != null) {
-                        planImage(imageUri, Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)))
-                    } else {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.Notes,
-                            contentDescription = null,
-                            tint = if (isSelectionMode) Primary else OnSurfaceVariant
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        text = plan.nome,
-                        style = MaterialTheme.typography.titleLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleLarge.fontSize)),
-                        color = if (isSelected) Primary else OnSurface,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    
-                    plan.dataFine?.let { expiry ->
-                        Text(
-                            text = stringResource(Res.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (expiry < Clock.System.now().toEpochMilliseconds()) Error else Primary,
-                            fontWeight = FontWeight.ExtraBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    if (isArchived) {
-                        Text(
-                            text = stringResource(Res.string.created_on) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(plan.dataInizio),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = OnSurfaceVariant,
-                            fontWeight = FontWeight.ExtraBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    
-                    if (!plan.giorniSettimana.isNullOrBlank()) {
-                        val scheduledDays = remember(plan.giorniSettimana) {
-                            plan.giorniSettimana.orEmpty().split(",").mapNotNull { 
-                                it.toIntOrNull()?.let { value -> DayOfWeek(value) }
-                            }
-                        }
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                        ) {
-                            DayOfWeek.entries.forEachIndexed { index, day ->
-                                val isScheduled = scheduledDays.contains(day)
-                                val dayShape = if (isScheduled) RoundedCornerShape(50)
-                                else when (index) {
-                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes().shape
-                                    DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes().shape
-                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes().shape
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(dayShape)
-                                        .background(if (isScheduled) Primary else SurfaceContainerHigh)
-                                        .then(
-                                            if (!isScheduled) Modifier.border(
-                                                BorderStroke(1.dp, OnSurfaceVariant.copy(alpha = 0.2f)),
-                                                dayShape
-                                            ) else Modifier
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = narrowDayName(day),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = if (isScheduled) OnPrimary else OnSurfaceVariant,
-                                        modifier = Modifier.padding(vertical = 4.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    if (trainedMuscleGroups.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier
-                                .padding(top = 6.dp)
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            trainedMuscleGroups.forEach { category ->
-                                val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
-                                androidx.compose.material3.Surface(
-                                    color = Surface,
-                                    contentColor = OnSurfaceVariant,
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Text(
-                                        text = translatedCategory,
-                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                                        fontWeight = FontWeight.ExtraBold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if (isSelectionMode) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (onMoveUp != null) {
-                        IconButton(onClick = onMoveUp) {
-                            Icon(
-                                Icons.Rounded.KeyboardArrowUp,
-                                contentDescription = "Move Up",
-                                tint = OnSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        }
-                    }
-                    if (onMoveDown != null) {
-                        IconButton(onClick = onMoveDown) {
-                            Icon(
-                                Icons.Rounded.KeyboardArrowDown,
-                                contentDescription = "Move Down",
-                                tint = OnSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }

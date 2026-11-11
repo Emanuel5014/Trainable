@@ -60,6 +60,9 @@
     <string name="unarchive_routine">Restaurer la Routine ?</string>
     <string name="unarchive_routine_message">Cette routine sera restaurée dans tes routines actives.</string>
     <string name="your_routines">TES ROUTINES</string>
+    <string name="routines_week_title">Ta semaine</string>
+    <string name="routines_week_today">Aujourd'hui : %1$s</string>
+    <string name="routines_week_rest">Repos</string>
     <string name="confirm">Confirmer</string>
     <string name="delete_routine">Supprimer la Routine ?</string>
     <string name="delete_routine_message">Cela supprimera définitivement cette routine et tous ses exercices.</string>

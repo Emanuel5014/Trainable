@@ -74,6 +74,8 @@ class UserPreferencesRepository(
         val THEME_STYLE = intPreferencesKey("theme_style")
         val TIMER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("timer_notifications_enabled")
         val SWIPE_ACTIONS_ENABLED = booleanPreferencesKey("swipe_actions_enabled")
+        /** Routines screen: the "your week" card folded into one line. */
+        val ROUTINES_WEEK_COLLAPSED = booleanPreferencesKey("routines_week_collapsed")
         val TIMER_FINISHED_LOCKSCREEN_VIBRATION_DURATION = intPreferencesKey("timer_finished_lockscreen_vibration_duration")
         val WARMUP_TIMER_ENABLED = booleanPreferencesKey("warmup_timer_enabled")
         val GYM_MEMBERSHIP_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("gym_membership_expiry_date")
@@ -346,6 +348,9 @@ class UserPreferencesRepository(
         .map { preferences ->
             preferences[SWIPE_ACTIONS_ENABLED] ?: true
         }
+
+    val routinesWeekCollapsed: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[ROUTINES_WEEK_COLLAPSED] ?: false }
 
     val warmupTimerEnabled: Flow<Boolean> = dataStore.data
         .map { preferences ->
@@ -878,6 +883,10 @@ class UserPreferencesRepository(
         dataStore.edit { preferences ->
             preferences[SWIPE_ACTIONS_ENABLED] = enabled
         }
+    }
+
+    suspend fun setRoutinesWeekCollapsed(collapsed: Boolean) {
+        dataStore.edit { preferences -> preferences[ROUTINES_WEEK_COLLAPSED] = collapsed }
     }
 
     suspend fun setWarmupTimerEnabled(enabled: Boolean) {

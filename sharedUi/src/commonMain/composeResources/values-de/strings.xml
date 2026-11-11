@@ -60,6 +60,9 @@
     <string name="unarchive_routine">Routine wiederherstellen?</string>
     <string name="unarchive_routine_message">Diese Routine wird in deine aktiven Routinen wiederhergestellt.</string>
     <string name="your_routines">DEINE ROUTINEN</string>
+    <string name="routines_week_title">Deine Woche</string>
+    <string name="routines_week_today">Heute: %1$s</string>
+    <string name="routines_week_rest">Ruhetag</string>
     <string name="confirm">Bestätigen</string>
     <string name="delete_routine">Routine löschen?</string>
     <string name="delete_routine_message">Dies löscht dauerhaft diese Routine und alle ihre Übungen.</string>
