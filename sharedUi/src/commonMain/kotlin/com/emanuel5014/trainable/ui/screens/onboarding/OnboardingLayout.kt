@@ -96,6 +96,8 @@ object OnboardingMetrics {
 fun OnboardingPage(
     modifier: Modifier = Modifier,
     centered: Boolean = false,
+    /** The fixed back/progress row sits above the page: no status-bar inset and a smaller top gap. */
+    underTopRow: Boolean = false,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(OnboardingMetrics.sectionSpacing),
     content: @Composable ColumnScope.() -> Unit
@@ -103,7 +105,7 @@ fun OnboardingPage(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .statusBarsPadding()
+            .then(if (underTopRow) Modifier else Modifier.statusBarsPadding())
             .imePadding(),
         contentAlignment = Alignment.TopCenter
     ) {
@@ -115,7 +117,7 @@ fun OnboardingPage(
                 .verticalScroll(rememberScrollState())
                 .then(if (centered) Modifier.heightIn(min = viewport) else Modifier)
                 .padding(horizontal = OnboardingMetrics.horizontalPadding)
-                .padding(top = if (centered) 0.dp else OnboardingMetrics.topPadding, bottom = 24.dp),
+                .padding(top = if (centered) 0.dp else if (underTopRow) 16.dp else OnboardingMetrics.topPadding, bottom = 24.dp),
             horizontalAlignment = horizontalAlignment,
             verticalArrangement = if (centered) Arrangement.Center else verticalArrangement,
             content = content

@@ -364,110 +364,18 @@ fun SettingsScreen(
                         val context = LocalContext.current
 
                         if (showLanguageDialog) {
-                            AlertDialog(
-                                onDismissRequest = { showLanguageDialog = false },
-                                containerColor = SurfaceContainerHigh,
-                                title = { Text(stringResource(R.string.language), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
-                                text = {
-                                    Column {
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_system_default),
-                                            isSelected = currentLanguage == "system",
-                                            onClick = {
-                                                viewModel.setLanguage("system") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_english),
-                                            isSelected = currentLanguage == "en",
-                                            onClick = {
-                                                viewModel.setLanguage("en") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_italian),
-                                            isSelected = currentLanguage == "it",
-                                            onClick = {
-                                                viewModel.setLanguage("it") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_spanish),
-                                            isSelected = currentLanguage == "es",
-                                            onClick = {
-                                                viewModel.setLanguage("es") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_french),
-                                            isSelected = currentLanguage == "fr",
-                                            onClick = {
-                                                viewModel.setLanguage("fr") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_german),
-                                            isSelected = currentLanguage == "de",
-                                            onClick = {
-                                                viewModel.setLanguage("de") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_portuguese),
-                                            isSelected = currentLanguage == "pt",
-                                            onClick = {
-                                                viewModel.setLanguage("pt") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
+                            LanguageDialog(
+                                currentLanguage = currentLanguage,
+                                onPick = { code ->
+                                    viewModel.setLanguage(code) {
+                                        showLanguageDialog = false
+                                        val intent = Intent(context, MainActivity::class.java)
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                        context.startActivity(intent)
+                                        exitProcess(0)
                                     }
                                 },
-                                confirmButton = {
-                                    TextButton(onClick = { showLanguageDialog = false }) {
-                                        Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                                    }
-                                }
+                                onDismiss = { showLanguageDialog = false }
                             )
                         }
 

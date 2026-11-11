@@ -6,6 +6,8 @@ import com.emanuel5014.trainable.data.local.entity.UserEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import kotlin.time.Clock
 
 /** Profile/settings writes shared by both platforms. Android owns its backup scheduler. */
@@ -52,38 +54,19 @@ class OnboardingModel(
         }
     }
 
-    suspend fun completeOnboarding(
-        username: String,
-        initialWeight: Float,
-        weeklyGoal: Int,
-        weightUnit: String,
-        hapticEnabled: Boolean = true,
-        swipeActionsEnabled: Boolean = true,
-        timerNotificationsEnabled: Boolean = true,
-        gymMembershipExpiryNotificationsEnabled: Boolean = false,
-        gymMembershipExpiryNotificationDaysBefore: Int = 3,
-        timerFinishedLockscreenVibrationDuration: Int = 30,
-        autoStopCardioAtTarget: Boolean = true,
-        autoStopTimeWeightAtTarget: Boolean = true,
-        autoBackupEnabled: Boolean = false,
-        autoBackupFrequency: Int = 1,
-        autoBackupFolderUri: String? = null,
-        autoBackupMaxCount: Int = 5,
-        autoBackupIncludeImages: Boolean = false,
-        dynamicColor: Boolean = true,
-        dynamicColorSeed: Int? = null,
-        themePalette: Int = 0,
-        themeStyle: Int = 0,
-        themeMode: Int = 0,
-        aiScanEnabled: Boolean = false,
-        aiModelVariant: String = "e2b",
-        advancedProgrammingEnabled: Boolean = false,
-        nextcloudAutoBackupEnabled: Boolean = false,
-        nextcloudAutoBackupFrequency: Int = 1,
-        nextcloudAutoBackupMaxCount: Int = 5,
-        nextcloudAutoBackupIncludeImages: Boolean = false,
-        nextcloudWifiOnly: Boolean = false
-    ) {
+    val navBarStyle = userPrefsRepository.navBarStyle
+    val liquidGlassEnabled = userPrefsRepository.glassSettings.map { it.enabled }
+
+    /** Written at once, like the theme, so the Look preview and the setup itself follow the choice. */
+    fun setNavBarStyle(style: NavBarStyle) {
+        scope.launch { userPrefsRepository.setNavBarStyle(style) }
+    }
+
+    fun setLiquidGlassEnabled(enabled: Boolean) {
+        scope.launch { userPrefsRepository.setLiquidGlassEnabled(enabled) }
+    }
+
+    suspend fun completeOnboarding(settings: OnboardingSettings) = with(settings) {
         val existingUser = userRepository.currentUser.firstOrNull()
 
         val user = existingUser?.copy(
@@ -121,16 +104,43 @@ class OnboardingModel(
         }
         userPrefsRepository.setAutoBackupMaxCount(autoBackupMaxCount)
         userPrefsRepository.setAutoBackupIncludeImages(autoBackupIncludeImages)
-        userPrefsRepository.setDynamicColor(dynamicColor)
-        userPrefsRepository.setThemePalette(themePalette)
-        if (dynamicColorSeed != null) {
-            userPrefsRepository.setDynamicColorSeed(dynamicColorSeed)
+        userPrefsRepository.setDynamicColor(theme.dynamicColor)
+        userPrefsRepository.setThemePalette(theme.palette)
+        if (theme.dynamicColorSeed != null) {
+            userPrefsRepository.setDynamicColorSeed(theme.dynamicColorSeed)
         }
-        userPrefsRepository.setThemeStyle(themeStyle)
-        userPrefsRepository.setThemeMode(themeMode)
+        userPrefsRepository.setThemeStyle(theme.style)
+        userPrefsRepository.setThemeMode(theme.mode)
         userPrefsRepository.setAiScanEnabled(aiScanEnabled)
         userPrefsRepository.setAiModelVariant(aiModelVariant)
-        userPrefsRepository.setAdvancedProgrammingEnabled(advancedProgrammingEnabled)
+        userPrefsRepository.setAdvancedProgrammingEnabled(advancedProgramming)
+
+        // Program, timers, exercises and journal: one preference per Tweaks row
+        userPrefsRepository.setRpeEnabled(rpeEnabled)
+        userPrefsRepository.setRpeScale(rpeScale)
+        userPrefsRepository.setStartingWeightEnabled(startingWeight)
+        userPrefsRepository.setSetPerformanceEnabled(setPerformance)
+        userPrefsRepository.setInlineExerciseModificationsEnabled(inlineModifications)
+        userPrefsRepository.setLoadRoundingIncrement(weightUnit, loadRounding)
+        userPrefsRepository.setRestTimerEnabled(restTimerEnabled)
+        userPrefsRepository.setWarmupTimerEnabled(warmupTimerEnabled)
+        userPrefsRepository.setWorkoutTimerEnabled(workoutTimerEnabled)
+        userPrefsRepository.setTimerAddEnabled(timerAddEnabled)
+        userPrefsRepository.setTimerAddSeconds(timerAddSeconds)
+        userPrefsRepository.setTimerSubtractEnabled(timerSubtractEnabled)
+        userPrefsRepository.setTimerSubtractSeconds(timerSubtractSeconds)
+        userPrefsRepository.setKeepScreenOnSetTimer(keepScreenOnSetTimer)
+        userPrefsRepository.setKeepScreenOnCardioTimer(keepScreenOnCardioTimer)
+        userPrefsRepository.setExerciseMediaEnabled(exerciseMedia)
+        userPrefsRepository.setExerciseMediaLarge(exerciseMediaLarge)
+        userPrefsRepository.setPlateCalculatorEnabled(plateCalculator)
+        userPrefsRepository.setEditablePresetExercises(editablePresets)
+        userPrefsRepository.setJournalEnabled(journalEnabled)
+        userPrefsRepository.setJournalPromptAtFinish(journalPromptAtFinish)
+        userPrefsRepository.setJournalRatingEnabled(journalRating)
+        if (membershipExpiryDate != null) {
+            userPrefsRepository.setGymMembershipExpiryDate(membershipExpiryDate)
+        }
 
         // The Nextcloud options only mean something once an account is connected
         val nextcloudConnected = userPrefsRepository.nextcloudServerUrl.firstOrNull() != null

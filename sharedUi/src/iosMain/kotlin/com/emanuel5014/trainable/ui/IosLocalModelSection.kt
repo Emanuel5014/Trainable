@@ -215,7 +215,7 @@ private fun DownloadButton(label: String, onClick: () -> Unit) {
  * 2.6 GB more in the app's inbox); [IosModelStore.import] reads it inside its security scope and copies it.
  */
 @Composable
-private fun ImportOption(error: ModelImportError?, store: IosModelStore) {
+internal fun ImportOption(error: ModelImportError?, store: IosModelStore) {
     val presenter = LocalUIViewController.current
     val delegate = remember(store) {
         object : NSObject(), UIDocumentPickerDelegateProtocol {

@@ -21,6 +21,7 @@ import com.emanuel5014.trainable.data.backup.NextcloudBackupService
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.backup.BackupManager
 import com.emanuel5014.trainable.util.backup.NextcloudBackupManager
+import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,8 +44,23 @@ class OnboardingViewModel @Inject constructor(
     private val nextcloudWebDav: NextcloudWebDav,
     private val nextcloudBackupService: NextcloudBackupService,
     private val nextcloudBackupManager: NextcloudBackupManager,
+    private val localeManager: AppLocaleManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
+
+    val currentLanguage = localeManager.currentLanguage.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "system"
+    )
+
+    /** Same as Settings: the activity restarts in the new language ([onChanged] does it). */
+    fun setLanguage(languageCode: String, onChanged: () -> Unit) {
+        viewModelScope.launch {
+            localeManager.setUserLanguage(languageCode)
+            onChanged()
+        }
+    }
 
     val model = OnboardingModel(userRepository, userPrefsRepository, viewModelScope,
         onCompleted = { AutoBackupWorker.scheduleFromPreferences(context, userPrefsRepository) })

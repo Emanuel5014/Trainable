@@ -9,23 +9,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
-import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
 import com.emanuel5014.trainable.sharedui.resources.*
 import com.emanuel5014.trainable.ui.components.LocalShowMessage
-import com.emanuel5014.trainable.ui.screens.onboarding.BackupSlide
+import com.emanuel5014.trainable.data.ai.IosLocalAiDevice
+import com.emanuel5014.trainable.ui.screens.onboarding.LocalBackupBody
+import com.emanuel5014.trainable.ui.screens.onboarding.NextcloudBody
+import com.emanuel5014.trainable.ui.screens.onboarding.NextcloudConnection
+import com.emanuel5014.trainable.ui.screens.onboarding.NextcloudForm
 import com.emanuel5014.trainable.ui.screens.onboarding.NextcloudRestoreDialog
-import com.emanuel5014.trainable.ui.screens.onboarding.NextcloudSlide
+import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingAi
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingChoices
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingContent
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingModel
+import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingRestore
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-/** Same setup as Android, with only capabilities available on iOS. */
+/** Same setup as Android, with only capabilities available on iOS (E2B only for the on-device model). */
 @Composable
 internal fun IosOnboarding() {
     val scope = rememberCoroutineScope()
     val show = LocalShowMessage.current
     val choices = remember { OnboardingChoices() }
+    val form = remember { NextcloudForm() }
     val model = remember {
         OnboardingModel(IosAppGraph.users, IosAppGraph.preferences, scope, onCompleted = { IosAutoBackup.reschedule() })
     }
@@ -43,27 +49,95 @@ internal fun IosOnboarding() {
     var nextcloudAutoBackupMaxCount by choices.nextcloudAutoBackupMaxCount
     var nextcloudAutoBackupIncludeImages by choices.nextcloudAutoBackupIncludeImages
     var nextcloudWifiOnly by choices.nextcloudWifiOnly
-    var serverUrl by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var remoteFolder by remember { mutableStateOf("Trainable/Backups") }
     var showRestore by remember { mutableStateOf(false) }
     var backupToRestore by remember { mutableStateOf<NextcloudBackupFile?>(null) }
+    var showLanguage by remember { mutableStateOf(false) }
     val connectedServer by IosAppGraph.preferences.nextcloudServerUrl.collectAsState(null)
     val connectedUser by IosAppGraph.preferences.nextcloudUsername.collectAsState(null)
+    val language by IosAppGraph.preferences.userLanguage.collectAsState(initial = null)
     val pickFolder = rememberIosBackupFolderPicker { autoBackupFolderUri = it }
     val restoreFromFiles = rememberIosBackupRestore(completeOnboarding = true)
 
-    // The password is only needed to connect; don't keep it around afterwards
-    LaunchedEffect(backups.testState) {
-        if (backups.testState is NextcloudConnectionResult.Success) password = ""
-    }
+    val connection = NextcloudConnection(
+        connectedAs = connectedUser?.let { user -> stringResource(Res.string.nextcloud_configured_as, user, connectedServer.orEmpty()) },
+        isConnecting = backups.isTesting,
+        state = backups.testState,
+        connect = { backups.connectNextcloud(form.serverUrl.value, form.username.value, form.password.value, form.remoteFolder.value) },
+        disconnect = { backups.disconnectNextcloudSilently() }
+    )
+
+    val ai = if (IosLocalAiDevice.isSupported) {
+        val store = IosAppGraph.localModels
+        val status by store.status.collectAsState()
+        val importError by store.importError.collectAsState()
+        OnboardingAi(
+            variants = listOf(store.variant),
+            selected = store.variant,
+            onSelect = {},
+            status = status,
+            onDownload = { store.startDownload() },
+            onCancel = { store.cancelDownload() },
+            // An iPhone needs 8 GB for it (IosLocalAiDevice), not Android's 6
+            requiredRamGb = { 8 },
+            importOption = {
+                LaunchedEffect(Unit) { store.clearImportError() }
+                ImportOption(importError, store)
+            }
+        )
+    } else null
+
+    val languageOptions = iosLanguageOptions()
+    val selectedLanguage = language ?: "system"
 
     OnboardingContent(
         model = model,
         onFinished = {}, // The persisted flag is the sole owner of the first-launch gate.
         choices = choices,
-        pages = IosOnboardingPages,
+        ai = ai,
+        selectedAiModelVariant = IosAppGraph.localModels.variant.id,
+        languageLabel = languageOptions.firstOrNull { it.first == selectedLanguage }?.second ?: languageOptions.first().second,
+        onPickLanguage = { showLanguage = true },
+        restore = OnboardingRestore(
+            fromFile = restoreFromFiles.open,
+            form = form,
+            connection = connection,
+            openNextcloudBackups = {
+                backupToRestore = null
+                showRestore = true
+                backups.loadNextcloudBackups()
+            }
+        ),
+        nextcloudConnected = connectedUser != null,
+        dataLocal = {
+            LocalBackupBody(
+                autoBackupEnabled = autoBackupEnabled,
+                onAutoBackupChange = { autoBackupEnabled = it },
+                autoBackupFrequency = autoBackupFrequency,
+                onAutoBackupFrequencyChange = { autoBackupFrequency = it },
+                autoBackupFolderUri = autoBackupFolderUri,
+                autoBackupMaxCount = autoBackupMaxCount,
+                onAutoBackupMaxCountChange = { autoBackupMaxCount = it },
+                autoBackupIncludeImages = autoBackupIncludeImages,
+                onAutoBackupIncludeImagesChange = { autoBackupIncludeImages = it },
+                onPickFolder = pickFolder
+            )
+        },
+        dataNextcloud = {
+            NextcloudBody(
+                form = form,
+                connection = connection,
+                autoBackupEnabled = nextcloudAutoBackupEnabled,
+                onAutoBackupChange = { nextcloudAutoBackupEnabled = it },
+                frequency = nextcloudAutoBackupFrequency,
+                onFrequencyChange = { nextcloudAutoBackupFrequency = it },
+                maxCount = nextcloudAutoBackupMaxCount,
+                onMaxCountChange = { nextcloudAutoBackupMaxCount = it },
+                includeImages = nextcloudAutoBackupIncludeImages,
+                onIncludeImagesChange = { nextcloudAutoBackupIncludeImages = it },
+                wifiOnly = nextcloudWifiOnly,
+                onWifiOnlyChange = { nextcloudWifiOnly = it }
+            )
+        },
         wallpaperSupported = false,
         customVibrationSupported = false,
         prepareCompletion = { selected ->
@@ -74,58 +148,15 @@ internal fun IosOnboarding() {
                 selected.timerNotificationsEnabled.value = timers && allowed
                 selected.gymMembershipExpiryNotificationsEnabled.value = membership && allowed
             }
-        },
-        platformPage = { page, _ ->
-            when (page) {
-                8 -> BackupSlide(
-                    autoBackupEnabled = autoBackupEnabled,
-                    onAutoBackupChange = { autoBackupEnabled = it },
-                    autoBackupFrequency = autoBackupFrequency,
-                    onAutoBackupFrequencyChange = { autoBackupFrequency = it },
-                    autoBackupFolderUri = autoBackupFolderUri,
-                    autoBackupMaxCount = autoBackupMaxCount,
-                    onAutoBackupMaxCountChange = { autoBackupMaxCount = it },
-                    autoBackupIncludeImages = autoBackupIncludeImages,
-                    onAutoBackupIncludeImagesChange = { autoBackupIncludeImages = it },
-                    onPickFolder = pickFolder,
-                    onImport = restoreFromFiles.open
-                )
-                9 -> NextcloudSlide(
-                    connectedAs = connectedUser?.let { user ->
-                        stringResource(Res.string.nextcloud_configured_as, user, connectedServer.orEmpty())
-                    },
-                    serverUrl = serverUrl,
-                    onServerUrlChange = { serverUrl = it },
-                    username = username,
-                    onUsernameChange = { username = it },
-                    password = password,
-                    onPasswordChange = { password = it },
-                    remoteFolder = remoteFolder,
-                    onRemoteFolderChange = { remoteFolder = it },
-                    isConnecting = backups.isTesting,
-                    connectState = backups.testState,
-                    onConnect = { backups.connectNextcloud(serverUrl, username, password, remoteFolder) },
-                    onDisconnect = { backups.disconnectNextcloudSilently() },
-                    autoBackupEnabled = nextcloudAutoBackupEnabled,
-                    onAutoBackupChange = { nextcloudAutoBackupEnabled = it },
-                    frequency = nextcloudAutoBackupFrequency,
-                    onFrequencyChange = { nextcloudAutoBackupFrequency = it },
-                    maxCount = nextcloudAutoBackupMaxCount,
-                    onMaxCountChange = { nextcloudAutoBackupMaxCount = it },
-                    includeImages = nextcloudAutoBackupIncludeImages,
-                    onIncludeImagesChange = { nextcloudAutoBackupIncludeImages = it },
-                    wifiOnly = nextcloudWifiOnly,
-                    onWifiOnlyChange = { nextcloudWifiOnly = it },
-                    onRestore = {
-                        backupToRestore = null
-                        showRestore = true
-                        backups.loadNextcloudBackups()
-                    }
-                )
-                else -> error("No iOS page $page")
-            }
         }
     )
+
+    if (showLanguage) {
+        IosLanguageDialog(selectedLanguage, onPick = { code ->
+            showLanguage = false
+            scope.launch { IosAppGraph.preferences.setUserLanguage(code) }
+        }, onDismiss = { showLanguage = false })
+    }
 
     if (showRestore) {
         NextcloudRestoreDialog(
@@ -151,5 +182,3 @@ internal fun IosOnboarding() {
         )
     }
 }
-
-internal val IosOnboardingPages = listOf(0, 1, 2, 3, 4, 5, 6, 8, 9, 10)

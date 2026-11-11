@@ -74,37 +74,13 @@ internal fun IosLanguageSetting() {
     val current by preferences.userLanguage.collectAsState(initial = null)
     val selected = current ?: "system"
     var showDialog by remember { mutableStateOf(false) }
-    val options = listOf(
-        "system" to stringResource(Res.string.language_system_default),
-        "en" to stringResource(Res.string.language_english),
-        "it" to stringResource(Res.string.language_italian),
-        "es" to stringResource(Res.string.language_spanish),
-        "fr" to stringResource(Res.string.language_french),
-        "de" to stringResource(Res.string.language_german),
-        "pt" to stringResource(Res.string.language_portuguese)
-    )
+    val options = iosLanguageOptions()
 
     if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            containerColor = SurfaceContainerHigh,
-            title = { Text(stringResource(Res.string.language), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
-            text = {
-                Column {
-                    options.forEach { (code, title) ->
-                        LanguageOption(title = title, isSelected = selected == code, onClick = {
-                            showDialog = false
-                            scope.launch { preferences.setUserLanguage(code) }
-                        })
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
-                }
-            }
-        )
+        IosLanguageDialog(selected, onPick = { code ->
+            showDialog = false
+            scope.launch { preferences.setUserLanguage(code) }
+        }, onDismiss = { showDialog = false })
     }
 
     Row(
@@ -125,4 +101,39 @@ internal fun IosLanguageSetting() {
         Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
     }
     HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+}
+
+
+/** The language codes with their names, "system" first. */
+@Composable
+internal fun iosLanguageOptions(): List<Pair<String, String>> = listOf(
+    "system" to stringResource(Res.string.language_system_default),
+    "en" to stringResource(Res.string.language_english),
+    "it" to stringResource(Res.string.language_italian),
+    "es" to stringResource(Res.string.language_spanish),
+    "fr" to stringResource(Res.string.language_french),
+    "de" to stringResource(Res.string.language_german),
+    "pt" to stringResource(Res.string.language_portuguese)
+)
+
+/** The language picker of Settings, shared with the onboarding Welcome step. */
+@Composable
+internal fun IosLanguageDialog(selected: String, onPick: (String) -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceContainerHigh,
+        title = { Text(stringResource(Res.string.language), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+        text = {
+            Column {
+                iosLanguageOptions().forEach { (code, title) ->
+                    LanguageOption(title = title, isSelected = selected == code, onClick = { onPick(code) })
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+            }
+        }
+    )
 }
