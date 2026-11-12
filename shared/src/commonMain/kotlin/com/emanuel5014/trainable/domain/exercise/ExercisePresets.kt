@@ -11,12 +11,21 @@ object ExercisePresets {
      * a hidden one) already carries its name: the user made it before the app learned it, and two with one name would
      * make every name check ambiguous. It comes in as soon as the name is free. A preset that is in the table is passed
      * on as it is; the insert ignores it. A [RetiredPresets] one comes in hidden.
+     *
+     * A [skipped] id (a cardio slot the user chose to leave out) is never returned. A cardio slot preset (164-166) that
+     * is not in the table is also left out while any existing exercise, hidden or not, carries one of its aliases.
      */
-    fun toInsert(presets: List<ExerciseEntity>, existing: List<ExerciseEntity>): List<ExerciseEntity> {
+    fun toInsert(
+        presets: List<ExerciseEntity>,
+        existing: List<ExerciseEntity>,
+        skipped: Set<Int> = emptySet()
+    ): List<ExerciseEntity> {
         val ids = existing.mapTo(hashSetOf()) { it.id }
         val names = existing.mapTo(hashSetOf()) { HistoryCsvColumns.fold(it.nome) }
         return presets
+            .filter { it.id !in skipped }
             .filter { it.id in ids || HistoryCsvColumns.fold(it.nome) !in names }
+            .filter { it.id in ids || it.id !in CardioPresets.SLOT_IDS || CardioPresets.aliasesOf(it).none { a -> a in names } }
             .map(RetiredPresets::forInsert)
     }
 }

@@ -70,6 +70,7 @@ private suspend fun populateInitialData(exerciseDao: ExerciseDao, userDao: UserD
 private suspend fun syncExercises(exerciseDao: ExerciseDao, retiredPresets: RetiredPresetsStore) {
     try {
         val existing = exerciseDao.getAllExercisesIncludingDeleted().first()
+        // No skipped ids yet (default emptySet()): a later task reads them from the DAO.
         exerciseDao.insertExercises(ExercisePresets.toInsert(ExerciseData.initialExercises, existing))
     } catch (e: Exception) {
         // Exercises might already exist, ignore
