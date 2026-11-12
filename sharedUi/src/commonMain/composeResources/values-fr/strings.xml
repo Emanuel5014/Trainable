@@ -767,6 +767,8 @@
     <string name="exercise_msg_merged">Fusionné dans %1$s</string>
     <string name="exercise_msg_restored">Restauré</string>
     <string name="exercise_msg_saved">Enregistré</string>
+    <string name="cardio_category_locked_has_cardio">Cet exercice a un historique cardio, il reste donc dans Cardio.</string>
+    <string name="cardio_category_locked_has_sets">Cet exercice a des séries de force, il ne peut donc pas passer dans Cardio.</string>
     <string name="exercise_msg_undone">Fusion annulée</string>
     <string name="exercise_record_best_e1rm">Meilleur 1RM estimé</string>
     <string name="exercise_record_best_volume">Meilleur volume sur une séance</string>

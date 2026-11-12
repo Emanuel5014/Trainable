@@ -5,6 +5,7 @@ import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.CardioExerciseMatcher
+import com.emanuel5014.trainable.domain.exercise.CategoryChangeBlock
 import com.emanuel5014.trainable.domain.exercise.ExerciseNames
 import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.domain.exercise.StoredTraits
@@ -60,9 +61,11 @@ class ExerciseRepository(
         )
         if (hidden != null) {
             val revived = ExerciseTraits.forRevival(hidden.id, StoredTraits(hidden.muscles, hidden.equipment), traits)
+            // Nor does a custom one take a category its history does not allow (cardio logs, strength sets)
+            val keepCategory = hidden.id < ExerciseEntity.FIRST_CUSTOM_ID || categoryChangeBlock(hidden.id, categoria) != null
             exerciseDao.reviveExercise(
                 hidden.id,
-                if (hidden.id < ExerciseEntity.FIRST_CUSTOM_ID) hidden.categoria else categoria,
+                if (keepCategory) hidden.categoria else categoria,
                 description?.takeIf { it.isNotBlank() } ?: hidden.descrizione,
                 revived.muscles,
                 revived.equipment
@@ -110,9 +113,28 @@ class ExerciseRepository(
     /** The exercise with this id as it changes (hidden, restored, renamed); emits null once it is gone for good. */
     fun observeExercise(id: Int): Flow<ExerciseEntity?> = exerciseDao.observeExercise(id)
 
-    /** Saves what the exercise form edits (name, category, description, muscles and equipment) and nothing else of the row. */
-    suspend fun updateExerciseDetails(id: Int, nome: String, categoria: String, descrizione: String?, traits: StoredTraits) {
+    /**
+     * Why moving the exercise to [newCategory] is not allowed, or null when it is: out of Cardio while cardio logs are
+     * linked to it, into Cardio while it has strength sets (see [CategoryChangeBlock.of]).
+     */
+    suspend fun categoryChangeBlock(id: Int, newCategory: String): CategoryChangeBlock? {
+        val current = exerciseDao.getExerciseById(id) ?: return null
+        return CategoryChangeBlock.of(
+            from = current.categoria,
+            to = newCategory,
+            hasCardioLogs = exerciseDao.hasCardioLogs(id),
+            hasStrengthSets = exerciseDao.hasSetLogs(id)
+        )
+    }
+
+    /**
+     * Saves what the exercise form edits (name, category, description, muscles and equipment) and nothing else of the row.
+     * A category change its history does not allow saves nothing and returns why.
+     */
+    suspend fun updateExerciseDetails(id: Int, nome: String, categoria: String, descrizione: String?, traits: StoredTraits): CategoryChangeBlock? {
+        categoryChangeBlock(id, categoria)?.let { return it }
         exerciseDao.updateExerciseDetails(id, nome, categoria, descrizione, traits.muscles, traits.equipment)
+        return null
     }
 
     /** Stars or unstars the exercise; the rest of its row is not touched. */

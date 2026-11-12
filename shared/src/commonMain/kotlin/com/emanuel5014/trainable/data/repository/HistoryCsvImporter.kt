@@ -83,7 +83,9 @@ class HistoryCsvImporter(
         val categories = exerciseDao.getAllCustomCategories().first().map { it.name }
         val plans = workoutDao.getAllPlans().first()
         val sessions = workoutDao.getAllSessionsWithDetails().first()
+        val skipped = exerciseDao.getSkippedPresetIds().toSet()
         return withContext(Dispatchers.Default) {
+            val exerciseById = realExercises.associateBy { it.id }
             KnownData(
                 exercises = exercises,
                 realExercises = realExercises,
@@ -104,10 +106,14 @@ class HistoryCsvImporter(
                                 km = 0f
                             )
                         } + details.cardio.map {
-                            SetSignature(HistoryImportPlanner.cardioKey(it.categoria), 0f, 0, it.durataSecondi, it.distanza)
+                            // A cardio log is told by the exercise it is linked to, named as the planner names the
+                            // exercise a file row resolves to (an old "Bike" log on Cycling matches a "Bici" row)
+                            val activity = it.exerciseId?.let { id -> exerciseById[id]?.nome } ?: it.categoria
+                            SetSignature(HistoryImportPlanner.cardioKey(activity), 0f, 0, it.durataSecondi, it.distanza)
                         }
                     )
-                }
+                },
+                skippedPresetIds = skipped
             )
         }
     }
@@ -278,8 +284,10 @@ class HistoryCsvImporter(
                     cardioRows.add(
                         CardioLogEntity(
                             sessionId = sessionId,
-                            // Cardio rows are named after the activity
+                            // Cardio rows are named after the activity, and linked to its exercise (decided by the
+                            // planner with CardioExerciseMatcher; a new one was created above with the others)
                             categoria = exercise.nome,
+                            exerciseId = exercise.id,
                             distanza = set.distanceKm,
                             durataSecondi = set.durationSeconds ?: 0,
                             timestamp = workout.timestamp,

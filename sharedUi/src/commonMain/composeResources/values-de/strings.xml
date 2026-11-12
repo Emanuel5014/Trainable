@@ -764,6 +764,8 @@
     <string name="exercise_msg_merged">Zusammengeführt in %1$s</string>
     <string name="exercise_msg_restored">Wiederhergestellt</string>
     <string name="exercise_msg_saved">Gespeichert</string>
+    <string name="cardio_category_locked_has_cardio">Diese Übung hat einen Cardio-Verlauf und bleibt daher in Cardio.</string>
+    <string name="cardio_category_locked_has_sets">Diese Übung hat Kraftsätze und kann daher nicht zu Cardio wechseln.</string>
     <string name="exercise_msg_undone">Zusammenführen rückgängig gemacht</string>
     <string name="exercise_record_best_e1rm">Bestes geschätztes 1RM</string>
     <string name="exercise_record_best_volume">Bestes Volumen einer Einheit</string>

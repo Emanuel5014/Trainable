@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.domain.csvimport
 
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.domain.exercise.CardioExerciseMatcher
 
 /** The exercise of this device (or the one to create) that an exercise name of the file stands for. */
 sealed interface ResolvedExercise {
@@ -42,10 +43,12 @@ sealed interface ResolvedExercise {
  * language; custom exercises are told by their name alone (their ids mean nothing on another device).
  */
 class HistoryExerciseResolver(
-    known: List<ExerciseEntity>,
+    private val known: List<ExerciseEntity>,
     customCategories: List<String>,
     /** The exercises as they are, when [known] carries merged-away ones under their old names (see ExerciseMerges.aliasView). */
-    realExercises: List<ExerciseEntity> = known
+    realExercises: List<ExerciseEntity> = known,
+    /** Cardio presets left out of this database: a cardio row never lands on one. */
+    private val skippedPresetIds: Set<Int> = emptySet()
 ) {
     private val byName: Map<String, List<ExerciseEntity>> =
         known.sortedBy { it.id }.groupBy { HistoryCsvColumns.fold(it.nome) }
@@ -73,8 +76,39 @@ class HistoryExerciseResolver(
         val folded = HistoryCsvColumns.fold(name)
         // The same name can mean two exercises (French calls "Machine Row" "Rowing Machine", which is also a cardio one)
         return resolved.getOrPut(Triple(folded, HistoryCsvColumns.fold(category), cardio)) {
-            find(folded, category, cardio) ?: created.getOrPut(folded) { create(name, category, cardio, folded) }
+            if (cardio == true) {
+                // The rules every cardio log of the app follows; a name that only a strength exercise has stays that
+                // exercise, so the row is refused rather than turned into a cardio twin of it
+                cardioMatch(name, folded) ?: find(folded, category, cardio)?.takeUnless { it.isCardio } ?: newCardio(name, folded)
+            } else {
+                val found = find(folded, category, cardio)
+                when {
+                    found == null -> created.getOrPut(folded) { create(name, category, cardio, folded) }
+                    // A row that turns out to be cardio by its name lands where a typed cardio row of that name would
+                    found.isCardio -> cardioMatch(name, folded) ?: newCardio(name, folded)
+                    else -> found
+                }
+            }
         }
+    }
+
+    /** The existing exercise [CardioExerciseMatcher] gives this activity name (custom cardio, then preset), or null. */
+    private fun cardioMatch(name: String, folded: String): ResolvedExercise? {
+        val plan = CardioExerciseMatcher.plan(listOf(CardioExerciseMatcher.Row(0, name)), known, skippedPresetIds, ExerciseEntity.FIRST_CUSTOM_ID)
+        if (plan.newExercises.isNotEmpty()) return null
+        val id = plan.links.getValue(0)
+        val exercise = realById[id] ?: known.first { it.id == id }
+        return existing(exercise, viaTranslation = HistoryCsvColumns.fold(exercise.nome) != folded)
+    }
+
+    /** A new custom cardio exercise (the importer gives it its id); a name that says nothing is called Cardio, as the matcher does. */
+    private fun newCardio(name: String, folded: String): ResolvedExercise = created.getOrPut(folded) {
+        ResolvedExercise.New(
+            key = "new:$folded",
+            name = if (folded.isEmpty()) ResolvedExercise.CARDIO else name.trim(),
+            category = ResolvedExercise.CARDIO,
+            categoryIsNew = false
+        )
     }
 
     private fun find(folded: String, category: String, cardio: Boolean?): ResolvedExercise? {

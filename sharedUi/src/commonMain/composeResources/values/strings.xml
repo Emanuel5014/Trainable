@@ -764,6 +764,8 @@
     <string name="exercise_msg_merged">Merged into %1$s</string>
     <string name="exercise_msg_restored">Restored</string>
     <string name="exercise_msg_saved">Saved</string>
+    <string name="cardio_category_locked_has_cardio">This exercise has cardio history, so it stays in Cardio.</string>
+    <string name="cardio_category_locked_has_sets">This exercise has strength sets, so it can't move to Cardio.</string>
     <string name="exercise_msg_undone">Merge undone</string>
     <string name="exercise_record_best_e1rm">Best estimated 1RM</string>
     <string name="exercise_record_best_volume">Best session volume</string>

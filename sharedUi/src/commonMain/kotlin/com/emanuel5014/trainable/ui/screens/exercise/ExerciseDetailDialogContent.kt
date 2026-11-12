@@ -3,6 +3,8 @@ package com.emanuel5014.trainable.ui.screens.exercise
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.back
+import com.emanuel5014.trainable.sharedui.resources.cardio_category_locked_has_cardio
+import com.emanuel5014.trainable.sharedui.resources.cardio_category_locked_has_sets
 import com.emanuel5014.trainable.sharedui.resources.cardio_dist_value
 import com.emanuel5014.trainable.sharedui.resources.cardio_speed_value
 import com.emanuel5014.trainable.sharedui.resources.compare_reps_value
@@ -96,6 +98,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -179,6 +182,8 @@ fun ExerciseDetailDialogContent(
     var willBeDeleted by remember { mutableStateOf<Boolean?>(null) }
     var lastMergeTarget by remember { mutableStateOf("") }
     var editOpen by remember { mutableStateOf(false) }
+    var editRetry by remember { mutableStateOf<ExerciseForm?>(null) }
+    var editRound by remember { mutableIntStateOf(0) }
     val categories by controller.categories.collectAsState()
     val namesInUse by controller.namesInUse.collectAsState()
     // Add or replace the image or GIF of the open exercise
@@ -202,9 +207,14 @@ fun ExerciseDetailDialogContent(
                 ExerciseDetailMessage.CANNOT_MERGE_WORKOUT -> org.jetbrains.compose.resources.getString(Res.string.exercise_msg_cannot_merge_workout)
                 ExerciseDetailMessage.CANNOT_RESTORE_NAME -> org.jetbrains.compose.resources.getString(Res.string.exercise_msg_cannot_restore_name)
                 ExerciseDetailMessage.SAVED -> org.jetbrains.compose.resources.getString(Res.string.exercise_msg_saved)
+                ExerciseDetailMessage.CATEGORY_LOCKED_HAS_CARDIO -> org.jetbrains.compose.resources.getString(Res.string.cardio_category_locked_has_cardio)
+                ExerciseDetailMessage.CATEGORY_LOCKED_HAS_SETS -> org.jetbrains.compose.resources.getString(Res.string.cardio_category_locked_has_sets)
             }
-            // The screen closes with a deleted exercise, and a snackbar goes with it: a toast stays
-            if (message == ExerciseDetailMessage.DELETED) showMessage(text)
+            // The screen closes with a deleted exercise, and a snackbar goes with it: a toast stays. A refused edit keeps
+            // its form open over the screen, where a snackbar would be hidden: a toast too
+            if (message == ExerciseDetailMessage.DELETED || message == ExerciseDetailMessage.CATEGORY_LOCKED_HAS_CARDIO ||
+                message == ExerciseDetailMessage.CATEGORY_LOCKED_HAS_SETS
+            ) showMessage(text)
             else snackbarHost.showSnackbar(text)
         }
     }
@@ -264,24 +274,37 @@ fun ExerciseDetailDialogContent(
     if (editOpen && exercise != null) {
         // The form starts from what the exercise has now (a preset: its catalog values), and saves only what differs
         val traits = ExerciseTraits.of(exercise)
-        ExerciseFormDialog(
-            title = stringResource(Res.string.edit_exercise_title),
-            categories = categories,
-            existingExercises = namesInUse,
-            languageCode = languageCode,
-            initial = ExerciseForm(
-                ExerciseNames.shownName(exercise, languageCode), exercise.categoria, exercise.descrizione.orEmpty(),
-                traits.muscles, traits.equipment
-            ),
-            editingId = exercise.id,
-            showTraits = true,
-            onConfirm = { form ->
-                editOpen = false
-                // The name in the form is the one the list shows: left alone, the stored name stays
-                controller.save(form.copy(name = ExerciseNames.nameToStore(form.name, exercise, languageCode)))
-            },
-            onDismiss = { editOpen = false }
-        )
+        // A refused edit opens the form again with what was typed, back on the category the exercise has
+        key(editRound) {
+            ExerciseFormDialog(
+                title = stringResource(Res.string.edit_exercise_title),
+                categories = categories,
+                existingExercises = namesInUse,
+                languageCode = languageCode,
+                initial = editRetry ?: ExerciseForm(
+                    ExerciseNames.shownName(exercise, languageCode), exercise.categoria, exercise.descrizione.orEmpty(),
+                    traits.muscles, traits.equipment
+                ),
+                editingId = exercise.id,
+                showTraits = true,
+                onConfirm = { form ->
+                    // The name in the form is the one the list shows: left alone, the stored name stays
+                    controller.save(form.copy(name = ExerciseNames.nameToStore(form.name, exercise, languageCode))) { block ->
+                        if (block == null) {
+                            editOpen = false
+                            editRetry = null
+                        } else {
+                            editRetry = form.copy(category = exercise.categoria)
+                            editRound++
+                        }
+                    }
+                },
+                onDismiss = {
+                    editOpen = false
+                    editRetry = null
+                }
+            )
+        }
     }
 
     if (pickerOpen && exercise != null) {

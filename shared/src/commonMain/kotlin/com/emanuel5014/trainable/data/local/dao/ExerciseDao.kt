@@ -72,6 +72,7 @@ interface ExerciseDao {
     @Query(
         """
         SELECT EXISTS(SELECT 1 FROM set_logs WHERE exercise_id = :id)
+            OR EXISTS(SELECT 1 FROM cardio_logs WHERE exercise_id = :id)
             OR EXISTS(SELECT 1 FROM plan_exercises WHERE exercise_id = :id)
             OR EXISTS(SELECT 1 FROM one_rep_maxes WHERE exercise_id = :id)
             OR EXISTS(SELECT 1 FROM session_exercise_swaps WHERE replacement_exercise_id = :id)
@@ -80,6 +81,14 @@ interface ExerciseDao {
         """
     )
     suspend fun isExerciseInUse(id: Int): Boolean
+
+    /** Whether any strength set (of any type but cardio) was logged on the exercise. */
+    @Query("SELECT EXISTS(SELECT 1 FROM set_logs WHERE exercise_id = :id)")
+    suspend fun hasSetLogs(id: Int): Boolean
+
+    /** Whether any cardio log is linked to the exercise. */
+    @Query("SELECT EXISTS(SELECT 1 FROM cardio_logs WHERE exercise_id = :id)")
+    suspend fun hasCardioLogs(id: Int): Boolean
 
     /**
      * Takes the exercise out of the library without touching the history and the routines that use it: those keep it

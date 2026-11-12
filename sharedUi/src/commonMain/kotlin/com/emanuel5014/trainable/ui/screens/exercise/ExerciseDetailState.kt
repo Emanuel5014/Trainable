@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.exercise
 
+import com.emanuel5014.trainable.domain.exercise.CategoryChangeBlock
 import com.emanuel5014.trainable.data.local.dao.MergeOutcome
 import com.emanuel5014.trainable.data.local.dao.MergePreview
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
@@ -66,7 +67,13 @@ data class ExerciseDetailActions(
 }
 
 /** Tells the screen what just happened, to show a short confirmation. */
-enum class ExerciseDetailMessage { MERGED, UNDONE, HIDDEN, DELETED, RESTORED, CANNOT_MERGE, CANNOT_MERGE_CARDIO, CANNOT_MERGE_WORKOUT, CANNOT_RESTORE_NAME, SAVED }
+enum class ExerciseDetailMessage {
+    MERGED, UNDONE, HIDDEN, DELETED, RESTORED, CANNOT_MERGE, CANNOT_MERGE_CARDIO, CANNOT_MERGE_WORKOUT, CANNOT_RESTORE_NAME, SAVED,
+    /** The edit was not saved: the exercise has cardio history, so it stays in Cardio. */
+    CATEGORY_LOCKED_HAS_CARDIO,
+    /** The edit was not saved: the exercise has strength sets, so it cannot move to Cardio. */
+    CATEGORY_LOCKED_HAS_SETS
+}
 
 /**
  * What the exercise detail screen shows. [exerciseId] says which exercise the state is about: the screen shows nothing
@@ -193,18 +200,30 @@ class ExerciseDetailState(
         }
     }
 
-    /** Saves the edit of the open exercise, unless its actions do not allow one (a preset while the switch is off). */
-    fun save(form: ExerciseForm) {
+    /**
+     * Saves the edit of the open exercise, unless its actions do not allow one (a preset while the switch is off).
+     * [onResult] gets null once saved, or why nothing was saved (a category its history does not allow), so the form
+     * can stay open.
+     */
+    fun save(form: ExerciseForm, onResult: (CategoryChangeBlock?) -> Unit = {}) {
         val current = state.value
-        val exercise = current.exercise ?: return
-        if (!current.actions.canEdit || form.name.isBlank()) return
+        val exercise = current.exercise
+        // Nothing to save: the form closes as it always did
+        if (exercise == null || !current.actions.canEdit || form.name.isBlank()) return onResult(null)
         scope.launch {
-            exerciseRepository.updateExerciseDetails(
+            val block = exerciseRepository.updateExerciseDetails(
                 exercise.id, form.name.trim(), form.category, form.description.trim().ifEmpty { null },
                 // A preset keeps NULL while its traits are the catalog's, so renaming it never freezes them
                 ExerciseTraits.forStorage(exercise.id, ExerciseTraits(form.muscles, form.equipment))
             )
-            _messages.tryEmit(ExerciseDetailMessage.SAVED)
+            _messages.tryEmit(
+                when (block) {
+                    null -> ExerciseDetailMessage.SAVED
+                    CategoryChangeBlock.HAS_CARDIO_LOGS -> ExerciseDetailMessage.CATEGORY_LOCKED_HAS_CARDIO
+                    CategoryChangeBlock.HAS_STRENGTH_SETS -> ExerciseDetailMessage.CATEGORY_LOCKED_HAS_SETS
+                }
+            )
+            onResult(block)
         }
     }
 
