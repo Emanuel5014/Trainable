@@ -112,23 +112,27 @@ fun ReportContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .actionGlassSource(actionGlass)
                 .padding(paddingValues.bodyPadding())
         ) {
-            ScreenHeader(
-                title = stringResource(Res.string.report),
-                subtitle = stringResource(Res.string.report_preview).uppercase(),
-                navigationIcon = {
-                    GymIconButton(
-                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                        onClick = onNavigateBack,
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                        contentColor = OnSurface,
-                        description = "Back"
-                    )
-                },
-                titleInRow = true
-            )
+            // Only the header is recorded for the buttons' glass, never the preview: the glass draws its recording again
+            // through a blur, and a WebView drawn into such an off-screen layer flickers and then crashes the app
+            // (Chromium's Vulkan draw on the Pixel). Over the page the buttons bend the plain screen background.
+            Box(modifier = Modifier.actionGlassSource(actionGlass)) {
+                ScreenHeader(
+                    title = stringResource(Res.string.report),
+                    subtitle = stringResource(Res.string.report_preview).uppercase(),
+                    navigationIcon = {
+                        GymIconButton(
+                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                            onClick = onNavigateBack,
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            contentColor = OnSurface,
+                            description = "Back"
+                        )
+                    },
+                    titleInRow = true
+                )
+            }
 
             if (uiState.isLoading) {
                 Box(
