@@ -775,11 +775,13 @@ fun Application.configureServer(
                                 })
                             }
                         })
+                        // Every exercise once for the response (hidden ones too): a cardio row is named after its linked exercise
+                        val exercisesById = exerciseDao.getAllExercisesIncludingDeleted().first().associateBy { it.id }
                         put("cardio", buildJsonArray {
                             // In the order they were done, the sets of an exercise one after the other
                             session.cardio.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie }, { it.id })).forEach { c ->
                                 add(buildJsonObject {
-                                    put("category", c.categoria)
+                                    put("category", com.emanuel5014.trainable.domain.exercise.CardioNames.of(c, exercisesById, lang))
                                     put("distanceKm", c.distanza)
                                     put("durationSeconds", c.durataSecondi)
                                     c.durataTargetSecondi?.let { put("targetDurationSeconds", it) }
