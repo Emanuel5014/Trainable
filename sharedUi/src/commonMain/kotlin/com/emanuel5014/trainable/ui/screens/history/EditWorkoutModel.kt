@@ -977,8 +977,9 @@ class EditWorkoutModel(
                 workoutRepository.updateSetOrders(setsToUpdate)
             }
             if (runMoves.isNotEmpty()) workoutRepository.moveRunEdits(sessionId, runMoves)
+            // Only the order: the rows on screen may be older than what an edit of a set has written meanwhile
             cardioToUpdate.forEach { cardio ->
-                workoutRepository.updateCardioLog(cardio)
+                workoutRepository.updateCardioOrder(cardio.id, cardio.ordineEsercizio)
             }
         }
     }

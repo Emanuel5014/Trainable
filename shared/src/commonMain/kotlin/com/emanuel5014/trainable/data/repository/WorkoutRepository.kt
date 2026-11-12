@@ -554,6 +554,9 @@ class WorkoutRepository(
 
     suspend fun updateCardioSetNumber(id: Int, number: Int) = workoutDao.updateCardioSetNumber(id, number)
 
+    /** Moves one cardio row to [order] in its session, writing nothing else of it. */
+    suspend fun updateCardioOrder(id: Int, order: Int) = workoutDao.updateCardioOrder(id, order)
+
     /** A cardio workout on its own (quick cardio): one set of [exerciseId], under the system "Cardio" routine. */
     suspend fun saveCardioSession(
         exerciseId: Int,

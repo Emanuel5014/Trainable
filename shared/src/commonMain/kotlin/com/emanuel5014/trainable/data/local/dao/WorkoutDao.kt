@@ -320,6 +320,10 @@ interface WorkoutDao {
     @Query("UPDATE cardio_logs SET numero_serie = :number WHERE id = :id")
     suspend fun updateCardioSetNumber(id: Int, number: Int)
 
+    /** Moves one cardio row to another place in its session; nothing else of the row is written (Edit workout reorder). */
+    @Query("UPDATE cardio_logs SET ordine_esercizio = :order WHERE id = :id")
+    suspend fun updateCardioOrder(id: Int, order: Int)
+
     /** The cardio exercises done most recently (newest log of each, finished workouts only), for the picker's suggestions. */
     @Query(
         "SELECT cl.exercise_id AS exerciseId, MAX(cl.timestamp) AS lastTimestamp FROM cardio_logs cl " +
