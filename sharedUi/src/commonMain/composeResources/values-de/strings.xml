@@ -1530,4 +1530,9 @@
         <item quantity="one">vor %1$d Tag</item>
         <item quantity="other">vor %1$d Tagen</item>
     </plurals>
+    <string name="when">Wann</string>
+    <string name="change">Ändern</string>
+    <string name="speed">Geschwindigkeit</string>
+    <string name="cardio_missing_values">Gib eine Dauer oder eine Strecke ein</string>
+    <string name="cardio_entry_label">Cardio hinzufügen</string>
 </resources>

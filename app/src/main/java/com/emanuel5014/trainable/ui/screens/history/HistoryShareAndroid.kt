@@ -180,7 +180,6 @@ import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
-import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.DeletedExercisePill

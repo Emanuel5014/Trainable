@@ -32,10 +32,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -106,7 +103,6 @@ import com.emanuel5014.trainable.sharedui.resources.add_cardio
 import com.emanuel5014.trainable.sharedui.resources.block_header
 import com.emanuel5014.trainable.sharedui.resources.cancel
 import com.emanuel5014.trainable.sharedui.resources.cardio_cat_label
-import com.emanuel5014.trainable.sharedui.resources.cardio_remove_set
 import com.emanuel5014.trainable.sharedui.resources.confirm
 import com.emanuel5014.trainable.sharedui.resources.custom_workout
 import com.emanuel5014.trainable.sharedui.resources.delete
@@ -116,7 +112,6 @@ import com.emanuel5014.trainable.sharedui.resources.delete_session
 import com.emanuel5014.trainable.sharedui.resources.delete_session_message
 import com.emanuel5014.trainable.sharedui.resources.edit
 import com.emanuel5014.trainable.sharedui.resources.edit_date
-import com.emanuel5014.trainable.sharedui.resources.edit_exercise_title
 import com.emanuel5014.trainable.sharedui.resources.exercise
 import com.emanuel5014.trainable.sharedui.resources.extra_badge
 import com.emanuel5014.trainable.sharedui.resources.hours
@@ -128,7 +123,6 @@ import com.emanuel5014.trainable.sharedui.resources.prescription_remove_sets_tit
 import com.emanuel5014.trainable.sharedui.resources.rename_workout
 import com.emanuel5014.trainable.sharedui.resources.save
 import com.emanuel5014.trainable.sharedui.resources.session_details
-import com.emanuel5014.trainable.sharedui.resources.set_number
 import com.emanuel5014.trainable.sharedui.resources.share_exercises
 import com.emanuel5014.trainable.sharedui.resources.superset
 import com.emanuel5014.trainable.sharedui.resources.tap_plus_to_add
@@ -142,8 +136,11 @@ import com.emanuel5014.trainable.data.local.entity.repsRange
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
-import com.emanuel5014.trainable.ui.components.AddCardioDialog
-import com.emanuel5014.trainable.ui.components.CardioInputForm
+import com.emanuel5014.trainable.ui.components.CardioAddFlow
+import com.emanuel5014.trainable.ui.components.CardioEntry
+import com.emanuel5014.trainable.ui.components.CardioEntryMode
+import com.emanuel5014.trainable.ui.components.CardioEntrySheet
+import com.emanuel5014.trainable.ui.components.editableRpeScale
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.SheetFormBody
@@ -231,8 +228,8 @@ fun EditWorkoutContent(
     var showDeleteExerciseDialog by remember { mutableStateOf<ExerciseKey?>(null) }
     var showEditDetailsSheet by remember { mutableStateOf(false) }
     var showJournalSheet by remember { mutableStateOf(false) }
-    var showAddCardio by remember { mutableStateOf(false) }
-    var pendingCardioCategory by remember { mutableStateOf<String?>(null) }
+    // A cardio picked from the add sheet: its entry sheet is open (picker → sheet, without a date)
+    var cardioToAdd by remember { mutableStateOf<ExerciseEntity?>(null) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
     var exerciseToEditPrescription by remember { mutableStateOf<ExerciseKey?>(null) }
     var pendingPrescription by remember { mutableStateOf<Pair<ExerciseKey, List<PrescriptionBlock>>?>(null) }
@@ -471,13 +468,25 @@ fun EditWorkoutContent(
 
     editingCardio?.let { log ->
         val siblings = state.cardioLogs.setsOf(log)
-        EditCardioDialog(
-            cardioLog = log,
-            onDismiss = { editingCardio = null },
-            onConfirm = {
-                viewModel.updateCardioLog(it)
+        // The set's own exercise names it, so a rename or a merge shows at once; it is never changed from here
+        val linked = log.exerciseId?.let { state.exercisesById[it] }
+            ?: ExerciseEntity(id = log.exerciseId ?: 0, nome = log.categoria, categoria = "Cardio")
+        CardioEntrySheet(
+            exercise = linked,
+            mode = CardioEntryMode.EDIT_SET,
+            initial = CardioEntry(log.durataSecondi, log.distanza, timestamp = null, note = log.note, rpe = log.rpe),
+            distanceUnit = "km",
+            rpeScale = editableRpeScale(hasValue = log.rpe != null),
+            languageCode = languageCode,
+            onChangeExercise = null,
+            title = CardioNames.of(log, state.exercisesById, languageCode),
+            onSave = { entry ->
+                viewModel.updateCardioLog(
+                    log.copy(durataSecondi = entry.seconds, distanza = entry.distanceKm, note = entry.note, rpe = entry.rpe)
+                )
                 editingCardio = null
             },
+            onDismiss = { editingCardio = null },
             onDelete = if (siblings.size > 1) {
                 {
                     viewModel.deleteCardioLog(log)
@@ -488,18 +497,19 @@ fun EditWorkoutContent(
         )
     }
 
-    if (showAddCardio) {
-        AddCardioDialog(
-            initialCategoria = pendingCardioCategory,
-            onDismiss = {
-                showAddCardio = false
-                pendingCardioCategory = null
+    cardioToAdd?.let { picked ->
+        CardioAddFlow(
+            mode = CardioEntryMode.ADD_TO_WORKOUT,
+            exercises = state.availableExercises,
+            languageCode = languageCode,
+            loadSuggestions = { viewModel.cardioSuggestions() },
+            onAddCustomExercise = { name, category, onCreated -> viewModel.addCustomExercise(name, category, onCreated) },
+            onSave = { exercise, entry ->
+                viewModel.addCardioLog(exercise, entry.distanceKm, entry.seconds, note = entry.note)
+                cardioToAdd = null
             },
-            onConfirm = { categoria, distanza, durataSecondi, note ->
-                viewModel.addCardioLogByName(categoria, distanza, durataSecondi, note = note)
-                showAddCardio = false
-                pendingCardioCategory = null
-            }
+            onDismiss = { cardioToAdd = null },
+            initialExercise = picked
         )
     }
 
@@ -556,6 +566,8 @@ fun EditWorkoutContent(
                 exerciseToSwap = null
                 showExercisePicker = false
             },
+            // Adding: a cardio goes to its entry sheet (time, distance, note) instead of a planned duration
+            onCardioPicked = if (exerciseToSwap == null) { exercise -> cardioToAdd = exercise } else null,
             onCardioExerciseSelected = { exercise, durationMinutes, _, sets ->
                 val currentSwapKey = exerciseToSwap
                 if (currentSwapKey != null) {
@@ -1288,99 +1300,6 @@ private fun CardioSetEditRow(set: CardioLogEntity, number: Int, onClick: () -> U
             }
         }
     }
-}
-
-@Composable
-fun EditCardioDialog(
-    cardioLog: CardioLogEntity,
-    onDismiss: () -> Unit,
-    onConfirm: (CardioLogEntity) -> Unit,
-    /** Removes the set; null when it is the only one of its exercise. */
-    onDelete: (() -> Unit)? = null,
-    /** Shown in the title when the exercise has more than one set. */
-    setNumber: Int? = null
-) {
-    var note by remember { mutableStateOf(cardioLog.note.orEmpty()) }
-    var rpe by remember { mutableStateOf(cardioLog.rpe) }
-    val rpeScale = com.emanuel5014.trainable.ui.components.editableRpeScale(hasValue = cardioLog.rpe != null)
-    var categoria by remember { mutableStateOf(cardioLog.categoria) }
-    var distanza by remember { mutableStateOf(cardioLog.distanza.toString()) }
-    var durataOre by remember { mutableStateOf((cardioLog.durataSecondi / 3600).let { if (it > 0) it.toString() else "" }) }
-    var durataMinuti by remember { mutableStateOf(((cardioLog.durataSecondi % 3600) / 60).toString()) }
-    var durataSecondi by remember { mutableStateOf((cardioLog.durataSecondi % 60).toString()) }
-
-    val isValid = categoria.isNotBlank() && (distanza.isNotBlank() || durataMinuti.isNotBlank() || durataOre.isNotBlank())
-
-    AlertDialog(
-        modifier = Modifier.imePadding(),
-        onDismissRequest = onDismiss,
-        title = { 
-            Text(
-                setNumber?.let { stringResource(Res.string.set_number, it) } ?: stringResource(Res.string.edit_exercise_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Black
-            ) 
-        },
-        text = {
-            Box(modifier = Modifier.verticalScroll(rememberScrollState())) {
-              Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-CardioInputForm(
-                categoria = categoria,
-                onCategoriaChange = { categoria = it },
-                distanza = distanza,
-                onDistanzaChange = { distanza = it },
-                durataOre = durataOre,
-                onDurataOreChange = { durataOre = it },
-                durataMinuti = durataMinuti,
-                onDurataMinutiChange = { durataMinuti = it },
-                durataSecondi = durataSecondi,
-                onDurataSecondiChange = { durataSecondi = it },
-                showCategory = false,
-                note = note,
-                onNoteChange = { note = it }
-            )
-                rpeScale?.let { scale ->
-                    com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it }, scale = scale)
-                }
-              }
-}
-        },
-        confirmButton = {
-            GymButton(
-                onClick = {
-                    val dist = distanza.toFloatOrNull() ?: 0f
-                    val h = durataOre.toIntOrNull() ?: 0
-                    val m = durataMinuti.toIntOrNull() ?: 0
-                    val s = durataSecondi.toIntOrNull() ?: 0
-                    val dur = h * 3600 + m * 60 + s
-                    onConfirm(cardioLog.copy(categoria = categoria, distanza = dist, durataSecondi = dur, note = note.trim().ifBlank { null }, rpe = rpe))
-                },
-                enabled = isValid
-            ) {
-                Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
-            }
-        },
-        dismissButton = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (onDelete != null) {
-                    IconButton(onClick = onDelete) {
-                        Icon(Icons.Rounded.Delete, contentDescription = stringResource(Res.string.cardio_remove_set), tint = Error)
-                    }
-                }
-                GymButton(
-                    onClick = onDismiss,
-                    containerColor = Color.Transparent,
-                    contentColor = OnSurfaceVariant
-                ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
-                }
-            }
-        },
-        containerColor = Surface,
-        titleContentColor = OnSurface,
-        textContentColor = OnSurfaceVariant,
-        shape = Shapes.extraLarge
-    )
 }
 
 @Composable

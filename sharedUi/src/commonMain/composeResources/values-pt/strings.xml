@@ -1533,4 +1533,9 @@
         <item quantity="one">há %1$d dia</item>
         <item quantity="other">há %1$d dias</item>
     </plurals>
+    <string name="when">Quando</string>
+    <string name="change">Alterar</string>
+    <string name="speed">Velocidade</string>
+    <string name="cardio_missing_values">Adicione uma duração ou uma distância</string>
+    <string name="cardio_entry_label">Adicionar cardio</string>
 </resources>

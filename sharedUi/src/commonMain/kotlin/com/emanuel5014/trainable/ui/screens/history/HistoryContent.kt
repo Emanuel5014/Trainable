@@ -181,7 +181,8 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.entity.isSystemPlan
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
-import com.emanuel5014.trainable.ui.components.AddCardioDialog
+import com.emanuel5014.trainable.ui.components.CardioAddFlow
+import com.emanuel5014.trainable.ui.components.CardioEntryMode
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.EmptyState
@@ -985,18 +986,29 @@ fun HistoryContent(
     }
 
     if (showCardioDialog) {
-        AddCardioDialog(
-            onDismiss = { showCardioDialog = false },
-            onConfirm = { categoria, distanza, durataSecondi, note ->
-                state.saveCardioWorkoutByName(categoria, distanza, durataSecondi, note)
+        // Picker (cardio only) then the entry sheet; the workout lands on the day and time chosen there
+        CardioAddFlow(
+            mode = CardioEntryMode.ADD_FROM_HISTORY,
+            exercises = uiState.exercises.values.toList(),
+            languageCode = languageCode,
+            loadSuggestions = { state.cardioSuggestions() },
+            onAddCustomExercise = { name, category, onCreated -> state.addCustomExercise(name, category, onCreated) },
+            onSave = { exercise, entry ->
+                state.saveCardioWorkout(
+                    exercise,
+                    entry.distanceKm,
+                    entry.seconds,
+                    entry.timestamp ?: Clock.System.now().toEpochMilliseconds(),
+                    entry.note
+                )
                 showCardioDialog = false
-            }
+            },
+            onDismiss = { showCardioDialog = false }
         )
     }
 }
 }
 
-// AddCardioDialog was moved to CardioInputForm.kt as a reusable component
 
 @Composable
 fun EditSetDialog(

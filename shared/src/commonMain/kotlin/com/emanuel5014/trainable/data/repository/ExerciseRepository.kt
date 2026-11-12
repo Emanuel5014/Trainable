@@ -4,7 +4,9 @@ import com.emanuel5014.trainable.data.local.ExerciseData
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
-import com.emanuel5014.trainable.domain.exercise.CardioExerciseMatcher
+import com.emanuel5014.trainable.data.local.entity.RecentCardio
+import com.emanuel5014.trainable.domain.exercise.CardioSuggestions
+import com.emanuel5014.trainable.domain.exercise.SuggestedExercise
 import com.emanuel5014.trainable.domain.exercise.CategoryChangeBlock
 import com.emanuel5014.trainable.domain.exercise.ExerciseNames
 import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
@@ -84,25 +86,13 @@ class ExerciseRepository(
         return newId
     }
 
-    /**
-     * The cardio exercise a typed activity name stands for, decided like the database update and the startup repair
-     * ([CardioExerciseMatcher]): an existing one, or a new custom cardio exercise added now. For the dialogs that still
-     * take a free-text name, so even their logs carry an exercise id.
-     */
-    suspend fun cardioExerciseForName(name: String): ExerciseEntity {
-        val exercises = exerciseDao.getAllExercisesIncludingDeleted().first()
-        val skipped = exerciseDao.getSkippedPresetIds().toSet()
-        val plan = CardioExerciseMatcher.plan(
-            listOf(CardioExerciseMatcher.Row(logId = 0, name = name)), exercises, skipped, exerciseDao.getMaxId() + 1
+    /** The "Suggested" section of the cardio picker, from the cardio done most recently ([recent], newest first). */
+    suspend fun cardioSuggestions(recent: List<RecentCardio>): List<SuggestedExercise> =
+        CardioSuggestions.of(
+            exerciseDao.getAllExercisesIncludingDeleted().first(),
+            recent,
+            exerciseDao.getSkippedPresetIds().toSet()
         )
-        // The new id is above every id of the table: the insert cannot replace anything
-        plan.newExercises.firstOrNull()?.let { created ->
-            exerciseDao.insertExercises(listOf(created))
-            return exerciseDao.getExerciseById(created.id) ?: created
-        }
-        val id = plan.links.getValue(0)
-        return exercises.first { it.id == id }
-    }
 
     /** The exercise with this id, also when it was deleted from the library: its history stays and can still be opened. */
     suspend fun getExercise(id: Int): ExerciseEntity? = exerciseDao.getExerciseById(id)

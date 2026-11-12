@@ -1533,4 +1533,9 @@
         <item quantity="one">%1$d giorno fa</item>
         <item quantity="other">%1$d giorni fa</item>
     </plurals>
+    <string name="when">Quando</string>
+    <string name="change">Cambia</string>
+    <string name="speed">Velocità</string>
+    <string name="cardio_missing_values">Aggiungi una durata o una distanza</string>
+    <string name="cardio_entry_label">Aggiungi cardio</string>
 </resources>

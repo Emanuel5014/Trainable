@@ -119,7 +119,9 @@ fun SwapExerciseBottomSheet(
     /** Top of the rep range of the exercise being replaced, so the new one starts from the same kind of reps. */
     currentRepsMax: Int? = null,
     /** Exercises that cannot be picked (the ones a screen that keys its list by exercise already has). */
-    excludedExerciseIds: Set<Int> = emptySet()
+    excludedExerciseIds: Set<Int> = emptySet(),
+    /** When set, a picked cardio exercise is handed over at once (the sheet closes) instead of asking minutes and sets. */
+    onCardioPicked: ((ExerciseEntity) -> Unit)? = null
 ) {
     rememberResponsiveSize()
 
@@ -134,6 +136,16 @@ fun SwapExerciseBottomSheet(
     var traitFilter by remember { mutableStateOf(TraitFilter.NONE) }
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
+
+    fun pick(exercise: ExerciseEntity) {
+        if (onCardioPicked != null && exercise.categoria.equals("Cardio", ignoreCase = true)) {
+            onCardioPicked(exercise)
+            onDismiss()
+        } else {
+            selectedExercise = exercise
+            step = 2
+        }
+    }
 
     val filteredExercises = remember(
         availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds, traitFilter
@@ -263,10 +275,7 @@ fun SwapExerciseBottomSheet(
                             ExercisePickRow(
                                 exercise = exercise,
                                 languageCode = languageCode,
-                                onClick = {
-                                    selectedExercise = exercise
-                                    step = 2
-                                },
+                                onClick = { pick(exercise) },
                                 isSelected = exercise.id == selectedExercise?.id,
                                 isCurrent = exercise.id == currentExerciseId,
                                 showThumbnail = showThumbnails,
@@ -357,10 +366,7 @@ fun SwapExerciseBottomSheet(
             languageCode = languageCode,
             showDescription = false,
             onConfirm = { form ->
-                onAddCustomExercise(form.name, form.category) { createdExercise ->
-                    selectedExercise = createdExercise
-                    step = 2
-                }
+                onAddCustomExercise(form.name, form.category) { createdExercise -> pick(createdExercise) }
                 showAddCustomDialog = false
             },
             onDismiss = { showAddCustomDialog = false }

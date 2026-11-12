@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.TagWithUsage
 import com.emanuel5014.trainable.data.repository.JournalRepository
+import com.emanuel5014.trainable.domain.exercise.SuggestedExercise
 import com.emanuel5014.trainable.domain.journal.JournalFilters
 import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -211,18 +212,23 @@ class HistoryState(
         }
     }
 
-    /** A cardio workout on its own, of [exercise], done now. */
-    fun saveCardioWorkout(exercise: ExerciseEntity, distanceKm: Float, seconds: Int, note: String? = null) {
+    /** A cardio workout on its own, of [exercise], done at [timestamp] (the moment chosen in the entry sheet). */
+    fun saveCardioWorkout(exercise: ExerciseEntity, distanceKm: Float, seconds: Int, timestamp: Long, note: String? = null) {
         scope.launch {
-            repository.saveCardioSession(exercise.id, exercise.nome, distanceKm, seconds, Clock.System.now().toEpochMilliseconds(), note)
+            repository.saveCardioSession(exercise.id, exercise.nome, distanceKm, seconds, timestamp, note)
         }
     }
 
-    /** The same from a typed activity name (the free-text dialog): the name is first resolved to its exercise. */
-    fun saveCardioWorkoutByName(name: String, distanceKm: Float, seconds: Int, note: String? = null) {
+    /** The "Suggested" section of the cardio picker. */
+    suspend fun cardioSuggestions(): List<SuggestedExercise> =
+        exerciseRepository.cardioSuggestions(repository.recentCardioExercises())
+
+    /** A custom exercise made from the picker; [onCreated] gets it once it is in the library. */
+    fun addCustomExercise(name: String, category: String, onCreated: (ExerciseEntity) -> Unit) {
         scope.launch {
-            val exercise = exerciseRepository.cardioExerciseForName(name)
-            repository.saveCardioSession(exercise.id, exercise.nome, distanceKm, seconds, Clock.System.now().toEpochMilliseconds(), note)
+            val id = exerciseRepository.addCustomExercise(name, category)
+            // A hidden exercise of that name comes back as it was stored, so it is read again
+            onCreated(exerciseRepository.getExercise(id) ?: ExerciseEntity(id = id, nome = name, categoria = category))
         }
     }
 

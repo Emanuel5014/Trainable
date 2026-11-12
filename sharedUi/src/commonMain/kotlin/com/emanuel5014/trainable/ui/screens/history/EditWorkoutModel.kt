@@ -14,7 +14,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.data.local.relation.toJournal
 import com.emanuel5014.trainable.data.repository.JournalRepository
-import com.emanuel5014.trainable.domain.csvimport.HistoryCsvColumns
+import com.emanuel5014.trainable.domain.exercise.SuggestedExercise
 import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
 import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
@@ -216,29 +216,18 @@ class EditWorkoutModel(
         }
     }
 
+    /** Saves a cardio set as edited in the entry sheet; its exercise link and stored name are kept as they are. */
     fun updateCardioLog(updatedCardio: CardioLogEntity) {
-        scope.launch {
-            val before = _state.value.cardioLogs.firstOrNull { it.id == updatedCardio.id }
-            // The activity typed in the dialog changed: the set now belongs to the exercise of that name
-            val renamed = before != null && HistoryCsvColumns.fold(before.categoria) != HistoryCsvColumns.fold(updatedCardio.categoria)
-            val row = if (renamed) {
-                val exercise = exerciseRepository.cardioExerciseForName(updatedCardio.categoria)
-                updatedCardio.copy(categoria = exercise.nome, exerciseId = exercise.id)
-            } else {
-                updatedCardio
-            }
-            workoutRepository.saveCardioLog(row)
-        }
+        scope.launch { workoutRepository.updateCardioLog(updatedCardio) }
     }
+
+    /** The "Suggested" section of the cardio picker. */
+    suspend fun cardioSuggestions(): List<SuggestedExercise> =
+        exerciseRepository.cardioSuggestions(workoutRepository.recentCardioExercises())
 
     /** A cardio exercise added to this past workout, after everything in it; [note] goes on its first set. */
     fun addCardioLog(exercise: ExerciseEntity, distanceKm: Float, seconds: Int, sets: Int = 1, note: String? = null) {
         scope.launch { insertCardioLogs(exercise, distanceKm, seconds, sets, note) }
-    }
-
-    /** The same from a typed activity name (the free-text dialog): the name is first resolved to its exercise. */
-    fun addCardioLogByName(name: String, distanceKm: Float, seconds: Int, sets: Int = 1, note: String? = null) {
-        scope.launch { insertCardioLogs(exerciseRepository.cardioExerciseForName(name), distanceKm, seconds, sets, note) }
     }
 
     private suspend fun insertCardioLogs(exercise: ExerciseEntity, distanceKm: Float, seconds: Int, sets: Int, note: String?) {
@@ -681,7 +670,8 @@ class EditWorkoutModel(
     fun addCustomExercise(name: String, category: String, onCreated: (ExerciseEntity) -> Unit = {}) {
         scope.launch {
             val exerciseId = exerciseRepository.addCustomExercise(name, category)
-            val newEx = ExerciseEntity(id = exerciseId, nome = name, categoria = category)
+            // A hidden exercise of that name comes back as it was stored, so it is read again
+            val newEx = exerciseRepository.getExercise(exerciseId) ?: ExerciseEntity(id = exerciseId, nome = name, categoria = category)
             onCreated(newEx)
         }
     }
