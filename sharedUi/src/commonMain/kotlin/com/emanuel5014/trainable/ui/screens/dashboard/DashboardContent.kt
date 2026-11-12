@@ -142,16 +142,17 @@ fun DashboardContent(
         }
     )
 
-    if (existingSessionForPlan != null) {
+    // Read once: on iOS the dialog composes its content once more while closing, after the state is already null
+    existingSessionForPlan?.let { session ->
         AlertDialog(
             onDismissRequest = { existingSessionForPlan = null },
             title = { Text(stringResource(Res.string.resume_workout)) },
-            text = { Text(stringResource(Res.string.existing_workout_message, existingSessionForPlan!!.displayName)) },
+            text = { Text(stringResource(Res.string.existing_workout_message, session.displayName)) },
             confirmButton = {
                 GymButton(
                     onClick = {
-                        existingSessionForPlan?.let { session ->
-                            onNavigateToWorkout(session.session.planId, session.session.id)
+                        existingSessionForPlan?.let { current ->
+                            onNavigateToWorkout(current.session.planId, current.session.id)
                         }
                         existingSessionForPlan = null
                     },
