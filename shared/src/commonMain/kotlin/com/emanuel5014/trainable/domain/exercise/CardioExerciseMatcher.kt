@@ -46,15 +46,18 @@ object CardioExerciseMatcher {
         val groups = LinkedHashMap<String, MutableList<Row>>()
         val spellings = HashMap<String, MutableList<String>>()
         for (row in rows) {
-            val spelling = row.name.trim().ifEmpty { CARDIO }
-            val key = HistoryCsvColumns.fold(spelling).ifEmpty { HistoryCsvColumns.fold(CARDIO) }
+            // A name with no letter or digit ("-", "?") says nothing: same as blank.
+            val folded = HistoryCsvColumns.fold(row.name)
+            val key = folded.ifEmpty { HistoryCsvColumns.fold(CARDIO) }
+            val spelling = if (folded.isEmpty()) CARDIO else row.name.trim()
             groups.getOrPut(key) { mutableListOf() }.add(row)
             spellings.getOrPut(key) { mutableListOf() }.add(spelling)
         }
 
         val links = HashMap<Int, Int>()
         val created = mutableListOf<ExerciseEntity>()
-        var nextId = nextCustomId
+        // Never trust the caller's counter: a clash with an existing id would corrupt a migration, so start above all.
+        var nextId = maxOf(nextCustomId, ExerciseEntity.FIRST_CUSTOM_ID, (exercises.maxOfOrNull { it.id } ?: 0) + 1)
         for ((key, group) in groups) {
             var target = existingTarget(key, exercises, skipped)
             if (target == null) {
@@ -79,7 +82,7 @@ object CardioExerciseMatcher {
         // Rule 2: a cardio preset that answers to the name. A slot goes to whoever owns it, which may be a custom.
         for (slot in CardioPresets.SLOT_IDS.sorted()) {
             if (slot in skipped) continue
-            if (key in (slotAliases(slot, exercises) ?: continue)) return slotOwner(slot, exercises, skipped)
+            if (key in (slotAliases(slot, exercises) ?: continue)) slotOwner(slot, exercises, skipped)?.let { return it }
         }
         return exercises
             .filter { it.id < ExerciseEntity.FIRST_CUSTOM_ID && it.id !in CardioPresets.SLOT_IDS && it.id !in skipped && isCardio(it) }
