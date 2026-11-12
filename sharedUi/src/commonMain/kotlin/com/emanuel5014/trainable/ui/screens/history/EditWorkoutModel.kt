@@ -216,9 +216,12 @@ class EditWorkoutModel(
         }
     }
 
-    /** Saves a cardio set as edited in the entry sheet; its exercise link and stored name are kept as they are. */
-    fun updateCardioLog(updatedCardio: CardioLogEntity) {
-        scope.launch { workoutRepository.updateCardioLog(updatedCardio) }
+    /**
+     * Saves what the entry sheet edits of a cardio set (time, distance, note, RPE) and nothing else: its exercise link,
+     * stored name and place in the session stay as they are, even if they changed while the sheet was open.
+     */
+    fun updateCardioSetValues(id: Int, seconds: Int, distanceKm: Float, note: String?, rpe: Float?) {
+        scope.launch { workoutRepository.updateCardioSetValues(id, seconds, distanceKm, note, rpe) }
     }
 
     /** The "Suggested" section of the cardio picker. */

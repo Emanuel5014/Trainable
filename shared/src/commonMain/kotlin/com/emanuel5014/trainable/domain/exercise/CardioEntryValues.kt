@@ -48,6 +48,31 @@ object CardioEntryValues {
         return if (fraction.isEmpty()) whole.toString() else "$whole$separator$fraction"
     }
 
+    /** The duration and distance a save gives back; [unchanged] when both are still the ones the sheet opened with. */
+    data class Read(val seconds: Int, val km: Float, val unchanged: Boolean)
+
+    /**
+     * What the tiles hold: [digits] and [distanceText] as typed. A value still showing the text it was opened with
+     * ([initialSeconds], [initialKm], null when adding) is given back exactly as stored, so a set saved only for its note
+     * keeps 5.2345 km or a duration over 99:59:59 instead of the rounded or capped text.
+     */
+    fun read(digits: String, distanceText: String, initialSeconds: Int?, initialKm: Float?, separator: Char): Read {
+        val sameSeconds = initialSeconds != null && digits == DurationDigits.digitsOf(initialSeconds)
+        val sameKm = initialKm != null && distanceText == distanceText(initialKm, separator)
+        return Read(
+            seconds = if (sameSeconds) initialSeconds!! else DurationDigits.seconds(digits),
+            km = if (sameKm) initialKm!! else parseDistance(distanceText),
+            unchanged = sameSeconds && sameKm
+        )
+    }
+
+    /**
+     * True when saving must ask for a duration or a distance: neither is there, unless a set is being [editing] with both
+     * values as they were (a stored 0/0 set can still have its note or RPE changed).
+     */
+    fun isMissing(read: Read, editing: Boolean): Boolean =
+        !(editing && read.unchanged) && read.seconds <= 0 && read.km <= 0f
+
     /** Seconds per km, only when [CardioHistory.speedKmh] says the values tell a speed (100 m and one minute). */
     fun paceSecondsPerKm(seconds: Int, km: Float): Int? =
         CardioHistory.speedKmh(seconds, km)?.let { (seconds / km).roundToInt() }

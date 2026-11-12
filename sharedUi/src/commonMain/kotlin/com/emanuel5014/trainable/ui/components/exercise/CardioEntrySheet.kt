@@ -157,9 +157,11 @@ fun CardioEntrySheet(
     var showDatePicker by remember { mutableStateOf(false) }
     var pendingDate by remember { mutableStateOf<Long?>(null) }
 
-    val seconds = DurationDigits.seconds(digits)
-    val km = CardioEntryValues.parseDistance(distanceText)
-    val hasValues = seconds > 0 || km > 0f
+    // A value left as it was opened is saved exactly as stored (the tiles round to 3 decimals and cap at 99:59:59)
+    val read = CardioEntryValues.read(digits, distanceText, initial?.seconds, initial?.distanceKm, separator)
+    val seconds = read.seconds
+    val km = read.km
+    val missing = CardioEntryValues.isMissing(read, editing = mode == CardioEntryMode.EDIT_SET)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -211,7 +213,7 @@ fun CardioEntrySheet(
 
                 val pace = CardioEntryValues.paceSecondsPerKm(seconds, km)
                 val speed = CardioHistory.speedKmh(seconds, km)
-                if (showMissing && !hasValues) {
+                if (showMissing && missing) {
                     Text(
                         text = stringResource(Res.string.cardio_missing_values),
                         style = MaterialTheme.typography.bodyMedium,
@@ -242,7 +244,7 @@ fun CardioEntrySheet(
             SheetFormFooter(horizontalPadding = ResponsiveSize.horizontalPadding) {
                 GymButton(
                     onClick = {
-                        if (!hasValues) {
+                        if (missing) {
                             showMissing = true
                         } else {
                             val now = Clock.System.now().toEpochMilliseconds()
@@ -668,14 +670,18 @@ fun CardioAddFlow(
             exercises = cardio,
             categories = listOf(CARDIO),
             onExerciseSelected = {
+                showPicker = false
                 // A hidden strength exercise brought back by "create" keeps its category: it is not a cardio
                 if (it.categoria.equals(CARDIO, ignoreCase = true)) exercise = it
-                showPicker = false
+                else if (exercise == null) onDismiss()
             },
             onAddCustomExercise = onAddCustomExercise,
+            // After a pick the picker dismisses itself too: by then it is already closed here, so nothing runs twice
             onDismiss = {
-                showPicker = false
-                if (exercise == null) onDismiss()
+                if (showPicker) {
+                    showPicker = false
+                    if (exercise == null) onDismiss()
+                }
             },
             languageCode = languageCode,
             lockedCategory = CARDIO,

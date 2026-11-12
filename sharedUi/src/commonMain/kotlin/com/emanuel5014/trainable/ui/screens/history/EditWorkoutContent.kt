@@ -481,9 +481,7 @@ fun EditWorkoutContent(
             onChangeExercise = null,
             title = CardioNames.of(log, state.exercisesById, languageCode),
             onSave = { entry ->
-                viewModel.updateCardioLog(
-                    log.copy(durataSecondi = entry.seconds, distanza = entry.distanceKm, note = entry.note, rpe = entry.rpe)
-                )
+                viewModel.updateCardioSetValues(log.id, entry.seconds, entry.distanceKm, entry.note, entry.rpe)
                 editingCardio = null
             },
             onDismiss = { editingCardio = null },
@@ -568,13 +566,9 @@ fun EditWorkoutContent(
             },
             // Adding: a cardio goes to its entry sheet (time, distance, note) instead of a planned duration
             onCardioPicked = if (exerciseToSwap == null) { exercise -> cardioToAdd = exercise } else null,
+            // Only swapping gets here: when adding, onCardioPicked takes every cardio
             onCardioExerciseSelected = { exercise, durationMinutes, _, sets ->
-                val currentSwapKey = exerciseToSwap
-                if (currentSwapKey != null) {
-                    viewModel.swapExerciseWithCardio(currentSwapKey, exercise, durationMinutes, sets)
-                } else {
-                    viewModel.addCardioLog(exercise, 0f, durationMinutes * 60, sets = sets)
-                }
+                exerciseToSwap?.let { viewModel.swapExerciseWithCardio(it, exercise, durationMinutes, sets) }
                 exerciseToSwap = null
                 showExercisePicker = false
             },
