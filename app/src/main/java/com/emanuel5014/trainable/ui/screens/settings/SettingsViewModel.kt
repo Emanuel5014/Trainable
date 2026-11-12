@@ -185,6 +185,8 @@ class SettingsViewModel @Inject constructor(
 
     val weightUnit = state.weightUnit
 
+    val distanceUnit = state.distanceUnit
+
     val timerNotificationsEnabled = state.timerNotificationsEnabled
 
     val timerFinishedLockscreenVibrationDuration = state.timerFinishedLockscreenVibrationDuration
@@ -676,6 +678,7 @@ class SettingsViewModel @Inject constructor(
     fun setThemeMode(mode: Int) = state.setThemeMode(mode)
 
     fun setWeightUnit(unit: String) = state.setWeightUnit(unit)
+    fun setDistanceUnit(unit: String) = state.setDistanceUnit(unit)
 
     fun getFolderDisplayPath(uriString: String?): String {
         if (uriString == null) return ""

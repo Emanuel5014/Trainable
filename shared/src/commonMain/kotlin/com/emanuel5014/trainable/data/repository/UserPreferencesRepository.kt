@@ -38,6 +38,8 @@ class UserPreferencesRepository(
         val NEXTCLOUD_AUTO_BACKUP_LAST_RUN = androidx.datastore.preferences.core.longPreferencesKey("nextcloud_auto_backup_last_run")
         val USER_LANGUAGE = stringPreferencesKey("user_language")
         val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
+        /** "km" or "mi": only what the screens show and take; distances are always stored in km. */
+        val DISTANCE_UNIT = stringPreferencesKey("distance_unit")
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
         val NAV_BAR_STYLE = intPreferencesKey("nav_bar_style")
         val LIQUID_GLASS_ENABLED = booleanPreferencesKey("liquid_glass_enabled")
@@ -295,6 +297,12 @@ class UserPreferencesRepository(
     val weightUnit: Flow<String> = dataStore.data
         .map { preferences ->
             preferences[WEIGHT_UNIT] ?: "kg"
+        }
+
+    /** Never written for existing installs, so they keep km; onboarding picks miles with pounds. */
+    val distanceUnit: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[DISTANCE_UNIT] ?: "km"
         }
 
     /** Falls back to the old floating/classic switch until the user picks one of the three styles. */
@@ -807,6 +815,12 @@ class UserPreferencesRepository(
     suspend fun setWeightUnit(unit: String) {
         dataStore.edit { preferences ->
             preferences[WEIGHT_UNIT] = unit
+        }
+    }
+
+    suspend fun setDistanceUnit(unit: String) {
+        dataStore.edit { preferences ->
+            preferences[DISTANCE_UNIT] = unit
         }
     }
 

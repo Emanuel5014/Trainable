@@ -23,6 +23,8 @@ object BackupSettingsCodec {
 
     fun appPreferences(prefs: Preferences, json: BackupJsonObject = KotlinxBackupJsonObject()): String {
         json.put("weight_unit", prefs[UserPreferencesRepository.WEIGHT_UNIT] ?: "kg")
+        // Only when chosen: backups of everyone still on km keep the legacy byte layout
+        prefs[UserPreferencesRepository.DISTANCE_UNIT]?.let { json.put("distance_unit", it) }
         prefs[UserPreferencesRepository.USER_LANGUAGE]?.let { json.put("user_language", it) }
         json.put("swipe_actions_enabled", prefs[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true)
         // Only when set: older backups and the legacy byte layout stay unchanged
@@ -100,6 +102,11 @@ object BackupSettingsCodec {
     fun restoreAppPreferences(jsonObject: BackupJsonObject, prefs: MutablePreferences) {
         if (jsonObject.has("weight_unit"))
             prefs[UserPreferencesRepository.WEIGHT_UNIT] = jsonObject.getString("weight_unit")
+        if (jsonObject.has("distance_unit"))
+            prefs[UserPreferencesRepository.DISTANCE_UNIT] = jsonObject.getString("distance_unit")
+        else
+            // A backup from before miles, or of someone who never chose: km
+            prefs.remove(UserPreferencesRepository.DISTANCE_UNIT)
         if (jsonObject.has("user_language") && !jsonObject.isNull("user_language"))
             prefs[UserPreferencesRepository.USER_LANGUAGE] = jsonObject.getString("user_language")
         if (jsonObject.has("swipe_actions_enabled"))

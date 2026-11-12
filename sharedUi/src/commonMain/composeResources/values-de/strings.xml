@@ -578,6 +578,12 @@
     <string name="username">Benutzername</string>
     <string name="weight_unit">Gewichtseinheit</string>
     <string name="weight_unit_desc">Wähle zwischen Kilogramm und Pfund</string>
+    <string name="distance_unit">Entfernungseinheit</string>
+    <string name="distance_unit_desc">Wähle zwischen Kilometern und Meilen</string>
+    <string name="kilometers">Kilometer</string>
+    <string name="miles">Meilen</string>
+    <string name="mi">mi</string>
+    <string name="mph">mph</string>
     <string name="workout_section_after">NACH DEM TRAINING</string>
     <string name="workout_section_programming">ROUTINEN &amp; ÜBUNGEN</string>
     <string name="workout_section_session">WÄHREND DES TRAININGS</string>
@@ -1044,7 +1050,7 @@
     <string name="cancel_workout">Training abbrechen</string>
     <string name="cardio_add_set">Satz hinzufügen</string>
     <string name="cardio_badge">CARDIO</string>
-    <string name="cardio_distance_label">Zurückgelegte Strecke (km)</string>
+    <string name="cardio_distance_label">Zurückgelegte Strecke (%1$s)</string>
     <string name="cardio_mark_completed">Als erledigt markieren</string>
     <string name="cardio_set_note">Satznotiz</string>
     <string name="cardio_stop_save">STOP &amp; SPEICH.</string>

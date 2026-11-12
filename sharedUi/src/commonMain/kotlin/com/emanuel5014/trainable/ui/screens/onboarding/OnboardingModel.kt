@@ -88,6 +88,8 @@ class OnboardingModel(
         }
 
         userPrefsRepository.setWeightUnit(weightUnit)
+        // Pounds go with miles, kilograms with km (no control of its own: Settings changes it)
+        userPrefsRepository.setDistanceUnit(if (weightUnit == "lb") "mi" else "km")
         userPrefsRepository.setWeeklyGoal(if (weeklyGoal > 0) weeklyGoal else 3)
         userPrefsRepository.setHapticEnabled(hapticEnabled)
         userPrefsRepository.setTimerFinishedLockscreenVibrationDuration(timerFinishedLockscreenVibrationDuration)

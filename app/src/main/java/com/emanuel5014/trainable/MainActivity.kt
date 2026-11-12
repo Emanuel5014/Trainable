@@ -217,6 +217,7 @@ class MainActivity : FragmentActivity() {
             val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = null)
             val advancedProgramming by userPreferencesRepository.advancedProgrammingEnabled.collectAsState(initial = false)
             val exerciseMediaEnabled by userPreferencesRepository.exerciseMediaEnabled.collectAsState(initial = false)
+            val distanceUnit by userPreferencesRepository.distanceUnit.collectAsState(initial = "km")
             val rpeEnabled by userPreferencesRepository.rpeEnabled.collectAsState(initial = false)
             val rpeScale by userPreferencesRepository.rpeScale.collectAsState(initial = RpeScale.BASIC)
             val rpeSettings = remember(rpeEnabled, rpeScale) { RpeSettings(rpeEnabled, rpeScale) }
@@ -315,6 +316,7 @@ class MainActivity : FragmentActivity() {
                   LocalAdvancedProgramming provides advancedProgramming,
                   LocalRpeSettings provides rpeSettings,
                   LocalExerciseMediaEnabled provides exerciseMediaEnabled,
+                  com.emanuel5014.trainable.ui.components.LocalDistanceUnit provides distanceUnit,
                   LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating),
                   LocalGlassSettings provides glassSettings,
                   LocalPlatformGlass provides AndroidPlatformGlass,

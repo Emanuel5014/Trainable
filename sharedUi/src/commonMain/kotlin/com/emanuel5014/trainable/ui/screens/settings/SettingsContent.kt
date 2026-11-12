@@ -1,5 +1,14 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.sharedui.resources.mi
+import com.emanuel5014.trainable.sharedui.resources.miles
+import com.emanuel5014.trainable.sharedui.resources.kilometers
+import com.emanuel5014.trainable.sharedui.resources.distance_unit_desc
+import com.emanuel5014.trainable.sharedui.resources.distance_unit
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.Straighten
 import com.emanuel5014.trainable.ui.util.bodyPadding
 import com.emanuel5014.trainable.ui.util.scrollEndInset
 import com.emanuel5014.trainable.ui.util.plusBottom
@@ -172,6 +181,7 @@ fun SettingsContent(
     val weeklyGoal by state.weeklyGoal.collectAsState()
     val hapticEnabled by state.hapticEnabled.collectAsState()
     val weightUnit by state.weightUnit.collectAsState()
+    val distanceUnit by state.distanceUnit.collectAsState()
     val navBarStyle by state.navBarStyle.collectAsState()
     val swipeActionsEnabled by state.swipeActionsEnabled.collectAsState()
     Scaffold(
@@ -298,50 +308,27 @@ fun SettingsContent(
             SettingsSection(title = stringResource(Res.string.preferences)) {
                 GymCard(containerColor = SurfaceContainerHigh) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.Scale, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(Res.string.weight_unit), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(Res.string.weight_unit_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(SurfaceContainerHighest)
-                                    .padding(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "kg",
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (weightUnit == "kg") Primary else Color.Transparent)
-                                        .clickable { state.setWeightUnit("kg") }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = if (weightUnit == "kg") OnPrimary else OnSurfaceVariant,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                                Text(
-                                    text = "lb",
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (weightUnit == "lb") Primary else Color.Transparent)
-                                        .clickable { state.setWeightUnit("lb") }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = if (weightUnit == "lb") OnPrimary else OnSurfaceVariant,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            }
-                        }
+                        UnitSettingRow(
+                            icon = Icons.Rounded.Scale,
+                            title = stringResource(Res.string.weight_unit),
+                            description = stringResource(Res.string.weight_unit_desc),
+                            options = listOf("kg" to "kg", "lb" to "lb"),
+                            selected = weightUnit,
+                            onSelect = state::setWeightUnit
+                        )
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        // Distances stay stored in km: this only changes what is shown and typed
+                        UnitSettingRow(
+                            icon = Icons.Rounded.Straighten,
+                            title = stringResource(Res.string.distance_unit),
+                            description = stringResource(Res.string.distance_unit_desc),
+                            options = listOf("km" to "km", "mi" to stringResource(Res.string.mi)),
+                            optionDescriptions = listOf(stringResource(Res.string.kilometers), stringResource(Res.string.miles)),
+                            selected = distanceUnit,
+                            onSelect = state::setDistanceUnit
+                        )
 
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
@@ -629,6 +616,56 @@ fun SettingsContent(
 
             platformSections()
             aboutSection()
+        }
+    }
+}
+
+/** A preference with a few short choices side by side (kg/lb, km/mi), the chosen one filled. */
+@Composable
+private fun UnitSettingRow(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    options: List<Pair<String, String>>,
+    selected: String,
+    onSelect: (String) -> Unit,
+    optionDescriptions: List<String>? = null
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                Text(description, style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+            }
+        }
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(SurfaceContainerHighest)
+                .padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            options.forEachIndexed { index, (value, label) ->
+                val spoken = optionDescriptions?.getOrNull(index)
+                Text(
+                    text = label,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (selected == value) Primary else Color.Transparent)
+                        .clickable { onSelect(value) }
+                        .then(if (spoken != null) Modifier.semantics { contentDescription = spoken } else Modifier)
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    color = if (selected == value) OnPrimary else OnSurfaceVariant,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
         }
     }
 }

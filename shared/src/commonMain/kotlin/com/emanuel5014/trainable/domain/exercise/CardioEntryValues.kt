@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.domain.exercise
 
+import com.emanuel5014.trainable.util.DistanceUnitConverter
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Instant
@@ -39,7 +40,7 @@ object CardioEntryValues {
         return kept
     }
 
-    /** [km] as it is typed again, with [separator] and without trailing zeros ("5,2", "10"); empty for zero. */
+    /** A distance ([km], or miles already converted) as it is typed again, with [separator] and without trailing zeros ("5,2", "10"); empty for zero. */
     fun distanceText(km: Float, separator: Char): String {
         val thousandths = (km.toDouble() * 1000).roundToLong()
         if (thousandths <= 0L) return ""
@@ -48,20 +49,46 @@ object CardioEntryValues {
         return if (fraction.isEmpty()) whole.toString() else "$whole$separator$fraction"
     }
 
+    /**
+     * The start text of a plain distance field (the workout's cardio dialogs): [km] as those fields have always shown it
+     * ("5.0"), or in miles with up to three decimals ("3.107"); empty for no distance.
+     */
+    fun fieldText(km: Float, unit: String): String = when {
+        km <= 0f -> ""
+        DistanceUnitConverter.isMiles(unit) -> distanceText(DistanceUnitConverter.toDisplay(km, unit), '.')
+        else -> km.toString()
+    }
+
+    /**
+     * The km of a plain distance field opened on [initialKm] (0 for none) in [unit]: still showing [fieldText] it gives
+     * [initialKm] back exactly, anything typed is read in [unit] and turned into km.
+     */
+    fun fieldKm(text: String, initialKm: Float, unit: String): Float =
+        if (initialKm > 0f && text == fieldText(initialKm, unit)) initialKm
+        else DistanceUnitConverter.toStorage(parseDistance(text), unit)
+
     /** The duration and distance a save gives back; [unchanged] when both are still the ones the sheet opened with. */
     data class Read(val seconds: Int, val km: Float, val unchanged: Boolean)
 
     /**
-     * What the tiles hold: [digits] and [distanceText] as typed. A value still showing the text it was opened with
-     * ([initialSeconds], [initialKm], null when adding) is given back exactly as stored, so a set saved only for its note
-     * keeps 5.2345 km or a duration over 99:59:59 instead of the rounded or capped text.
+     * What the tiles hold: [digits] and [distanceText] as typed, the distance in [unit] ("km" or "mi"). A value still
+     * showing the text it was opened with ([initialSeconds], [initialKm], null when adding) is given back exactly as
+     * stored, so a set saved only for its note keeps 5.2345 km or a duration over 99:59:59 instead of the rounded or
+     * capped text, and 5 km shown as 3.107 mi never comes back as 5.0004 km. A typed distance becomes km.
      */
-    fun read(digits: String, distanceText: String, initialSeconds: Int?, initialKm: Float?, separator: Char): Read {
+    fun read(
+        digits: String,
+        distanceText: String,
+        initialSeconds: Int?,
+        initialKm: Float?,
+        separator: Char,
+        unit: String = DistanceUnitConverter.KM
+    ): Read {
         val sameSeconds = initialSeconds != null && digits == DurationDigits.digitsOf(initialSeconds)
-        val sameKm = initialKm != null && distanceText == distanceText(initialKm, separator)
+        val sameKm = initialKm != null && distanceText == distanceText(DistanceUnitConverter.toDisplay(initialKm, unit), separator)
         return Read(
             seconds = if (sameSeconds) initialSeconds!! else DurationDigits.seconds(digits),
-            km = if (sameKm) initialKm!! else parseDistance(distanceText),
+            km = if (sameKm) initialKm!! else DistanceUnitConverter.toStorage(parseDistance(distanceText), unit),
             unchanged = sameSeconds && sameKm
         )
     }

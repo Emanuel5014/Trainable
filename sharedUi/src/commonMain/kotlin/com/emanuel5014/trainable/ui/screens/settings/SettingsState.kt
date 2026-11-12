@@ -151,6 +151,12 @@ class SettingsState(
         initialValue = "kg"
     )
 
+    val distanceUnit = userPrefsRepository.distanceUnit.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "km"
+    )
+
     val timerNotificationsEnabled = userPrefsRepository.timerNotificationsEnabled.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -613,6 +619,12 @@ class SettingsState(
     fun setWeightUnit(unit: String) {
         scope.launch {
             userPrefsRepository.setWeightUnit(unit)
+        }
+    }
+
+    fun setDistanceUnit(unit: String) {
+        scope.launch {
+            userPrefsRepository.setDistanceUnit(unit)
         }
     }
 

@@ -232,6 +232,7 @@ private fun TrainableIosApp() {
     val themeStyle by preferences.themeStyle.collectAsState(initial = 0)
     val themeMode by preferences.themeMode.collectAsState(initial = null)
     val exerciseMediaEnabled by preferences.exerciseMediaEnabled.collectAsState(initial = false)
+    val distanceUnit by preferences.distanceUnit.collectAsState(initial = "km")
     val advancedProgramming by preferences.advancedProgrammingEnabled.collectAsState(initial = false)
     val navBarStyle by preferences.navBarStyle.collectAsState(initial = null)
     val rpeEnabled by preferences.rpeEnabled.collectAsState(initial = false)
@@ -257,6 +258,7 @@ private fun TrainableIosApp() {
             com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi provides IosExercisePlatformUi,
             com.emanuel5014.trainable.ui.components.LocalExerciseAddMemory provides IosExerciseAddMemory,
             com.emanuel5014.trainable.ui.components.LocalExerciseMediaEnabled provides exerciseMediaEnabled,
+            com.emanuel5014.trainable.ui.components.LocalDistanceUnit provides distanceUnit,
             com.emanuel5014.trainable.ui.components.LocalShowMessage provides rememberIosShowMessage(),
             LocalPaletteColors provides IosPaletteColors,
             LocalHapticsSetting provides preferences.hapticEnabled,
