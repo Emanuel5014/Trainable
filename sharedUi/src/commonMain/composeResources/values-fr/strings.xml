@@ -759,7 +759,7 @@
     <string name="exercise_merged_into_row">Fusionné dans %1$s</string>
     <string name="exercise_more_actions">Plus d'actions</string>
     <string name="exercise_msg_cannot_merge">Ces exercices ne peuvent pas être fusionnés</string>
-    <string name="exercise_msg_cannot_merge_cardio">Les exercices de cardio ne peuvent pas être fusionnés</string>
+    <string name="exercise_msg_cannot_merge_cardio">Les exercices de cardio ne peuvent être fusionnés qu'avec des exercices de cardio</string>
     <string name="exercise_msg_cannot_merge_workout">Terminez d'abord la séance en cours</string>
     <string name="exercise_msg_cannot_restore_name">Un autre exercice porte déjà ce nom. Renomme-le d'abord.</string>
     <string name="exercise_msg_deleted">Supprimé</string>

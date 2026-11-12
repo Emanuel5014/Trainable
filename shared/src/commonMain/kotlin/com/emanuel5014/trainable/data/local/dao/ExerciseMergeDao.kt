@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.Flow
 
 /** What a merge will move from the exercise that goes away to the one that stays. */
 data class MergePreview(
+    /** Strength sets and cardio sets (`cardio_logs` rows) together. */
     val sets: Int,
+    /** Workouts with sets or cardio of the exercise. */
     val workouts: Int,
     val routineEntries: Int,
     val routines: Int,
@@ -73,12 +75,13 @@ interface ExerciseMergeDao {
     @Query("DELETE FROM exercise_merges WHERE id = :mergeId")
     suspend fun deleteMerge(mergeId: Int)
 
-    // --- what will move (the five places an exercise is referred to) ---
+    // --- what will move (the six places an exercise is referred to) ---
 
-    @Query("SELECT COUNT(*) FROM set_logs WHERE exercise_id = :id")
+    /** Strength sets plus cardio sets: a cardio exercise has only the second, one used as cardio in a routine both. */
+    @Query("SELECT (SELECT COUNT(*) FROM set_logs WHERE exercise_id = :id) + (SELECT COUNT(*) FROM cardio_logs WHERE exercise_id = :id)")
     suspend fun countSets(id: Int): Int
 
-    @Query("SELECT COUNT(DISTINCT session_id) FROM set_logs WHERE exercise_id = :id")
+    @Query("SELECT COUNT(*) FROM (SELECT session_id FROM set_logs WHERE exercise_id = :id UNION SELECT session_id FROM cardio_logs WHERE exercise_id = :id)")
     suspend fun countWorkouts(id: Int): Int
 
     @Query("SELECT COUNT(*) FROM plan_exercises WHERE exercise_id = :id")
@@ -101,12 +104,13 @@ interface ExerciseMergeDao {
     suspend fun countSharedWorkouts(loserId: Int, winnerId: Int): Int
 
     /**
-     * True when a workout not yet finished uses the exercise (sets, a place in its routine, or a swap to it). A workout in
+     * True when a workout not yet finished uses the exercise (sets, cardio, a place in its routine, or a swap to it). A workout in
      * progress holds the exercise ids it loaded: merged under its feet, it would go on writing to the one that is hidden.
      */
     @Query(
         """
         SELECT EXISTS(SELECT 1 FROM set_logs sl JOIN workout_sessions ws ON ws.id = sl.session_id WHERE sl.exercise_id = :id AND ws.is_finished = 0)
+            OR EXISTS(SELECT 1 FROM cardio_logs cl JOIN workout_sessions ws ON ws.id = cl.session_id WHERE cl.exercise_id = :id AND ws.is_finished = 0)
             OR EXISTS(SELECT 1 FROM plan_exercises pe JOIN workout_sessions ws ON ws.plan_id = pe.plan_id WHERE pe.exercise_id = :id AND ws.is_finished = 0)
             OR EXISTS(SELECT 1 FROM session_exercise_swaps sw JOIN workout_sessions ws ON ws.id = sw.session_id WHERE sw.replacement_exercise_id = :id AND ws.is_finished = 0)
         """
@@ -142,6 +146,9 @@ interface ExerciseMergeDao {
     @Query("INSERT INTO exercise_merge_moves (merge_id, source, row_id) SELECT :mergeId, 'PRESCRIPTION_EDIT', id FROM session_prescription_edits WHERE exercise_id = :exerciseId")
     suspend fun recordProgramEdits(mergeId: Int, exerciseId: Int)
 
+    @Query("INSERT INTO exercise_merge_moves (merge_id, source, row_id) SELECT :mergeId, 'CARDIO_LOG', id FROM cardio_logs WHERE exercise_id = :exerciseId")
+    suspend fun recordCardioLogs(mergeId: Int, exerciseId: Int)
+
     // --- move them to the winner ---
 
     @Query("UPDATE set_logs SET exercise_id = :toId WHERE exercise_id = :fromId")
@@ -159,6 +166,10 @@ interface ExerciseMergeDao {
     @Query("UPDATE session_prescription_edits SET exercise_id = :toId WHERE exercise_id = :fromId")
     suspend fun repointProgramEdits(fromId: Int, toId: Int)
 
+    /** Only `exercise_id`: `categoria` keeps the name written at the time, a fallback for a missing link. */
+    @Query("UPDATE cardio_logs SET exercise_id = :toId WHERE exercise_id = :fromId")
+    suspend fun repointCardioLogs(fromId: Int, toId: Int)
+
     // --- and back: only the rows the merge moved, and only while they are still on the winner ---
 
     @Query("UPDATE set_logs SET exercise_id = :loserId WHERE exercise_id = :winnerId AND id IN (SELECT row_id FROM exercise_merge_moves WHERE merge_id = :mergeId AND source = 'SET_LOG')")
@@ -175,6 +186,9 @@ interface ExerciseMergeDao {
 
     @Query("UPDATE session_prescription_edits SET exercise_id = :loserId WHERE exercise_id = :winnerId AND id IN (SELECT row_id FROM exercise_merge_moves WHERE merge_id = :mergeId AND source = 'PRESCRIPTION_EDIT')")
     suspend fun restoreProgramEdits(mergeId: Int, winnerId: Int, loserId: Int)
+
+    @Query("UPDATE cardio_logs SET exercise_id = :loserId WHERE exercise_id = :winnerId AND id IN (SELECT row_id FROM exercise_merge_moves WHERE merge_id = :mergeId AND source = 'CARDIO_LOG')")
+    suspend fun restoreCardioLogs(mergeId: Int, winnerId: Int, loserId: Int)
 
     /** Merges [loserId] into [winnerId] (the loser is hidden), or says why it cannot be done and changes nothing. */
     @Transaction
@@ -200,11 +214,13 @@ interface ExerciseMergeDao {
         recordOneRepMaxes(mergeId, loserId)
         recordSwaps(mergeId, loserId)
         recordProgramEdits(mergeId, loserId)
+        recordCardioLogs(mergeId, loserId)
         repointSetLogs(loserId, winnerId)
         repointPlanExercises(loserId, winnerId)
         repointOneRepMaxes(loserId, winnerId)
         repointSwaps(loserId, winnerId)
         repointProgramEdits(loserId, winnerId)
+        repointCardioLogs(loserId, winnerId)
         if (!loser.isDeleted) setHidden(loserId, true)
         if (moveStar) setFavorite(winnerId, true)
         return MergeOutcome.Merged(mergeId)
@@ -222,6 +238,7 @@ interface ExerciseMergeDao {
         restoreOneRepMaxes(mergeId, merge.winnerId, merge.loserId)
         restoreSwaps(mergeId, merge.winnerId, merge.loserId)
         restoreProgramEdits(mergeId, merge.winnerId, merge.loserId)
+        restoreCardioLogs(mergeId, merge.winnerId, merge.loserId)
         if (!merge.loserWasHidden) setHidden(merge.loserId, false)
         if (merge.favoriteMoved) setFavorite(merge.winnerId, false)
         deleteMerge(mergeId)

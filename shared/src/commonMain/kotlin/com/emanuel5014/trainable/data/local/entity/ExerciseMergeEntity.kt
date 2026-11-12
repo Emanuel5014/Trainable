@@ -7,7 +7,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * One exercise merged into another: everything of the loser (sets, routine entries, maxes, swaps, program changes) now
+ * One exercise merged into another: everything of the loser (sets, cardio, routine entries, maxes, swaps, program changes) now
  * belongs to the winner and the loser is hidden. The row stays so that the merge can be undone and so that imports
  * recognise the loser's name as the winner.
  */
@@ -80,4 +80,5 @@ object MergeSource {
     const val ONE_REP_MAX = "ONE_REP_MAX"
     const val SWAP_REPLACEMENT = "SWAP_REPLACEMENT"
     const val PRESCRIPTION_EDIT = "PRESCRIPTION_EDIT"
+    const val CARDIO_LOG = "CARDIO_LOG"
 }

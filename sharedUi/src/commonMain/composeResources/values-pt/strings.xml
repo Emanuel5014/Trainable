@@ -759,7 +759,7 @@
     <string name="exercise_merged_into_row">Mesclado em %1$s</string>
     <string name="exercise_more_actions">Mais ações</string>
     <string name="exercise_msg_cannot_merge">Esses exercícios não podem ser mesclados</string>
-    <string name="exercise_msg_cannot_merge_cardio">Exercícios de cardio não podem ser mesclados</string>
+    <string name="exercise_msg_cannot_merge_cardio">Exercícios de cardio só podem ser mesclados com exercícios de cardio</string>
     <string name="exercise_msg_cannot_merge_workout">Termine antes o treino em andamento</string>
     <string name="exercise_msg_cannot_restore_name">Outro exercício já tem este nome. Renomeie-o primeiro.</string>
     <string name="exercise_msg_deleted">Excluído</string>

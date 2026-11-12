@@ -56,7 +56,7 @@ data class ExerciseDetailActions(
         fun of(exercise: ExerciseEntity, merges: ExerciseMergeState, editablePresets: Boolean = false): ExerciseDetailActions {
             val mergedAway = merges.asLoser != null
             return ExerciseDetailActions(
-                canMerge = !mergedAway && !ExerciseMerges.isCardio(exercise),
+                canMerge = !mergedAway,
                 canRemove = !exercise.isDeleted && !mergedAway,
                 canRestore = exercise.isDeleted && !mergedAway,
                 canEdit = !mergedAway && (exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID || editablePresets),
@@ -157,7 +157,7 @@ class ExerciseDetailState(
         // does not show the previous content for a moment before the spinner
         .stateIn(scope, SharingStarted.WhileSubscribed(5000, replayExpirationMillis = 0), ExerciseDetailUiState())
 
-    /** The exercises this one can be merged into: in the library, and passing the merge rules. */
+    /** The exercises this one can be merged into: in the library, of the same kind (cardio or not), and passing the merge rules. */
     @OptIn(ExperimentalCoroutinesApi::class)
     val mergeCandidates: StateFlow<List<ExerciseEntity>> = requestedId
         .flatMapLatest { id ->
@@ -167,7 +167,8 @@ class ExerciseDetailState(
                 exerciseRepository.getAllExercises(),
                 mergeRepository.observeMerges()
             ) { open, library, merges ->
-                library.filter { ExerciseMerges.check(winner = it, loser = open, merges = merges) == MergeCheck.OK }
+                if (open == null) emptyList()
+                else library.filter { ExerciseMerges.canMergeInto(open, it) && ExerciseMerges.check(winner = it, loser = open, merges = merges) == MergeCheck.OK }
             }
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())

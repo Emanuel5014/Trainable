@@ -756,7 +756,7 @@
     <string name="exercise_merged_into_row">Merged into %1$s</string>
     <string name="exercise_more_actions">More actions</string>
     <string name="exercise_msg_cannot_merge">These exercises can't be merged</string>
-    <string name="exercise_msg_cannot_merge_cardio">Cardio exercises can't be merged</string>
+    <string name="exercise_msg_cannot_merge_cardio">Cardio exercises can only be merged with cardio exercises</string>
     <string name="exercise_msg_cannot_merge_workout">Finish the workout in progress first</string>
     <string name="exercise_msg_cannot_restore_name">Another exercise already has this name. Rename it first.</string>
     <string name="exercise_msg_deleted">Deleted</string>

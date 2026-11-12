@@ -756,7 +756,7 @@
     <string name="exercise_merged_into_row">Zusammengeführt in %1$s</string>
     <string name="exercise_more_actions">Weitere Aktionen</string>
     <string name="exercise_msg_cannot_merge">Diese Übungen lassen sich nicht zusammenführen</string>
-    <string name="exercise_msg_cannot_merge_cardio">Cardio-Übungen lassen sich nicht zusammenführen</string>
+    <string name="exercise_msg_cannot_merge_cardio">Cardio-Übungen lassen sich nur mit Cardio-Übungen zusammenführen</string>
     <string name="exercise_msg_cannot_merge_workout">Beende zuerst das laufende Training</string>
     <string name="exercise_msg_cannot_restore_name">Eine andere Übung hat schon diesen Namen. Benenne sie zuerst um.</string>
     <string name="exercise_msg_deleted">Gelöscht</string>

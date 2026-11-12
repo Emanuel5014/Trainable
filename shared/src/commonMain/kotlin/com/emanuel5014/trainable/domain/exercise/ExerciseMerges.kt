@@ -6,8 +6,8 @@ import com.emanuel5014.trainable.domain.csvimport.HistoryCsvColumns
 import com.emanuel5014.trainable.domain.csvimport.ResolvedExercise
 
 /**
- * Why two exercises can or cannot be merged. [CARDIO_EXERCISE]: the cardio history is linked to an exercise by its name,
- * which a merge does not move. [WINNER_MERGED_AWAY]: the target was itself merged into another exercise, which is where
+ * Why two exercises can or cannot be merged. [CARDIO_EXERCISE]: one is cardio and the other is not (see
+ * [ExerciseMerges.canMergeInto]). [WINNER_MERGED_AWAY]: the target was itself merged into another exercise, which is where
  * its history is. [LOSER_IN_ACTIVE_WORKOUT] is decided by the database (it needs the workouts in progress).
  */
 enum class MergeCheck {
@@ -50,7 +50,7 @@ object ExerciseMerges {
         if (merges.any { it.loserId == loser.id }) return MergeCheck.LOSER_ALREADY_MERGED
         if (merges.any { it.loserId == winner.id }) return MergeCheck.WINNER_MERGED_AWAY
         if (winner.isDeleted) return MergeCheck.WINNER_HIDDEN
-        if (isCardio(winner) || isCardio(loser)) return MergeCheck.CARDIO_EXERCISE
+        if (!canMergeInto(source = loser, target = winner)) return MergeCheck.CARDIO_EXERCISE
         return MergeCheck.OK
     }
 
@@ -107,6 +107,12 @@ object ExerciseMerges {
     /** Analytics keeps a set of selected exercises: the winner joins it when the loser was in it. */
     fun selectionAfterMerge(selected: Set<Int>, loserId: Int, winnerId: Int): Set<Int> =
         if (loserId in selected) selected + winnerId else selected
+
+    /**
+     * Cardio goes only into cardio and strength only into strength: the history of one kind would not show on the other.
+     * The cardio logs of any exercise move with it all the same (a strength exercise used as cardio in a routine has some).
+     */
+    fun canMergeInto(source: ExerciseEntity, target: ExerciseEntity): Boolean = isCardio(source) == isCardio(target)
 
     fun isCardio(exercise: ExerciseEntity): Boolean = exercise.categoria.equals(ResolvedExercise.CARDIO, ignoreCase = true)
 }
