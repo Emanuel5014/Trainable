@@ -48,7 +48,7 @@ fun RoomDatabase.Builder<GymDatabase>.withAppSetup(
                     CoroutineScope(Dispatchers.IO).launch {
                         syncExercises(dbInstance.exerciseDao(), retiredPresets)
                         // After the sync, so that a preset it just added can take its logs
-                        repairCardioLinks(dbInstance.exerciseDao(), dbInstance.workoutDao())
+                        repairCardioLinks(dbInstance.workoutDao())
                     }
                 }
             }
@@ -82,9 +82,9 @@ private suspend fun syncExercises(exerciseDao: ExerciseDao, retiredPresets: Reti
 }
 
 /** Links the cardio logs left without an exercise (normally none). A failure is ignored: the next launch tries again. */
-private suspend fun repairCardioLinks(exerciseDao: ExerciseDao, workoutDao: WorkoutDao) {
+private suspend fun repairCardioLinks(workoutDao: WorkoutDao) {
     try {
-        CardioLinking.repair(exerciseDao, workoutDao)
+        CardioLinking.repair(workoutDao)
     } catch (e: Exception) {
         // Left unlinked for now: the rows keep their name, the next launch tries again
     }

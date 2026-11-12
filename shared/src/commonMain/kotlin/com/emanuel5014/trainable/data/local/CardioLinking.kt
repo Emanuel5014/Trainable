@@ -3,13 +3,11 @@ package com.emanuel5014.trainable.data.local
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.execSQL
-import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.CardioExerciseMatcher
 import com.emanuel5014.trainable.domain.exercise.CardioPresets
 import com.emanuel5014.trainable.domain.exercise.ExercisePresets
-import kotlinx.coroutines.flow.first
 
 /**
  * Gives every cardio log the id of its exercise, decided by [CardioExerciseMatcher] from the name written on the log.
@@ -39,16 +37,19 @@ object CardioLinking {
         rebuildCardioLogs(connection)
         connection.execSQL(CREATE_SKIPPED_PRESETS)
 
-        // An id of the new presets already taken (no build ever made one): that preset is left out for good and the row
-        // that holds the id is not touched
-        val taken = readExercises(connection).mapTo(hashSetOf()) { it.id }
-        CardioPresets.SLOT_IDS.sorted().filter { it in taken }.forEach { id ->
+        // An id of the new presets held by another exercise (no published build ever made one): that preset is left out
+        // for good and the row is not touched. A row that is the preset itself (a build of this work run at 42) is ours:
+        // it stays as it is and takes its logs like any slot.
+        val slotPresets = ExerciseData.initialExercises.filter { it.id in CardioPresets.SLOT_IDS }.associateBy { it.id }
+        val before = readExercises(connection)
+        val taken = before.mapTo(hashSetOf()) { it.id }
+        before.filter { it.id in CardioPresets.SLOT_IDS && !isShippedPreset(it, slotPresets[it.id]) }.map { it.id }.sorted().forEach { id ->
             connection.prepare("INSERT OR IGNORE INTO skipped_presets (id) VALUES (?)").use { it.bindLong(1, id.toLong()); it.step() }
         }
         val skipped = readSkipped(connection)
 
         // The presets, unless a name of theirs is already taken (then the exercise with that name takes their place)
-        ExercisePresets.toInsert(ExerciseData.initialExercises.filter { it.id in CardioPresets.SLOT_IDS }, readExercises(connection), skipped)
+        ExercisePresets.toInsert(slotPresets.values.toList(), readExercises(connection), skipped)
             .filter { it.id !in taken }
             .forEach { insertExercise(connection, it, orIgnore = true) }
 
@@ -75,18 +76,28 @@ object CardioLinking {
      * `ON DELETE SET NULL` of an exercise deleted for real. Normally there is none. A failure leaves the rows as they are,
      * the next start tries again.
      */
-    suspend fun repair(exerciseDao: ExerciseDao, workoutDao: WorkoutDao) {
-        val rows = workoutDao.getUnlinkedCardioRows()
+    suspend fun repair(workoutDao: WorkoutDao) = workoutDao.repairCardioLinks()
+
+    /**
+     * The body of [WorkoutDao.repairCardioLinks], inside its one write transaction: nothing can change the exercises or
+     * the logs between the plan and the links, and a link is only written on a row that still has none.
+     */
+    internal suspend fun repairInTransaction(dao: WorkoutDao) {
+        val rows = dao.getUnlinkedCardioRows()
         if (rows.isEmpty()) return
-        val exercises = exerciseDao.getAllExercisesIncludingDeleted().first()
-        val skipped = exerciseDao.getSkippedPresetIds().toSet()
+        val exercises = dao.getExercisesForCardioLinking()
+        val skipped = dao.getSkippedPresetIdsForCardioLinking().toSet()
         val plan = CardioExerciseMatcher.plan(rows, exercises, skipped, nextCustomId(exercises))
-        // The ids are above every id of the table, so the insert cannot clash; if anything got there first, the check
+        // The ids are above every id of the table, so the insert cannot clash; if anything were there first, the check
         // below leaves those logs alone instead of linking them to someone else's exercise
-        if (plan.newExercises.isNotEmpty()) exerciseDao.insertExercises(plan.newExercises)
-        trustedLinks(plan, exerciseDao.getAllExercisesIncludingDeleted().first(), skipped)
-            .forEach { (logId, exerciseId) -> workoutDao.linkCardioRow(logId, exerciseId) }
+        if (plan.newExercises.isNotEmpty()) dao.insertExercisesForCardioLinking(plan.newExercises)
+        trustedLinks(plan, dao.getExercisesForCardioLinking(), skipped)
+            .forEach { (logId, exerciseId) -> dao.linkCardioRow(logId, exerciseId) }
     }
+
+    /** [row] is the shipped [preset] itself: same id and stored name, cardio. */
+    private fun isShippedPreset(row: ExerciseEntity, preset: ExerciseEntity?): Boolean =
+        preset != null && row.id == preset.id && row.nome == preset.nome && row.categoria.equals(CARDIO, ignoreCase = true)
 
     private fun nextCustomId(exercises: List<ExerciseEntity>) =
         maxOf(ExerciseEntity.FIRST_CUSTOM_ID, (exercises.maxOfOrNull { it.id } ?: 0) + 1)

@@ -8,7 +8,9 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
+import com.emanuel5014.trainable.data.local.CardioLinking
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
@@ -321,8 +323,24 @@ interface WorkoutDao {
     @Query("SELECT id AS logId, categoria AS name FROM cardio_logs WHERE exercise_id IS NULL ORDER BY id")
     suspend fun getUnlinkedCardioRows(): List<CardioExerciseMatcher.Row>
 
-    @Query("UPDATE cardio_logs SET exercise_id = :exerciseId WHERE id = :logId")
+    /** Links a cardio log to its exercise, only while it has none: a link already there is never overwritten. */
+    @Query("UPDATE cardio_logs SET exercise_id = :exerciseId WHERE id = :logId AND exercise_id IS NULL")
     suspend fun linkCardioRow(logId: Int, exerciseId: Int)
+
+    @Query("SELECT * FROM exercises ORDER BY id")
+    suspend fun getExercisesForCardioLinking(): List<ExerciseEntity>
+
+    @Query("SELECT id FROM skipped_presets")
+    suspend fun getSkippedPresetIdsForCardioLinking(): List<Int>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExercisesForCardioLinking(exercises: List<ExerciseEntity>)
+
+    /** Links the cardio logs left without an exercise, in one write transaction (see CardioLinking.repair). */
+    @Transaction
+    suspend fun repairCardioLinks() {
+        CardioLinking.repairInTransaction(this)
+    }
 
     @Query("SELECT * FROM cardio_logs WHERE session_id = :sessionId")
     fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>>
