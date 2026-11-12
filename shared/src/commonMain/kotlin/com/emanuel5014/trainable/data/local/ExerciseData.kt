@@ -157,6 +157,11 @@ object ExerciseData {
 
         // The hip machines: the adductors and the abductors had a filter chip and no exercise
         ExerciseEntity(id = 162, nome = "Hip Adduction Machine", categoria = "Legs"),
-        ExerciseEntity(id = 163, nome = "Hip Abduction Machine", categoria = "Legs")
+        ExerciseEntity(id = 163, nome = "Hip Abduction Machine", categoria = "Legs"),
+
+        // The three cardio chips (run, bike, walk) had a word and no exercise: now their logs link to these
+        ExerciseEntity(id = 164, nome = "Running", categoria = "Cardio"),
+        ExerciseEntity(id = 165, nome = "Cycling", categoria = "Cardio"),
+        ExerciseEntity(id = 166, nome = "Walking", categoria = "Cardio")
     )
 }
