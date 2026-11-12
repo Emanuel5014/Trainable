@@ -7,6 +7,7 @@ import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.CardioExerciseMatcher
 import com.emanuel5014.trainable.domain.exercise.CardioPresets
+import com.emanuel5014.trainable.domain.exercise.CardioProvenance
 import com.emanuel5014.trainable.domain.exercise.ExercisePresets
 
 /**
@@ -53,14 +54,14 @@ object CardioLinking {
             .filter { it.id !in taken }
             .forEach { insertExercise(connection, it, orIgnore = true) }
 
-        // Only now, with the presets in, every log is decided
+        // Only now, with the presets in, every log is decided: first by the routine it came from, then by its name
         val exercises = readExercises(connection)
-        val rows = readUnlinked(connection)
-        if (rows.isEmpty()) return
-        val plan = CardioExerciseMatcher.plan(rows, exercises, skipped, nextCustomId(exercises))
+        val logs = readUnlinked(connection)
+        if (logs.isEmpty()) return
+        val decision = decide(logs, readUses(connection, PLAN_USES), readUses(connection, SWAP_USES), exercises, skipped)
         // Plain insert: the ids are above every id of the table, a clash is impossible and must not be hidden
-        plan.newExercises.forEach { insertExercise(connection, it, orIgnore = false) }
-        val links = trustedLinks(plan, readExercises(connection), skipped)
+        decision.plan.newExercises.forEach { insertExercise(connection, it, orIgnore = false) }
+        val links = decision.trustedLinks(readExercises(connection), skipped)
         connection.prepare("UPDATE cardio_logs SET exercise_id = ? WHERE id = ?").use { statement ->
             links.forEach { (logId, exerciseId) ->
                 statement.bindLong(1, exerciseId.toLong())
@@ -83,16 +84,40 @@ object CardioLinking {
      * the logs between the plan and the links, and a link is only written on a row that still has none.
      */
     internal suspend fun repairInTransaction(dao: WorkoutDao) {
-        val rows = dao.getUnlinkedCardioRows()
-        if (rows.isEmpty()) return
+        val logs = dao.getUnlinkedCardioLogs()
+        if (logs.isEmpty()) return
         val exercises = dao.getExercisesForCardioLinking()
         val skipped = dao.getSkippedPresetIdsForCardioLinking().toSet()
-        val plan = CardioExerciseMatcher.plan(rows, exercises, skipped, nextCustomId(exercises))
+        val decision = decide(logs, dao.getPlanExerciseUses(), dao.getSwapReplacementUses(), exercises, skipped)
         // The ids are above every id of the table, so the insert cannot clash; if anything were there first, the check
         // below leaves those logs alone instead of linking them to someone else's exercise
-        if (plan.newExercises.isNotEmpty()) dao.insertExercisesForCardioLinking(plan.newExercises)
-        trustedLinks(plan, dao.getExercisesForCardioLinking(), skipped)
+        if (decision.plan.newExercises.isNotEmpty()) dao.insertExercisesForCardioLinking(decision.plan.newExercises)
+        decision.trustedLinks(dao.getExercisesForCardioLinking(), skipped)
             .forEach { (logId, exerciseId) -> dao.linkCardioRow(logId, exerciseId) }
+    }
+
+    /** How the unlinked logs are linked: [byOrigin] to the exercise of their routine, the others by [plan] (the matcher). */
+    private class Decision(val byOrigin: Map<Int, Int>, val plan: CardioExerciseMatcher.LinkPlan) {
+        /** Every link to apply, each checked against the table as it is after the new exercises went in. */
+        fun trustedLinks(exercises: List<ExerciseEntity>, skipped: Set<Int>): Map<Int, Int> {
+            val ids = exercises.mapTo(hashSetOf()) { it.id }
+            // A routine's exercise may be of any category: it only has to be there and not be a skipped id
+            return byOrigin.filter { (_, exerciseId) -> exerciseId in ids && exerciseId !in skipped } +
+                trustedLinks(plan, exercises, skipped)
+        }
+    }
+
+    /** Routine first ([CardioProvenance]); only the logs it leaves reach the matcher, so only those can make customs. */
+    private fun decide(
+        logs: List<CardioProvenance.Log>,
+        planExercises: List<CardioProvenance.Use>,
+        swaps: List<CardioProvenance.Use>,
+        exercises: List<ExerciseEntity>,
+        skipped: Set<Int>
+    ): Decision {
+        val byOrigin = CardioProvenance.links(logs, planExercises, swaps, exercises, skipped)
+        val rest = logs.filter { it.logId !in byOrigin }.map { CardioExerciseMatcher.Row(logId = it.logId, name = it.name) }
+        return Decision(byOrigin, CardioExerciseMatcher.plan(rest, exercises, skipped, nextCustomId(exercises)))
     }
 
     /** [row] is the shipped [preset] itself: same id and stored name, cardio. */
@@ -168,10 +193,23 @@ object CardioLinking {
     private fun readSkipped(connection: SQLiteConnection): Set<Int> =
         connection.prepare("SELECT id FROM skipped_presets").use { st -> buildSet { while (st.step()) add(st.getInt(0)) } }
 
-    private fun readUnlinked(connection: SQLiteConnection): List<CardioExerciseMatcher.Row> =
-        connection.prepare("SELECT id, categoria FROM cardio_logs WHERE exercise_id IS NULL ORDER BY id").use { st ->
-            buildList { while (st.step()) add(CardioExerciseMatcher.Row(logId = st.getInt(0), name = st.getText(1))) }
+    private fun readUnlinked(connection: SQLiteConnection): List<CardioProvenance.Log> =
+        connection.prepare(
+            "SELECT cl.id, cl.categoria, cl.session_id, ws.plan_id FROM cardio_logs cl " +
+                "LEFT JOIN workout_sessions ws ON ws.id = cl.session_id WHERE cl.exercise_id IS NULL ORDER BY cl.id"
+        ).use { st ->
+            buildList {
+                while (st.step()) {
+                    add(CardioProvenance.Log(st.getInt(0), st.getText(1), st.getInt(2), if (st.isNull(3)) null else st.getInt(3)))
+                }
+            }
         }
+
+    private const val PLAN_USES = "SELECT plan_id, exercise_id FROM plan_exercises"
+    private const val SWAP_USES = "SELECT session_id, replacement_exercise_id FROM session_exercise_swaps"
+
+    private fun readUses(connection: SQLiteConnection, sql: String): List<CardioProvenance.Use> =
+        connection.prepare(sql).use { st -> buildList { while (st.step()) add(CardioProvenance.Use(st.getInt(0), st.getInt(1))) } }
 
     /** Every column given, the NOT NULL ones included, so nothing is left to a default. */
     private fun insertExercise(connection: SQLiteConnection, e: ExerciseEntity, orIgnore: Boolean) {

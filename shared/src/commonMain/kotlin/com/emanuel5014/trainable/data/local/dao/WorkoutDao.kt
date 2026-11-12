@@ -25,7 +25,7 @@ import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
-import com.emanuel5014.trainable.domain.exercise.CardioExerciseMatcher
+import com.emanuel5014.trainable.domain.exercise.CardioProvenance
 import kotlinx.coroutines.flow.Flow
 
 /** One run of an exercise in a session going from the order [from] to the order [to]. */
@@ -319,9 +319,20 @@ interface WorkoutDao {
     @Query("UPDATE cardio_logs SET numero_serie = :number WHERE id = :id")
     suspend fun updateCardioSetNumber(id: Int, number: Int)
 
-    /** The cardio logs without an exercise yet, with the name written on them, for the startup repair (CardioLinking). */
-    @Query("SELECT id AS logId, categoria AS name FROM cardio_logs WHERE exercise_id IS NULL ORDER BY id")
-    suspend fun getUnlinkedCardioRows(): List<CardioExerciseMatcher.Row>
+    /** The cardio logs without an exercise yet, with their name, session and routine, for the startup repair (CardioLinking). */
+    @Query(
+        "SELECT cl.id AS logId, cl.categoria AS name, cl.session_id AS sessionId, ws.plan_id AS planId FROM cardio_logs cl " +
+            "LEFT JOIN workout_sessions ws ON ws.id = cl.session_id WHERE cl.exercise_id IS NULL ORDER BY cl.id"
+    )
+    suspend fun getUnlinkedCardioLogs(): List<CardioProvenance.Log>
+
+    /** Which exercises each routine holds (owner = plan id), for the startup repair. */
+    @Query("SELECT plan_id AS owner, exercise_id AS exerciseId FROM plan_exercises")
+    suspend fun getPlanExerciseUses(): List<CardioProvenance.Use>
+
+    /** The swap replacements of each session (owner = session id), for the startup repair. */
+    @Query("SELECT session_id AS owner, replacement_exercise_id AS exerciseId FROM session_exercise_swaps")
+    suspend fun getSwapReplacementUses(): List<CardioProvenance.Use>
 
     /** Links a cardio log to its exercise, only while it has none: a link already there is never overwritten. */
     @Query("UPDATE cardio_logs SET exercise_id = :exerciseId WHERE id = :logId AND exercise_id IS NULL")
