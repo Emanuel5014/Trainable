@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Picker preview of the Routine widget (API 31+), close to its large layout in the default blue theme. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:backgroundTint="#FFE4E8F7"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="54dp"
+            android:layout_height="54dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/widget_shape_cookie9"
+                android:tint="#FF3F5AA8"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="P"
+                android:textColor="#FFFFFFFF"
+                android:textSize="23sp" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_label_suggested_today"
+                android:textColor="#FF3F5AA8"
+                android:textSize="11sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Push"
+                android:textColor="#FF141B2C"
+                android:textSize="18sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="34dp"
+        android:background="@drawable/widget_pill"
+        android:backgroundTint="#FF3F5AA8"
+        android:gravity="center"
+        android:text="@string/widget_action_start"
+        android:textColor="#FFFFFFFF"
+        android:textSize="13sp" />
+</LinearLayout>

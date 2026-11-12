@@ -12,8 +12,7 @@ import com.emanuel5014.trainable.ui.components.techniqueLabel
 import com.emanuel5014.trainable.util.ExerciseMediaStorage
 import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
-import com.emanuel5014.trainable.widget.TrainableWidget
-import com.emanuel5014.trainable.widget.WeeklyGoalWidget
+import com.emanuel5014.trainable.widget.WidgetUpdater
 
 /** Exercise media in `filesDir/exercise_media` (ExerciseMediaStorage); [source] is a content uri. */
 class AndroidExerciseMediaFiles(private val context: Context) : ExerciseMediaFiles {
@@ -34,8 +33,7 @@ class AndroidWorkoutPlatform(private val context: Context) : WorkoutPlatform {
 
     override fun onWorkoutsChanged() {
         try {
-            TrainableWidget.update(context)
-            WeeklyGoalWidget.update(context)
+            WidgetUpdater.updateAll(context)
         } catch (e: Exception) {
             e.printStackTrace()
         }

@@ -407,18 +407,36 @@
     <string name="notification_last_reps">(última: %1$d)</string>
 
     <!-- Widget -->
-    <string name="widget_state_in_progress">EN CURSO</string>
-    <string name="widget_state_suggested_today">RECOMENDADO HOY</string>
-    <string name="widget_state_suggested">RECOMENDADO</string>
-    <string name="widget_state_welcome">BIENVENIDO</string>
-    <string name="widget_action_resume">REANUDAR</string>
-    <string name="widget_action_start">INICIAR</string>
-    <string name="widget_action_open_app">ABRIR APP</string>
-    <string name="widget_start_routine">Iniciar una rutina</string>
+    <string name="widget_action_resume">Reanudar</string>
+    <string name="widget_action_start">Iniciar</string>
+    <string name="widget_action_open_app">Abrir la app</string>
     <string name="widget_trainable_label">Entrenamiento</string>
     <string name="widget_trainable_description">Entrenamiento sugerido e inicio rápido</string>
     <string name="widget_weekly_goal_label">Objetivo Semanal</string>
     <string name="widget_weekly_goal_description">Seguimiento del progreso semanal</string>
+    <!-- Home-screen widgets (M3 Expressive redesign) -->
+    <string name="widget_label_up_next">A continuación</string>
+    <string name="widget_label_suggested_today">Recomendada hoy</string>
+    <string name="widget_label_in_progress">En curso</string>
+    <string name="widget_started_at">Empezado a las %1$s</string>
+    <string name="widget_create_routine">Crear una rutina</string>
+    <string name="widget_goal_title">Objetivo semanal</string>
+    <string name="widget_goal_unit">entrenamientos</string>
+    <string name="widget_goal_met">Objetivo cumplido</string>
+    <string name="widget_goal_cardio">%d de cardio</string>
+    <string name="widget_quick_start_label">Inicio rápido</string>
+    <string name="widget_quick_start_description">Inicia o reanuda tu entrenamiento con un toque</string>
+    <string name="widget_cd_start">Iniciar %1$s</string>
+    <string name="widget_cd_resume">Reanudar %1$s</string>
+    <string name="widget_cd_open">Abrir Trainable</string>
+    <plurals name="widget_exercise_count">
+        <item quantity="one">%d ejercicio</item>
+        <item quantity="other">%d ejercicios</item>
+    </plurals>
+    <plurals name="widget_goal_remaining">
+        <item quantity="one">Falta %d</item>
+        <item quantity="other">Faltan %d</item>
+    </plurals>
 
     <!-- Common -->
     <string name="ok">OK</string>

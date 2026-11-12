@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/glance_default_layout"
+    android:previewLayout="@layout/widget_preview_routine"
     android:minWidth="180dp"
     android:minHeight="40dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="40dp"
+    android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:targetCellWidth="3"
-    android:targetCellHeight="1"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
     android:updatePeriodMillis="0"
     android:label="@string/widget_trainable_label"
     android:description="@string/widget_trainable_description" />

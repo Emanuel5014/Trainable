@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from MaterialShapes by ShapeVectorsTest: do not edit by hand. Tinted at runtime. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M20.91,20.90 C19.45,22.36 17.18,23.02 14.93,22.05 C14.60,21.91 14.27,21.76 13.95,21.62 C12.71,21.09 11.30,21.09 10.06,21.63 C9.74,21.77 9.42,21.91 9.09,22.05 C4.59,24.00 0.01,19.43 1.96,14.92 C2.10,14.60 2.24,14.27 2.38,13.94 C2.92,12.70 2.91,11.30 2.38,10.06 C2.24,9.73 2.10,9.41 1.96,9.09 C0.00,4.58 4.57,0.01 9.08,1.95 C9.41,2.09 9.73,2.24 10.06,2.38 C11.30,2.91 12.71,2.91 13.95,2.37 C14.27,2.23 14.59,2.09 14.92,1.95 C19.42,0.00 24.00,4.57 22.05,9.08 C21.91,9.40 21.77,9.73 21.63,10.06 C21.09,11.30 21.09,12.70 21.63,13.94 C21.77,14.27 21.91,14.59 22.05,14.91 C23.03,17.16 22.37,19.44 20.91,20.90 Z" />
+</vector>

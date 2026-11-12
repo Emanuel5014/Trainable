@@ -521,6 +521,8 @@ class WorkoutRepository(
 
     fun getUnfinishedSessionsWithPlanName(): Flow<List<SessionWithPlanName>> = workoutDao.getUnfinishedSessionsWithPlanName()
 
+    fun countPlanExercises(planId: Int): Flow<Int> = workoutDao.countPlanExercises(planId)
+
     suspend fun setSessionFinished(sessionId: Int, durationMs: Long? = null) {
         workoutDao.setSessionFinished(sessionId)
         if (durationMs != null) {

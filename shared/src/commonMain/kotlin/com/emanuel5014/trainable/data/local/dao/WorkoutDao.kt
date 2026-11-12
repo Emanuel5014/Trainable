@@ -303,6 +303,10 @@ interface WorkoutDao {
 
     @Query("SELECT COUNT(*) FROM workout_sessions WHERE plan_id = :planId")
     suspend fun countSessionsForPlan(planId: Int): Int
+
+    /** How many exercises a routine has (the Routine widget's "6 exercises"). */
+    @Query("SELECT COUNT(*) FROM plan_exercises WHERE plan_id = :planId")
+    fun countPlanExercises(planId: Int): Flow<Int>
     
     @Update
     suspend fun updateCardioLog(cardio: CardioLogEntity)

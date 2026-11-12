@@ -17,13 +17,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DateTimeUnit
+import com.emanuel5014.trainable.domain.weekStartMillis
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.isoDayNumber
-import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 
@@ -62,9 +59,7 @@ class DashboardState(
 
     private fun weekStartMillis(day: LocalDate): Long {
         weekStartOfDay?.takeIf { it.first == day }?.let { return it.second }
-        val firstDayOfWeek = firstDayOfWeek()
-        val daysBack = (day.dayOfWeek.isoDayNumber - firstDayOfWeek.isoDayNumber + 7) % 7
-        val millis = day.minus(daysBack, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        val millis = weekStartMillis(day, firstDayOfWeek(), TimeZone.currentSystemDefault())
         weekStartOfDay = day to millis
         return millis
     }

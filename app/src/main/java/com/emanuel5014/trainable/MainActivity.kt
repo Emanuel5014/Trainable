@@ -529,7 +529,6 @@ class MainActivity : FragmentActivity() {
         if (::timerNotificationHelper.isInitialized) {
             timerNotificationHelper.cancelCustomVibration()
         }
-        com.emanuel5014.trainable.widget.TrainableWidget.update(this)
-        com.emanuel5014.trainable.widget.WeeklyGoalWidget.update(this)
+        com.emanuel5014.trainable.widget.WidgetUpdater.updateAll(this)
     }
 }

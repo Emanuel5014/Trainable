@@ -407,18 +407,36 @@
     <string name="notification_last_reps">(ultima: %1$d)</string>
 
     <!-- Widget -->
-    <string name="widget_state_in_progress">IN CORSO</string>
-    <string name="widget_state_suggested_today">CONSIGLIATO OGGI</string>
-    <string name="widget_state_suggested">CONSIGLIATO</string>
-    <string name="widget_state_welcome">BENVENUTO</string>
-    <string name="widget_action_resume">RIPRENDI</string>
-    <string name="widget_action_start">INIZIA</string>
-    <string name="widget_action_open_app">APRI APP</string>
-    <string name="widget_start_routine">Inizia una routine</string>
+    <string name="widget_action_resume">Riprendi</string>
+    <string name="widget_action_start">Inizia</string>
+    <string name="widget_action_open_app">Apri l\'app</string>
     <string name="widget_trainable_label">Allenamento</string>
     <string name="widget_trainable_description">Allenamento suggerito e avvio rapido</string>
     <string name="widget_weekly_goal_label">Obiettivo Settimanale</string>
     <string name="widget_weekly_goal_description">Progressi allenamenti settimanali</string>
+    <!-- Home-screen widgets (M3 Expressive redesign) -->
+    <string name="widget_label_up_next">Prossima</string>
+    <string name="widget_label_suggested_today">Consigliata oggi</string>
+    <string name="widget_label_in_progress">In corso</string>
+    <string name="widget_started_at">Iniziato alle %1$s</string>
+    <string name="widget_create_routine">Crea una routine</string>
+    <string name="widget_goal_title">Obiettivo settimanale</string>
+    <string name="widget_goal_unit">allenamenti</string>
+    <string name="widget_goal_met">Obiettivo raggiunto</string>
+    <string name="widget_goal_cardio">di cui %d cardio</string>
+    <string name="widget_quick_start_label">Avvio rapido</string>
+    <string name="widget_quick_start_description">Avvia o riprendi l\'allenamento con un tocco</string>
+    <string name="widget_cd_start">Inizia %1$s</string>
+    <string name="widget_cd_resume">Riprendi %1$s</string>
+    <string name="widget_cd_open">Apri Trainable</string>
+    <plurals name="widget_exercise_count">
+        <item quantity="one">%d esercizio</item>
+        <item quantity="other">%d esercizi</item>
+    </plurals>
+    <plurals name="widget_goal_remaining">
+        <item quantity="one">Ne manca %d</item>
+        <item quantity="other">Ne mancano %d</item>
+    </plurals>
 
     <!-- Common -->
     <string name="ok">OK</string>
