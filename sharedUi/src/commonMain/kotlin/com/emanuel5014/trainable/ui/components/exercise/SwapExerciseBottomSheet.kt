@@ -212,96 +212,100 @@ fun SwapExerciseBottomSheet(
                 },
                 modifier = modifier
             ) {
-                Column(
+                ExercisePickerSheetLayout(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = ResponsiveSize.cardPadding)
-                        .padding(bottom = ResponsiveSize.cardPadding)
-                    ) {
-                    // Title and the custom-exercise button make way for the list while the keyboard is up
-                    AnimatedVisibility(visible = !imeVisible) {
+                        .padding(bottom = ResponsiveSize.cardPadding),
+                    header = {
                         Column {
-                            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
-                                Text(
-                                    text = if (isAdding) stringResource(Res.string.add_exercise) else stringResource(Res.string.swap_exercise),
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontSize = ResponsiveSize.labelLargeSize
-                                ),
-                                color = Primary,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                            Text(
-                                text = if (isAdding) stringResource(Res.string.exercise_details) else stringResource(Res.string.swap_exercise_message),
-                                style = MaterialTheme.typography.headlineMedium.copy(
-                                    fontSize = ResponsiveSize.headlineMediumSize
-                                ),
-                                color = OnSurface,
-                                fontWeight = FontWeight.Black
-                            )
+                            // Title and the custom-exercise button make way for the list while the keyboard is up
+                            AnimatedVisibility(visible = !imeVisible) {
+                                Column {
+                                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
+                                        Text(
+                                            text = if (isAdding) stringResource(Res.string.add_exercise) else stringResource(Res.string.swap_exercise),
+                                            style = MaterialTheme.typography.labelMedium.copy(
+                                                fontSize = ResponsiveSize.labelLargeSize
+                                            ),
+                                            color = Primary,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                        Text(
+                                            text = if (isAdding) stringResource(Res.string.exercise_details) else stringResource(Res.string.swap_exercise_message),
+                                            style = MaterialTheme.typography.headlineMedium.copy(
+                                                fontSize = ResponsiveSize.headlineMediumSize
+                                            ),
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(Spacing.large))
+                                }
                             }
 
-                            Spacer(modifier = Modifier.height(Spacing.large))
-                        }
-                    }
-
-                    ExerciseSearchWithTraitFilter(
-                        query = searchQuery,
-                        onQueryChange = { searchQuery = it },
-                        traitFilter = traitFilter,
-                        onTraitFilterChange = { traitFilter = it },
-                        resultCount = filteredExercises.size
-                    )
-
-                    Spacer(modifier = Modifier.height(Spacing.medium))
-
-                    AnimatedVisibility(visible = !imeVisible) {
-                        Column {
-                            ExerciseFilterBar(options = filterOptions)
-
-                            Spacer(modifier = Modifier.height(Spacing.medium))
-                        }
-                    }
-
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.small)
-                    ) {
-                        if (filteredExercises.isEmpty()) {
-                            item { ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null) }
-                        }
-                        items(filteredExercises) { exercise ->
-                            ExercisePickRow(
-                                exercise = exercise,
-                                languageCode = languageCode,
-                                onClick = { pick(exercise) },
-                                isSelected = exercise.id == selectedExercise?.id,
-                                isCurrent = exercise.id == currentExerciseId,
-                                showThumbnail = showThumbnails,
-                                onThumbnailClick = { exerciseMediaToView = exercise },
-                                onInfoClick = { detailExerciseId = exercise.id }
+                            ExerciseSearchWithTraitFilter(
+                                query = searchQuery,
+                                onQueryChange = { searchQuery = it },
+                                traitFilter = traitFilter,
+                                onTraitFilterChange = { traitFilter = it },
+                                resultCount = filteredExercises.size
                             )
-                        }
-                    }
 
-                    AnimatedVisibility(visible = !imeVisible) {
-                        Column {
                             Spacer(modifier = Modifier.height(Spacing.medium))
 
-                            GymButton(
-                                onClick = { showAddCustomDialog = true },
-                                modifier = Modifier.fillMaxWidth(),
-                                containerColor = SurfaceContainerHigh,
-                                contentColor = OnSurface
-                            ) {
-                                Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
-                                Spacer(modifier = Modifier.width(Spacing.medium))
-                                Text(stringResource(Res.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                            AnimatedVisibility(visible = !imeVisible) {
+                                Column {
+                                    ExerciseFilterBar(options = filterOptions)
+
+                                    Spacer(modifier = Modifier.height(Spacing.medium))
+                                }
+                            }
+                        }
+                    },
+                    list = {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                        ) {
+                            if (filteredExercises.isEmpty()) {
+                                item { ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null) }
+                            }
+                            items(filteredExercises) { exercise ->
+                                ExercisePickRow(
+                                    exercise = exercise,
+                                    languageCode = languageCode,
+                                    onClick = { pick(exercise) },
+                                    isSelected = exercise.id == selectedExercise?.id,
+                                    isCurrent = exercise.id == currentExerciseId,
+                                    showThumbnail = showThumbnails,
+                                    onThumbnailClick = { exerciseMediaToView = exercise },
+                                    onInfoClick = { detailExerciseId = exercise.id }
+                                )
+                            }
+                        }
+                    },
+                    footer = {
+                        AnimatedVisibility(visible = !imeVisible) {
+                            Column {
+                                Spacer(modifier = Modifier.height(Spacing.medium))
+
+                                GymButton(
+                                    onClick = { showAddCustomDialog = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    containerColor = SurfaceContainerHigh,
+                                    contentColor = OnSurface
+                                ) {
+                                    Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
+                                    Spacer(modifier = Modifier.width(Spacing.medium))
+                                    Text(stringResource(Res.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                                }
                             }
                         }
                     }
-                }
+                )
             }
         }
         2 -> {
