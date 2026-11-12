@@ -48,7 +48,9 @@ data class HistoryUiState(
     /** With the journal on: workouts can be rated, so the rating filter shows. */
     val journalRatingEnabled: Boolean = true,
     /** Every tag, to pick from in the filter sheet and to name in the active-filters bar. */
-    val availableTags: List<TagWithUsage> = emptyList()
+    val availableTags: List<TagWithUsage> = emptyList(),
+    /** Every exercise by id (hidden ones too), for the names of the cardio rows. */
+    val exercises: Map<Int, ExerciseEntity> = emptyMap()
 )
 
 /** The history's state, the same on every platform; each one gives it its own lifetime ([scope]). */
@@ -89,6 +91,11 @@ class HistoryState(
         scope.launch {
             userPreferencesRepository.journalRatingEnabled.collect { enabled ->
                 _uiState.update { it.copy(journalRatingEnabled = enabled) }
+            }
+        }
+        scope.launch {
+            repository.getExercisesById().collect { exercises ->
+                _uiState.update { it.copy(exercises = exercises) }
             }
         }
         scope.launch {

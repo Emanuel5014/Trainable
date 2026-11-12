@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.domain.compare
 
 import com.emanuel5014.trainable.data.local.entity.straightReps
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.exerciseKey
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.isTimeAndReps
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
@@ -149,7 +150,11 @@ data class CardioSide(val distanceKm: Float, val durationSeconds: Int, val targe
     }
 }
 
-data class CardioComparison(val label: String, val a: CardioSide?, val b: CardioSide?) {
+/**
+ * One cardio exercise of the two sessions. [exerciseId] is its linked exercise (null while a row is not linked) and [label]
+ * the name written on the row, only a fallback: the screen shows the exercise's own name (see CardioNames).
+ */
+data class CardioComparison(val label: String, val a: CardioSide?, val b: CardioSide?, val exerciseId: Int? = null) {
     val distance: ComparedMetric? get() = if (a != null && b != null) ComparedMetric(MetricKind.CARDIO_DISTANCE, a.distanceKm, b.distanceKm) else null
     val duration: ComparedMetric? get() = if (a != null && b != null) ComparedMetric(MetricKind.CARDIO_DURATION, a.durationSeconds.toFloat(), b.durationSeconds.toFloat()) else null
     val pace: ComparedMetric?
@@ -247,13 +252,15 @@ data class SessionComparison(
 
         // ---- cardio -------------------------------------------------------------------------------
 
-        /** Logs of the same activity are paired in order ("Treadmill" with "Treadmill"); the rest stand alone. */
+        /** Logs of the same exercise are paired in order (by id when linked, by name only when not); the rest stand alone. */
         private fun cardio(a: SessionWithDetails, b: SessionWithDetails): List<CardioComparison> {
             // The sets of a cardio exercise add up to one entry
             fun sorted(session: SessionWithDetails) = session.cardio.groupedByExercise().map { it.combined() }
-            val queueA = sorted(a).groupBy { normalize(it.categoria) }.mapValues { it.value.toMutableList() }
-            val queueB = sorted(b).groupBy { normalize(it.categoria) }.mapValues { it.value.toMutableList() }
-            val keys = (sorted(a).map { normalize(it.categoria) } + sorted(b).map { normalize(it.categoria) }).distinct()
+            val entriesA = sorted(a)
+            val entriesB = sorted(b)
+            val queueA = entriesA.groupBy { it.exerciseKey() }.mapValues { it.value.toMutableList() }
+            val queueB = entriesB.groupBy { it.exerciseKey() }.mapValues { it.value.toMutableList() }
+            val keys = (entriesA.map { it.exerciseKey() } + entriesB.map { it.exerciseKey() }).distinct()
 
             return keys.flatMap { key ->
                 val listA = queueA[key].orEmpty()
@@ -261,10 +268,12 @@ data class SessionComparison(
                 (0 until maxOf(listA.size, listB.size)).map { index ->
                     val ca = listA.getOrNull(index)
                     val cb = listB.getOrNull(index)
+                    val any = (ca ?: cb)!!
                     CardioComparison(
-                        label = (ca ?: cb)!!.categoria.trim(),
+                        label = any.categoria.trim(),
                         a = ca?.toSide(),
-                        b = cb?.toSide()
+                        b = cb?.toSide(),
+                        exerciseId = any.exerciseId
                     )
                 }
             }
@@ -277,8 +286,6 @@ data class SessionComparison(
             durataSecondi = totalSeconds,
             durataTargetSecondi = first.durataTargetSecondi?.let { it * sets.size }
         )
-
-        private fun normalize(label: String) = label.trim().lowercase()
     }
 }
 

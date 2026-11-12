@@ -418,10 +418,10 @@ interface WorkoutDao {
         FROM cardio_logs cl
         INNER JOIN workout_sessions ws ON cl.session_id = ws.id
         INNER JOIN workout_plans wp ON ws.plan_id = wp.id
-        WHERE LOWER(cl.categoria) = LOWER(:activity) AND ws.is_finished = 1 AND cl.is_completed = 1
+        WHERE cl.exercise_id = :exerciseId AND ws.is_finished = 1 AND cl.is_completed = 1
         ORDER BY ws.timestamp DESC, ws.id DESC, cl.ordine_esercizio ASC, cl.numero_serie ASC, cl.id ASC
     """)
-    fun getCardioHistoryForActivity(activity: String): Flow<List<CardioSetWithSession>>
+    fun getCardioHistoryForExercise(exerciseId: Int): Flow<List<CardioSetWithSession>>
 
     /**
      * Weight (kg) of the first working set of the exercise in its most recent finished workout, in any routine.

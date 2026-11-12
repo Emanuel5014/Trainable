@@ -639,6 +639,7 @@ fun HistoryContent(
                                         shape = rowShape,
                                         weightUnit = uiState.weightUnit,
                                         languageCode = languageCode,
+                                        exercises = uiState.exercises,
                                         showJournal = uiState.journalEnabled,
                                         isSelectionMode = uiState.isSelectionMode,
                                         isSelected = uiState.selectedSessionIds.contains(session.id),
@@ -683,7 +684,7 @@ fun HistoryContent(
         }
 
         // Preparing and previewing the image of a shared workout, where the platform can share one
-        share.Overlay(languageCode, uiState.weightUnit, advancedProgramming)
+        share.Overlay(languageCode, uiState.weightUnit, advancedProgramming, uiState.exercises)
 
         // The opened workout. It closes when its workout leaves the shown list (deleted or filtered out), when
         // selection starts or when the page is left. Composed before the dialogs and the journal sheet so they
@@ -703,6 +704,7 @@ fun HistoryContent(
                 details = details,
                 planName = openPlanName,
                 languageCode = languageCode,
+                exercises = uiState.exercises,
                 weightUnit = uiState.weightUnit,
                 showJournal = uiState.journalEnabled,
                 showEdit = !swipeActionsEnabled,

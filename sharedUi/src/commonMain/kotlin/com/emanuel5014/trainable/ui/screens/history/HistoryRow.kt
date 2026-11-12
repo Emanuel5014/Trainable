@@ -52,6 +52,8 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.domain.exercise.CardioNames
 import com.emanuel5014.trainable.ui.util.fullDate
 import com.emanuel5014.trainable.ui.util.monthName
 import com.emanuel5014.trainable.ui.util.shortDayName
@@ -74,6 +76,7 @@ internal fun HistoryRow(
     shape: Shape,
     weightUnit: String,
     languageCode: String,
+    exercises: Map<Int, ExerciseEntity>,
     showJournal: Boolean,
     isSelectionMode: Boolean,
     isSelected: Boolean,
@@ -88,8 +91,9 @@ internal fun HistoryRow(
     }
     val dayName = remember(date.dayOfWeek, languageCode) { shortDayName(date.dayOfWeek) }
     val dateDescription = remember(session.timestamp, languageCode) { fullDate(session.timestamp) }
-    val cardioCategory = remember(sessionDetails.cardio) {
-        sessionDetails.cardio.minByOrNull { it.ordineEsercizio }?.categoria
+    val cardioCategory = remember(sessionDetails.cardio, exercises) {
+        // The name of the exercise the first cardio row is linked to (it only picks the icon)
+        sessionDetails.cardio.minByOrNull { it.ordineEsercizio }?.let { CardioNames.of(it, exercises, "en") }
     }
 
     Box(

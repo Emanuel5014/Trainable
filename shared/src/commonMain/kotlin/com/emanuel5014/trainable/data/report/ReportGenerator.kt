@@ -2,7 +2,13 @@ package com.emanuel5014.trainable.data.report
 
 import com.emanuel5014.trainable.data.local.entity.straightReps
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.data.local.entity.CardioExerciseKey
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.belongsTo
+import com.emanuel5014.trainable.data.local.entity.exerciseKey
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
+import com.emanuel5014.trainable.domain.exercise.CardioNames
 import com.emanuel5014.trainable.data.local.entity.kind
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
@@ -52,7 +58,8 @@ class ReportGenerator(
         val weightUnit = userPreferencesRepository.weightUnit.first()
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
-        val report = buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit, advanced)
+        val exercisesById = workoutRepository.getExercisesById().first()
+        val report = buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit, advanced, exercisesById)
         // The workout journal is part of the report only while it is on
         return if (userPreferencesRepository.journalEnabled.first()) report.copy(journal = journalEntries(sessions)) else report
     }
@@ -85,7 +92,8 @@ class ReportGenerator(
         swaps: List<SessionExerciseSwapEntity>,
         languageCode: String,
         weightUnit: String,
-        advanced: Boolean
+        advanced: Boolean,
+        exercisesById: Map<Int, ExerciseEntity>
     ): PlanReport {
         val plan = planWithDetails.plan
         val currentExerciseIds = planWithDetails.exercises.map { it.exercise.id }.toSet()
@@ -243,7 +251,7 @@ class ReportGenerator(
                 },
                 program = planExercise?.let(::programOf)
             )
-        } + cardioExercises(planWithDetails, sessions, languageCode, ::programOf)
+        } + cardioExercises(planWithDetails, sessions, languageCode, exercisesById, ::programOf)
 
         // What the sheet asks for and was never done at all is the most telling line of the report
         val done = exercises.map { it.exerciseId }.toSet()
@@ -292,20 +300,22 @@ class ReportGenerator(
 
     /**
      * Cardio exercises have no set rows: their sets are the cardio logs of each session, one exercise per activity
-     * (a session can have it twice, e.g. a warm-up and a cool-down, which both count).
+     * (a session can have it twice, e.g. a warm-up and a cool-down, which both count). The activity is the exercise the
+     * logs are linked to, named as that exercise; only a row not linked yet falls back to the name written on it.
      */
     private fun cardioExercises(
         planWithDetails: PlanWithDetails,
         sessions: List<SessionWithDetails>,
         languageCode: String,
+        exercisesById: Map<Int, ExerciseEntity>,
         programOf: (PlanExerciseWithDetails) -> ExerciseProgram
     ): List<ExerciseReport> {
-        val byActivity = mutableMapOf<String, MutableList<ExerciseSessionEntry>>()
-        val names = mutableMapOf<String, String>()
+        val byActivity = linkedMapOf<CardioExerciseKey, MutableList<ExerciseSessionEntry>>()
+        val firstRows = mutableMapOf<CardioExerciseKey, CardioLogEntity>()
         sessions.forEach { session ->
             session.cardio.filter { it.isCompleted }.groupedByExercise().forEach { cardio ->
-                val key = cardio.categoria.trim().lowercase()
-                if (key !in names) names[key] = cardio.categoria.trim()
+                val key = cardio.first.exerciseKey()
+                firstRows.getOrPut(key) { cardio.first }
                 byActivity.getOrPut(key) { mutableListOf() }.add(
                     ExerciseSessionEntry(
                         date = session.session.timestamp,
@@ -327,12 +337,14 @@ class ReportGenerator(
             }
         }
         return byActivity.map { (key, entries) ->
-            val planExercise = planWithDetails.exercises.firstOrNull { it.exercise.nome.trim().lowercase() == key }
+            val row = firstRows.getValue(key)
+            val planExercise = planWithDetails.exercises.firstOrNull { row.belongsTo(it.exercise) }
             val sorted = entries.sortedBy { it.date }
             ExerciseReport(
-                // Activities typed by hand have no exercise: a stable id that cannot clash with a real one
-                exerciseId = planExercise?.exercise?.id ?: -(key.hashCode() and Int.MAX_VALUE) - 1,
-                exerciseName = ExerciseTranslations.translate(names.getValue(key), languageCode),
+                // A row not linked yet has no exercise: a stable id that cannot clash with a real one
+                exerciseId = row.exerciseId ?: planExercise?.exercise?.id
+                    ?: -((key as CardioExerciseKey.Unlinked).foldedName.hashCode() and Int.MAX_VALUE) - 1,
+                exerciseName = CardioNames.of(row, exercisesById, languageCode),
                 muscleGroup = ExerciseTranslations.translateCategory("Cardio", languageCode),
                 isCurrentlyInPlan = planExercise != null,
                 sessions = sorted,

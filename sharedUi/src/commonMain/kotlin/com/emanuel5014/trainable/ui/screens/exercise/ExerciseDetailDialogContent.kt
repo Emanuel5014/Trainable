@@ -489,10 +489,9 @@ fun ExerciseDetailContent(
         if (state.merges.asWinner.isNotEmpty() || state.merges.asLoser != null) {
             item(key = "merges") { MergeRows(state = state.merges, languageCode = state.languageCode, onUndo = onUndoMerge) }
         }
-        // A cardio exercise keeps its workouts apart from the sets of the others
-        val cardio = state.cardioHistory
-        val nothingDone = if (cardio != null) cardio.performances.isEmpty() else history.performances.isEmpty()
-        if (nothingDone) {
+        // Cardio keeps its workouts apart from the sets: shown for any exercise that has cardio logs linked to it
+        val cardio = state.cardioHistory?.takeIf { it.performances.isNotEmpty() }
+        if (cardio == null && history.performances.isEmpty()) {
             item(key = "empty") {
                 Text(
                     text = stringResource(Res.string.exercise_detail_empty),
@@ -501,13 +500,15 @@ fun ExerciseDetailContent(
                     modifier = Modifier.padding(vertical = 24.dp)
                 )
             }
-        } else if (cardio != null) {
-            item(key = "records") { CardioRecordsCard(records = cardio.records) }
-            item(key = "history_title") { SectionTitle(stringResource(Res.string.exercise_detail_history)) }
+        }
+        if (cardio != null) {
+            item(key = "cardio_records") { CardioRecordsCard(records = cardio.records) }
+            item(key = "cardio_history_title") { SectionTitle(stringResource(Res.string.exercise_detail_history)) }
             items(cardio.performances, key = { "cardio_${it.sessionId}" }) { performance ->
                 CardioPerformanceCard(performance = performance)
             }
-        } else {
+        }
+        if (history.performances.isNotEmpty()) {
             item(key = "records") { RecordsCard(history = history, weightUnit = state.weightUnit) }
             if (history.kind == ExerciseKind.STRENGTH && history.chartPoints.size >= 2) {
                 item(key = "progress") { ProgressCard(points = history.chartPoints, weightUnit = state.weightUnit) }

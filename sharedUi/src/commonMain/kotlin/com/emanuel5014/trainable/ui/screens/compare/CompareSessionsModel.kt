@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.ui.screens.compare
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -19,6 +20,8 @@ data class CompareSessionsUiState(
     val isLoading: Boolean = true,
     val weightUnit: String = "kg",
     val languageCode: String = "en",
+    /** Every exercise by id, for the names of the cardio rows. */
+    val exercises: Map<Int, ExerciseEntity> = emptyMap(),
     val error: String? = null
 )
 
@@ -40,6 +43,11 @@ class CompareSessionsModel(
         scope.launch {
             userPreferencesRepository.weightUnit.collect { unit ->
                 _uiState.update { it.copy(weightUnit = unit) }
+            }
+        }
+        scope.launch {
+            workoutRepository.getExercisesById().collect { exercises ->
+                _uiState.update { it.copy(exercises = exercises) }
             }
         }
         scope.launch {

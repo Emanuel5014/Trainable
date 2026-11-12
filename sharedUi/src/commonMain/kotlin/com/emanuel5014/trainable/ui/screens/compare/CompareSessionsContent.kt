@@ -91,7 +91,9 @@ import com.emanuel5014.trainable.sharedui.resources.error
 import com.emanuel5014.trainable.sharedui.resources.week_short
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.compare.CardioComparison
+import com.emanuel5014.trainable.domain.exercise.CardioNames
 import com.emanuel5014.trainable.domain.compare.ComparedMetric
 import com.emanuel5014.trainable.domain.compare.ComparedSet
 import com.emanuel5014.trainable.domain.compare.ExerciseComparison
@@ -200,6 +202,7 @@ fun CompareSessionsContent(
                     comparison = comparison,
                     weightUnit = uiState.weightUnit,
                     languageCode = uiState.languageCode,
+                    exercises = uiState.exercises,
                     modifier = Modifier.padding(paddingValues.bodyPadding()),
                     endInset = paddingValues.scrollEndInset()
                 )
@@ -215,6 +218,7 @@ private fun CompareContent(
     comparison: SessionComparison,
     weightUnit: String,
     languageCode: String,
+    exercises: Map<Int, ExerciseEntity>,
     modifier: Modifier = Modifier,
     /** Room after the last row for the bottom area the body runs under (iOS). */
     endInset: androidx.compose.ui.unit.Dp = 0.dp
@@ -238,7 +242,7 @@ private fun CompareContent(
 
         if (comparison.cardio.isNotEmpty()) {
             item { SectionTitle(stringResource(Res.string.compare_cardio)) }
-            items(comparison.cardio) { CardioCard(it) }
+            items(comparison.cardio) { CardioCard(it, CardioNames.of(it.exerciseId, it.label, exercises, languageCode)) }
         }
 
         if (comparison.exercises.isNotEmpty()) {
@@ -406,10 +410,10 @@ private fun BarLine(fraction: Float, color: Color, value: String) {
 // ---- cardio ------------------------------------------------------------------------------------
 
 @Composable
-private fun CardioCard(cardio: CardioComparison) {
+private fun CardioCard(cardio: CardioComparison, name: String) {
     val icon = when {
-        cardio.label.containsAny("bike", "bici", "cicl", "spin") -> Icons.AutoMirrored.Rounded.DirectionsBike
-        cardio.label.containsAny("run", "corsa", "treadmill", "tapis", "jog") -> Icons.AutoMirrored.Rounded.DirectionsRun
+        name.containsAny("bike", "bici", "cicl", "spin") -> Icons.AutoMirrored.Rounded.DirectionsBike
+        name.containsAny("run", "corsa", "treadmill", "tapis", "jog") -> Icons.AutoMirrored.Rounded.DirectionsRun
         else -> Icons.AutoMirrored.Rounded.DirectionsWalk
     }
     Card(
@@ -421,7 +425,7 @@ private fun CardioCard(cardio: CardioComparison) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(22.dp))
                 Text(
-                    text = cardio.label,
+                    text = name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurface,

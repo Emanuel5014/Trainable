@@ -37,6 +37,7 @@ import com.emanuel5014.trainable.sharedui.resources.*
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
 import com.emanuel5014.trainable.ui.components.LocalShowMessage
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.ui.components.WorkoutShareCardContent
 import com.emanuel5014.trainable.ui.screens.history.HistoryShareUi
 import com.emanuel5014.trainable.ui.util.PlatformBackHandler
@@ -94,7 +95,7 @@ internal fun rememberIosHistoryShareUi(): HistoryShareUi {
             }
 
             @Composable
-            override fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean) {
+            override fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean, exercises: Map<Int, ExerciseEntity>) {
                 val active = request != null || captured != null
                 DisposableEffect(active) {
                     val visible = BottomBarManager.isVisibleOverride
@@ -123,7 +124,7 @@ internal fun rememberIosHistoryShareUi(): HistoryShareUi {
                             Text(stringResource(Res.string.preparing_share), color = Color.White)
                         }
                         key(pending) {
-                            RenderHistoryImage(pending, languageCode, weightUnit, showPrescription,
+                            RenderHistoryImage(pending, languageCode, weightUnit, showPrescription, exercises,
                                 onReady = { captured = it; request = null },
                                 onFailed = { request = null; show(failed) })
                         }
@@ -181,7 +182,7 @@ internal fun rememberIosHistoryShareUi(): HistoryShareUi {
 /** A full-height unbounded card is recorded without drawing it onto the app's visible canvas. */
 @Composable
 private fun RenderHistoryImage(
-    request: HistoryImageRequest, language: String, unit: String, prescription: Boolean,
+    request: HistoryImageRequest, language: String, unit: String, prescription: Boolean, exercises: Map<Int, ExerciseEntity>,
     onReady: (HistoryImage) -> Unit, onFailed: () -> Unit
 ) {
     val layer = rememberGraphicsLayer()
@@ -201,7 +202,8 @@ private fun RenderHistoryImage(
                 setDetailsText = { set, includePrescription ->
                     ((if (includePrescription) text.setPrescriptionBadges(set) else emptyList()) + text.setPerformanceBadges(set))
                         .takeIf { it.isNotEmpty() }?.joinToString(" · ")
-                })
+                },
+                exercisesById = exercises)
         }) { children, _ ->
             val width = with(density) { 402.dp.roundToPx() }
             val card = children.single().measure(Constraints(minWidth = width, maxWidth = width))

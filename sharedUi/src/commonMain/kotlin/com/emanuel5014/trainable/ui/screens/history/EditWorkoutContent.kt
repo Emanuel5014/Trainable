@@ -9,6 +9,8 @@ import com.emanuel5014.trainable.ui.glass.actionGlassElevation
 import com.emanuel5014.trainable.ui.glass.actionGlassSource
 import com.emanuel5014.trainable.ui.glass.rememberActionGlassSource
 import com.emanuel5014.trainable.ui.components.cardioSetValueText
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.domain.exercise.CardioNames
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.setsOf
@@ -427,6 +429,7 @@ fun EditWorkoutContent(
                                 is CardioExerciseLogs -> {
                                     CardioEditCard(
                                         cardio = item,
+                                        exercises = state.exercisesById,
                                         isFirst = index == 0,
                                         isLast = index == displayedItems.lastIndex,
                                         isDragging = isDragging,
@@ -1143,6 +1146,7 @@ fun EditSetRow(
 @Composable
 fun CardioEditCard(
     cardio: CardioExerciseLogs,
+    exercises: Map<Int, ExerciseEntity>,
     isFirst: Boolean,
     isLast: Boolean,
     isDragging: Boolean = false,
@@ -1153,7 +1157,7 @@ fun CardioEditCard(
     onMoveDown: () -> Unit
 ) {
     val languageCode = androidx.compose.ui.text.intl.Locale.current.language
-    val translatedTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
+    val translatedTitle = CardioNames.of(cardio.first, exercises, languageCode)
     val cardBgColor = if (isDragging) SurfaceContainerHigh else SurfaceContainerLow
     val cardBorder = if (isDragging) androidx.compose.foundation.BorderStroke(2.dp, Primary) else null
 

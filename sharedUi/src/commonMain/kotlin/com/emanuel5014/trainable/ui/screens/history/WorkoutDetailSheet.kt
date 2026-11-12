@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.domain.exercise.CardioNames
 import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.data.local.entity.forRun
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
@@ -203,6 +205,7 @@ internal fun WorkoutDetailSheet(
     details: SessionWithDetails?,
     planName: String,
     languageCode: String,
+    exercises: Map<Int, ExerciseEntity>,
     weightUnit: String,
     showJournal: Boolean,
     showEdit: Boolean,
@@ -318,7 +321,7 @@ internal fun WorkoutDetailSheet(
                                     weightUnit = weightUnit,
                                     onRestoreExercise = onRestoreExercise
                                 )
-                                is UnifiedHistoryItem.Cardio -> HistoryCardioBlock(item.cardio, languageCode)
+                                is UnifiedHistoryItem.Cardio -> HistoryCardioBlock(item.cardio, exercises, languageCode)
                             }
                         }
                     }
@@ -719,16 +722,16 @@ internal fun cardioIcon(categoria: String): ImageVector {
 
 /** A cardio activity: its name, then one line (distance, time) or one line per set, with the notes. */
 @Composable
-private fun HistoryCardioBlock(cardioLogs: CardioExerciseLogs, languageCode: String, modifier: Modifier = Modifier) {
+private fun HistoryCardioBlock(cardioLogs: CardioExerciseLogs, exercises: Map<Int, ExerciseEntity>, languageCode: String, modifier: Modifier = Modifier) {
     val cardio = cardioLogs.first
     val cardioSets = cardioLogs.sets
-    val translatedTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
+    val translatedTitle = CardioNames.of(cardio, exercises, languageCode)
     val rpeScale = LocalRpeSettings.current.scale
     val rpeText = LocalPrescriptionText.current
     fun rpeSuffix(rpe: Float?) = rpe?.let { " · " + rpeText.rpeBadge(it, rpeScale) }.orEmpty()
     Column(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(cardioIcon(cardio.categoria), contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+            Icon(cardioIcon(translatedTitle), contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = translatedTitle.uppercase(),

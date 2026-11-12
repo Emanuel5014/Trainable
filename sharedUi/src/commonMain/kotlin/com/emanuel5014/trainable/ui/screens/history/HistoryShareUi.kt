@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.history
 
 import androidx.compose.runtime.Composable
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 
@@ -17,7 +18,7 @@ interface HistoryShareUi {
 
     /** The waiting layer and the preview, inside the history's root Box. */
     @Composable
-    fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean)
+    fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean, exercises: Map<Int, ExerciseEntity>)
 }
 
 object NoHistoryShare : HistoryShareUi {
@@ -26,5 +27,5 @@ object NoHistoryShare : HistoryShareUi {
     override fun share(session: SessionWithDetails, planName: String, planExercises: List<PlanExerciseWithDetails>?) {}
 
     @Composable
-    override fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean) {}
+    override fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean, exercises: Map<Int, ExerciseEntity>) {}
 }

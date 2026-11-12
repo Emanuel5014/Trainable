@@ -130,11 +130,9 @@ class ExerciseDetailState(
                             flowOf(ExerciseDetailUiState(exerciseId = id, loading = false, notFound = true))
                         } else {
                             val history = workoutRepository.getSetHistoryForExercise(id).map { ExerciseHistory.of(it) }.flowOn(Dispatchers.Default)
-                            // Cardio is logged apart from the sets, under the name of the exercise
+                            // Cardio is logged apart from the sets, linked to the exercise by id: any exercise can have it, whatever its category
                             val cardioHistory: Flow<CardioHistory?> =
-                                if (ExerciseMerges.isCardio(exercise)) {
-                                    workoutRepository.getCardioHistoryForActivity(exercise.nome).map { CardioHistory.of(it) }.flowOn(Dispatchers.Default)
-                                } else flowOf(null)
+                                workoutRepository.getCardioHistoryForExercise(id).map { CardioHistory.of(it) }.flowOn(Dispatchers.Default)
                             val histories = combine(history, cardioHistory) { sets, cardio -> sets to cardio }
                             combine(histories, weightUnit, languageCode, mergeRepository.observeState(id), editablePresets) { (history, cardio), unit, language, merges, editable ->
                                 ExerciseDetailUiState(

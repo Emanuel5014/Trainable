@@ -53,6 +53,8 @@ data class EditWorkoutState(
     val exercises: List<EditExerciseState> = emptyList(),
     val cardioLogs: List<CardioLogEntity> = emptyList(),
     val availableExercises: List<ExerciseEntity> = emptyList(),
+    /** Every exercise by id, hidden ones too: a cardio set is named after the exercise it is linked to. */
+    val exercisesById: Map<Int, ExerciseEntity> = emptyMap(),
     val categories: List<String> = emptyList(),
     val sessionTimestamp: Long = 0L,
     val sessionDurationMs: Long? = null,
@@ -112,6 +114,9 @@ class EditWorkoutModel(
         loadCategories()
         scope.launch {
             languageCodes.collect { _languageCode.value = it }
+        }
+        scope.launch {
+            workoutRepository.getExercisesById().collect { all -> _state.update { it.copy(exercisesById = all) } }
         }
         scope.launch {
             userPreferencesRepository.weightUnit.collect { unit ->

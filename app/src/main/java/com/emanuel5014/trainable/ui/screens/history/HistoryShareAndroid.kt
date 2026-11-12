@@ -175,6 +175,7 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.entity.isArchived
 import com.emanuel5014.trainable.data.local.entity.isSystemPlan
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -251,7 +252,7 @@ fun rememberAndroidHistoryShareUi(): HistoryShareUi {
         }
 
         @Composable
-        override fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean) {
+        override fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean, exercises: Map<Int, ExerciseEntity>) {
         if (sessionToShare != null) {
             Box(
                 modifier = Modifier
@@ -287,7 +288,8 @@ fun rememberAndroidHistoryShareUi(): HistoryShareUi {
                                             languageCode = languageCode,
                                             weightUnit = weightUnit,
                                             planExercises = sessionToShare!!.third,
-                                            showPrescription = showPrescription
+                                            showPrescription = showPrescription,
+                                            exercisesById = exercises
                                         )
                                     }
                                 }

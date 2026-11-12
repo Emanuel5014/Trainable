@@ -16,6 +16,7 @@ import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.domain.exercise.CardioNames
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.byWeek
@@ -67,6 +68,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 @OptIn(ExperimentalUuidApi::class)
 class WorkoutRepository(
@@ -751,8 +753,12 @@ class WorkoutRepository(
     /** Every completed set of the exercise in a finished workout, newest first (see [WorkoutDao.getSetHistoryForExercise]). */
     fun getSetHistoryForExercise(exerciseId: Int): Flow<List<ExerciseSetWithSession>> = workoutDao.getSetHistoryForExercise(exerciseId)
 
-    /** Every completed cardio set of the activity in a finished workout, newest first (see [WorkoutDao.getCardioHistoryForActivity]). */
-    fun getCardioHistoryForActivity(activity: String): Flow<List<CardioSetWithSession>> = workoutDao.getCardioHistoryForActivity(activity)
+    /** Every exercise by id, hidden ones included: a cardio log shows the name of the exercise it is linked to, even a removed one. */
+    fun getExercisesById(): Flow<Map<Int, ExerciseEntity>> =
+        exerciseDao.getAllExercisesIncludingDeleted().map { list -> list.associateBy { it.id } }
+
+    /** Every completed cardio set linked to the exercise in a finished workout, newest first (see [WorkoutDao.getCardioHistoryForExercise]). */
+    fun getCardioHistoryForExercise(exerciseId: Int): Flow<List<CardioSetWithSession>> = workoutDao.getCardioHistoryForExercise(exerciseId)
 
     /** Weight in kg the exercise was last lifted with in any routine, null if never. */
     suspend fun getLastWorkingWeightForExercise(exerciseId: Int): Float? = workoutDao.getLastWorkingWeightForExercise(exerciseId)
@@ -837,6 +843,7 @@ class WorkoutRepository(
         val supersetColumn = sessions.any { s -> SupersetCsv.numbering(s.sets.map { it.setLog }).isNotEmpty() }
 
         val sb = StringBuilder()
+        val exercisesById = getExercisesById().first()
         sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced, journalEnabled, rpeColumn, supersetColumn))
 
         fun escapeCsv(value: String): String {
@@ -915,7 +922,7 @@ class WorkoutRepository(
 
             is HistoryCsvRow.Cardio -> {
                 val cardio = row.log
-                val exerciseName = escapeCsv(ExerciseTranslations.translate(cardio.categoria, languageCode))
+                val exerciseName = escapeCsv(CardioNames.of(cardio, exercisesById, languageCode))
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
                 val week = session.session.programWeek?.toString() ?: ""
                 val cardioRpe = cardio.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: ""

@@ -77,7 +77,9 @@ fun WorkoutShareCardContent(
     modifier: Modifier = Modifier,
     logo: Painter,
     appName: String,
-    setDetailsText: (com.emanuel5014.trainable.data.local.entity.SetLogEntity, Boolean) -> String?
+    setDetailsText: (com.emanuel5014.trainable.data.local.entity.SetLogEntity, Boolean) -> String?,
+    /** Every exercise by id: a cardio row is named after the exercise it is linked to. */
+    exercisesById: Map<Int, com.emanuel5014.trainable.data.local.entity.ExerciseEntity> = emptyMap()
 ) {
     val primaryColor = Primary
 
@@ -528,7 +530,7 @@ fun WorkoutShareCardContent(
                     is UnifiedShareItem.Cardio -> {
                         val cardio = unifiedItem.cardio.first
                         val cardioSets = unifiedItem.cardio.sets
-                        val cardioTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
+                        val cardioTitle = com.emanuel5014.trainable.domain.exercise.CardioNames.of(cardio, exercisesById, languageCode)
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
