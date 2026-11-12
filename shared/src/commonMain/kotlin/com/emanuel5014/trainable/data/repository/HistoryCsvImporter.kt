@@ -84,6 +84,7 @@ class HistoryCsvImporter(
         val plans = workoutDao.getAllPlans().first()
         val sessions = workoutDao.getAllSessionsWithDetails().first()
         val skipped = exerciseDao.getSkippedPresetIds().toSet()
+        val usedAsCardio = exerciseDao.getExerciseIdsUsedAsCardio().toSet()
         return withContext(Dispatchers.Default) {
             val exerciseById = realExercises.associateBy { it.id }
             KnownData(
@@ -113,7 +114,8 @@ class HistoryCsvImporter(
                         }
                     )
                 },
-                skippedPresetIds = skipped
+                skippedPresetIds = skipped,
+                exercisesUsedAsCardio = usedAsCardio
             )
         }
     }

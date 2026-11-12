@@ -66,8 +66,9 @@ interface ExerciseDao {
     suspend fun reviveExercise(id: Int, categoria: String, descrizione: String?, muscles: String?, equipment: String?)
 
     /**
-     * True when a workout, a routine, a swap, a program change or a 1RM still refers to the exercise, or a merge with
-     * another exercise is on record (deleting the row would cascade into the merge log and make it impossible to undo).
+     * True when a workout (its strength sets or its cardio logs), a routine, a swap, a program change or a 1RM still
+     * refers to the exercise, or a merge with another exercise is on record (deleting the row would cascade into the
+     * merge log and make it impossible to undo). A cardio exercise with history is therefore only hidden, never deleted.
      */
     @Query(
         """
@@ -85,6 +86,19 @@ interface ExerciseDao {
     /** Whether any strength set (of any type but cardio) was logged on the exercise. */
     @Query("SELECT EXISTS(SELECT 1 FROM set_logs WHERE exercise_id = :id)")
     suspend fun hasSetLogs(id: Int): Boolean
+
+    /**
+     * The exercises the user does as cardio whatever their category: those cardio logs are linked to, and those a
+     * routine has as a cardio entry. The CSV import gives them the file's cardio rows of their name.
+     */
+    @Query(
+        """
+        SELECT exercise_id FROM cardio_logs WHERE exercise_id IS NOT NULL
+        UNION
+        SELECT exercise_id FROM plan_exercises WHERE exercise_type = 'cardio'
+        """
+    )
+    suspend fun getExerciseIdsUsedAsCardio(): List<Int>
 
     /** Whether any cardio log is linked to the exercise. */
     @Query("SELECT EXISTS(SELECT 1 FROM cardio_logs WHERE exercise_id = :id)")

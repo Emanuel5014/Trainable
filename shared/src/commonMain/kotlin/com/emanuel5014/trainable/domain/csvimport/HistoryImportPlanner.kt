@@ -52,7 +52,12 @@ data class KnownData(
     /** The exercises as they are: [exercises] may carry merged-away ones under their old names to match against. */
     val realExercises: List<ExerciseEntity> = exercises,
     /** Cardio presets left out of this database (their id was taken): never a target of a cardio row. */
-    val skippedPresetIds: Set<Int> = emptySet()
+    val skippedPresetIds: Set<Int> = emptySet(),
+    /**
+     * Exercises of another category than Cardio that the user does as cardio (cardio logs linked to them, or a cardio
+     * entry of a routine): a cardio row of the file naming one of them is theirs, not refused.
+     */
+    val exercisesUsedAsCardio: Set<Int> = emptySet()
 )
 
 /** A set reduced to what tells two copies of a workout apart. */
@@ -195,7 +200,7 @@ object HistoryImportPlanner {
     ): ImportPlan {
         val issues = history.issues.toMutableList()
         val resolver = HistoryExerciseResolver(known.exercises, known.customCategories, known.realExercises, known.skippedPresetIds)
-        val valid = history.rows.mapNotNull { validate(it, resolver, options, issues) }
+        val valid = history.rows.mapNotNull { validate(it, resolver, options, issues, known.exercisesUsedAsCardio) }
 
         val userPlans = known.plans.filter { !it.isSystemPlan }
             .groupBy { HistoryCsvColumns.fold(it.nome) }
@@ -283,7 +288,13 @@ object HistoryImportPlanner {
 
     // --- Rows ---
 
-    private fun validate(row: ParsedRow, resolver: HistoryExerciseResolver, options: ImportOptions, issues: MutableList<ImportIssue>): ValidRow? {
+    private fun validate(
+        row: ParsedRow,
+        resolver: HistoryExerciseResolver,
+        options: ImportOptions,
+        issues: MutableList<ImportIssue>,
+        usedAsCardio: Set<Int>
+    ): ValidRow? {
         fun reject(code: IssueCode, column: CsvColumn? = null, value: String = ""): ValidRow? {
             issues.add(ImportIssue(row.line, IssueSeverity.ERROR, code, column, value))
             return null
@@ -298,6 +309,9 @@ object HistoryImportPlanner {
         val exercise = resolver.resolve(row.exercise, row.category, cardioHint)
         val kind = when {
             exercise.isCardio -> RowKind.CARDIO
+            // An exercise of another category the user already does as cardio (logs or a routine entry) takes the
+            // file's cardio rows; any other strength exercise refuses them below, so a file cannot put cardio in it
+            cardioHint == true && exercise is ResolvedExercise.Existing && exercise.exercise.id in usedAsCardio -> RowKind.CARDIO
             row.declaredKind == RowKind.CARDIO -> return reject(IssueCode.CARDIO_NOT_CARDIO_EXERCISE, CsvColumn.EXERCISE, row.exercise)
             row.declaredKind != null -> row.declaredKind
             row.durationSeconds != null && row.reps != null -> RowKind.TIME_AND_REPS
