@@ -321,7 +321,12 @@ internal fun WorkoutDetailSheet(
                                     weightUnit = weightUnit,
                                     onRestoreExercise = onRestoreExercise
                                 )
-                                is UnifiedHistoryItem.Cardio -> HistoryCardioBlock(item.cardio, exercises, languageCode)
+                                is UnifiedHistoryItem.Cardio -> HistoryCardioBlock(
+                                    cardioLogs = item.cardio,
+                                    exercises = exercises,
+                                    languageCode = languageCode,
+                                    onRestoreExercise = onRestoreExercise
+                                )
                             }
                         }
                     }
@@ -720,26 +725,59 @@ internal fun cardioIcon(categoria: String): ImageVector {
     }
 }
 
-/** A cardio activity: its name, then one line (distance, time) or one line per set, with the notes. */
+/**
+ * A cardio activity: its name (its exercise deleted from the list → greyed with a restore pill, like a strength
+ * exercise), then one line (distance, time) or one line per set, with the notes.
+ */
 @Composable
-private fun HistoryCardioBlock(cardioLogs: CardioExerciseLogs, exercises: Map<Int, ExerciseEntity>, languageCode: String, modifier: Modifier = Modifier) {
+private fun HistoryCardioBlock(
+    cardioLogs: CardioExerciseLogs,
+    exercises: Map<Int, ExerciseEntity>,
+    languageCode: String,
+    modifier: Modifier = Modifier,
+    /** Adds an exercise deleted from the exercise list back to it. */
+    onRestoreExercise: (Int) -> Unit = {}
+) {
     val cardio = cardioLogs.first
     val cardioSets = cardioLogs.sets
     val translatedTitle = CardioNames.of(cardio, exercises, languageCode)
+    // Only a row linked to an exercise can be greyed: an unlinked one shows as before
+    val linkedExercise = cardio.exerciseId?.let { exercises[it] }
+    val isDeleted = linkedExercise?.isDeleted == true
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    if (showRestoreDialog && linkedExercise != null) {
+        RestoreExerciseDialog(
+            exerciseNames = listOf(translatedTitle),
+            onRestore = {
+                onRestoreExercise(linkedExercise.id)
+                showRestoreDialog = false
+            },
+            onSkip = { showRestoreDialog = false },
+            onDismiss = { showRestoreDialog = false },
+            skipLabel = stringResource(Res.string.cancel)
+        )
+    }
     val rpeScale = LocalRpeSettings.current.scale
     val rpeText = LocalPrescriptionText.current
     fun rpeSuffix(rpe: Float?) = rpe?.let { " · " + rpeText.rpeBadge(it, rpeScale) }.orEmpty()
     Column(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(cardioIcon(translatedTitle), contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+            // Deleted from the exercise list: still in the history, greyed out
+            val titleColor = if (isDeleted) OnSurfaceVariant.copy(alpha = 0.7f) else Primary
+            Icon(cardioIcon(translatedTitle), contentDescription = null, tint = titleColor, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = translatedTitle.uppercase(),
                 style = MaterialTheme.typography.labelLarge,
-                color = Primary,
+                color = titleColor,
                 fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 1.sp
+                letterSpacing = 1.sp,
+                modifier = Modifier.weight(1f, fill = false)
             )
+            if (isDeleted) {
+                Spacer(modifier = Modifier.width(8.dp))
+                DeletedExercisePill(Modifier.clickable { showRestoreDialog = true })
+            }
         }
         Spacer(modifier = Modifier.height(4.dp))
         if (cardioSets.size > 1) {

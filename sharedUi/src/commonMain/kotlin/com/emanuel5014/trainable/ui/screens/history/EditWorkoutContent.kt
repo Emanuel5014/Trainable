@@ -434,7 +434,8 @@ fun EditWorkoutContent(
                                         onAddSet = { viewModel.addCardioSet(item) },
                                         onDelete = { viewModel.deleteCardioExercise(item) },
                                         onMoveUp = { viewModel.moveCardio(item, displayedItems, -1) },
-                                        onMoveDown = { viewModel.moveCardio(item, displayedItems, 1) }
+                                        onMoveDown = { viewModel.moveCardio(item, displayedItems, 1) },
+                                        onRestoreExercise = { viewModel.restoreExercise(it) }
                                     )
                                 }
                             }
@@ -1160,10 +1161,28 @@ fun CardioEditCard(
     onAddSet: () -> Unit,
     onDelete: () -> Unit,
     onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit
+    onMoveDown: () -> Unit,
+    /** Adds the linked exercise back to the exercise list when the user deleted it from there. */
+    onRestoreExercise: (Int) -> Unit = {}
 ) {
     val languageCode = androidx.compose.ui.text.intl.Locale.current.language
     val translatedTitle = CardioNames.of(cardio.first, exercises, languageCode)
+    // Only a row linked to an exercise can be greyed: an unlinked one shows as before
+    val linkedExercise = cardio.first.exerciseId?.let { exercises[it] }
+    val isDeleted = linkedExercise?.isDeleted == true
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    if (showRestoreDialog && linkedExercise != null) {
+        com.emanuel5014.trainable.ui.components.RestoreExerciseDialog(
+            exerciseNames = listOf(translatedTitle),
+            onRestore = {
+                onRestoreExercise(linkedExercise.id)
+                showRestoreDialog = false
+            },
+            onSkip = { showRestoreDialog = false },
+            onDismiss = { showRestoreDialog = false },
+            skipLabel = stringResource(Res.string.cancel)
+        )
+    }
     val cardBgColor = if (isDragging) SurfaceContainerHigh else SurfaceContainerLow
     val cardBorder = if (isDragging) androidx.compose.foundation.BorderStroke(2.dp, Primary) else null
 
@@ -1224,9 +1243,14 @@ fun CardioEditCard(
                 text = translatedTitle,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Black,
-                color = OnSurface,
+                // Deleted from the exercise list: still in the workout, greyed out
+                color = if (isDeleted) OnSurfaceVariant else OnSurface,
                 modifier = Modifier.fillMaxWidth()
             )
+            if (isDeleted) {
+                Spacer(modifier = Modifier.height(4.dp))
+                com.emanuel5014.trainable.ui.components.DeletedExercisePill(Modifier.clickable { showRestoreDialog = true })
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
