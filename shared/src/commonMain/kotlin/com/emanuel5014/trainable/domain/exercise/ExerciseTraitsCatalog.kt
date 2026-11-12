@@ -159,9 +159,9 @@ object ExerciseTraitsCatalog {
         155 to traits(Equipment.MACHINE),  // Assault Bike
         156 to traits(Equipment.MACHINE),  // SkiErg
         157 to traits(Equipment.OTHER),  // Jump Rope
-        164 to traits(Equipment.OTHER),  // Running
+        164 to traits(Equipment.BODYWEIGHT),  // Running
         165 to traits(Equipment.OTHER),  // Cycling
-        166 to traits(Equipment.OTHER),  // Walking
+        166 to traits(Equipment.BODYWEIGHT),  // Walking
     )
 
     private fun traits(equipment: Equipment, vararg muscles: Muscle) =
