@@ -79,7 +79,9 @@ fun ExerciseFormDialog(
     initial: ExerciseForm = ExerciseForm(),
     editingId: Int? = null,
     showDescription: Boolean = true,
-    showTraits: Boolean = false
+    showTraits: Boolean = false,
+    /** Why the caller refuses the typed name (the trimmed name), shown under it like a taken name; null when it does not. */
+    nameRefusal: (String) -> String? = { null }
 ) {
     var name by remember { mutableStateOf(initial.name) }
     var category by remember { mutableStateOf(initial.category.ifBlank { categories.firstOrNull() ?: "Custom" }) }
@@ -89,7 +91,8 @@ fun ExerciseFormDialog(
     val taken = remember(name, existingExercises, languageCode, editingId) {
         ExerciseNames.isTaken(name, existingExercises, languageCode, editingId)
     }
-    val canConfirm = name.isNotBlank() && !taken
+    val refused = nameRefusal(name.trim())
+    val canConfirm = name.isNotBlank() && !taken && refused == null
 
     AlertDialog(
         modifier = Modifier.imePadding(),
@@ -104,8 +107,8 @@ fun ExerciseFormDialog(
                     value = name,
                     onValueChange = { name = it },
                     label = stringResource(Res.string.exercise_name),
-                    supportingText = if (taken) stringResource(Res.string.exercise_name_taken) else null,
-                    isError = taken,
+                    supportingText = if (taken) stringResource(Res.string.exercise_name_taken) else refused,
+                    isError = taken || refused != null,
                     modifier = Modifier.fillMaxWidth()
                 )
                 FormDropdown(

@@ -223,6 +223,9 @@ class HistoryState(
     suspend fun cardioSuggestions(): List<SuggestedExercise> =
         exerciseRepository.cardioSuggestions(repository.recentCardioExercises())
 
+    /** Whether the cardio picker refuses [name]: a hidden exercise that is not a cardio carries it. */
+    suspend fun isNameOfHiddenNonCardio(name: String): Boolean = exerciseRepository.isNameOfHiddenNonCardio(name)
+
     /** A custom exercise made from the picker; [onCreated] gets it once it is in the library. */
     fun addCustomExercise(name: String, category: String, onCreated: (ExerciseEntity) -> Unit) {
         scope.launch {

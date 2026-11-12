@@ -1535,6 +1535,7 @@
     <string name="suggested">Sugeridos</string>
     <string name="all_cardio">Todo el cardio</string>
     <string name="create_cardio_exercise">Crear ejercicio de cardio</string>
+    <string name="cardio_name_used_by_deleted_strength">Un ejercicio de fuerza eliminado ya usa este nombre. Restáuralo desde Ejercicios o elige otro nombre.</string>
     <plurals name="days_ago">
         <item quantity="one">hace %1$d día</item>
         <item quantity="other">hace %1$d días</item>

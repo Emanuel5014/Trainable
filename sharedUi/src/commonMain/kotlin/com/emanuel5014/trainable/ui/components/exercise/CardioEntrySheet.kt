@@ -81,6 +81,7 @@ import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.cancel
 import com.emanuel5014.trainable.sharedui.resources.cardio_entry_label
 import com.emanuel5014.trainable.sharedui.resources.cardio_missing_values
+import com.emanuel5014.trainable.sharedui.resources.cardio_name_used_by_deleted_strength
 import com.emanuel5014.trainable.sharedui.resources.cardio_remove_set
 import com.emanuel5014.trainable.sharedui.resources.change
 import com.emanuel5014.trainable.sharedui.resources.compare_pace
@@ -634,6 +635,8 @@ private class SuffixTransformation(private val suffix: String, private val style
 /**
  * Adding a cardio: the cardio picker (cardio only, suggestions on top), then [CardioEntrySheet]. "Change" on the sheet
  * opens the picker again over it and keeps what was typed. With [initialExercise] the sheet opens at once.
+ * "Create cardio exercise" refuses a name [isNameOfHiddenNonCardio] says belongs to a hidden exercise that is not a
+ * cardio: that exercise is left as it is and the form stays open with the reason.
  */
 @Composable
 fun CardioAddFlow(
@@ -642,6 +645,7 @@ fun CardioAddFlow(
     languageCode: String,
     loadSuggestions: suspend () -> List<SuggestedExercise>,
     onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
+    isNameOfHiddenNonCardio: suspend (String) -> Boolean,
     onSave: (ExerciseEntity, CardioEntry) -> Unit,
     onDismiss: () -> Unit,
     initialExercise: ExerciseEntity? = null,
@@ -650,6 +654,7 @@ fun CardioAddFlow(
     var exercise by remember { mutableStateOf(initialExercise) }
     var showPicker by remember { mutableStateOf(initialExercise == null) }
     val suggestions by produceState(emptyList<SuggestedExercise>()) { value = loadSuggestions() }
+    val usedByDeletedStrength = stringResource(Res.string.cardio_name_used_by_deleted_strength)
     val cardio = remember(exercises, languageCode) {
         exercises
             .filter { !it.isDeleted && it.categoria.equals(CARDIO, ignoreCase = true) }
@@ -676,7 +681,7 @@ fun CardioAddFlow(
             categories = listOf(CARDIO),
             onExerciseSelected = {
                 showPicker = false
-                // A hidden strength exercise brought back by "create" keeps its category: it is not a cardio
+                // Never anything but a cardio: "create" refuses the name of a hidden strength exercise (refuseNewExercise)
                 if (it.categoria.equals(CARDIO, ignoreCase = true)) exercise = it
                 else if (exercise == null) onDismiss()
             },
@@ -690,7 +695,8 @@ fun CardioAddFlow(
             },
             languageCode = languageCode,
             lockedCategory = CARDIO,
-            suggested = suggestions
+            suggested = suggestions,
+            refuseNewExercise = { name -> usedByDeletedStrength.takeIf { isNameOfHiddenNonCardio(name) } }
         )
     }
 }

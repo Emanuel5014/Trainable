@@ -4,6 +4,7 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvColumns
 import com.emanuel5014.trainable.domain.csvimport.HistoryExerciseResolver
+import com.emanuel5014.trainable.domain.csvimport.ResolvedExercise
 
 /** Names of exercises: two exercises with the same name are what the merge of issue #50 has to clean up, so none is made. */
 object ExerciseNames {
@@ -57,4 +58,13 @@ object ExerciseNames {
         val wanted = setOf(typed, HistoryCsvColumns.fold(HistoryExerciseResolver.canonicalName(name.trim())))
         return exercises.firstOrNull { it.isDeleted && it.id !in mergedAwayIds && HistoryCsvColumns.fold(it.nome) in wanted }
     }
+
+    /**
+     * The hidden exercise that is not a cardio and that creating a cardio named [name] would bring back ([findHidden]), or
+     * null. The cardio picker refuses such a name: bringing a strength exercise back from there would put it in the library
+     * again and log nothing. A hidden cardio with the name may still come back.
+     */
+    fun hiddenNonCardio(name: String, exercises: List<ExerciseEntity>, mergedAwayIds: Set<Int> = emptySet()): ExerciseEntity? =
+        findHidden(name, exercises, mergedAwayIds)
+            ?.takeIf { !it.categoria.trim().equals(ResolvedExercise.CARDIO, ignoreCase = true) }
 }

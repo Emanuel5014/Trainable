@@ -670,6 +670,9 @@ class EditWorkoutModel(
         }
     }
 
+    /** Whether the cardio picker refuses [name]: a hidden exercise that is not a cardio carries it. */
+    suspend fun isNameOfHiddenNonCardio(name: String): Boolean = exerciseRepository.isNameOfHiddenNonCardio(name)
+
     fun addCustomExercise(name: String, category: String, onCreated: (ExerciseEntity) -> Unit = {}) {
         scope.launch {
             val exerciseId = exerciseRepository.addCustomExercise(name, category)

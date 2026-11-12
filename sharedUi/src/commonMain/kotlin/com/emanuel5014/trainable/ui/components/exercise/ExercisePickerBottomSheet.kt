@@ -45,8 +45,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import org.jetbrains.compose.resources.stringResource
@@ -83,7 +85,12 @@ fun ExercisePickerBottomSheet(
     /** Lists only this category (ignoring case), hides the category chips and fixes it in the create form. */
     lockedCategory: String? = null,
     /** Shown on top while the search is empty; only meant for the cardio entry. */
-    suggested: List<SuggestedExercise> = emptyList()
+    suggested: List<SuggestedExercise> = emptyList(),
+    /**
+     * Asked before a new exercise is created from the form: a message refuses the name, and the form stays open with it
+     * under the name until the name changes. Null creates at once.
+     */
+    refuseNewExercise: (suspend (name: String) -> String?)? = null
 ) {
     val platformUi = LocalExercisePlatformUi.current
     rememberResponsiveSize()
@@ -94,6 +101,10 @@ fun ExercisePickerBottomSheet(
     var showOnlyFavorites by remember { mutableStateOf(false) }
     var traitFilter by remember { mutableStateOf(TraitFilter.NONE) }
     var showAddCustomDialog by remember { mutableStateOf(false) }
+    // The name refused by [refuseNewExercise] and why, while the form is open; checking blocks a second confirm meanwhile
+    var refusedName by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var checkingNewName by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
 
@@ -281,14 +292,30 @@ fun ExercisePickerBottomSheet(
             existingExercises = platformUi.namesInUse(),
             languageCode = languageCode,
             showDescription = false,
+            nameRefusal = { typed -> refusedName?.takeIf { it.first == typed }?.second },
             onConfirm = { form ->
-                onAddCustomExercise(form.name, form.category) { createdExercise ->
-                    onExerciseSelected(createdExercise)
-                    onDismiss()
+                fun create() {
+                    onAddCustomExercise(form.name, form.category) { createdExercise ->
+                        onExerciseSelected(createdExercise)
+                        onDismiss()
+                    }
+                    refusedName = null
+                    showAddCustomDialog = false
                 }
-                showAddCustomDialog = false
+                val check = refuseNewExercise
+                if (check == null) create()
+                else if (!checkingNewName) {
+                    checkingNewName = true
+                    scope.launch {
+                        val refusal = try { check(form.name) } finally { checkingNewName = false }
+                        if (refusal != null) refusedName = form.name to refusal else create()
+                    }
+                }
             },
-            onDismiss = { showAddCustomDialog = false }
+            onDismiss = {
+                refusedName = null
+                showAddCustomDialog = false
+            }
         )
     }
 

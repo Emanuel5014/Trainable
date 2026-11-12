@@ -503,6 +503,7 @@ fun EditWorkoutContent(
             languageCode = languageCode,
             loadSuggestions = { viewModel.cardioSuggestions() },
             onAddCustomExercise = { name, category, onCreated -> viewModel.addCustomExercise(name, category, onCreated) },
+            isNameOfHiddenNonCardio = { viewModel.isNameOfHiddenNonCardio(it) },
             onSave = { exercise, entry ->
                 viewModel.addCardioLog(exercise, entry.distanceKm, entry.seconds, note = entry.note)
                 cardioToAdd = null

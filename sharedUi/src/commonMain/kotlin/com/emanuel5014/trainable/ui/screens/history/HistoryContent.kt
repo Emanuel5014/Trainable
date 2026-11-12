@@ -993,6 +993,7 @@ fun HistoryContent(
             languageCode = languageCode,
             loadSuggestions = { state.cardioSuggestions() },
             onAddCustomExercise = { name, category, onCreated -> state.addCustomExercise(name, category, onCreated) },
+            isNameOfHiddenNonCardio = { state.isNameOfHiddenNonCardio(it) },
             onSave = { exercise, entry ->
                 state.saveCardioWorkout(
                     exercise,

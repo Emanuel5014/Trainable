@@ -87,6 +87,17 @@ class ExerciseRepository(
         return newId
     }
 
+    /**
+     * True when [name] is that of a hidden exercise that is not a cardio ([ExerciseNames.hiddenNonCardio]): the cardio
+     * picker refuses to create a cardio with it instead of bringing that exercise back.
+     */
+    suspend fun isNameOfHiddenNonCardio(name: String): Boolean =
+        ExerciseNames.hiddenNonCardio(
+            name,
+            exerciseDao.getAllExercisesIncludingDeleted().first(),
+            exerciseDao.getExerciseMerges().map { it.loserId }.toSet()
+        ) != null
+
     /** The "Suggested" section of the cardio picker, from the cardio done most recently ([recent], newest first). */
     suspend fun cardioSuggestions(recent: List<RecentCardio>): List<SuggestedExercise> =
         CardioSuggestions.of(
