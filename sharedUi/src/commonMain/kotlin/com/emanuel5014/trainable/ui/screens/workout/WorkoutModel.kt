@@ -1970,6 +1970,35 @@ class WorkoutModel(
         return order
     }
 
+    /**
+     * Gives back the execution order of the exercise at [exerciseIndex] when none of its sets is done any more, apart from
+     * [ignoringSetIndex] (the set being unticked or deleted): a set ticked by mistake must not move the exercise in the
+     * running order, so it goes back to a placeholder and takes the order again only when a set of it is really done.
+     * Cardio keeps its order (it is ranked when its timer starts). Returns the order the exercise ends up with. Call it
+     * with [setRowsLock] held, like [assignExecutionRank].
+     */
+    private suspend fun releaseExecutionRank(sessionId: Int, exerciseIndex: Int, exState: WorkoutExerciseState, ignoringSetIndex: Int): Int {
+        var order = exState.executionOrder
+        var rank: Int? = null
+        _state.update { curr ->
+            val inner = curr.exercises.getOrNull(exerciseIndex)
+            rank = null
+            if (inner == null || inner.exercise.id != exState.exercise.id) return@update curr
+            order = inner.executionOrder
+            val stillDone = inner.sets.withIndex().any { (i, set) -> i != ignoringSetIndex && set.isCompleted }
+            if (!inner.hasExecutionRank || inner.isCardio || stillDone) return@update curr
+            rank = inner.executionOrder
+            order = nextPlaceholderOrder(curr)
+            val exercises = curr.exercises.toMutableList()
+            exercises[exerciseIndex] = inner.copy(executionOrder = order)
+            // The last order handed out is free again, so the next exercise started takes it
+            val next = if (inner.executionOrder == curr.nextExecutionOrder - 1) inner.executionOrder else curr.nextExecutionOrder
+            curr.copy(exercises = exercises, nextExecutionOrder = next)
+        }
+        rank?.let { from -> workoutRepository.moveExerciseRows(sessionId, exState.exercise.id, from, order) }
+        return order
+    }
+
     fun toggleSetComplete(exerciseIndex: Int, setIndex: Int) {
         val currentState = _state.value
         val exState = currentState.exercises.getOrNull(exerciseIndex) ?: return
@@ -2027,6 +2056,8 @@ class WorkoutModel(
                         exercises[exerciseIndex] = inner.copy(sets = sets)
                         state.copy(exercises = exercises)
                     }
+                    // Unticking the only set done (ticked by mistake) puts the exercise back in the routine's order
+                    if (!newIsCompleted) releaseExecutionRank(currentState.sessionId!!, exerciseIndex, exState, setIndex)
                     id
                 }
                 newSetId = logId.toInt()
@@ -3351,7 +3382,11 @@ class WorkoutModel(
         val setState = exState.sets.getOrNull(setIndex) ?: return
 
         modelScope.launch {
-            val executionOrder = exState.executionOrder
+            // Deleting the only set done (ticked by mistake) puts the exercise back in the routine's order
+            val sessionId = currentState.sessionId
+            val executionOrder = if (setState.isCompleted && sessionId != null) {
+                setRowsLock.withLock { releaseExecutionRank(sessionId, exerciseIndex, exState, setIndex) }
+            } else exState.executionOrder
             if (setState.id != null) {
                 workoutRepository.deleteSet(
                     SetLogEntity(
