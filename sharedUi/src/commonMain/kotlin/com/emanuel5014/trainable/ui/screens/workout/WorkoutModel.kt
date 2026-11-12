@@ -54,6 +54,7 @@ import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.ui.screens.history.sessionName
+import com.emanuel5014.trainable.util.DistanceUnitConverter
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.util.notification.EmomNotificationAction
 import com.emanuel5014.trainable.util.notification.EmomNotificationInfo
@@ -241,6 +242,12 @@ class WorkoutModel(
         modelScope.launch {
             userPreferencesRepository.weightUnit.collect { unit ->
                 _state.update { it.copy(weightUnit = unit) }
+            }
+        }
+
+        modelScope.launch {
+            userPreferencesRepository.distanceUnit.collect { unit ->
+                _state.update { it.copy(distanceUnit = unit) }
             }
         }
 
@@ -2357,7 +2364,10 @@ class WorkoutModel(
         val words = workoutText()
         val parts = listOfNotNull(
             exState.cardioDurataTargetSeconds?.takeIf { it >= 60 }?.let { words.cardioMinutes(it / 60) },
-            exState.cardioDistanzaTargetKm?.takeIf { it > 0f }?.let { words.cardioDistance(it.toString()) }
+            exState.cardioDistanzaTargetKm?.takeIf { it > 0f }?.let { km ->
+                val unit = _state.value.distanceUnit
+                if (DistanceUnitConverter.isMiles(unit)) DistanceUnitConverter.format(km, unit) else words.cardioDistance(km.toString())
+            }
         )
         return parts.joinToString(" · ").ifEmpty { words.cardioFreeForm }
     }

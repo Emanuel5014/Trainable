@@ -1,7 +1,6 @@
 package com.emanuel5014.trainable.ui.components
 
 import com.emanuel5014.trainable.sharedui.resources.Res
-import com.emanuel5014.trainable.sharedui.resources.cardio_dist_value
 import com.emanuel5014.trainable.sharedui.resources.time_reps_value
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import androidx.compose.runtime.Composable
@@ -33,15 +32,15 @@ fun setValueText(
 /** Kilometres the way the cardio logs have always been written ("2.4"), without float noise from sums. */
 fun cardioKmText(km: Float): String = (kotlin.math.round(km * 100.0) / 100.0).toString()
 
-/** A cardio set as the app writes it: "10:00 · 2.5 km", or just the time without a distance. */
+/** A cardio set as the app writes it: "10:00 · 2.5 km" (or miles), or just the time without a distance. */
 @Composable
-fun cardioSetValueText(set: CardioLogEntity): String {
+fun cardioSetValueText(set: CardioLogEntity, distanceUnit: String = LocalDistanceUnit.current): String {
     val h = set.durataSecondi / 3600
     val m = (set.durataSecondi % 3600) / 60
     val s = set.durataSecondi % 60
     fun twoDigits(value: Int) = value.toString().padStart(2, '0')
     val time = if (h > 0) "$h:${twoDigits(m)}:${twoDigits(s)}" else "${twoDigits(m)}:${twoDigits(s)}"
-    return if (set.distanza > 0f) time + " · " + stringResource(Res.string.cardio_dist_value, cardioKmText(set.distanza)) else time
+    return if (set.distanza > 0f) time + " · " + distanceValueText(set.distanza, distanceUnit) else time
 }
 
 @Composable

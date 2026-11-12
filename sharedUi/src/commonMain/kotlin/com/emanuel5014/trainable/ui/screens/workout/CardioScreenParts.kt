@@ -86,7 +86,10 @@ import com.emanuel5014.trainable.sharedui.resources.swap_exercise
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.components.GymButton
-import com.emanuel5014.trainable.ui.components.cardioKmText
+import com.emanuel5014.trainable.ui.components.LocalDistanceUnit
+import com.emanuel5014.trainable.ui.components.distanceTargetText
+import com.emanuel5014.trainable.ui.components.distanceValueText
+import com.emanuel5014.trainable.util.DistanceUnitConverter
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -231,7 +234,9 @@ fun CardioTopBlock(
                     }
                     if (targetKm != null && targetKm > 0) {
                         Text(
-                            text = stringResource(Res.string.cardio_target_km_format, targetKm.toString()),
+                            text = if (DistanceUnitConverter.isMiles(LocalDistanceUnit.current)) {
+                                distanceTargetText(targetKm).uppercase()
+                            } else stringResource(Res.string.cardio_target_km_format, targetKm.toString()),
                             style = MaterialTheme.typography.labelMedium,
                             color = OnSurfaceVariant,
                             fontWeight = FontWeight.Bold
@@ -475,7 +480,7 @@ fun CardioBottomBlock(
                     append(cardioTimeText(goal.elapsed))
                     if (goal.totalKm > 0f) {
                         withStyle(SpanStyle(color = bulletColor)) { append("  •  ") }
-                        append(stringResource(Res.string.cardio_dist_value, cardioKmText(goal.totalKm)))
+                        append(distanceValueText(goal.totalKm))
                     }
                 }
                 Text(
@@ -534,7 +539,7 @@ fun CardioBottomBlock(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
-                                    text = stringResource(Res.string.cardio_dist_value, distanceTarget.toString()),
+                                    text = distanceTargetText(distanceTarget),
                                     style = MaterialTheme.typography.titleLarge,
                                     color = tint,
                                     fontWeight = FontWeight.Black

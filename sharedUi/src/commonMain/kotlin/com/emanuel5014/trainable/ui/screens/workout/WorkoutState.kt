@@ -44,6 +44,8 @@ data class WorkoutState(
     val isNavigating: Boolean = false,
     val exerciseSwaps: Map<Int, Int> = emptyMap(),
     val weightUnit: String = "kg",
+    /** "km" or "mi": how the rest notification writes a cardio distance target. */
+    val distanceUnit: String = "km",
     val timerNotificationsEnabled: Boolean = true,
     val isQuickWorkout: Boolean = false,
     val swipeActionsEnabled: Boolean = true,

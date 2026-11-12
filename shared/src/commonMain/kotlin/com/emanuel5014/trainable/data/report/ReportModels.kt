@@ -14,6 +14,8 @@ data class PlanReport(
     val periodLastSession: Long?,
     val exercises: List<ExerciseReport>,
     val weightUnit: String = "kg",
+    /** "km" or "mi": how the distances (stored in km) are written. */
+    val distanceUnit: String = "km",
     /** Weeks of a periodized program (1 for a plain routine) and the week the athlete is on. */
     val weeksCount: Int = 1,
     val currentWeek: Int = 1,

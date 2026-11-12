@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.data.report
 
+import com.emanuel5014.trainable.util.DistanceUnitConverter
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
 import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
@@ -41,8 +42,11 @@ class HtmlReportFormatter {
     }
 
     /** Language, formats and words shared by every part of one page. Dates follow the language of the report, not the device. */
-    private class Page(val s: ReportStrings, languageCode: String) {
+    private class Page(val s: ReportStrings, private val languageCode: String, val distanceUnit: String = DistanceUnitConverter.KM) {
         private val formats = ReportDateFormats(languageCode)
+
+        /** The same page for a routine whose distances are written in [unit] ("km" or "mi"). */
+        fun withDistanceUnit(unit: String): Page = if (unit == distanceUnit) this else Page(s, languageCode, unit)
 
         fun day(millis: Long): String = formats.day(millis)
         fun moment(millis: Long): String = formats.moment(millis)
@@ -68,7 +72,8 @@ class HtmlReportFormatter {
         append("</ol>\n</nav>\n")
     }
 
-    private fun StringBuilder.appendPlan(page: Page, report: PlanReport, index: Int) {
+    private fun StringBuilder.appendPlan(documentPage: Page, report: PlanReport, index: Int) {
+        val page = documentPage.withDistanceUnit(report.distanceUnit)
         val s = page.s
         val id = "plan-${index + 1}"
         append("<section class=\"plan\" id=\"$id\" aria-labelledby=\"$id-title\">\n")
@@ -244,7 +249,7 @@ class HtmlReportFormatter {
             )
             ReportExerciseKind.CARDIO -> listOfNotNull(
                 Metric(s["total_time"], formatSeconds(summary.totalSeconds)),
-                summary.totalKm.takeIf { it > 0f }?.let { Metric(s["total_distance"], "${formatNumber(it)} km") },
+                summary.totalKm.takeIf { it > 0f }?.let { Metric(s["total_distance"], distance(page, it)) },
                 Metric(s["longest_set"], formatSeconds(summary.bestSeconds)),
                 Metric(s["total_sets"], summary.totalSets.toString())
             )
@@ -301,7 +306,7 @@ class HtmlReportFormatter {
             ReportExerciseKind.CARDIO -> {
                 val km = working.sumOf { (it.distanceKm ?: 0f).toDouble() }.toFloat()
                 val time = formatSeconds(working.sumOf { it.seconds ?: 0 })
-                s["total_time"] to if (km > 0f) "$time · ${formatNumber(km)} km" else time
+                s["total_time"] to if (km > 0f) "$time · ${distance(page, km)}" else time
             }
         }
     }
@@ -346,7 +351,9 @@ class HtmlReportFormatter {
             ReportExerciseKind.TIME_AND_WEIGHT -> listOfNotNull(weight, value(time)).joinToString(sep)
             ReportExerciseKind.TIME_AND_REPS -> reps + sep + value(time)
             ReportExerciseKind.CARDIO -> {
-                val km = set.distanceKm?.takeIf { it > 0f }?.let { value(formatNumber(it)) + " " + small("km") }
+                val km = set.distanceKm?.takeIf { it > 0f }?.let {
+                    value(formatNumber(DistanceUnitConverter.toDisplay(it, page.distanceUnit))) + " " + small(DistanceUnitConverter.unitLabel(page.distanceUnit))
+                }
                 listOfNotNull(value(time), km).joinToString(sep)
             }
         }
@@ -472,7 +479,7 @@ class HtmlReportFormatter {
             target.sets != null -> parts += "${target.sets} × $amount"
             else -> parts += amount
         }
-        target.distanceKm?.let { parts += "${formatNumber(it)} km" }
+        target.distanceKm?.let { parts += distance(page, it) }
         target.restSeconds?.let { parts += "${s["rest"]} ${formatSeconds(it)}" }
         return parts.joinToString(" · ").ifEmpty { "-" }
     }
@@ -625,6 +632,10 @@ class HtmlReportFormatter {
 
     /** 100 → "100", 62.5 → "62.5", the same way the prescriptions of the sets write their numbers. */
     private fun formatNumber(value: Float): String = PrescriptionFormatter.number(value)
+
+    /** "1.5 km", or the same distance in miles when the user reads miles (stored values are always km). */
+    private fun distance(page: Page, km: Float): String =
+        "${formatNumber(DistanceUnitConverter.toDisplay(km, page.distanceUnit))} ${DistanceUnitConverter.unitLabel(page.distanceUnit)}"
 
     private fun escapeHtml(text: String): String {
         return text

@@ -475,7 +475,7 @@ fun EditWorkoutContent(
             exercise = linked,
             mode = CardioEntryMode.EDIT_SET,
             initial = CardioEntry(log.durataSecondi, log.distanza, timestamp = null, note = log.note, rpe = log.rpe),
-            distanceUnit = "km",
+            distanceUnit = com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current,
             rpeScale = editableRpeScale(hasValue = log.rpe != null),
             languageCode = languageCode,
             onChangeExercise = null,

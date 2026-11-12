@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.isArchived
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
-import com.emanuel5014.trainable.platform.formatLocalDecimals
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.import_history_workouts_count
 import com.emanuel5014.trainable.sharedui.resources.routine_sets_count
@@ -172,7 +171,7 @@ internal fun HistoryRow(
                 val stats = buildList {
                     summary.durationMs?.let { add(formatSessionDuration(it)) }
                     if (summary.isCardioOnly) {
-                        if (summary.cardioKm > 0f) add(formatLocalDecimals(summary.cardioKm.toDouble(), 1) + " km")
+                        if (summary.cardioKm > 0f) add(com.emanuel5014.trainable.ui.components.distanceLocalText(summary.cardioKm))
                     } else {
                         if (summary.sets > 0) add(pluralStringResource(Res.plurals.routine_sets_count, summary.sets, summary.sets))
                         if (summary.volumeKg > 0f) add(formatVolume(summary.volumeKg, weightUnit))

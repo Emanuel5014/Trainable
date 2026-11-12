@@ -569,8 +569,12 @@ fun WorkoutShareCardContent(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                val distanceUnit = com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current
                                 Text(
-                                    text = "${cardio.distanza} KM",
+                                    text = if (com.emanuel5014.trainable.util.DistanceUnitConverter.isMiles(distanceUnit)) {
+                                        com.emanuel5014.trainable.util.DistanceUnitConverter.displayNumber(cardio.distanza, distanceUnit) +
+                                            " " + com.emanuel5014.trainable.ui.components.distanceUnitLabel(distanceUnit).uppercase()
+                                    } else "${cardio.distanza} KM",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = textPrimary

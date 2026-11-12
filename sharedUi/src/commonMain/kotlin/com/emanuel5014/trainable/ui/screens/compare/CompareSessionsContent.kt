@@ -120,6 +120,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.ui.util.DateFormatter
+import com.emanuel5014.trainable.util.DistanceUnitConverter
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -370,8 +371,8 @@ private fun MetricBars(metric: ComparedMetric, weightUnit: String) {
             )
             DeltaChip(metric)
         }
-        BarLine(fraction = (metric.a ?: 0f) / top, color = ColorA, value = formatMetric(metric.kind, metric.a, weightUnit))
-        BarLine(fraction = (metric.b ?: 0f) / top, color = ColorB, value = formatMetric(metric.kind, metric.b, weightUnit))
+        BarLine(fraction = (metric.a ?: 0f) / top, color = ColorA, value = formatMetric(metric.kind, metric.a, weightUnit, com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current))
+        BarLine(fraction = (metric.b ?: 0f) / top, color = ColorB, value = formatMetric(metric.kind, metric.b, weightUnit, com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current))
     }
 }
 
@@ -466,7 +467,7 @@ private fun CompactMetricRow(metric: ComparedMetric, weightUnit: String) {
             modifier = Modifier.weight(1.1f)
         )
         Text(
-            text = formatMetric(metric.kind, metric.a, weightUnit),
+            text = formatMetric(metric.kind, metric.a, weightUnit, com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = ColorA,
@@ -474,7 +475,7 @@ private fun CompactMetricRow(metric: ComparedMetric, weightUnit: String) {
             modifier = Modifier.weight(1f)
         )
         Text(
-            text = formatMetric(metric.kind, metric.b, weightUnit),
+            text = formatMetric(metric.kind, metric.b, weightUnit, com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = ColorB,
@@ -532,9 +533,9 @@ private fun ExerciseCard(comparison: ExerciseComparison, weightUnit: String, lan
                         color = OnSurfaceVariant
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(formatMetric(headline.kind, headline.a, weightUnit), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = ColorA)
+                        Text(formatMetric(headline.kind, headline.a, weightUnit, com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = ColorA)
                         Text(stringResource(Res.string.compare_vs), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontWeight = FontWeight.Bold)
-                        Text(formatMetric(headline.kind, headline.b, weightUnit), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = ColorB)
+                        Text(formatMetric(headline.kind, headline.b, weightUnit, com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = ColorB)
                     }
                 }
             }
@@ -699,7 +700,7 @@ private fun metricLabel(kind: MetricKind): String = stringResource(
     }
 )
 
-private fun formatMetric(kind: MetricKind, value: Float?, weightUnit: String): String {
+private fun formatMetric(kind: MetricKind, value: Float?, weightUnit: String, distanceUnit: String = DistanceUnitConverter.KM): String {
     if (value == null) return "—"
     return when (kind) {
         MetricKind.VOLUME ->
@@ -709,10 +710,12 @@ private fun formatMetric(kind: MetricKind, value: Float?, weightUnit: String): S
         MetricKind.DURATION, MetricKind.CARDIO_DURATION, MetricKind.TIME_UNDER_TENSION -> formatDuration(value.roundToInt())
         MetricKind.WORKING_SETS, MetricKind.TOTAL_REPS, MetricKind.EXERCISES -> value.roundToInt().toString()
         MetricKind.AVG_RPE -> formatOneDecimal(value)
-        MetricKind.CARDIO_DISTANCE -> WeightUnitConverter.format(value) + " km"
+        MetricKind.CARDIO_DISTANCE ->
+            WeightUnitConverter.format(DistanceUnitConverter.toDisplay(value, distanceUnit)) + " " + DistanceUnitConverter.unitLabel(distanceUnit)
         MetricKind.CARDIO_PACE -> {
-            val total = value.roundToInt()
-            "${total / 60}:${(total % 60).pad2()} /km"
+            // Seconds per km; a mile takes 1.609344 times as long
+            val total = (if (DistanceUnitConverter.isMiles(distanceUnit)) value * DistanceUnitConverter.KM_PER_MILE else value).roundToInt()
+            "${total / 60}:${(total % 60).pad2()} /${DistanceUnitConverter.unitLabel(distanceUnit)}"
         }
     }
 }

@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.cancel
 import com.emanuel5014.trainable.sharedui.resources.cardio_add_set
-import com.emanuel5014.trainable.sharedui.resources.cardio_dist_value
 import com.emanuel5014.trainable.sharedui.resources.cardio_distance_label
 import com.emanuel5014.trainable.sharedui.resources.cardio_remove_set
 import com.emanuel5014.trainable.sharedui.resources.minutes
@@ -115,7 +114,7 @@ fun CardioSetsStrip(
                         text = if (set.isCompleted) {
                             buildString {
                                 append("${set.setNumber} · ${cardioTimeText(set.elapsedSeconds)}")
-                                if (set.distanceKm > 0f) append(" · ").append(stringResource(Res.string.cardio_dist_value, com.emanuel5014.trainable.ui.components.cardioKmText(set.distanceKm)))
+                                if (set.distanceKm > 0f) append(" · ").append(com.emanuel5014.trainable.ui.components.distanceValueText(set.distanceKm))
                             }
                         } else stringResource(Res.string.set_number, set.setNumber),
                         style = MaterialTheme.typography.labelLarge,
@@ -178,7 +177,9 @@ fun CardioSetDialog(
 ) {
     var minutes by remember { mutableStateOf((set.elapsedSeconds / 60).toString()) }
     var seconds by remember { mutableStateOf((set.elapsedSeconds % 60).toString()) }
-    var distance by remember { mutableStateOf(if (set.distanceKm > 0f) set.distanceKm.toString() else "") }
+    // Typed in the user's unit; left untouched the stored km are saved exactly
+    val distanceUnit = com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current
+    var distance by remember { mutableStateOf(com.emanuel5014.trainable.domain.exercise.CardioEntryValues.fieldText(set.distanceKm, distanceUnit)) }
     var note by remember { mutableStateOf(set.note.orEmpty()) }
     var rpe by remember { mutableStateOf(set.rpe) }
     val totalSeconds = (minutes.toIntOrNull() ?: 0) * 60 + (seconds.toIntOrNull() ?: 0)
@@ -214,7 +215,7 @@ fun CardioSetDialog(
                     OutlinedTextField(
                         value = distance,
                         onValueChange = { distance = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
-                        label = { Text(stringResource(Res.string.cardio_distance_label) + " " + stringResource(Res.string.optional_suffix)) },
+                        label = { Text(stringResource(Res.string.cardio_distance_label, com.emanuel5014.trainable.ui.components.distanceUnitLabel(distanceUnit)) + " " + stringResource(Res.string.optional_suffix)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         shape = RoundedCornerShape(16.dp),
@@ -243,7 +244,7 @@ fun CardioSetDialog(
                 TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercase()) }
                 TextButton(
                     enabled = valid,
-                    onClick = { onSave(totalSeconds, distance.replace(',', '.').toFloatOrNull() ?: 0f, note, rpe) }
+                    onClick = { onSave(totalSeconds, com.emanuel5014.trainable.domain.exercise.CardioEntryValues.fieldKm(distance, set.distanceKm, distanceUnit), note, rpe) }
                 ) {
                     Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold, color = if (valid) Primary else OnSurface.copy(alpha = 0.4f))
                 }

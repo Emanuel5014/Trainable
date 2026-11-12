@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.domain.exercise.CardioEntryValues
+import com.emanuel5014.trainable.ui.components.distanceUnitLabel
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.ui.glass.surfaceGlass
 import com.emanuel5014.trainable.ui.theme.Shapes
@@ -186,11 +188,13 @@ fun WorkoutExecutionContent(
     val exercisePlatform = LocalExercisePlatformUi.current
     val pickMedia = exercisePlatform.rememberMediaPicker { exerciseId, uri -> viewModel.setExerciseMedia(exerciseId, uri) }
     exercisePlatform.ImportMessages(viewModel.mediaMessages)
-    // Each cardio set has its own distance
-    var cardioDistanceInput by remember(state.currentExercise?.exercise?.id, state.currentExercise?.activeCardioSetIndex) {
-        mutableStateOf(
-            if ((state.currentExercise?.cardioDistanceKm ?: 0f) > 0f) state.currentExercise?.cardioDistanceKm.toString() else ""
-        )
+    // Each cardio set has its own distance, typed in the user's unit; left untouched it is saved exactly as stored
+    val distanceUnit = com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current
+    val cardioDistanceStartKm = remember(state.currentExercise?.exercise?.id, state.currentExercise?.activeCardioSetIndex, distanceUnit) {
+        state.currentExercise?.cardioDistanceKm?.takeIf { it > 0f } ?: 0f
+    }
+    var cardioDistanceInput by remember(state.currentExercise?.exercise?.id, state.currentExercise?.activeCardioSetIndex, distanceUnit) {
+        mutableStateOf(CardioEntryValues.fieldText(cardioDistanceStartKm, distanceUnit))
     }
 
     WorkoutEarlyDialogs(
@@ -441,6 +445,7 @@ fun WorkoutExecutionContent(
                                     },
                                     distanceInput = cardioDistanceInput,
                                     onDistanceChange = { cardioDistanceInput = it },
+                                    distanceKm = { CardioEntryValues.fieldKm(it, cardioDistanceStartKm, distanceUnit) },
                                     bottomPadding = cardioBottomPadding
                                 )
                             } else if (usesEmomClock(targetExState)) {
@@ -613,6 +618,8 @@ fun CardioExerciseContent(
     onAddExercise: (() -> Unit)? = null,
     distanceInput: String,
     onDistanceChange: (String) -> Unit,
+    /** The km of what the distance field holds (typed in the user's unit). */
+    distanceKm: (String) -> Float = { CardioEntryValues.parseDistance(it) },
     bottomPadding: androidx.compose.ui.unit.Dp = 120.dp
 ) {
     var showStopDialog by remember { mutableStateOf(false) }
@@ -680,7 +687,7 @@ fun CardioExerciseContent(
                     OutlinedTextField(
                         value = distanceInput,
                         onValueChange = onDistanceChange,
-                        label = { Text(stringResource(Res.string.cardio_distance_label) + " " + stringResource(Res.string.optional_suffix)) },
+                        label = { Text(stringResource(Res.string.cardio_distance_label, distanceUnitLabel()) + " " + stringResource(Res.string.optional_suffix)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.fillMaxWidth(),
@@ -692,7 +699,7 @@ fun CardioExerciseContent(
                 TextButton(
                     enabled = secondsToLog > 0,
                     onClick = {
-                        viewModel.completeCardio(distanceInput.replace(',', '.').toFloatOrNull() ?: 0f, secondsToLog)
+                        viewModel.completeCardio(distanceKm(distanceInput), secondsToLog)
                         showCompleteDialog = false
                     }
                 ) {
@@ -719,7 +726,7 @@ fun CardioExerciseContent(
                 OutlinedTextField(
                     value = distanceInput,
                     onValueChange = onDistanceChange,
-                    label = { Text(stringResource(Res.string.cardio_distance_label) + " " + stringResource(Res.string.optional_suffix)) },
+                    label = { Text(stringResource(Res.string.cardio_distance_label, distanceUnitLabel()) + " " + stringResource(Res.string.optional_suffix)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
@@ -728,7 +735,7 @@ fun CardioExerciseContent(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val dist = distanceInput.toFloatOrNull() ?: 0f
+                    val dist = distanceKm(distanceInput)
                     viewModel.stopCardioTimer(dist)
                     showStopDialog = false
                 }) {

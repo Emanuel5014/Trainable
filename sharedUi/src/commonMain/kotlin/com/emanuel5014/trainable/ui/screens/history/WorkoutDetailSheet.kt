@@ -60,7 +60,6 @@ import com.emanuel5014.trainable.data.local.entity.forRun
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.isArchived
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
-import com.emanuel5014.trainable.platform.formatLocalDecimals
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.share
 import com.emanuel5014.trainable.sharedui.resources.edit
@@ -219,6 +218,7 @@ internal fun WorkoutDetailSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val session = sessionDetails.session
     val summary = remember(details ?: sessionDetails) { historyRowSummary(details ?: sessionDetails) }
+    val cardioDistanceText = com.emanuel5014.trainable.ui.components.distanceLocalText(summary.cardioKm)
     val workoutItems = remember(details) { details?.let { historyWorkoutItems(it) } }
 
     ModalBottomSheet(
@@ -263,7 +263,7 @@ internal fun WorkoutDetailSheet(
                 summary.durationMs?.let { add(StatTile(formatSessionDuration(it), Res.string.share_duration)) }
                 if (summary.isCardioOnly) {
                     if (summary.cardioKm > 0f) {
-                        add(StatTile(formatLocalDecimals(summary.cardioKm.toDouble(), 1) + " km", Res.string.distance))
+                        add(StatTile(cardioDistanceText, Res.string.distance))
                     }
                 } else {
                     if (summary.sets > 0) add(StatTile(summary.sets.toString(), Res.string.sets))
@@ -771,7 +771,7 @@ private fun HistoryCardioBlock(cardioLogs: CardioExerciseLogs, exercises: Map<In
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = formatLocalDecimals(cardio.distanza.toDouble(), 1) + " km",
+                text = com.emanuel5014.trainable.ui.components.distanceLocalText(cardio.distanza),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = OnSurface

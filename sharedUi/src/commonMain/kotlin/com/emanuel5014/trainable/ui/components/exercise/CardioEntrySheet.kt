@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.util.DistanceUnitConverter
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -81,7 +82,6 @@ import com.emanuel5014.trainable.sharedui.resources.cancel
 import com.emanuel5014.trainable.sharedui.resources.cardio_entry_label
 import com.emanuel5014.trainable.sharedui.resources.cardio_missing_values
 import com.emanuel5014.trainable.sharedui.resources.cardio_remove_set
-import com.emanuel5014.trainable.sharedui.resources.cardio_speed_value
 import com.emanuel5014.trainable.sharedui.resources.change
 import com.emanuel5014.trainable.sharedui.resources.compare_pace
 import com.emanuel5014.trainable.sharedui.resources.confirm
@@ -120,8 +120,8 @@ data class CardioEntry(val seconds: Int, val distanceKm: Float, val timestamp: L
 /**
  * The bottom sheet that logs or edits one cardio set of [exercise]: duration and distance tiles, pace and speed, a note,
  * the date and time from History, the RPE when a set is edited. Built like the History workout sheet (big title, rounded
- * stat tiles) and scrolls, so it fits small screens and large fonts. The distance is typed and shown in km whatever
- * [distanceUnit] says for now.
+ * stat tiles) and scrolls, so it fits small screens and large fonts. The distance is typed and shown in [distanceUnit]
+ * ("km" or "mi") and given back in km; a distance left as it was opened comes back exactly as stored.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,7 +146,9 @@ fun CardioEntrySheet(
     val separator = remember { formatLocalDecimals(1.5, 1).getOrElse(1) { '.' } }
 
     var digits by remember { mutableStateOf(DurationDigits.digitsOf(initial?.seconds ?: 0)) }
-    var distanceText by remember { mutableStateOf(CardioEntryValues.distanceText(initial?.distanceKm ?: 0f, separator)) }
+    var distanceText by remember {
+        mutableStateOf(CardioEntryValues.distanceText(DistanceUnitConverter.toDisplay(initial?.distanceKm ?: 0f, distanceUnit), separator))
+    }
     var note by remember { mutableStateOf(initial?.note.orEmpty()) }
     var rpe by remember { mutableStateOf(initial?.rpe) }
     // The day the date picker gave (UTC midnight) and the time; null = now
@@ -157,8 +159,9 @@ fun CardioEntrySheet(
     var showDatePicker by remember { mutableStateOf(false) }
     var pendingDate by remember { mutableStateOf<Long?>(null) }
 
-    // A value left as it was opened is saved exactly as stored (the tiles round to 3 decimals and cap at 99:59:59)
-    val read = CardioEntryValues.read(digits, distanceText, initial?.seconds, initial?.distanceKm, separator)
+    // A value left as it was opened is saved exactly as stored (the tiles round to 3 decimals and cap at 99:59:59);
+    // the distance is compared in the unit shown, so km never go through miles and back when untouched
+    val read = CardioEntryValues.read(digits, distanceText, initial?.seconds, initial?.distanceKm, separator, distanceUnit)
     val seconds = read.seconds
     val km = read.km
     val missing = CardioEntryValues.isMissing(read, editing = mode == CardioEntryMode.EDIT_SET)
@@ -205,13 +208,14 @@ fun CardioEntrySheet(
                         showMissing = false
                     },
                     distanceText = distanceText,
+                    unitLabel = distanceUnitLabel(distanceUnit),
                     onDistanceChange = {
                         distanceText = it
                         showMissing = false
                     }
                 )
 
-                val pace = CardioEntryValues.paceSecondsPerKm(seconds, km)
+                val pace = DistanceUnitConverter.paceSeconds(seconds, km, distanceUnit)
                 val speed = CardioHistory.speedKmh(seconds, km)
                 if (showMissing && missing) {
                     Text(
@@ -221,8 +225,8 @@ fun CardioEntrySheet(
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
                 } else if (pace != null && speed != null) {
-                    val paceText = DurationDigits.format(pace) + " /km"
-                    val speedText = stringResource(Res.string.cardio_speed_value, formatLocalDecimals(speed.toDouble(), 1))
+                    val paceText = DurationDigits.format(pace) + " /" + distanceUnitLabel(distanceUnit)
+                    val speedText = speedValueText(speed, distanceUnit)
                     val description = stringResource(Res.string.compare_pace) + " " + paceText + ", " +
                         stringResource(Res.string.speed) + " " + speedText
                     Text(
@@ -413,6 +417,7 @@ private fun ValueTiles(
     digits: String,
     onDigitsChange: (String) -> Unit,
     distanceText: String,
+    unitLabel: String,
     onDistanceChange: (String) -> Unit
 ) {
     val distanceFocus = remember { FocusRequester() }
@@ -421,7 +426,7 @@ private fun ValueTiles(
         DurationTile(digits, onDigitsChange, onNext = { distanceFocus.requestFocus() }, modifier = m)
     }
     val distance: @Composable (Modifier) -> Unit = { m ->
-        DistanceTile(distanceText, onDistanceChange, distanceFocus, modifier = m)
+        DistanceTile(distanceText, unitLabel, onDistanceChange, distanceFocus, modifier = m)
     }
     if (stacked) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -515,12 +520,12 @@ private fun DurationTile(digits: String, onDigitsChange: (String) -> Unit, onNex
 }
 
 @Composable
-private fun DistanceTile(text: String, onTextChange: (String) -> Unit, focus: FocusRequester, modifier: Modifier) {
+private fun DistanceTile(text: String, unitLabel: String, onTextChange: (String) -> Unit, focus: FocusRequester, modifier: Modifier) {
     var focused by remember { mutableStateOf(false) }
     var selection by remember { mutableStateOf(TextRange(text.length)) }
     val style = tileValueStyle()
     val unitColor = OnSurfaceVariant
-    val unit = remember(unitColor) { SuffixTransformation(" km", SpanStyle(color = unitColor, fontWeight = FontWeight.Medium)) }
+    val unit = remember(unitColor, unitLabel) { SuffixTransformation(" $unitLabel", SpanStyle(color = unitColor, fontWeight = FontWeight.Medium)) }
     EntryTile(label = stringResource(Res.string.distance), focused = focused, focusRequester = focus, modifier = modifier) {
         BasicTextField(
             value = TextFieldValue(text, selection.coerceIn(text.length)),
@@ -540,7 +545,7 @@ private fun DistanceTile(text: String, onTextChange: (String) -> Unit, focus: Fo
                 .onFocusChanged { focused = it.isFocused },
             decorationBox = { inner ->
                 Box {
-                    if (text.isEmpty()) Text("0 km", style = style, color = OnSurfaceVariant.copy(alpha = 0.5f), maxLines = 1)
+                    if (text.isEmpty()) Text("0 $unitLabel", style = style, color = OnSurfaceVariant.copy(alpha = 0.5f), maxLines = 1)
                     inner()
                 }
             }
@@ -640,7 +645,7 @@ fun CardioAddFlow(
     onSave: (ExerciseEntity, CardioEntry) -> Unit,
     onDismiss: () -> Unit,
     initialExercise: ExerciseEntity? = null,
-    distanceUnit: String = "km"
+    distanceUnit: String = LocalDistanceUnit.current
 ) {
     var exercise by remember { mutableStateOf(initialExercise) }
     var showPicker by remember { mutableStateOf(initialExercise == null) }

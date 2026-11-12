@@ -5,7 +5,6 @@ import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.back
 import com.emanuel5014.trainable.sharedui.resources.cardio_category_locked_has_cardio
 import com.emanuel5014.trainable.sharedui.resources.cardio_category_locked_has_sets
-import com.emanuel5014.trainable.sharedui.resources.cardio_dist_value
 import com.emanuel5014.trainable.sharedui.resources.cardio_speed_value
 import com.emanuel5014.trainable.sharedui.resources.compare_reps_value
 import com.emanuel5014.trainable.sharedui.resources.compare_warmup_set
@@ -121,7 +120,10 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.domain.exercise.CardioPerformance
 import com.emanuel5014.trainable.domain.exercise.CardioRecords
 import com.emanuel5014.trainable.ui.components.LocalRpeSettings
-import com.emanuel5014.trainable.ui.components.cardioKmText
+import com.emanuel5014.trainable.ui.components.LocalDistanceUnit
+import com.emanuel5014.trainable.ui.components.distanceValueText
+import com.emanuel5014.trainable.util.DistanceUnitConverter
+import com.emanuel5014.trainable.sharedui.resources.mph
 import com.emanuel5014.trainable.ui.components.cardioSetValueText
 import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
 import kotlin.math.roundToInt
@@ -701,7 +703,7 @@ private fun PerformanceSetRow(set: SetLogEntity, weightUnit: String) {
 /** One workout of a cardio exercise: when and under what name, its average speed, and every set as the history writes it. */
 @Composable
 private fun CardioPerformanceCard(performance: CardioPerformance) {
-    val summary = performance.averageSpeedKmh?.let { stringResource(Res.string.cardio_speed_value, speedText(it)) }
+    val summary = performance.averageSpeedKmh?.let { cardioSpeedText(it) }
     GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(modifier = Modifier.weight(1f)) {
@@ -779,10 +781,10 @@ private fun CardioRecordsCard(records: CardioRecords) {
             RecordRow(stringResource(Res.string.exercise_record_cardio_longest), durationText(it.value.roundToInt()), it.timestamp)
         }
         records.farthestSession?.let {
-            RecordRow(stringResource(Res.string.exercise_record_cardio_farthest), stringResource(Res.string.cardio_dist_value, cardioKmText(it.value)), it.timestamp)
+            RecordRow(stringResource(Res.string.exercise_record_cardio_farthest), distanceValueText(it.value), it.timestamp)
         }
         records.bestSpeed?.let {
-            RecordRow(stringResource(Res.string.exercise_record_cardio_best_speed), stringResource(Res.string.cardio_speed_value, speedText(it.value)), it.timestamp)
+            RecordRow(stringResource(Res.string.exercise_record_cardio_best_speed), cardioSpeedText(it.value), it.timestamp)
         }
         val sessions = pluralStringResource(Res.plurals.exercise_detail_sessions, records.sessionCount, records.sessionCount)
         val sets = pluralStringResource(Res.plurals.exercise_detail_sets, records.setCount, records.setCount)
@@ -794,7 +796,7 @@ private fun CardioRecordsCard(records: CardioRecords) {
             modifier = Modifier.padding(top = 12.dp)
         )
         val total = durationText(records.totalSeconds.toInt()) +
-            if (records.totalKm > 0f) " · " + stringResource(Res.string.cardio_dist_value, cardioKmText(records.totalKm)) else ""
+            if (records.totalKm > 0f) " · " + distanceValueText(records.totalKm) else ""
         Text(
             text = stringResource(Res.string.exercise_detail_cardio_total, total),
             style = MaterialTheme.typography.bodySmall,
@@ -878,6 +880,15 @@ private const val MAX_LABELLED_POINTS = 8
 
 /** Km/h with one decimal. */
 internal expect fun speedText(kmh: Float): String
+
+/** [kmh] in the user's distance unit: "12.3 km/h" or "7.6 mph". */
+@Composable
+private fun cardioSpeedText(kmh: Float): String {
+    val unit = LocalDistanceUnit.current
+    val number = speedText(DistanceUnitConverter.toDisplay(kmh, unit))
+    return if (DistanceUnitConverter.isMiles(unit)) number + " " + stringResource(Res.string.mph)
+    else stringResource(Res.string.cardio_speed_value, number)
+}
 internal expect fun durationText(totalSeconds: Int): String
 
 private fun weightText(kg: Float, weightUnit: String): String =

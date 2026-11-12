@@ -3,7 +3,6 @@ package com.emanuel5014.trainable.ui.components
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.cardio_cat_label
 import com.emanuel5014.trainable.sharedui.resources.cardio_cat_with_name
-import com.emanuel5014.trainable.sharedui.resources.cardio_dist_value
 import com.emanuel5014.trainable.sharedui.resources.cardio_free_form
 import com.emanuel5014.trainable.sharedui.resources.cardio_min_format
 import com.emanuel5014.trainable.sharedui.resources.not_in_week
@@ -207,7 +206,7 @@ fun ExerciseEntryCard(
                             if (durMin != null && durMin > 0) append(stringResource(Res.string.cardio_min_format, durMin))
                             if (distKm != null && distKm > 0) {
                                 if (isNotEmpty()) append(" • ")
-                                append(stringResource(Res.string.cardio_dist_value, distKm.toString()))
+                                append(distanceTargetText(distKm))
                             }
                             if (isEmpty()) append(stringResource(Res.string.cardio_free_form))
                         }

@@ -252,6 +252,8 @@ fun rememberAndroidHistoryShareUi(): HistoryShareUi {
 
         @Composable
         override fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean, exercises: Map<Int, ExerciseEntity>) {
+        // The card is drawn in a view of its own: it gets the distance unit handed over explicitly
+        val distanceUnit = com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current
         if (sessionToShare != null) {
             Box(
                 modifier = Modifier
@@ -281,15 +283,19 @@ fun rememberAndroidHistoryShareUi(): HistoryShareUi {
                             factory = { ctx ->
                                 ComposeView(ctx).apply {
                                     setContent {
-                                        WorkoutShareCard(
-                                            sessionDetails = sessionToShare!!.first,
-                                            planName = sessionToShare!!.second,
-                                            languageCode = languageCode,
-                                            weightUnit = weightUnit,
-                                            planExercises = sessionToShare!!.third,
-                                            showPrescription = showPrescription,
-                                            exercisesById = exercises
-                                        )
+                                        androidx.compose.runtime.CompositionLocalProvider(
+                                            com.emanuel5014.trainable.ui.components.LocalDistanceUnit provides distanceUnit
+                                        ) {
+                                            WorkoutShareCard(
+                                                sessionDetails = sessionToShare!!.first,
+                                                planName = sessionToShare!!.second,
+                                                languageCode = languageCode,
+                                                weightUnit = weightUnit,
+                                                planExercises = sessionToShare!!.third,
+                                                showPrescription = showPrescription,
+                                                exercisesById = exercises
+                                            )
+                                        }
                                     }
                                 }
                             },

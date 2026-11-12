@@ -60,6 +60,7 @@ class ReportGenerator(
 
         val exercisesById = workoutRepository.getExercisesById().first()
         val report = buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit, advanced, exercisesById)
+            .copy(distanceUnit = userPreferencesRepository.distanceUnit.first())
         // The workout journal is part of the report only while it is on
         return if (userPreferencesRepository.journalEnabled.first()) report.copy(journal = journalEntries(sessions)) else report
     }
