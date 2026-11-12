@@ -23,6 +23,7 @@ import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
+import com.emanuel5014.trainable.domain.exercise.CardioExerciseMatcher
 import kotlinx.coroutines.flow.Flow
 
 /** One run of an exercise in a session going from the order [from] to the order [to]. */
@@ -315,6 +316,13 @@ interface WorkoutDao {
 
     @Query("UPDATE cardio_logs SET numero_serie = :number WHERE id = :id")
     suspend fun updateCardioSetNumber(id: Int, number: Int)
+
+    /** The cardio logs without an exercise yet, with the name written on them, for the startup repair (CardioLinking). */
+    @Query("SELECT id AS logId, categoria AS name FROM cardio_logs WHERE exercise_id IS NULL ORDER BY id")
+    suspend fun getUnlinkedCardioRows(): List<CardioExerciseMatcher.Row>
+
+    @Query("UPDATE cardio_logs SET exercise_id = :exerciseId WHERE id = :logId")
+    suspend fun linkCardioRow(logId: Int, exerciseId: Int)
 
     @Query("SELECT * FROM cardio_logs WHERE session_id = :sessionId")
     fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>>

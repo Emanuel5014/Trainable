@@ -21,6 +21,10 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercises ORDER BY nome ASC")
     fun getAllExercisesIncludingDeleted(): Flow<List<ExerciseEntity>>
 
+    /** The cardio presets left out for good in this database because their id was taken (see SkippedPresetEntity). */
+    @Query("SELECT id FROM skipped_presets")
+    suspend fun getSkippedPresetIds(): List<Int>
+
     @Query("SELECT * FROM exercises WHERE categoria = :category AND is_deleted = 0 ORDER BY nome ASC")
     fun getExercisesByCategory(category: String): Flow<List<ExerciseEntity>>
 
