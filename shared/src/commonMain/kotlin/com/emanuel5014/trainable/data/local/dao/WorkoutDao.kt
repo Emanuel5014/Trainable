@@ -466,14 +466,15 @@ interface WorkoutDao {
     @Query("UPDATE set_logs SET ordine_esercizio = :to WHERE session_id = :sessionId AND exercise_id = :exerciseId AND ordine_esercizio = :from")
     suspend fun moveExerciseRows(sessionId: Int, exerciseId: Int, from: Int, to: Int)
 
-    @Query("UPDATE cardio_logs SET ordine_esercizio = :to WHERE session_id = :sessionId AND LOWER(categoria) = LOWER(:categoria) AND ordine_esercizio = :from")
-    suspend fun moveCardioRows(sessionId: Int, categoria: String, from: Int, to: Int)
+    /** Moves the cardio rows of one exercise of the session (identified by exercise and order) to a new order. */
+    @Query("UPDATE cardio_logs SET ordine_esercizio = :to WHERE session_id = :sessionId AND exercise_id = :exerciseId AND ordine_esercizio = :from")
+    suspend fun moveCardioRows(sessionId: Int, exerciseId: Int, from: Int, to: Int)
 
     @Query("DELETE FROM set_logs WHERE session_id = :sessionId AND exercise_id = :exerciseId AND ordine_esercizio = :order")
     suspend fun deleteExerciseRows(sessionId: Int, exerciseId: Int, order: Int)
 
-    @Query("DELETE FROM cardio_logs WHERE session_id = :sessionId AND LOWER(categoria) = LOWER(:categoria) AND ordine_esercizio = :order")
-    suspend fun deleteCardioRows(sessionId: Int, categoria: String, order: Int)
+    @Query("DELETE FROM cardio_logs WHERE session_id = :sessionId AND exercise_id = :exerciseId AND ordine_esercizio = :order")
+    suspend fun deleteCardioRows(sessionId: Int, exerciseId: Int, order: Int)
 
     @Query("DELETE FROM set_logs WHERE session_id = :sessionId AND is_completed = 0")
     suspend fun deleteUncompletedSetsForSession(sessionId: Int)

@@ -19,6 +19,9 @@ import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.forRun
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
+import com.emanuel5014.trainable.data.local.entity.belongsTo
+import com.emanuel5014.trainable.data.local.entity.exerciseIn
+import com.emanuel5014.trainable.data.local.entity.exerciseKey
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.JournalRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
@@ -502,7 +505,7 @@ class WorkoutModel(
         // Rows saved before exercises had an order all carry 0 for several exercises: those are matched by exercise id.
         // A single exercise at order 0 (the first one started) is a perfectly good order.
         val instanceCount = sessionWithSets.sets.map { it.ordineEsercizio to it.exerciseId }.distinct().size +
-            cardioLogs.map { it.ordineEsercizio to it.categoria.trim().lowercase() }.distinct().size
+            cardioLogs.map { it.ordineEsercizio to it.exerciseKey() }.distinct().size
         val useOrdine = sessionWithSets.sets.any { it.ordineEsercizio > 0 } || cardioLogs.any { it.ordineEsercizio > 0 } || instanceCount <= 1
 
         suspend fun createExerciseState(exercise: ExerciseEntity, planDetail: PlanExerciseEntity?, exerciseIndex: Int, useOrdine: Boolean, executionOrder: Int): WorkoutExerciseState {
@@ -511,8 +514,8 @@ class WorkoutModel(
             val isCardio = exercise.categoria.equals("Cardio", ignoreCase = true) || (planDetail?.exerciseType == "cardio" && !isSwapped)
             val exerciseCardioLogs = if (isCardio) {
                 cardioLogs.filter {
-                    if (useOrdine) it.ordineEsercizio == exerciseIndex && it.categoria.equals(exercise.nome, ignoreCase = true)
-                    else it.categoria.equals(exercise.nome, ignoreCase = true)
+                    if (useOrdine) it.ordineEsercizio == exerciseIndex && it.belongsTo(exercise)
+                    else it.belongsTo(exercise)
                 }
             } else emptyList()
             val cardioLog = exerciseCardioLogs.firstOrNull()
@@ -694,7 +697,6 @@ class WorkoutModel(
                 supersetId = planDetail?.supersetId ?: loggedSets.firstOrNull()?.supersetId,
                 customRestSeconds = restoredRestSeconds,
                 isCardio = isCardio,
-                cardioCategoria = exercise.nome,
                 cardioDurataTargetSeconds = cardioLog?.durataTargetSecondi ?: planDetail?.durataTargetSecondi,
                 cardioDistanzaTargetKm = planDetail?.distanzaTargetKm,
                 // A swapped-in or added cardio exercise has a log for every set it was given
@@ -741,12 +743,12 @@ class WorkoutModel(
             }
 
             val cardioGroups = cardioLogs
-                .groupBy { it.ordineEsercizio to it.categoria.trim().lowercase() }
+                .groupBy { it.ordineEsercizio to it.exerciseKey() }
                 .entries
                 .sortedWith(compareBy({ it.key.first }, { entry -> entry.value.minOf { it.id } }))
             for (group in cardioGroups) {
                 val order = group.key.first
-                val exercise = allAvailableExercises.find { it.nome.equals(group.value.first().categoria, ignoreCase = true) } ?: continue
+                val exercise = group.value.first().exerciseIn(allAvailableExercises) ?: continue
                 var planDetail = planExercises.find { it.exercise.id == exercise.id && it.planExercise.id !in consumedPlanDetailIds }
                 // If the cardio exercise was swapped in from a plan exercise, use the original plan detail
                 if (planDetail == null) {
@@ -792,7 +794,7 @@ class WorkoutModel(
             // Rows without a usable order (sessions saved before it existed): exercises are matched by id
             fun orderOnRows(exercise: ExerciseEntity): Int? =
                 sessionWithSets.sets.firstOrNull { it.exerciseId == exercise.id }?.ordineEsercizio
-                    ?: cardioLogs.firstOrNull { it.categoria.equals(exercise.nome, ignoreCase = true) }?.ordineEsercizio
+                    ?: cardioLogs.firstOrNull { it.belongsTo(exercise) }?.ordineEsercizio
 
             val planExerciseStates = planExercises.mapIndexed { index, detail ->
                 val swappedId = swapMap[detail.planExercise.id]
@@ -806,9 +808,7 @@ class WorkoutModel(
 
             val consumedExerciseIds = planExerciseStates.map { it.exercise.id }.toSet()
             val loggedExerciseIds = sessionWithSets.sets.map { it.exerciseId }.distinct()
-            val cardioExerciseIds = cardioLogs.mapNotNull { log ->
-                allAvailableExercises.find { it.nome.equals(log.categoria, ignoreCase = true) }?.id
-            }.distinct()
+            val cardioExerciseIds = cardioLogs.mapNotNull { log -> log.exerciseIn(allAvailableExercises)?.id }.distinct()
             val extraExerciseIds = (loggedExerciseIds + cardioExerciseIds).filter { it !in consumedExerciseIds }
 
             val extraExerciseStates = extraExerciseIds.mapIndexed { idx, exerciseId ->
@@ -831,7 +831,7 @@ class WorkoutModel(
             if (activeCardioLog != null) {
                 val cardioIdx = exerciseStates.indexOfFirst { exState ->
                     exState.isCardio && !exState.isCardioCompleted && 
-                    exState.exercise.nome.equals(activeCardioLog.categoria, ignoreCase = true)
+                    activeCardioLog.belongsTo(exState.exercise)
                 }
                 if (cardioIdx >= 0) cardioIdx else activeIndex
             } else {
@@ -999,7 +999,6 @@ class WorkoutModel(
                 supersetId = detail.planExercise.supersetId,
                 progression = progression,
                 isCardio = isCardio,
-                cardioCategoria = detail.exercise.nome,
                 cardioDurataTargetSeconds = detail.planExercise.durataTargetSecondi,
                 cardioDistanzaTargetKm = detail.planExercise.distanzaTargetKm,
                 cardioSets = if (isCardio) pendingCardioSets(detail.planExercise.serieTarget) else emptyList(),
@@ -1959,7 +1958,7 @@ class WorkoutModel(
         }
         placeholder?.let { from ->
             workoutRepository.moveExerciseRows(sessionId, exState.exercise.id, from, order)
-            if (exState.isCardio) workoutRepository.moveCardioRows(sessionId, exState.exercise.nome, from, order)
+            if (exState.isCardio) workoutRepository.moveCardioRows(sessionId, exState.exercise.id, from, order)
         }
         return order
     }
@@ -2901,7 +2900,7 @@ class WorkoutModel(
         } else {
             workoutRepository.deleteExerciseFromSession(sessionId, exState.exercise.id)
         }
-        if (exState.isCardio) workoutRepository.deleteCardioRows(sessionId, exState.exercise.nome, exState.executionOrder)
+        if (exState.isCardio) workoutRepository.deleteCardioRows(sessionId, exState.exercise.id, exState.executionOrder)
     }
 
     /**
@@ -2920,7 +2919,8 @@ class WorkoutModel(
                     ordineEsercizio = order,
                     durataTargetSecondi = targetSeconds,
                     isCompleted = false,
-                    numeroSerie = number
+                    numeroSerie = number,
+                    exerciseId = exercise.id
                 )
             ).toInt()
             CardioSetState(id = id, setNumber = number)
@@ -2961,7 +2961,6 @@ class WorkoutModel(
                         customRestSeconds = restTimer,
                         customRepsTarget = null,
                         isCardio = true,
-                        cardioCategoria = replacementExercise.categoria,
                         cardioDurataTargetSeconds = durationMinutes * 60,
                         cardioSets = newCardioSets,
                         exerciseType = "cardio",
@@ -2983,7 +2982,6 @@ class WorkoutModel(
                         customRestSeconds = restTimer,
                         customRepsTarget = null,
                         isCardio = true,
-                        cardioCategoria = replacementExercise.categoria,
                         cardioDurataTargetSeconds = durationMinutes * 60,
                         cardioSets = newCardioSets,
                         exerciseType = "cardio",
@@ -3185,7 +3183,6 @@ class WorkoutModel(
                         customRepsMax = repsRange?.max,
                         progression = progression,
                         isCardio = isCardio,
-                        cardioCategoria = exercise.categoria,
                         cardioDurataTargetSeconds = targetDurationSeconds,
                         cardioSets = newCardioSets,
                         exerciseType = exerciseType,
@@ -3269,7 +3266,6 @@ class WorkoutModel(
                         customRepsMax = repsRange?.max,
                         progression = progression,
                         isCardio = isCardio,
-                        cardioCategoria = exercise.categoria,
                         cardioDurataTargetSeconds = targetDurationSeconds,
                         cardioSets = newCardioSets,
                         exerciseType = exerciseType,
@@ -3475,7 +3471,8 @@ class WorkoutModel(
                         ordineEsercizio = order,
                         isCompleted = false,
                         numeroSerie = currentEx.activeCardioSet?.setNumber ?: 1,
-                        note = currentEx.activeCardioSet?.note
+                        note = currentEx.activeCardioSet?.note,
+                        exerciseId = currentEx.exercise.id
                     )
                     logId = workoutRepository.saveCardioLog(newLog).toInt()
                 }
@@ -3639,7 +3636,9 @@ class WorkoutModel(
                 isCompleted = true,
                 numeroSerie = doneSet.setNumber,
                 note = doneSet.note,
-                rpe = doneSet.rpe
+                rpe = doneSet.rpe,
+                // Also on the update of an existing row: a fresh entity without it would clear the link
+                exerciseId = currentEx.exercise.id
             )
             if (logId != null && logId > 0) {
                 workoutRepository.updateCardioLog(cardioEntity)
@@ -3698,7 +3697,8 @@ class WorkoutModel(
                     isCompleted = false,
                     numeroSerie = set.setNumber,
                     note = set.note,
-                    rpe = set.rpe
+                    rpe = set.rpe,
+                    exerciseId = ex.exercise.id
                 )
             ).toInt()
             setCardioSetId(exerciseIndex, set.setNumber, id)
@@ -3727,7 +3727,7 @@ class WorkoutModel(
             removed.id?.let { id ->
                 state.sessionId?.let { sessionId ->
                     workoutRepository.deleteCardioLog(
-                        CardioLogEntity(id = id, sessionId = sessionId, categoria = ex.exercise.nome, distanza = 0f, durataSecondi = 0, timestamp = 0L)
+                        CardioLogEntity(id = id, sessionId = sessionId, categoria = ex.exercise.nome, distanza = 0f, durataSecondi = 0, timestamp = 0L, exerciseId = ex.exercise.id)
                     )
                 }
             }

@@ -986,7 +986,7 @@ fun HistoryContent(
         AddCardioDialog(
             onDismiss = { showCardioDialog = false },
             onConfirm = { categoria, distanza, durataSecondi, note ->
-                state.saveCardioWorkout(categoria, distanza, durataSecondi, note)
+                state.saveCardioWorkoutByName(categoria, distanza, durataSecondi, note)
                 showCardioDialog = false
             }
         )

@@ -549,7 +549,15 @@ class WorkoutRepository(
 
     suspend fun updateCardioSetNumber(id: Int, number: Int) = workoutDao.updateCardioSetNumber(id, number)
 
-    suspend fun saveCardioSession(categoria: String, distanza: Float, durataSecondi: Int, timestamp: Long, note: String? = null) {
+    /** A cardio workout on its own (quick cardio): one set of [exerciseId], under the system "Cardio" routine. */
+    suspend fun saveCardioSession(
+        exerciseId: Int,
+        exerciseName: String,
+        distanceKm: Float,
+        seconds: Int,
+        timestamp: Long,
+        note: String? = null
+    ) {
         val user = userDao.getUser().first() ?: return
 
         // Find or create "Cardio" plan with system tag
@@ -585,11 +593,12 @@ class WorkoutRepository(
         workoutDao.insertCardioLog(
             CardioLogEntity(
                 sessionId = sessionId,
-                categoria = categoria,
-                distanza = distanza,
-                durataSecondi = durataSecondi,
+                categoria = exerciseName,
+                distanza = distanceKm,
+                durataSecondi = seconds,
                 timestamp = timestamp,
-                note = note
+                note = note,
+                exerciseId = exerciseId
             )
         )
     }
@@ -790,14 +799,14 @@ class WorkoutRepository(
     /** Follows runs that got a new order with the program edits made to them. */
     suspend fun moveRunEdits(sessionId: Int, moves: List<RunMove>) = workoutDao.moveRunEdits(sessionId, moves)
 
-    suspend fun moveCardioRows(sessionId: Int, categoria: String, from: Int, to: Int) =
-        workoutDao.moveCardioRows(sessionId, categoria, from, to)
+    suspend fun moveCardioRows(sessionId: Int, exerciseId: Int, from: Int, to: Int) =
+        workoutDao.moveCardioRows(sessionId, exerciseId, from, to)
 
     suspend fun deleteExerciseRows(sessionId: Int, exerciseId: Int, order: Int) =
         workoutDao.deleteExerciseRows(sessionId, exerciseId, order)
 
-    suspend fun deleteCardioRows(sessionId: Int, categoria: String, order: Int) =
-        workoutDao.deleteCardioRows(sessionId, categoria, order)
+    suspend fun deleteCardioRows(sessionId: Int, exerciseId: Int, order: Int) =
+        workoutDao.deleteCardioRows(sessionId, exerciseId, order)
 
     suspend fun deleteUncompletedSetsForSession(sessionId: Int) = workoutDao.deleteUncompletedSetsForSession(sessionId)
 

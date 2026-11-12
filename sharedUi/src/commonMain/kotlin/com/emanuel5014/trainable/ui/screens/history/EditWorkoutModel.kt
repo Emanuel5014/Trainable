@@ -14,6 +14,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.data.local.relation.toJournal
 import com.emanuel5014.trainable.data.repository.JournalRepository
+import com.emanuel5014.trainable.domain.csvimport.HistoryCsvColumns
 import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
 import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
@@ -212,30 +213,48 @@ class EditWorkoutModel(
 
     fun updateCardioLog(updatedCardio: CardioLogEntity) {
         scope.launch {
-            workoutRepository.saveCardioLog(updatedCardio)
+            val before = _state.value.cardioLogs.firstOrNull { it.id == updatedCardio.id }
+            // The activity typed in the dialog changed: the set now belongs to the exercise of that name
+            val renamed = before != null && HistoryCsvColumns.fold(before.categoria) != HistoryCsvColumns.fold(updatedCardio.categoria)
+            val row = if (renamed) {
+                val exercise = exerciseRepository.cardioExerciseForName(updatedCardio.categoria)
+                updatedCardio.copy(categoria = exercise.nome, exerciseId = exercise.id)
+            } else {
+                updatedCardio
+            }
+            workoutRepository.saveCardioLog(row)
         }
     }
 
-    fun addCardioLog(categoria: String, distanza: Float, durataSecondi: Int, sets: Int = 1, note: String? = null) {
-        scope.launch {
-            val maxOrder = maxOf(
-                _state.value.exercises.maxOfOrNull { it.sets.firstOrNull()?.ordineEsercizio ?: 0 } ?: 0,
-                _state.value.cardioLogs.maxOfOrNull { it.ordineEsercizio } ?: 0
-            )
-            (1..sets.coerceAtLeast(1)).forEach { number ->
-                workoutRepository.saveCardioLog(
-                    CardioLogEntity(
-                        sessionId = sessionId,
-                        categoria = categoria,
-                        distanza = distanza,
-                        durataSecondi = durataSecondi,
-                        timestamp = _state.value.sessionTimestamp,
-                        ordineEsercizio = maxOrder + 1,
-                        numeroSerie = number,
-                        note = note.takeIf { number == 1 }
-                    )
+    /** A cardio exercise added to this past workout, after everything in it; [note] goes on its first set. */
+    fun addCardioLog(exercise: ExerciseEntity, distanceKm: Float, seconds: Int, sets: Int = 1, note: String? = null) {
+        scope.launch { insertCardioLogs(exercise, distanceKm, seconds, sets, note) }
+    }
+
+    /** The same from a typed activity name (the free-text dialog): the name is first resolved to its exercise. */
+    fun addCardioLogByName(name: String, distanceKm: Float, seconds: Int, sets: Int = 1, note: String? = null) {
+        scope.launch { insertCardioLogs(exerciseRepository.cardioExerciseForName(name), distanceKm, seconds, sets, note) }
+    }
+
+    private suspend fun insertCardioLogs(exercise: ExerciseEntity, distanceKm: Float, seconds: Int, sets: Int, note: String?) {
+        val maxOrder = maxOf(
+            _state.value.exercises.maxOfOrNull { it.sets.firstOrNull()?.ordineEsercizio ?: 0 } ?: 0,
+            _state.value.cardioLogs.maxOfOrNull { it.ordineEsercizio } ?: 0
+        )
+        (1..sets.coerceAtLeast(1)).forEach { number ->
+            workoutRepository.saveCardioLog(
+                CardioLogEntity(
+                    sessionId = sessionId,
+                    categoria = exercise.nome,
+                    distanza = distanceKm,
+                    durataSecondi = seconds,
+                    timestamp = _state.value.sessionTimestamp,
+                    ordineEsercizio = maxOrder + 1,
+                    numeroSerie = number,
+                    note = note.takeIf { number == 1 },
+                    exerciseId = exercise.id
                 )
-            }
+            )
         }
     }
 
@@ -562,7 +581,7 @@ class EditWorkoutModel(
     private suspend fun prescriptionEnvironment(): Pair<String, Float> =
         userPreferencesRepository.weightUnit.first() to userPreferencesRepository.loadRoundingIncrement.first()
 
-    fun swapExerciseWithCardio(old: ExerciseKey, cardioCategory: String, durationMinutes: Int, sets: Int = 1) {
+    fun swapExerciseWithCardio(old: ExerciseKey, cardioExercise: ExerciseEntity, durationMinutes: Int, sets: Int = 1) {
         scope.launch {
             val order = old.order
 
@@ -575,12 +594,13 @@ class EditWorkoutModel(
             val added = (1..sets.coerceAtLeast(1)).map { number ->
                 val newCardio = CardioLogEntity(
                     sessionId = sessionId,
-                    categoria = cardioCategory,
+                    categoria = cardioExercise.nome,
                     distanza = 0f,
                     durataSecondi = durationMinutes * 60,
                     timestamp = _state.value.sessionTimestamp,
                     ordineEsercizio = order,
-                    numeroSerie = number
+                    numeroSerie = number,
+                    exerciseId = cardioExercise.id
                 )
                 newCardio.copy(id = workoutRepository.saveCardioLog(newCardio).toInt())
             }

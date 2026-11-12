@@ -493,7 +493,7 @@ fun EditWorkoutContent(
                 pendingCardioCategory = null
             },
             onConfirm = { categoria, distanza, durataSecondi, note ->
-                viewModel.addCardioLog(categoria, distanza, durataSecondi, note = note)
+                viewModel.addCardioLogByName(categoria, distanza, durataSecondi, note = note)
                 showAddCardio = false
                 pendingCardioCategory = null
             }
@@ -556,9 +556,9 @@ fun EditWorkoutContent(
             onCardioExerciseSelected = { exercise, durationMinutes, _, sets ->
                 val currentSwapKey = exerciseToSwap
                 if (currentSwapKey != null) {
-                    viewModel.swapExerciseWithCardio(currentSwapKey, exercise.nome, durationMinutes, sets)
+                    viewModel.swapExerciseWithCardio(currentSwapKey, exercise, durationMinutes, sets)
                 } else {
-                    viewModel.addCardioLog(exercise.nome, 0f, durationMinutes * 60, sets = sets)
+                    viewModel.addCardioLog(exercise, 0f, durationMinutes * 60, sets = sets)
                 }
                 exerciseToSwap = null
                 showExercisePicker = false

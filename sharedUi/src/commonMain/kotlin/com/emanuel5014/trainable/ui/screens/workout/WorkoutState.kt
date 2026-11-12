@@ -195,7 +195,6 @@ data class WorkoutExerciseState(
     val customRepsMax: Int? = null,
     val supersetId: String? = null,
     val isCardio: Boolean = false,
-    val cardioCategoria: String? = null,
     val cardioDurataTargetSeconds: Int? = null,
     val cardioDistanzaTargetKm: Float? = null,
     /** The sets of a cardio exercise (at least one); the first one not completed is the one on the timer. */

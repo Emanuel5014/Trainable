@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -203,9 +204,18 @@ class HistoryState(
         }
     }
 
-    fun saveCardioWorkout(categoria: String, distanza: Float, durataSecondi: Int, note: String? = null) {
+    /** A cardio workout on its own, of [exercise], done now. */
+    fun saveCardioWorkout(exercise: ExerciseEntity, distanceKm: Float, seconds: Int, note: String? = null) {
         scope.launch {
-            repository.saveCardioSession(categoria, distanza, durataSecondi, Clock.System.now().toEpochMilliseconds(), note)
+            repository.saveCardioSession(exercise.id, exercise.nome, distanceKm, seconds, Clock.System.now().toEpochMilliseconds(), note)
+        }
+    }
+
+    /** The same from a typed activity name (the free-text dialog): the name is first resolved to its exercise. */
+    fun saveCardioWorkoutByName(name: String, distanceKm: Float, seconds: Int, note: String? = null) {
+        scope.launch {
+            val exercise = exerciseRepository.cardioExerciseForName(name)
+            repository.saveCardioSession(exercise.id, exercise.nome, distanceKm, seconds, Clock.System.now().toEpochMilliseconds(), note)
         }
     }
 
