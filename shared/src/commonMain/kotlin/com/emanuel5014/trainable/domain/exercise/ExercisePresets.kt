@@ -28,4 +28,11 @@ object ExercisePresets {
             .filter { it.id in ids || it.id !in CardioPresets.SLOT_IDS || CardioPresets.aliasesOf(it).none { a -> a in names } }
             .map(RetiredPresets::forInsert)
     }
+
+    /**
+     * The presets "Reset preset names" gives their shipped name back to. A [skipped] id is left out: that slot holds a
+     * row of the user's (an exercise that took the id before the preset shipped), never a preset, so it is not renamed.
+     */
+    fun toRename(presets: List<ExerciseEntity>, skipped: Set<Int>): List<ExerciseEntity> =
+        presets.filter { it.id !in skipped }
 }

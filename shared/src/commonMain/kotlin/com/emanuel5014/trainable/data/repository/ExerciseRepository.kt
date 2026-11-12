@@ -9,6 +9,7 @@ import com.emanuel5014.trainable.domain.exercise.CardioSuggestions
 import com.emanuel5014.trainable.domain.exercise.SuggestedExercise
 import com.emanuel5014.trainable.domain.exercise.CategoryChangeBlock
 import com.emanuel5014.trainable.domain.exercise.ExerciseNames
+import com.emanuel5014.trainable.domain.exercise.ExercisePresets
 import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.domain.exercise.StoredTraits
 import kotlinx.coroutines.Dispatchers
@@ -184,8 +185,10 @@ class ExerciseRepository(
 
     fun isCustomExercise(exercise: ExerciseEntity): Boolean = exercise.id >= 1000
 
+    /** Gives the presets their shipped names back; a skipped preset slot holds a row of the user's and keeps its name. */
     suspend fun resetPresetExerciseNames() {
-        ExerciseData.initialExercises.forEach { presetExercise ->
+        val skipped = exerciseDao.getSkippedPresetIds().toSet()
+        ExercisePresets.toRename(ExerciseData.initialExercises, skipped).forEach { presetExercise ->
             exerciseDao.updateExerciseName(presetExercise.id, presetExercise.nome)
         }
     }
