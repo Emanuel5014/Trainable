@@ -115,7 +115,9 @@ fun ExercisePickRow(
     isCurrent: Boolean = false,
     showThumbnail: Boolean = false,
     onThumbnailClick: () -> Unit = {},
-    onInfoClick: (() -> Unit)? = null
+    onInfoClick: (() -> Unit)? = null,
+    /** A small note after the badges, e.g. when the exercise was last used. */
+    note: String? = null
 ) {
     ExerciseRow(
         name = ExerciseTranslations.translate(exercise.nome, languageCode),
@@ -138,6 +140,7 @@ fun ExercisePickRow(
                 )
                 isCurrent -> PrescriptionPill(text = stringResource(Res.string.current_badge).uppercase(), containerColor = Surface)
             }
+            if (note != null) PrescriptionPill(text = note, containerColor = Surface)
         },
         trailing = onInfoClick?.let { { ExerciseInfoButton(onClick = it) } }
     )

@@ -1524,4 +1524,13 @@
     <string name="onboarding_ai_scan_desc">Legge serie, ripetizioni ed esercizi da una foto, sul telefono o con un tuo provider.</string>
     <string name="onboarding_ai_local_unsupported_title">Niente IA sul dispositivo su questo telefono</string>
     <string name="onboarding_ai_local_unsupported_desc">Il modello sul dispositivo richiede almeno %1$d GB di RAM. Puoi comunque scansionare con un provider: una chiave API cloud o un server sul tuo PC.</string>
+    <string name="select_activity">Seleziona attività</string>
+    <string name="which_cardio">Che cardio hai fatto?</string>
+    <string name="suggested">Suggeriti</string>
+    <string name="all_cardio">Tutti i cardio</string>
+    <string name="create_cardio_exercise">Crea esercizio cardio</string>
+    <plurals name="days_ago">
+        <item quantity="one">%1$d giorno fa</item>
+        <item quantity="other">%1$d giorni fa</item>
+    </plurals>
 </resources>

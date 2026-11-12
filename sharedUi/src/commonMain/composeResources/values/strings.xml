@@ -1522,4 +1522,13 @@
     <string name="onboarding_ai_scan_desc">Reads sets, reps and exercises from a photo, on this phone or with your own provider.</string>
     <string name="onboarding_ai_local_unsupported_title">No on-device AI on this phone</string>
     <string name="onboarding_ai_local_unsupported_desc">The on-device model needs at least %1$d GB of RAM. You can still scan with a provider: a cloud API key or a server on your PC.</string>
+    <string name="select_activity">Select activity</string>
+    <string name="which_cardio">Which cardio did you do?</string>
+    <string name="suggested">Suggested</string>
+    <string name="all_cardio">All cardio</string>
+    <string name="create_cardio_exercise">Create cardio exercise</string>
+    <plurals name="days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
 </resources>

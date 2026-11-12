@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.data.local.dao
 
+import com.emanuel5014.trainable.data.local.entity.RecentCardio
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -318,6 +319,15 @@ interface WorkoutDao {
 
     @Query("UPDATE cardio_logs SET numero_serie = :number WHERE id = :id")
     suspend fun updateCardioSetNumber(id: Int, number: Int)
+
+    /** The cardio exercises done most recently (newest log of each, finished workouts only), for the picker's suggestions. */
+    @Query(
+        "SELECT cl.exercise_id AS exerciseId, MAX(cl.timestamp) AS lastTimestamp FROM cardio_logs cl " +
+            "INNER JOIN workout_sessions ws ON ws.id = cl.session_id " +
+            "WHERE ws.is_finished = 1 AND cl.exercise_id IS NOT NULL " +
+            "GROUP BY cl.exercise_id ORDER BY lastTimestamp DESC LIMIT :limit"
+    )
+    suspend fun recentCardioExercises(limit: Int): List<RecentCardio>
 
     /** The cardio logs without an exercise yet, with their name, session and routine, for the startup repair (CardioLinking). */
     @Query(

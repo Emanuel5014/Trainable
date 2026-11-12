@@ -1521,4 +1521,13 @@
     <string name="onboarding_ai_scan_desc">Liest Sätze, Wiederholungen und Übungen aus einem Foto, auf dem Telefon oder mit deinem Anbieter.</string>
     <string name="onboarding_ai_local_unsupported_title">Keine KI auf diesem Telefon</string>
     <string name="onboarding_ai_local_unsupported_desc">Das Modell auf dem Gerät braucht mindestens %1$d GB RAM. Du kannst trotzdem mit einem Anbieter scannen: einem Cloud-API-Schlüssel oder einem Server auf deinem PC.</string>
+    <string name="select_activity">Aktivität wählen</string>
+    <string name="which_cardio">Welches Cardio hast du gemacht?</string>
+    <string name="suggested">Vorgeschlagen</string>
+    <string name="all_cardio">Alles Cardio</string>
+    <string name="create_cardio_exercise">Cardio-Übung erstellen</string>
+    <plurals name="days_ago">
+        <item quantity="one">vor %1$d Tag</item>
+        <item quantity="other">vor %1$d Tagen</item>
+    </plurals>
 </resources>

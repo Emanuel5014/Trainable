@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.data.repository
 
+import com.emanuel5014.trainable.data.local.entity.RecentCardio
 import com.emanuel5014.trainable.data.local.entity.parts
 import com.emanuel5014.trainable.data.local.entity.pauses
 import com.emanuel5014.trainable.data.local.entity.performed
@@ -509,6 +510,8 @@ class WorkoutRepository(
     fun getAllSessionsWithDetails(): Flow<List<SessionWithDetails>> = workoutDao.getAllSessionsWithDetails()
 
     fun getAllSessions(): Flow<List<WorkoutSessionEntity>> = workoutDao.getAllSessions()
+
+    suspend fun recentCardioExercises(limit: Int = 12): List<RecentCardio> = workoutDao.recentCardioExercises(limit)
 
     fun getCardioSessionCountSince(sinceTimestamp: Long): Flow<Int> = workoutDao.getCardioSessionCountSince(sinceTimestamp)
     

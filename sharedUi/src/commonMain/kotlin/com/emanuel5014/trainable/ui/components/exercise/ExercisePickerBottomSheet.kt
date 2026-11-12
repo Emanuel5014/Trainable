@@ -8,6 +8,17 @@ import com.emanuel5014.trainable.sharedui.resources.filter_custom
 import com.emanuel5014.trainable.sharedui.resources.filter_favorites
 import com.emanuel5014.trainable.sharedui.resources.new_exercise
 import com.emanuel5014.trainable.sharedui.resources.select_exercise
+import com.emanuel5014.trainable.sharedui.resources.all_cardio
+import com.emanuel5014.trainable.sharedui.resources.create_cardio_exercise
+import com.emanuel5014.trainable.sharedui.resources.days_ago
+import com.emanuel5014.trainable.sharedui.resources.select_activity
+import com.emanuel5014.trainable.sharedui.resources.suggested
+import com.emanuel5014.trainable.sharedui.resources.today
+import com.emanuel5014.trainable.sharedui.resources.which_cardio
+import com.emanuel5014.trainable.domain.exercise.ExerciseForm
+import com.emanuel5014.trainable.domain.exercise.SuggestedExercise
+import org.jetbrains.compose.resources.pluralStringResource
+import kotlin.time.Clock
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -68,7 +79,11 @@ fun ExercisePickerBottomSheet(
     /** Only to choose one: no way to add, edit, delete or open the details of an exercise (e.g. picking what to merge into). */
     pickOnly: Boolean = false,
     /** Replaces the line under the title, e.g. to say what the choice is for. */
-    hint: String? = null
+    hint: String? = null,
+    /** Lists only this category (ignoring case), hides the category chips and fixes it in the create form. */
+    lockedCategory: String? = null,
+    /** Shown on top while the search is empty; only meant for the cardio entry. */
+    suggested: List<SuggestedExercise> = emptyList()
 ) {
     val platformUi = LocalExercisePlatformUi.current
     rememberResponsiveSize()
@@ -82,11 +97,14 @@ fun ExercisePickerBottomSheet(
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    val filteredExercises = remember(exercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, traitFilter) {
+    val locked = lockedCategory != null
+    val filteredExercises = remember(exercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, traitFilter, lockedCategory) {
         ExercisePickerFilter.apply(
             exercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, traits = traitFilter
-        )
+        ).filter { lockedCategory == null || it.categoria.equals(lockedCategory, ignoreCase = true) }
     }
+    val shownSuggestions = if (searchQuery.isBlank()) suggested else emptyList()
+    val nowMillis = remember { Clock.System.now().toEpochMilliseconds() }
 
     val showThumbnails = rememberShowExerciseThumbnails(exercises)
 
@@ -106,7 +124,7 @@ fun ExercisePickerBottomSheet(
             add(ExerciseFilterOption(favoritesLabel, showOnlyFavorites) { showOnlyFavorites = !showOnlyFavorites })
         }
         if (!pickOnly) add(ExerciseFilterOption(customLabel, showOnlyCustom) { showOnlyCustom = !showOnlyCustom })
-        categories.forEach { category ->
+        if (!locked) categories.forEach { category ->
             add(
                 ExerciseFilterOption(ExerciseTranslations.translateCategory(category, languageCode), selectedCategory == category) {
                     selectedCategory = category
@@ -142,7 +160,7 @@ fun ExercisePickerBottomSheet(
             AnimatedVisibility(visible = !imeVisible) {
                 Column {
                 Text(
-                    text = stringResource(Res.string.select_exercise).uppercase(),
+                    text = stringResource(if (locked) Res.string.select_activity else Res.string.select_exercise).uppercase(),
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontSize = ResponsiveSize.labelLargeSize
                     ),
@@ -151,7 +169,7 @@ fun ExercisePickerBottomSheet(
                 )
                 Spacer(modifier = Modifier.height(Spacing.xtraSmall))
                 Text(
-                    text = stringResource(Res.string.choose_from_library),
+                    text = stringResource(if (locked) Res.string.which_cardio else Res.string.choose_from_library),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = ResponsiveSize.headlineMediumSize
                     ),
@@ -186,7 +204,8 @@ fun ExercisePickerBottomSheet(
 
             AnimatedVisibility(visible = !imeVisible) {
                 Column {
-                    ExerciseFilterBar(options = filterOptions)
+                    // Locked to one category there is nothing to filter by category: only favorites remain
+                    if (!locked || filterOptions.size > 1) ExerciseFilterBar(options = filterOptions)
 
                     Spacer(modifier = Modifier.height(Spacing.medium))
                 }
@@ -198,6 +217,25 @@ fun ExercisePickerBottomSheet(
                     .weight(1f, fill = false),
                 verticalArrangement = Arrangement.spacedBy(Spacing.small)
             ) {
+                if (shownSuggestions.isNotEmpty()) {
+                    item(key = "suggested-header") { SectionLabel(stringResource(Res.string.suggested)) }
+                    items(shownSuggestions, key = { "suggested-${it.exercise.id}" }) { s ->
+                        val days = s.lastUsed?.let { daysBetween(it, nowMillis) }
+                        ExercisePickRow(
+                            exercise = s.exercise,
+                            languageCode = languageCode,
+                            onClick = {
+                                onExerciseSelected(s.exercise)
+                                onDismiss()
+                            },
+                            showThumbnail = showThumbnails,
+                            onThumbnailClick = { exerciseMediaToView = s.exercise },
+                            onInfoClick = if (pickOnly || !platformUi.hasExerciseDetail) null else { { detailExerciseId = s.exercise.id } },
+                            note = days?.let { if (it <= 0) stringResource(Res.string.today) else pluralStringResource(Res.plurals.days_ago, it, it) }
+                        )
+                    }
+                    if (locked) item(key = "all-header") { SectionLabel(stringResource(Res.string.all_cardio)) }
+                }
                 if (filteredExercises.isEmpty()) {
                     item { ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null) }
                 }
@@ -228,7 +266,7 @@ fun ExercisePickerBottomSheet(
                     ) {
                         Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
                         Spacer(modifier = Modifier.width(Spacing.medium))
-                        Text(stringResource(Res.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(if (locked) Res.string.create_cardio_exercise else Res.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -238,7 +276,8 @@ fun ExercisePickerBottomSheet(
     if (showAddCustomDialog) {
         ExerciseFormDialog(
             title = stringResource(Res.string.new_exercise),
-            categories = categories,
+            categories = if (lockedCategory != null) listOf(lockedCategory) else categories,
+            initial = if (lockedCategory != null) ExerciseForm(category = lockedCategory) else ExerciseForm(),
             existingExercises = platformUi.namesInUse(),
             languageCode = languageCode,
             showDescription = false,
@@ -257,3 +296,18 @@ fun ExercisePickerBottomSheet(
     detailExerciseId?.let { platformUi.ExerciseDetail(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
 }
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        color = OnSurfaceVariant,
+        fontWeight = FontWeight.ExtraBold,
+        modifier = Modifier.padding(top = Spacing.small)
+    )
+}
+
+private const val DAY_MILLIS = 24L * 60 * 60 * 1000
+
+private fun daysBetween(from: Long, to: Long): Int = ((to - from) / DAY_MILLIS).toInt()
