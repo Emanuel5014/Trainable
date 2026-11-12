@@ -147,7 +147,10 @@ interface AnalyticsDao {
     @Query("""
         SELECT 
             COALESCE(SUM(s.peso_sollevato * s.reps_effettive), 0) AS volume,
-            COUNT(DISTINCT w.id) AS sessionCount,
+            (
+                SELECT COUNT(*) FROM workout_sessions ws
+                WHERE ws.is_finished = 1 AND ws.timestamp >= :startDate AND ws.timestamp <= :endDate
+            ) AS sessionCount,
             COUNT(s.id) AS setCount,
             COALESCE(AVG(s.peso_sollevato), 0) AS avgWeight
         FROM set_logs s
