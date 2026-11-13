@@ -66,7 +66,8 @@ internal class IosWorkoutTimers(
     }
     override fun startOrUpdateTimerNotification(remainingSeconds: Int, sessionId: Int, exerciseName: String?,
         nextSetNumber: Int?, nextSetWeight: Float?, nextSetReps: Int?, previousReps: Int?, weightUnit: String?,
-        totalSeconds: Int?, scheduleAlarm: Boolean, nextSetRepsLabel: String?, nextSetDetail: String?, nextSetText: String?) {
+        totalSeconds: Int?, scheduleAlarm: Boolean, nextSetRepsLabel: String?, nextSetDetail: String?, nextSetText: String?,
+        nextSetKey: NextSetKey?) {
         if (!scheduleAlarm) return
         val text = words() ?: return
         val detail = text.nextSet(exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit,
@@ -79,9 +80,10 @@ internal class IosWorkoutTimers(
         restScheduled = true
         if (remainingSeconds > 0) {
             val instance = restLiveInstance ?: Uuid.random().toString().also { restLiveInstance = it }
-            publish(context().apply(IosLiveTimer(REST_NOTICE, instance, text.restTitle, detail,
+            // The buttons for the end of the rest travel with the countdown: a locked phone sleeps through that moment
+            publish(withFinishedRow(context().apply(IosLiveTimer(REST_NOTICE, instance, text.restTitle, detail,
                 endsAt, (totalSeconds ?: remainingSeconds).coerceAtLeast(remainingSeconds), finishedText = text.restBody,
-                exercise = exercise, setLine = setLine), text.skipLabel))
+                exercise = exercise, setLine = setLine), text.skipLabel), nextSetKey, text))
         }
     }
     override fun startOrUpdateWarmupTimerNotification(remainingSeconds: Int, totalSeconds: Int?, scheduleAlarm: Boolean) {
@@ -117,11 +119,45 @@ internal class IosWorkoutTimers(
         }
     }
 
-    override fun showRestFinished() {
-        IosLiveTimerSnapshots.forget(REST_NOTICE, restLiveInstance)
-        live()?.cancel(REST_NOTICE); restLiveInstance = null
-        val text = words() ?: return
+    /** The rest card of the current rest, for a Live Activity button to check it pressed this one. */
+    internal val restLiveInstanceId: String? get() = restLiveInstance
+
+    override fun showRestFinished(next: RestNextSet?) {
+        val text = words()
+        val current = IosLiveTimerSnapshots.get(REST_NOTICE)?.takeIf { it.instanceId == restLiveInstance }
+        val finished = if (text != null && current != null) finishedRestCard(current, next, text) else null
+        if (finished != null) {
+            // The card stays at zero with its buttons; it keeps its identity and its (past) deadline
+            publish(finished)
+        } else {
+            IosLiveTimerSnapshots.forget(REST_NOTICE, restLiveInstance)
+            live()?.cancel(REST_NOTICE); restLiveInstance = null
+        }
+        if (text == null) return
         if (!restScheduled) scheduler.schedule(listOf(IosNotice(REST_NOTICE, text.restTitle, text.restBody, now())))
+    }
+
+    /** [current] at zero with "+s" and "Set done" (each when allowed), or null when it has no button to offer. */
+    private fun finishedRestCard(current: IosLiveTimer, next: RestNextSet?, text: IosNotificationWords): IosLiveTimer? {
+        val controls = context().apply(current, text.skipLabel)
+        val announced = next?.let {
+            val detail = text.nextSet(it.exerciseName, it.setNumber, it.weight, it.reps, it.previousReps, it.weightUnit,
+                it.repsLabel, it.detail, it.text)
+            val (exercise, setLine) = text.nextSetParts(it.exerciseName, it.setNumber, it.weight, it.reps, it.previousReps,
+                it.weightUnit, it.repsLabel, it.detail, it.text)
+            controls.copy(detail = detail, exercise = exercise, setLine = setLine)
+        } ?: controls
+        val key = if (next != null) next.key else NextSetKey.parse(current.nextSetToken)
+        return withFinishedRow(announced, key, text).takeIf { it.finishedActionKeys.isNotEmpty() }
+    }
+
+    /** The buttons a rest card shows once it is over: "+s" (when the add button is on) and "Set done" for [key]. */
+    private fun withFinishedRow(card: IosLiveTimer, key: NextSetKey?, text: IosNotificationWords): IosLiveTimer {
+        val keys = mutableListOf<String>(); val labels = mutableListOf<String>()
+        if (card.showAdd) { keys += REST_MORE_ACTION; labels += "+${card.addSeconds}s" }
+        if (key != null) { keys += REST_NEXT_ACTION; labels += text.nextSetDoneLabel }
+        return card.copy(finishedActionKeys = keys, finishedActionLabels = labels,
+            openAppText = if (keys.isEmpty()) "" else text.openAppText, nextSetToken = key?.token() ?: "", needsApp = false)
     }
     override fun showWarmupTimerFinished() {
         IosLiveTimerSnapshots.forget(WARMUP_NOTICE, warmupLiveInstance)

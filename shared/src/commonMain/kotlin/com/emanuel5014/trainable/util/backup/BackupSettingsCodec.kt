@@ -82,6 +82,7 @@ object BackupSettingsCodec {
         prefs[UserPreferencesRepository.EXERCISE_TYPES]?.let { json.put("exercise_types", it) }
         json.put("timer_show_time_buttons", prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] ?: true)
         json.put("timer_show_skip_button", prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] ?: true)
+        prefs[UserPreferencesRepository.TIMER_SHOW_NEXT_SET_BUTTON]?.let { json.put("timer_show_next_set_button", it) }
         json.put("starting_weight_enabled", prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] ?: false)
         json.put("set_performance_enabled", prefs[UserPreferencesRepository.SET_PERFORMANCE_ENABLED] ?: false)
         json.put("plate_calculator_enabled", prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] ?: false)
@@ -222,6 +223,8 @@ object BackupSettingsCodec {
             prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] = jsonObject.getBoolean("timer_show_time_buttons")
         if (jsonObject.has("timer_show_skip_button"))
             prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] = jsonObject.getBoolean("timer_show_skip_button")
+        if (jsonObject.has("timer_show_next_set_button"))
+            prefs[UserPreferencesRepository.TIMER_SHOW_NEXT_SET_BUTTON] = jsonObject.getBoolean("timer_show_next_set_button")
         if (jsonObject.has("starting_weight_enabled"))
             prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] = jsonObject.getBoolean("starting_weight_enabled")
         if (jsonObject.has("set_performance_enabled"))

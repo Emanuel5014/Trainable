@@ -45,6 +45,8 @@ import com.emanuel5014.trainable.sharedui.resources.timer_add_time
 import com.emanuel5014.trainable.sharedui.resources.timer_buttons
 import com.emanuel5014.trainable.sharedui.resources.timer_buttons_desc
 import com.emanuel5014.trainable.sharedui.resources.timer_subtract_time
+import com.emanuel5014.trainable.sharedui.resources.timer_next_set_button
+import com.emanuel5014.trainable.sharedui.resources.timer_next_set_button_desc
 import com.emanuel5014.trainable.sharedui.resources.workout_section_after
 import com.emanuel5014.trainable.sharedui.resources.workout_section_programming
 import com.emanuel5014.trainable.sharedui.resources.workout_section_session
@@ -294,6 +296,7 @@ private fun TimersAndCardioCard(state: SettingsState) {
     val timerSubtractSeconds by state.timerSubtractSeconds.collectAsState()
     val timerAddEnabled by state.timerAddEnabled.collectAsState()
     val timerSubtractEnabled by state.timerSubtractEnabled.collectAsState()
+    val timerShowNextSetButton by state.timerShowNextSetButton.collectAsState()
     val autoStopCardioAtTarget by state.autoStopCardioAtTarget.collectAsState()
     val keepScreenOnCardioTimer by state.keepScreenOnCardioTimer.collectAsState()
     val autoStopTimeWeightAtTarget by state.autoStopTimeWeightAtTarget.collectAsState()
@@ -336,6 +339,17 @@ private fun TimersAndCardioCard(state: SettingsState) {
                 options = TimerAdjustment.SUBTRACT_OPTIONS.map { "−${it}s" },
                 selectedIndex = TimerAdjustment.SUBTRACT_OPTIONS.indexOf(timerSubtractSeconds),
                 onSelect = { state.setTimerSubtractSeconds(TimerAdjustment.SUBTRACT_OPTIONS[it]) }
+            )
+
+            SettingDivider()
+
+            // "Set done" on the finished-rest notification / Live Activity
+            SettingSwitchRow(
+                icon = Icons.Rounded.Timer,
+                title = stringResource(Res.string.timer_next_set_button),
+                description = stringResource(Res.string.timer_next_set_button_desc),
+                checked = timerShowNextSetButton,
+                onCheckedChange = { state.setTimerShowNextSetButton(it) }
             )
 
             SettingDivider()

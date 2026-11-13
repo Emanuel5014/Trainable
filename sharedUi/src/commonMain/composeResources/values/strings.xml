@@ -574,6 +574,10 @@
     <string name="timer_buttons">Timer buttons</string>
     <string name="timer_buttons_desc">Choose which of the + and − buttons the rest and warmup timers show, in the app and in the notification, and how much they move the countdown.</string>
     <string name="timer_subtract_time">Remove time</string>
+    <string name="timer_next_set_button">Set done button</string>
+    <string name="timer_next_set_button_desc">When rest ends, log the next set from the notification</string>
+    <string name="next_set_done">Set done</string>
+    <string name="open_app_to_continue">Open Trainable to continue</string>
     <string name="today">today</string>
     <string name="username">Username</string>
     <string name="weight_unit">Weight Unit</string>

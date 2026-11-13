@@ -577,6 +577,10 @@
     <string name="timer_buttons">Pulsanti del timer</string>
     <string name="timer_buttons_desc">Scegli quali pulsanti + e − mostrano il timer di recupero e di riscaldamento, nell'app e nella notifica, e di quanto spostano il conto alla rovescia.</string>
     <string name="timer_subtract_time">Togli tempo</string>
+    <string name="timer_next_set_button">Pulsante Serie fatta</string>
+    <string name="timer_next_set_button_desc">A fine riposo, segna la serie dopo dalla notifica</string>
+    <string name="next_set_done">Serie fatta</string>
+    <string name="open_app_to_continue">Apri Trainable per continuare</string>
     <string name="today">oggi</string>
     <string name="username">Nome utente</string>
     <string name="weight_unit">Unità di Misura</string>

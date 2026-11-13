@@ -1,7 +1,10 @@
 package com.emanuel5014.trainable.ui
 
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import kotlin.test.*
 
 private class ActionLive : IosWorkoutLiveActivities {
@@ -37,6 +40,49 @@ private class ActionStore : IosTimerActionStore {
 class IosTimerActionsTest {
     @BeforeTest fun reset() = IosLiveTimerSnapshots.clear()
     @AfterTest fun clean() = IosLiveTimerSnapshots.clear()
+
+    private fun finishedCard() = request().copy(finishedActionKeys = listOf("rest.more", "rest.next"),
+        finishedActionLabels = listOf("+45s", "Set done"), openAppText = "Open Trainable to continue")
+
+    @Test fun restNextWithoutModelShowsOpenAppAndWritesNothing() = runBlocking {
+        val live = ActionLive(); val card = finishedCard()
+        IosLiveTimerSnapshots.remember(card)
+        assertFalse(IosWorkoutTimerActions.performRestAction(card, "rest.next", null, live, null))
+        val shown = live.timers.getValue(REST_NOTICE)
+        assertTrue(shown.needsApp); assertTrue(shown.finishedActionKeys.isEmpty())
+        assertEquals("Open Trainable to continue", shown.openAppText)
+    }
+
+    @Test fun aCardLeftFromBeforeTheAppRestartedStillReachesTheReopenedWorkout() = runBlocking {
+        // The reopened workout has new timers that never drew this card: the token still decides what gets logged
+        val live = ActionLive()
+        val timers = IosWorkoutTimers(IosNotificationScheduler(FakeNotificationDelivery()),
+            { IosNotificationWords("Rest", "Go", "Warmup", "Ready", "M", "%1\$d", "%1\$d/%2\$d", "C", "G") },
+            { 1_000_000L }, { live }, { IosLiveTimerContext(sessionId = 7, sessionStartedAtMillis = 100) })
+        val card = finishedCard().copy(nextSetToken = "1001:2:20.0:8")
+        var logged: com.emanuel5014.trainable.util.notification.NextSetKey? = null
+        assertTrue(IosWorkoutTimerActions.performRestAction(card, "rest.next", timers, live) { logged = it })
+        assertEquals(com.emanuel5014.trainable.util.notification.NextSetKey(1001, 2, 20f, 8), logged)
+    }
+
+    @Test fun restActionsReachTheOpenWorkoutOnlyForItsCurrentCard() = runBlocking {
+        val live = ActionLive()
+        val timers = IosWorkoutTimers(IosNotificationScheduler(FakeNotificationDelivery()),
+            { IosNotificationWords("Rest", "Go", "Warmup", "Ready", "M", "%1\$d", "%1\$d/%2\$d", "C", "G") },
+            { 1_000_000L }, { live }, { IosLiveTimerContext(sessionId = 7, sessionStartedAtMillis = 100) })
+        timers.startOrUpdateTimerNotification(30, 7, "Squat", 2, 20f, 8, null, "kg", 30, true, null, null, null)
+        val card = live.timers.getValue(REST_NOTICE).copy(nextSetToken = "1001:2:20.0:8")
+        var logged: com.emanuel5014.trainable.util.notification.NextSetKey? = null
+        assertTrue(IosWorkoutTimerActions.performRestAction(card, "rest.next", timers, live) { logged = it })
+        // "Set done" hands the workout the set the card showed
+        assertEquals(com.emanuel5014.trainable.util.notification.NextSetKey(1001, 2, 20f, 8), logged)
+        val got = async { timers.timerEvents.first() }
+        yield()
+        assertTrue(IosWorkoutTimerActions.performRestAction(card, "rest.more", timers, live) { })
+        assertEquals(com.emanuel5014.trainable.util.notification.TimerAction.MORE_REST, got.await())
+        // A press from an older card (another rest) reaches nothing
+        assertFalse(IosWorkoutTimerActions.performRestAction(card.copy(instanceId = "old"), "rest.next", timers, live) { fail() })
+    }
     private fun request(kind: String = REST_NOTICE) = IosLiveTimer(kind, "timer-A", "Rest", "Next: Squat - Set 2: 20 kg × 8",
         if (kind == REST_NOTICE) 1_030_000 else 1_060_000, if (kind == REST_NOTICE) 30 else 60,
         sessionId = 7, sessionStartedAtMillis = 100, finishedText = "Ready")

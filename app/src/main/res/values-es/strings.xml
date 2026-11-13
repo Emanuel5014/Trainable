@@ -111,6 +111,8 @@
     <string name="previous_exercise">Anterior</string>
     <string name="next_exercise">Siguiente</string>
     <string name="skip_rest">Saltar</string>
+    <string name="next_set_done">Serie hecha</string>
+    <string name="open_app_to_continue">Abre Trainable para continuar</string>
     <string name="add_time">+30s</string>
     <string name="rest_timer">Temporizador</string>
     <string name="warmup_timer">Temporizador de Calentamiento</string>

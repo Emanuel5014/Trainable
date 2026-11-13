@@ -97,6 +97,55 @@ class IosLiveActivitiesTest {
         rest(t, 30)
         assertNotEquals(first.instanceId, live.timers.getValue(REST_NOTICE).instanceId)
     }
+    private val inSession = { IosLiveTimerContext(sessionId = 1, sessionStartedAtMillis = 100) }
+    private val nextSet = com.emanuel5014.trainable.util.notification.RestNextSet("Squat", 3, 60f, 8, null, "kg", null, null, null,
+        com.emanuel5014.trainable.util.notification.NextSetKey(1, 3, 60f, 8))
+
+    @Test fun finishedRestKeepsTheCardWithMoreAndDoneButtons() {
+        val d = FakeNotificationDelivery(); val live = FakeLiveActivities()
+        val t = IosWorkoutTimers(IosNotificationScheduler(d), { words }, { 1_000_000L }, { live }, inSession)
+        rest(t, 30)
+        val id = live.timers.getValue(REST_NOTICE).instanceId
+        t.showRestFinished(nextSet)
+        val card = live.timers.getValue(REST_NOTICE)
+        assertEquals(id, card.instanceId)
+        assertEquals(listOf("rest.more", "rest.next"), card.finishedActionKeys)
+        assertEquals(listOf("+30s", "Set done"), card.finishedActionLabels)
+        assertEquals("Squat", card.exercise); assertEquals("Set 3: 60 kg × 8", card.setLine)
+        assertEquals("Open Trainable to continue", card.openAppText); assertFalse(card.needsApp)
+        assertEquals(nextSet.key!!.token(), card.nextSetToken)
+    }
+
+    @Test fun restCountdownCardAlreadyCarriesTheFinishedButtonsAndTheShownSet() {
+        // With the phone locked the app sleeps through the end of the rest: the card must have its buttons already
+        val d = FakeNotificationDelivery(); val live = FakeLiveActivities()
+        val t = IosWorkoutTimers(IosNotificationScheduler(d), { words }, { 1_000_000L }, { live }, inSession)
+        val key = com.emanuel5014.trainable.util.notification.NextSetKey(1, 2, 60f, 8)
+        t.startOrUpdateTimerNotification(30, 1, "Squat", 2, 60f, 8, 8, "kg", 30, true, null, null, null, key)
+        val card = live.timers.getValue(REST_NOTICE)
+        assertEquals(listOf("rest.more", "rest.next"), card.finishedActionKeys)
+        assertEquals(key.token(), card.nextSetToken)
+        assertEquals("Open Trainable to continue", card.openAppText)
+    }
+
+    @Test fun finishedRestWithoutButtonsStillEndsTheCard() {
+        val d = FakeNotificationDelivery(); val live = FakeLiveActivities()
+        val t = IosWorkoutTimers(IosNotificationScheduler(d), { words }, { 1_000_000L }, { live },
+            { IosLiveTimerContext(sessionId = 1, sessionStartedAtMillis = 100, showAdd = false) })
+        rest(t, 30)
+        t.showRestFinished(nextSet.copy(key = null))
+        assertFalse(REST_NOTICE in live.timers)
+    }
+
+    @Test fun finishedCardNeedingTheAppDropsItsButtons() {
+        val d = FakeNotificationDelivery(); val live = FakeLiveActivities()
+        val t = IosWorkoutTimers(IosNotificationScheduler(d), { words }, { 1_000_000L }, { live }, inSession)
+        rest(t, 30); t.showRestFinished(nextSet)
+        val card = live.timers.getValue(REST_NOTICE).needingApp()
+        assertTrue(card.needsApp); assertTrue(card.finishedActionKeys.isEmpty()); assertTrue(card.finishedActionLabels.isEmpty())
+        assertEquals("Open Trainable to continue", card.openAppText)
+    }
+
     @Test fun restAndWarmupAreIndependentAndFinishingOneDoesNotClearTheOther() {
         val d = FakeNotificationDelivery(); val live = FakeLiveActivities(); val t = timers(d, live)
         rest(t, 30); t.startOrUpdateWarmupTimerNotification(60, 60, true)

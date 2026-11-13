@@ -27,12 +27,20 @@ struct TrainableTimerAttributes: ActivityAttributes {
         var paused: Bool = false
         var actionKeys: [String] = []
         var actionLabels: [String] = []
+        /** Rest only, once it is over: "rest.more" / "rest.next" buttons, or the hint to open the app. */
+        var finishedActionKeys: [String] = []
+        var finishedActionLabels: [String] = []
+        var openAppText: String = ""
+        var needsApp: Bool = false
+        /** Rest only: the set "Set done" would log, as this card shows it. */
+        var nextSetToken: String = ""
 
         enum CodingKeys: String, CodingKey {
             case instanceID, title, detail, startedAt, endsAt, sessionID, sessionStartedAtMillis
             case addSeconds, subtractSeconds, showAdd, showSubtract, showSkip, skipLabel, finishedText
             case exercise, setLine, accentARGB
             case roundStartsAt, roundEndsAt, paused, actionKeys, actionLabels
+            case finishedActionKeys, finishedActionLabels, openAppText, needsApp, nextSetToken
         }
     }
     var kind: String
@@ -64,5 +72,10 @@ extension TrainableTimerAttributes.ContentState {
         paused = try c.decodeIfPresent(Bool.self, forKey: .paused) ?? false
         actionKeys = try c.decodeIfPresent([String].self, forKey: .actionKeys) ?? []
         actionLabels = try c.decodeIfPresent([String].self, forKey: .actionLabels) ?? []
+        finishedActionKeys = try c.decodeIfPresent([String].self, forKey: .finishedActionKeys) ?? []
+        finishedActionLabels = try c.decodeIfPresent([String].self, forKey: .finishedActionLabels) ?? []
+        openAppText = try c.decodeIfPresent(String.self, forKey: .openAppText) ?? ""
+        needsApp = try c.decodeIfPresent(Bool.self, forKey: .needsApp) ?? false
+        nextSetToken = try c.decodeIfPresent(String.self, forKey: .nextSetToken) ?? ""
     }
 }

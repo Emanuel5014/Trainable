@@ -63,6 +63,8 @@ import com.emanuel5014.trainable.util.notification.TimerAction
 import com.emanuel5014.trainable.util.notification.WarmupTimerAction
 import com.emanuel5014.trainable.util.notification.EmomAction
 import com.emanuel5014.trainable.util.notification.EmomCue
+import com.emanuel5014.trainable.util.notification.NextSetKey
+import com.emanuel5014.trainable.util.notification.RestNextSet
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.util.TimerAdjustment
@@ -204,6 +206,9 @@ class WorkoutModel(
                     TimerAction.SUBTRACT -> adjustRestTime(-_state.value.timerSubtractSeconds)
                     TimerAction.DISMISS -> workoutTimers.cancelTimer()
                     TimerAction.FINISHED -> handleTimerFinished()
+                    // The notification shows what the model last announced (it is redrawn on every change)
+                    TimerAction.NEXT_SET -> logAnnouncedSet(announcedNextSetKey)
+                    TimerAction.MORE_REST -> extendRest()
                 }
             }
         }
@@ -320,6 +325,11 @@ class WorkoutModel(
         modelScope.launch {
             userPreferencesRepository.timerShowSkipButton.collect { show ->
                 _state.update { it.copy(timerShowSkipButton = show) }
+            }
+        }
+        modelScope.launch {
+            userPreferencesRepository.timerShowNextSetButton.collect { show ->
+                _state.update { it.copy(timerShowNextSetButton = show) }
             }
         }
 
@@ -2090,11 +2100,14 @@ class WorkoutModel(
                             val translatedName = ExerciseTranslations.translate(exState.exercise.nome, _languageCode.value)
                             val plannedReps = if (exState.isAdvanced) nextSet.prescription?.targetReps ?: nextSet.reps
                                 else getPlannedRepsForSet(exState, nextSet.setNumber) ?: nextSet.reps
+                            val repsLabel = repsLabelFor(nextSet)
+                            val timedText = timedSetText(exState, nextSet)
                             startRestTimer(
                                 restTime, translatedName, nextSet.setNumber, nextSet.weight, plannedReps, nextSet.previousReps, currentState.weightUnit,
-                                nextSetRepsLabel = repsLabelFor(nextSet),
+                                nextSetRepsLabel = repsLabel,
                                 nextSetDetail = prescriptionDetail(nextSet),
-                                nextSetText = timedSetText(exState, nextSet)
+                                nextSetText = timedText,
+                                nextSetKey = nextSetKeyOf(exState, nextSet, plannedReps, repsLabel, timedText, currentState, ticked = setState)
                             )
                         } else if (!isLastExercise) {
                             val nextExState = currentState.exercises.getOrNull(exerciseIndex + 1)
@@ -2102,11 +2115,14 @@ class WorkoutModel(
                             if (firstSet != null) {
                                 val translatedName = ExerciseTranslations.translate(nextExState.exercise.nome, _languageCode.value)
                                 val plannedReps = getPlannedRepsForSet(nextExState, firstSet.setNumber) ?: firstSet.reps
+                                val repsLabel = repsLabelFor(firstSet)
+                                val timedText = timedSetText(nextExState, firstSet)
                                 startRestTimer(
                                     restTime, translatedName, firstSet.setNumber, firstSet.weight, plannedReps, firstSet.previousReps, currentState.weightUnit,
-                                    nextSetRepsLabel = repsLabelFor(firstSet),
+                                    nextSetRepsLabel = repsLabel,
                                     nextSetDetail = prescriptionDetail(firstSet),
-                                    nextSetText = timedSetText(nextExState, firstSet)
+                                    nextSetText = timedText,
+                                    nextSetKey = nextSetKeyOf(nextExState, firstSet, plannedReps, repsLabel, timedText, currentState, ticked = setState)
                                 )
                             } else {
                                 // A cardio exercise has no weight sets: its next set is announced by its targets
@@ -2124,6 +2140,10 @@ class WorkoutModel(
             updateSetState(exerciseIndex, setIndex) { 
                 it.copy(isCompleted = newIsCompleted, id = newSetId) 
             }
+
+            // A set done with no rest after it: the finished-rest card has nothing left to offer
+            if (newIsCompleted && _state.value.restTimerEndTime == null) workoutTimers.cancelTimer()
+            else if (newIsCompleted) republishRestCard()
 
             setState.prescription?.takeIf { it.repMode == RepMode.TOTAL }?.let { reconcileTotalBlock(exerciseIndex, it.blockIndex) }
 
@@ -2148,6 +2168,7 @@ class WorkoutModel(
                             modelScope.launch {
                                 delay(300)
                                 _state.update { it.copy(currentExerciseIndex = nextIndex) }
+                                republishRestCard()
                             }
                             break
                         }
@@ -2312,6 +2333,71 @@ class WorkoutModel(
         }
     }
 
+    /**
+     * "Set done" on the finished-rest card: ticks the announced set only if it is still exactly [shown], the set the
+     * card showed. A rest that ran out while the app slept is closed first. Anything else logs nothing and redraws the
+     * card with what is true now.
+     */
+    fun logAnnouncedSet(shown: NextSetKey?) {
+        val end = _state.value.restTimerEndTime
+        if (end != null) {
+            if (end > nowMillis()) return
+            handleTimerFinished()
+        }
+        val target = nextSetTarget()
+        val key = target?.info?.key
+        if (shown != null && key == shown && target.setIndex >= 0) {
+            toggleSetComplete(target.exerciseIndex, target.setIndex)
+        } else if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
+            publishRestFinished()
+        }
+    }
+
+    /** "+s" on the rest card: more time on a running rest, or a new rest of that length once it is over. */
+    fun extendRest() {
+        // A rest that ran out while the app slept is closed first, so "+s" gives the whole extra rest
+        _state.value.restTimerEndTime?.let { end -> if (end <= nowMillis()) handleTimerFinished() }
+        if (_state.value.restTimerEndTime != null) {
+            adjustRestTime(_state.value.timerAddSeconds)
+        } else {
+            startRestTimer(_state.value.timerAddSeconds, buildNextSetLabel())
+        }
+    }
+
+    /**
+     * Redraws the running rest's card when the set that comes next is no longer the one it shows (a superset moved
+     * to the partner, a set ticked out of order). iOS gets no per-second redraw, and its "Set done" carries what the
+     * card shows.
+     */
+    private fun republishRestCard() {
+        val state = _state.value
+        val end = state.restTimerEndTime ?: return
+        val remaining = ((end - nowMillis()) / 1000).toInt()
+        if (remaining <= 0 || !state.timerNotificationsEnabled || !workoutTimers.hasNotificationPermission()) return
+        val sessionId = state.sessionId ?: return
+        val info = buildNextSetLabel()
+        if (info?.key == announcedNextSetKey) return
+        announcedNextSetKey = info?.key
+        workoutTimers.startOrUpdateTimerNotification(
+            remaining, sessionId,
+            info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit,
+            totalSeconds = state.totalRestSeconds,
+            nextSetRepsLabel = info?.repsLabel,
+            nextSetDetail = info?.detail,
+            nextSetText = info?.text,
+            nextSetKey = info?.key
+        )
+    }
+
+    /** The set the card last announced, so a button press can only log that one. */
+    private var announcedNextSetKey: NextSetKey? = null
+
+    private fun publishRestFinished() {
+        val next = restNextSet()
+        announcedNextSetKey = next?.key
+        workoutTimers.showRestFinished(next)
+    }
+
     private fun startRestTimer(
         seconds: Int,
         exerciseName: String? = null,
@@ -2322,7 +2408,8 @@ class WorkoutModel(
         weightUnit: String? = null,
         nextSetRepsLabel: String? = null,
         nextSetDetail: String? = null,
-        nextSetText: String? = null
+        nextSetText: String? = null,
+        nextSetKey: NextSetKey? = null
     ) {
         if (seconds <= 0) return
         stopRestTimer()
@@ -2333,12 +2420,14 @@ class WorkoutModel(
             // still counting down keeps its own
             if (_state.value.warmupTimerEndTime == null) workoutTimers.cancelWarmupTimer()
             _state.value.sessionId?.let { sessionId ->
+                announcedNextSetKey = nextSetKey
                 workoutTimers.startOrUpdateTimerNotification(
                     seconds, sessionId, exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit,
                     totalSeconds = seconds,
                     nextSetRepsLabel = nextSetRepsLabel,
                     nextSetDetail = nextSetDetail,
-                    nextSetText = nextSetText
+                    nextSetText = nextSetText,
+                    nextSetKey = nextSetKey
                 )
             }
         }
@@ -2358,6 +2447,46 @@ class WorkoutModel(
         return repsList.getOrElse(setNumber - 1) { repsList.lastOrNull() }
     }
 
+    /**
+     * The set the finished-rest "Set done" button may log, or null wherever the button must not appear:
+     * the switch is off, the set is not a plain weight × reps one, the card would show reps other than the ones
+     * that get logged, or it is the last set left of the workout (logged in the app, with its RPE and notes).
+     * [ticked] is a set being completed right now, which [state] may still hold as incomplete.
+     */
+    private fun nextSetKeyOf(exState: WorkoutExerciseState, set: WorkoutSetState, announcedReps: Int,
+        repsLabel: String?, timedText: String?, state: WorkoutState, ticked: WorkoutSetState? = null): NextSetKey? {
+        if (!state.timerShowNextSetButton) return null
+        if (set.isCompleted || exState.isCardio || exState.isTimed || set.isEmom) return null
+        if (repsLabel != null || timedText != null) return null
+        if (state.miniSet != null) return null
+        if (announcedReps != set.reps) return null
+        val remaining = state.exercises.sumOf { ex -> ex.sets.count { !it.isCompleted && it !== ticked } }
+        if (remaining < 2) return null
+        return NextSetKey(exState.exercise.id, set.setNumber, set.weight, set.reps)
+    }
+
+    /** Where the announced next set lives, so a button on the card can tick exactly that set. */
+    private data class NextSetTarget(val exerciseIndex: Int, val setIndex: Int, val info: NextSetInfo)
+
+    /** The set [buildNextSetLabel] announces, with its place in the workout; null during a mini-set pause. */
+    private fun nextSetTarget(): NextSetTarget? {
+        val state = _state.value
+        if (state.miniSet?.takeIf { !it.awaitingReps } != null) return null
+        for (index in listOf(state.currentExerciseIndex, state.currentExerciseIndex + 1)) {
+            val exState = state.exercises.getOrNull(index) ?: continue
+            val info = nextSetInfoOf(exState) ?: continue
+            return NextSetTarget(index, exState.sets.indexOfFirst { !it.isCompleted }, info)
+        }
+        return null
+    }
+
+    /** What the finished-rest card announces, with the key of its "Set done" button. */
+    private fun restNextSet(): RestNextSet? {
+        val info = buildNextSetLabel() ?: return null
+        return RestNextSet(info.exerciseName, info.setNumber, info.weight, info.reps, info.previousReps,
+            info.weightUnit, info.repsLabel, info.detail, info.text, info.key)
+    }
+
     /** What the rest notification announces for [exState]: its next set to do (a cardio one included), null when none is left. */
     private fun nextSetInfoOf(exState: WorkoutExerciseState): NextSetInfo? {
         val name = ExerciseTranslations.translate(exState.exercise.nome, _languageCode.value)
@@ -2368,6 +2497,8 @@ class WorkoutModel(
         }
         val nextSet = exState.sets.firstOrNull { !it.isCompleted } ?: return null
         val plannedReps = getPlannedRepsForSet(exState, nextSet.setNumber) ?: nextSet.reps
+        val repsLabel = repsLabelFor(nextSet)
+        val timedText = timedSetText(exState, nextSet)
         return NextSetInfo(
             exerciseName = name,
             setNumber = nextSet.setNumber,
@@ -2375,9 +2506,10 @@ class WorkoutModel(
             reps = plannedReps,
             weightUnit = unit,
             previousReps = nextSet.previousReps,
-            repsLabel = repsLabelFor(nextSet),
+            repsLabel = repsLabel,
             detail = prescriptionDetail(nextSet),
-            text = timedSetText(exState, nextSet)
+            text = timedText,
+            key = nextSetKeyOf(exState, nextSet, plannedReps, repsLabel, timedText, _state.value)
         )
     }
 
@@ -2409,7 +2541,8 @@ class WorkoutModel(
             seconds, info.exerciseName, info.setNumber, info.weight, info.reps, info.previousReps, info.weightUnit,
             nextSetRepsLabel = info.repsLabel,
             nextSetDetail = info.detail,
-            nextSetText = info.text
+            nextSetText = info.text,
+            nextSetKey = info.key
         )
     }
 
@@ -2431,13 +2564,15 @@ class WorkoutModel(
             if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
                 _state.value.sessionId?.let { sessionId ->
                     val info = buildNextSetLabel()
+                    announcedNextSetKey = info?.key
                     workoutTimers.startOrUpdateTimerNotification(
                         remaining, sessionId,
                         info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit,
                         totalSeconds = totalSeconds,
                         nextSetRepsLabel = info?.repsLabel,
                         nextSetDetail = info?.detail,
-                        nextSetText = info?.text
+                        nextSetText = info?.text,
+                        nextSetKey = info?.key
                     )
                 }
             }
@@ -2453,7 +2588,7 @@ class WorkoutModel(
             _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
             workoutTimers.cancelFinishAlarm()
             if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
-                workoutTimers.showRestFinished()
+                publishRestFinished()
             }
             clearTimerInSession()
             timerJob?.cancel()
@@ -2478,6 +2613,7 @@ class WorkoutModel(
                     if (workoutTimers.isLiveNotificationSupported() && _state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
                         _state.value.sessionId?.let { sessionId ->
                             val info = buildNextSetLabel()
+                            announcedNextSetKey = info?.key
                             workoutTimers.startOrUpdateTimerNotification(
                                 remainingSeconds = remaining,
                                 sessionId = sessionId,
@@ -2491,7 +2627,8 @@ class WorkoutModel(
                                 scheduleAlarm = false,
                                 nextSetRepsLabel = info?.repsLabel,
                                 nextSetDetail = info?.detail,
-                                nextSetText = info?.text
+                                nextSetText = info?.text,
+                                nextSetKey = info?.key
                             )
                         }
                     }
@@ -2527,13 +2664,15 @@ class WorkoutModel(
             if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
                 _state.value.sessionId?.let { sessionId ->
                     val info = buildNextSetLabel()
+                    announcedNextSetKey = info?.key
                     workoutTimers.startOrUpdateTimerNotification(
                         newRemaining, sessionId,
                         info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit,
                         totalSeconds = newTotal,
                         nextSetRepsLabel = info?.repsLabel,
                         nextSetDetail = info?.detail,
-                        nextSetText = info?.text
+                        nextSetText = info?.text,
+                        nextSetKey = info?.key
                     )
                 }
             }

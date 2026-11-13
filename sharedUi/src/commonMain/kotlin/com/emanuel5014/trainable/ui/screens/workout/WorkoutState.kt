@@ -15,6 +15,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.data.local.entity.repsRange
+import com.emanuel5014.trainable.util.notification.NextSetKey
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.domain.prescription.DoubleProgression
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
@@ -57,6 +58,8 @@ data class WorkoutState(
     /** Which buttons the rest and warmup timers show: the - / + pair and the skip button. */
     val timerShowTimeButtons: Boolean = true,
     val timerShowSkipButton: Boolean = true,
+    /** The "Set done" button of the finished-rest notification / Live Activity. */
+    val timerShowNextSetButton: Boolean = true,
     /** Each time button on its own; a button shows only while both this and [timerShowTimeButtons] are on. */
     val timerAddEnabled: Boolean = true,
     val timerSubtractEnabled: Boolean = true,
@@ -426,5 +429,7 @@ data class NextSetInfo(
     val repsLabel: String? = null,
     val detail: String? = null,
     /** The whole value of a timed set ("45s · 20 reps"), which has no weight × reps to show. */
-    val text: String? = null
+    val text: String? = null,
+    /** Set that the finished-rest "Set done" button may log; null hides the button. */
+    val key: NextSetKey? = null
 )

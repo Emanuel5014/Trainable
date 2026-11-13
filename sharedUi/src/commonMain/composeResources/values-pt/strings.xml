@@ -577,6 +577,10 @@
     <string name="timer_buttons">Botões do temporizador</string>
     <string name="timer_buttons_desc">Escolha quais dos botões + e − o temporizador de descanso e o de aquecimento mostram, no app e na notificação, e quanto eles movem a contagem regressiva.</string>
     <string name="timer_subtract_time">Remover tempo</string>
+    <string name="timer_next_set_button">Botão Série feita</string>
+    <string name="timer_next_set_button_desc">No fim do descanso, registra a próxima série pela notificação</string>
+    <string name="next_set_done">Série feita</string>
+    <string name="open_app_to_continue">Abra o Trainable para continuar</string>
     <string name="today">hoje</string>
     <string name="username">Nome de usuário</string>
     <string name="weight_unit">Unidade de Peso</string>

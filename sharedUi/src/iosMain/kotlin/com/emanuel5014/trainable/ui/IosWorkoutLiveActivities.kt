@@ -38,8 +38,27 @@ data class IosLiveTimer(
     val paused: Boolean = false,
     /** EMOM only: buttons in order, keys "emom.done|pause|resume|stop" with labels in the app language. */
     val actionKeys: List<String> = emptyList(),
-    val actionLabels: List<String> = emptyList()
+    val actionLabels: List<String> = emptyList(),
+    /** Rest only, once it is over: keys "rest.more|rest.next" with labels, in that order; empty hides the row. */
+    val finishedActionKeys: List<String> = emptyList(),
+    val finishedActionLabels: List<String> = emptyList(),
+    /**
+     * Rest only: "Open Trainable to continue", carried with the buttons so that a press reaching no open workout
+     * (cold launch, no Compose strings yet) can still say it. Shown only when [needsApp].
+     */
+    val openAppText: String = "",
+    val needsApp: Boolean = false,
+    /** Rest only: the set "Set done" would log, as the card shows it ([NextSetKey.token]); empty when none. */
+    val nextSetToken: String = ""
 )
+
+/** Buttons of the finished rest card, as the Live Activity intent sends them. */
+internal const val REST_MORE_ACTION = "rest.more"
+internal const val REST_NEXT_ACTION = "rest.next"
+
+/** The finished rest card once a button found no open workout: no buttons, only the hint to open the app. */
+internal fun IosLiveTimer.needingApp(): IosLiveTimer =
+    copy(finishedActionKeys = emptyList(), finishedActionLabels = emptyList(), needsApp = true)
 
 /** Updated by the iOS theme, read whenever a countdown is published. */
 object IosLiveActivityStyle {

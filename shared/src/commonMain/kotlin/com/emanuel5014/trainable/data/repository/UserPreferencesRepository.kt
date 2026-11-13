@@ -142,6 +142,8 @@ class UserPreferencesRepository(
     /** Whether the rest and warmup timers (and their notifications) show the - / + buttons and the skip button. */
     val TIMER_SHOW_TIME_BUTTONS = booleanPreferencesKey("timer_show_time_buttons")
     val TIMER_SHOW_SKIP_BUTTON = booleanPreferencesKey("timer_show_skip_button")
+    /** The "Set done" button of the finished-rest notification / Live Activity. On by default. */
+    val TIMER_SHOW_NEXT_SET_BUTTON = booleanPreferencesKey("timer_show_next_set_button")
     /** Each of the two time buttons on its own: with both off the timers carry neither. On by default. */
     val TIMER_ADD_ENABLED = booleanPreferencesKey("timer_add_enabled")
     val TIMER_SUBTRACT_ENABLED = booleanPreferencesKey("timer_subtract_enabled")
@@ -619,6 +621,15 @@ class UserPreferencesRepository(
     suspend fun setTimerShowSkipButton(show: Boolean) {
         dataStore.edit { preferences ->
             preferences[TIMER_SHOW_SKIP_BUTTON] = show
+        }
+    }
+
+    val timerShowNextSetButton: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[TIMER_SHOW_NEXT_SET_BUTTON] ?: true }
+
+    suspend fun setTimerShowNextSetButton(show: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_SHOW_NEXT_SET_BUTTON] = show
         }
     }
 

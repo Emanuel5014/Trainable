@@ -265,6 +265,12 @@ class SettingsState(
         initialValue = true
     )
 
+    val timerShowNextSetButton = userPrefsRepository.timerShowNextSetButton.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
     val startingWeightEnabled = userPrefsRepository.startingWeightEnabled.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -394,6 +400,12 @@ class SettingsState(
     fun setTimerShowSkipButton(show: Boolean) {
         scope.launch {
             userPrefsRepository.setTimerShowSkipButton(show)
+        }
+    }
+
+    fun setTimerShowNextSetButton(show: Boolean) {
+        scope.launch {
+            userPrefsRepository.setTimerShowNextSetButton(show)
         }
     }
 

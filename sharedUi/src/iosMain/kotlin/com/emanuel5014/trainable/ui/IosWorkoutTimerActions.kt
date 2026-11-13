@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.emanuel5014.trainable.util.notification.EmomAction
+import com.emanuel5014.trainable.util.notification.NextSetKey
+import com.emanuel5014.trainable.util.notification.TimerAction
 import kotlin.math.abs
 
 /** Latest logical timer identity, also rejects actions from an old Dynamic Island presentation. */
@@ -124,17 +126,22 @@ internal class IosTimerActionProcessor(
 object IosWorkoutTimerActions {
     private val lock = Mutex()
     private val models = mutableListOf<WorkoutModel>()
-    private val emomTimers = mutableMapOf<WorkoutModel, IosWorkoutTimers>()
+    private val timersByModel = mutableMapOf<WorkoutModel, IosWorkoutTimers>()
     internal fun bind(model: WorkoutModel, timers: IosWorkoutTimers? = null) {
         models += model
-        if (timers != null) emomTimers[model] = timers
+        if (timers != null) timersByModel[model] = timers
     }
-    internal fun unbind(model: WorkoutModel) { models.remove(model); emomTimers.remove(model) }
+    internal fun unbind(model: WorkoutModel) { models.remove(model); timersByModel.remove(model) }
 
     suspend fun perform(request: IosLiveTimer, action: String): Boolean = withContext(Dispatchers.Main) {
         lock.withLock {
             try {
                 if (request.kind == EMOM_NOTICE) return@withLock performEmom(request, action)
+                if (request.kind == REST_NOTICE && action in setOf(REST_MORE_ACTION, REST_NEXT_ACTION)) {
+                    val model = models.lastOrNull { it.state.value.sessionId == request.sessionId }
+                    return@withLock performRestAction(request, action, model?.let { timersByModel[it] },
+                        IosWorkoutLiveActivityBridge.service, model?.let { open -> { shown -> open.logAnnouncedSet(shown) } })
+                }
                 if (!prepareIosTimerAction()) return@withLock false
                 IosTimerActionProcessor(IosAppTimerActionStore, IosNotifications.scheduler,
                     { IosWorkoutLiveActivityBridge.service },
@@ -145,12 +152,41 @@ object IosWorkoutTimerActions {
     }
 
     /**
+     * "+s" and "Set done" on the finished rest card act only through the open workout, which logs exactly the set the
+     * card shows. With no workout in memory (the app was terminated) nothing is written: the card asks to open the app.
+     */
+    internal suspend fun performRestAction(request: IosLiveTimer, action: String, timers: IosWorkoutTimers?,
+        live: IosWorkoutLiveActivities?, logShown: ((NextSetKey?) -> Unit)?): Boolean {
+        if (action != REST_NEXT_ACTION && action != REST_MORE_ACTION) return false
+        if (timers == null) {
+            val card = (IosLiveTimerSnapshots.get(REST_NOTICE)?.takeIf { it.instanceId == request.instanceId } ?: request).needingApp()
+            IosLiveTimerSnapshots.remember(card)
+            live?.update(card)
+            return false
+        }
+        // A press from an older rest's card is refused; a card the reopened workout never drew (the app restarted)
+        // still reaches it, and the token decides what may be logged
+        val current = timers.restLiveInstanceId
+        if (current != null && current != request.instanceId) return false
+        if (action == REST_NEXT_ACTION) {
+            // The card says which set it showed: the workout logs it only if that is still the set to do
+            (logShown ?: return false)(NextSetKey.parse(request.nextSetToken))
+        } else {
+            timers.timerEvents.tryEmit(TimerAction.MORE_REST)
+        }
+        // Let the model handle it on this (main) dispatcher before the intent returns
+        repeat(5) { yield() }
+        delay(100)
+        return true
+    }
+
+    /**
      * An EMOM run only lives in the open workout (a reopened workout parks it, paused, before the next set), so
      * a button pressed after the app was terminated just removes the card.
      */
     private suspend fun performEmom(request: IosLiveTimer, action: String): Boolean {
         val model = models.lastOrNull { it.state.value.sessionId == request.sessionId }
-        val timers = model?.let { emomTimers[it] }
+        val timers = model?.let { timersByModel[it] }
         if (model == null || timers == null || timers.emomLiveInstance != request.instanceId || model.state.value.emomRun == null) {
             IosLiveTimerSnapshots.forget(EMOM_NOTICE, request.instanceId)
             IosWorkoutLiveActivityBridge.service?.cancel(EMOM_NOTICE)

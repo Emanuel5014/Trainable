@@ -111,6 +111,8 @@
     <string name="previous_exercise">Vorherige</string>
     <string name="next_exercise">Nächste</string>
     <string name="skip_rest">Überspringen</string>
+    <string name="next_set_done">Satz erledigt</string>
+    <string name="open_app_to_continue">Öffne Trainable, um fortzufahren</string>
     <string name="add_time">+30s</string>
     <string name="rest_timer">Pausentimer</string>
     <string name="warmup_timer">Aufwärmtimer</string>

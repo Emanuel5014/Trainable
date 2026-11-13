@@ -42,8 +42,8 @@ class AndroidWorkoutTimers(private val helper: TimerNotificationHelper) : Workou
     override fun showEmomNotification(info: EmomNotificationInfo) =
         helper.showEmomNotification(info)
 
-    override fun showRestFinished() =
-        helper.showRestFinished()
+    override fun showRestFinished(next: RestNextSet?) =
+        helper.showRestFinished(next)
 
     override fun showWarmupTimerFinished() =
         helper.showWarmupTimerFinished()
@@ -61,7 +61,8 @@ class AndroidWorkoutTimers(private val helper: TimerNotificationHelper) : Workou
         scheduleAlarm: Boolean,
         nextSetRepsLabel: String?,
         nextSetDetail: String?,
-        nextSetText: String?
+        nextSetText: String?,
+        nextSetKey: NextSetKey?
     ) =
         helper.startOrUpdateTimerNotification(
             remainingSeconds = remainingSeconds,
@@ -76,7 +77,8 @@ class AndroidWorkoutTimers(private val helper: TimerNotificationHelper) : Workou
             scheduleAlarm = scheduleAlarm,
             nextSetRepsLabel = nextSetRepsLabel,
             nextSetDetail = nextSetDetail,
-            nextSetText = nextSetText
+            nextSetText = nextSetText,
+            nextSetKey = nextSetKey
         )
 
     override fun startOrUpdateWarmupTimerNotification(

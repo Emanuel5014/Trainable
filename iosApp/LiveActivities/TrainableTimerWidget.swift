@@ -43,9 +43,15 @@ struct TrainableTimerWidget: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     if done {
-                        FinishedText(state: state, compact: true, accent: accent)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 6)
+                        VStack(alignment: .leading, spacing: 8) {
+                            FinishedText(state: state, compact: true, accent: accent)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            if state.hasFinishedRow(kind: kind) {
+                                FinishedActionRow(activityID: context.activityID, state: state, accent: accent,
+                                                  height: 30, plusWidth: 72)
+                            }
+                        }
+                        .padding(.horizontal, 6)
                     } else {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(alignment: .center, spacing: 12) {
@@ -149,6 +155,8 @@ private struct LockScreenTimerView: View {
             }
             if !done {
                 ControlRow(kind: kind, activityID: activityID, state: state, accent: accent, height: 32, isStale: isStale)
+            } else if state.hasFinishedRow(kind: kind) {
+                FinishedActionRow(activityID: activityID, state: state, accent: accent, height: 32, plusWidth: 84)
             }
         }
         .padding(.horizontal, 16).padding(.vertical, 14)
@@ -255,6 +263,11 @@ extension TrainableTimerAttributes.ContentState {
 
     /// The countdown is over (a rest/warmup past its end, or the whole EMOM run). Evaluated whenever the system
     /// renders the card: at its stale date, when the end alert arrives, or when the screen wakes.
+    /// A finished rest card with buttons (or the hint to open the app) instead of nothing under its text.
+    func hasFinishedRow(kind: String) -> Bool {
+        kind != emomKind && (!finishedActionKeys.isEmpty || needsApp)
+    }
+
     func isFinished(kind: String, isStale: Bool) -> Bool {
         if paused { return false }
         if kind == emomKind { return endsAt <= Date() }
@@ -387,6 +400,47 @@ private struct TimerControlButtons: View {
                 .background(fill, in: Capsule())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// The rest is over: "+Xs" and "✓ Set done" (the wide one), or the hint to open the app when no workout answered.
+private struct FinishedActionRow: View {
+    let activityID: String
+    let state: TrainableTimerAttributes.ContentState
+    let accent: Color
+    let height: CGFloat
+    let plusWidth: CGFloat
+
+    var body: some View {
+        if state.needsApp {
+            Text(state.openAppText)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.75))
+                .lineLimit(1).minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, minHeight: height, alignment: .leading)
+        } else {
+            let pairs = Array(zip(state.finishedActionKeys, state.finishedActionLabels))
+            HStack(spacing: 8) {
+                ForEach(pairs, id: \.0) { key, label in
+                    let primary = key == "rest.next"
+                    Button(intent: TimerControlIntent(activityID: activityID, instanceID: state.instanceID, action: key)) {
+                        Group {
+                            if primary {
+                                Label { Text(label) } icon: { Image(systemName: "checkmark") }.labelStyle(.titleAndIcon)
+                            } else {
+                                Text(label).monospacedDigit()
+                            }
+                        }
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                        .foregroundStyle(primary ? TimerPalette.onAccent(accent: state.accentARGB) : .white)
+                        .frame(maxWidth: primary || pairs.count == 1 ? .infinity : plusWidth, minHeight: height)
+                        .background(primary ? accent : .white.opacity(0.14), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .font(.subheadline.weight(.semibold))
+        }
     }
 }
 

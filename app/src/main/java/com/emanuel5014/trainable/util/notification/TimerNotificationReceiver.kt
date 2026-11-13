@@ -32,6 +32,8 @@ class TimerNotificationReceiver : BroadcastReceiver() {
         const val ACTION_SUBTRACT = "com.emanuel5014.trainable.ACTION_SUBTRACT"
         const val ACTION_DISMISS = "com.emanuel5014.trainable.ACTION_DISMISS"
         const val ACTION_TIMER_FINISHED = "com.emanuel5014.trainable.ACTION_TIMER_FINISHED"
+        const val ACTION_REST_NEXT_SET = "com.emanuel5014.trainable.ACTION_REST_NEXT_SET"
+        const val ACTION_REST_MORE = "com.emanuel5014.trainable.ACTION_REST_MORE"
 
         const val ACTION_WARMUP_SKIP = "com.emanuel5014.trainable.ACTION_WARMUP_SKIP"
         const val ACTION_WARMUP_ADD_30S = "com.emanuel5014.trainable.ACTION_WARMUP_ADD_30S"
@@ -100,6 +102,9 @@ class TimerNotificationReceiver : BroadcastReceiver() {
                 }
             }
 
+            ACTION_REST_NEXT_SET -> forwardRest(TimerAction.NEXT_SET)
+            ACTION_REST_MORE -> forwardRest(TimerAction.MORE_REST)
+
             ACTION_WARMUP_SKIP -> {
                 warmupTimerEvents.tryEmit(WarmupTimerAction.SKIP)
                 timerNotificationHelper.cancelWarmupTimer()
@@ -135,6 +140,16 @@ class TimerNotificationReceiver : BroadcastReceiver() {
             ACTION_EMOM_RESUME -> forwardEmom(EmomAction.RESUME)
             ACTION_EMOM_STOP -> forwardEmom(EmomAction.STOP)
         }
+    }
+
+    /** A finished-rest button acts only through the open workout; without one it writes nothing. */
+    private fun forwardRest(action: TimerAction) {
+        timerNotificationHelper.cancelCustomVibration()
+        if (timerEvents.subscriptionCount.value == 0) {
+            timerNotificationHelper.showOpenAppToContinue()
+            return
+        }
+        timerEvents.tryEmit(action)
     }
 
     private fun forwardEmom(action: EmomAction) {

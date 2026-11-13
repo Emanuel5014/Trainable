@@ -73,6 +73,9 @@ class TimerNotificationHelper @Inject constructor(
      */
     @Volatile var workoutSessionId: Int? = null
 
+    /** The set "Set done" would log, as the last rest notification announced it. */
+    @Volatile private var lastNextSetKey: NextSetKey? = null
+
     init {
         scope.launch {
             workoutRepository.deletedSessions.collect { id ->
@@ -364,6 +367,33 @@ class TimerNotificationHelper @Inject constructor(
      * Uses Android's internal Chronometer to update the countdown in the System UI
      * without requiring a notify() call every second.
      */
+    /** "Next: Squat - Set 2: 60 kg × 8", or null when there is no next set to announce. */
+    private fun nextSetLabelOf(
+        exerciseName: String?, nextSetNumber: Int?, nextSetWeight: Float?, nextSetReps: Int?, previousReps: Int?,
+        weightUnit: String?, nextSetRepsLabel: String?, nextSetDetail: String?, nextSetText: String?
+    ): String? {
+    return if (exerciseName != null && nextSetNumber != null && nextSetText != null) {
+        context.getString(R.string.notification_next_set_text, exerciseName, nextSetNumber, nextSetText)
+    } else if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && (nextSetReps != null || nextSetRepsLabel != null) && weightUnit != null) {
+        val formattedWeight = WeightUnitConverter.formatWithUnit(
+            WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
+            weightUnit
+        )
+        val base = if (nextSetRepsLabel != null || nextSetDetail != null) {
+            // Advanced prescription: string reps ("MAX") plus e.g. "75% · Pause 2″"
+            context.getString(
+                R.string.notification_next_set_detail,
+                exerciseName, nextSetNumber, formattedWeight, nextSetRepsLabel ?: nextSetReps.toString()
+            ) + (nextSetDetail?.let { " · $it" } ?: "")
+        } else {
+            context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
+        }
+        if (previousReps != null && previousReps != nextSetReps && nextSetRepsLabel == null) {
+            "$base ${context.getString(R.string.notification_last_reps, previousReps)}"
+        } else base
+    } else null
+    }
+
     fun startOrUpdateTimerNotification(
         remainingSeconds: Int,
         sessionId: Int,
@@ -378,9 +408,12 @@ class TimerNotificationHelper @Inject constructor(
         nextSetRepsLabel: String? = null,
         nextSetDetail: String? = null,
         /** Replaces weight × reps for a timed set ("45s · 20 reps"). */
-        nextSetText: String? = null
+        nextSetText: String? = null,
+        /** The set "Set done" may log once the rest ends; null hides that button. */
+        nextSetKey: NextSetKey? = null
     ) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
+        lastNextSetKey = nextSetKey
         
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -408,26 +441,8 @@ class TimerNotificationHelper @Inject constructor(
         }
         val subtractPendingIntent = PendingIntent.getBroadcast(context, 5, subtractIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetText != null) {
-            context.getString(R.string.notification_next_set_text, exerciseName, nextSetNumber, nextSetText)
-        } else if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && (nextSetReps != null || nextSetRepsLabel != null) && weightUnit != null) {
-            val formattedWeight = WeightUnitConverter.formatWithUnit(
-                WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
-                weightUnit
-            )
-            val base = if (nextSetRepsLabel != null || nextSetDetail != null) {
-                // Advanced prescription: string reps ("MAX") plus e.g. "75% · Pause 2″"
-                context.getString(
-                    R.string.notification_next_set_detail,
-                    exerciseName, nextSetNumber, formattedWeight, nextSetRepsLabel ?: nextSetReps.toString()
-                ) + (nextSetDetail?.let { " · $it" } ?: "")
-            } else {
-                context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
-            }
-            if (previousReps != null && previousReps != nextSetReps && nextSetRepsLabel == null) {
-                "$base ${context.getString(R.string.notification_last_reps, previousReps)}"
-            } else base
-        } else null
+        val nextSetLabel = nextSetLabelOf(exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps,
+            weightUnit, nextSetRepsLabel, nextSetDetail, nextSetText)
         lastNextSetLabel = nextSetLabel
 
         val total = if (totalSeconds != null && totalSeconds > 0) totalSeconds else remainingSeconds
@@ -486,7 +501,13 @@ class TimerNotificationHelper @Inject constructor(
         }
     }
 
-    fun showRestFinished() {
+    /** The rest is over; [next] (from the open workout) is the set the card now announces. */
+    fun showRestFinished(next: RestNextSet? = null) {
+        if (next != null) {
+            lastNextSetLabel = nextSetLabelOf(next.exerciseName, next.setNumber, next.weight, next.reps, next.previousReps,
+                next.weightUnit, next.repsLabel, next.detail, next.text)
+            lastNextSetKey = next.key
+        }
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -531,6 +552,10 @@ class TimerNotificationHelper @Inject constructor(
             .setOngoing(false)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .apply {
+                if (showTimeButtons && addEnabled) addAction(0, "+${addSeconds}s", restActionIntent(TimerNotificationReceiver.ACTION_REST_MORE, 6))
+                if (lastNextSetKey != null) addAction(0, context.getString(R.string.next_set_done), restActionIntent(TimerNotificationReceiver.ACTION_REST_NEXT_SET, 7))
+            }
             .addAction(0, context.getString(R.string.dismiss), dismissPendingIntent)
 
         if (useCustomVibration) {
@@ -543,6 +568,33 @@ class TimerNotificationHelper @Inject constructor(
         }
 
         notificationManager.notify(notificationId, notificationBuilder.build())
+    }
+
+    private fun restActionIntent(action: String, requestCode: Int): PendingIntent {
+        val intent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            this.action = action
+            workoutSessionId?.let { putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, it) }
+        }
+        return PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+
+    /** A "Set done" / "+s" press reached no open workout: say so, with no button that would do nothing again. */
+    fun showOpenAppToContinue() {
+        cancelCustomVibration()
+        val intent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val text = context.getString(R.string.open_app_to_continue)
+        val notification = NotificationCompat.Builder(context, finishedChannelId)
+            .setSmallIcon(R.drawable.ic_app_logo)
+            .setContentTitle(context.getString(R.string.rest_timer))
+            .setContentText(text)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setSilent(true)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+        notificationManager.notify(notificationId, notification)
     }
 
     fun cancelTimer() {

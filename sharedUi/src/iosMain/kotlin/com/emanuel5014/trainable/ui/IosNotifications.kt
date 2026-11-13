@@ -139,7 +139,8 @@ internal data class IosNotificationWords(val restTitle: String, val restBody: St
     val nextSetTemplate: String = "Next: %1\$s - Set %2\$d: %3\$s × %4\$d",
     val nextSetDetailTemplate: String = "Next: %1\$s - Set %2\$d: %3\$s × %4\$s",
     val nextSetTextTemplate: String = "Next: %1\$s - Set %2\$d: %3\$s",
-    val lastRepsTemplate: String = "(last: %1\$d)", val skipLabel: String = "Skip") {
+    val lastRepsTemplate: String = "(last: %1\$d)", val skipLabel: String = "Skip",
+    val nextSetDoneLabel: String = "Set done", val openAppText: String = "Open Trainable to continue") {
     private fun fill(template: String, vararg args: Any): String =
         Regex("%(\\d+)\\$[sd]").replace(template) { match -> args[match.groupValues[1].toInt() - 1].toString() }
 
@@ -219,7 +220,8 @@ internal fun IosNotificationEffects(preferences: UserPreferencesRepository) {
         stringResource(Res.string.gym_membership_expiring), stringResource(Res.string.gym_membership_expiring_desc),
         stringResource(Res.string.emom_round_progress), stringResource(Res.string.emom_notification_finished_title), stringResource(Res.string.emom_notification_title_get_ready),
         stringResource(Res.string.notification_next_set), stringResource(Res.string.notification_next_set_detail),
-        stringResource(Res.string.notification_next_set_text), stringResource(Res.string.notification_last_reps), stringResource(Res.string.skip_rest))
+        stringResource(Res.string.notification_next_set_text), stringResource(Res.string.notification_last_reps), stringResource(Res.string.skip_rest),
+        stringResource(Res.string.next_set_done), stringResource(Res.string.open_app_to_continue))
     SideEffect { IosNotifications.words = words }
     var activation by remember { mutableIntStateOf(0) }
     DisposableEffect(Unit) {

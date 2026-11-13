@@ -29,7 +29,11 @@ final class WorkoutLiveActivityService: NSObject, IosWorkoutLiveActivities {
             roundStartsAt: timer.roundStartsAtMillis > 0 ? Date(timeIntervalSince1970: Double(timer.roundStartsAtMillis) / 1000) : nil,
             roundEndsAt: timer.roundEndsAtMillis > 0 ? Date(timeIntervalSince1970: Double(timer.roundEndsAtMillis) / 1000) : nil,
             paused: timer.paused,
-            actionKeys: Array(timer.actionKeys.prefix(4)), actionLabels: Array(timer.actionLabels.prefix(4)).map { String($0.prefix(30)) })
+            actionKeys: Array(timer.actionKeys.prefix(4)), actionLabels: Array(timer.actionLabels.prefix(4)).map { String($0.prefix(30)) },
+            finishedActionKeys: Array(timer.finishedActionKeys.prefix(2)),
+            finishedActionLabels: Array(timer.finishedActionLabels.prefix(2)).map { String($0.prefix(30)) },
+            openAppText: String(timer.openAppText.prefix(120)), needsApp: timer.needsApp,
+            nextSetToken: String(timer.nextSetToken.prefix(60)))
         let kind = timer.kind
         DispatchQueue.main.async { TimerLiveActivityCoordinator.shared.set(kind: kind, state: state) }
     }
@@ -63,13 +67,15 @@ final class TimerLiveActivityCoordinator {
     private var synchronization: Task<Void, Never>?
     private var expirations: [String: Task<Void, Never>] = [:]
     private var observers: [NSObjectProtocol] = []
+    /// A finished rest card with buttons stays at zero this long at most, then it ends.
+    private let restFinishedKeepSeconds: TimeInterval = 1800
 
     private init() {
         // Existing activities survive process recreation. Restore only their display state, never workout data.
         for activity in TimerActivity.activities where kinds.contains(activity.attributes.kind) {
             let kind = activity.attributes.kind
             let state = activity.content.state
-            if isRunning(activity), state.endsAt > Date() {
+            if isRunning(activity), expiry(state) > Date() {
                 desired[kind] = state
                 knownInstances[kind] = state.instanceID
             }
@@ -136,7 +142,9 @@ final class TimerLiveActivityCoordinator {
             exercise: state.exercise, setLine: state.setLine, accentArgb: state.accentARGB,
             roundStartsAtMillis: state.roundStartsAt.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0,
             roundEndsAtMillis: state.roundEndsAt.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0,
-            paused: state.paused, actionKeys: state.actionKeys, actionLabels: state.actionLabels)
+            paused: state.paused, actionKeys: state.actionKeys, actionLabels: state.actionLabels,
+            finishedActionKeys: state.finishedActionKeys, finishedActionLabels: state.finishedActionLabels,
+            openAppText: state.openAppText, needsApp: state.needsApp, nextSetToken: state.nextSetToken)
         _ = try? await IosWorkoutTimerActions.shared.perform(request: request, action: action)
         // Kotlin forwards ActivityKit mutations through the serial main queue. Drain it before the intent exits.
         await withCheckedContinuation { continuation in
@@ -161,13 +169,19 @@ final class TimerLiveActivityCoordinator {
         }
     }
 
+    /// When the card is no longer wanted: at its deadline, or later for a finished rest that still offers buttons.
+    private func expiry(_ state: State) -> Date {
+        let keepsAfterEnd = !state.finishedActionKeys.isEmpty || state.needsApp
+        return keepsAfterEnd ? state.endsAt.addingTimeInterval(restFinishedKeepSeconds) : state.endsAt
+    }
+
     private func isRunning(_ activity: TimerActivity) -> Bool {
         activity.activityState == .active || activity.activityState == .stale
     }
 
     private func reconcile() async {
         let now = Date()
-        desired = desired.filter { $0.value.endsAt > now }
+        desired = desired.filter { expiry($0.value) > now }
         if !ActivityAuthorizationInfo().areActivitiesEnabled { desired.removeAll() }
         let snapshot = desired
         let activities = TimerActivity.activities.filter { kinds.contains($0.attributes.kind) }
@@ -209,7 +223,7 @@ final class TimerLiveActivityCoordinator {
         expirations.values.forEach { $0.cancel() }
         expirations.removeAll()
         for (kind, state) in desired {
-            let delay = max(0, state.endsAt.timeIntervalSinceNow)
+            let delay = max(0, expiry(state).timeIntervalSinceNow)
             expirations[kind] = Task { [weak self] in
                 do { try await Task.sleep(nanoseconds: UInt64(min(delay, 86_400) * 1_000_000_000)) }
                 catch { return }

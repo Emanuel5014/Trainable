@@ -577,6 +577,10 @@
     <string name="timer_buttons">Boutons du minuteur</string>
     <string name="timer_buttons_desc">Choisis lesquels des boutons + et − affichent le minuteur de repos et d'échauffement, dans l'appli et dans la notification, et de combien ils déplacent le décompte.</string>
     <string name="timer_subtract_time">Retirer du temps</string>
+    <string name="timer_next_set_button">Bouton Série faite</string>
+    <string name="timer_next_set_button_desc">À la fin du repos, enregistre la série suivante depuis la notification</string>
+    <string name="next_set_done">Série faite</string>
+    <string name="open_app_to_continue">Ouvre Trainable pour continuer</string>
     <string name="today">aujourd'hui</string>
     <string name="username">Nom d'utilisateur</string>
     <string name="weight_unit">Unité de Poids</string>

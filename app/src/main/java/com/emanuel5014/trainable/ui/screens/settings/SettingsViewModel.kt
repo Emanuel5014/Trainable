@@ -239,6 +239,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setTimerShowSkipButton(show: Boolean) = state.setTimerShowSkipButton(show)
 
+    val timerShowNextSetButton = state.timerShowNextSetButton
+
+    fun setTimerShowNextSetButton(show: Boolean) = state.setTimerShowNextSetButton(show)
+
     val startingWeightEnabled = state.startingWeightEnabled
 
     fun setStartingWeightEnabled(enabled: Boolean) = state.setStartingWeightEnabled(enabled)

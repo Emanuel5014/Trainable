@@ -574,6 +574,10 @@
     <string name="timer_buttons">Timer-Tasten</string>
     <string name="timer_buttons_desc">Wähle, welche der Tasten + und − der Erholungs- und der Aufwärmtimer in der App und in der Benachrichtigung zeigen, und um wie viel sie den Countdown verschieben.</string>
     <string name="timer_subtract_time">Zeit abziehen</string>
+    <string name="timer_next_set_button">Satz-erledigt-Taste</string>
+    <string name="timer_next_set_button_desc">Nach der Pause den nächsten Satz aus der Benachrichtigung eintragen</string>
+    <string name="next_set_done">Satz erledigt</string>
+    <string name="open_app_to_continue">Öffne Trainable, um fortzufahren</string>
     <string name="today">heute</string>
     <string name="username">Benutzername</string>
     <string name="weight_unit">Gewichtseinheit</string>
