@@ -12,7 +12,6 @@ import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.notification.AndroidWorkoutTimers
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,7 +25,7 @@ class WorkoutViewModel @Inject constructor(
     localeManager: AppLocaleManager,
     oneRepMaxRepository: OneRepMaxRepository,
     journalRepository: JournalRepository,
-    savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val model = WorkoutModel(
         workoutRepository = workoutRepository,
@@ -40,7 +39,7 @@ class WorkoutViewModel @Inject constructor(
         languageCodes = userPreferencesRepository.userLanguage.map { localeManager.getResolvedLanguage() },
         modelScope = viewModelScope,
         planId = savedStateHandle.get<Int>("planId"),
-        sessionId = savedStateHandle.get<Int>("sessionId"),
+        sessionId = savedStateHandle.get<Int>(WORKOUT_SESSION_ID),
         quickStart = savedStateHandle.get<Boolean>("quickStart") ?: false,
         workoutName = savedStateHandle.get<String>("workoutName"),
         nowMillis = System::currentTimeMillis
@@ -48,10 +47,9 @@ class WorkoutViewModel @Inject constructor(
 
     init {
         // The notifications of this workout outlive the screen: tell their helper which session they belong to
-        viewModelScope.launch {
-            model.state.map { it.sessionId }.distinctUntilChanged().collect { id ->
-                if (id != null) timerNotificationHelper.workoutSessionId = id
-            }
+        // The saved state names the session too, so a screen recreated after process death resumes it
+        viewModelScope.followWorkoutSession(model.state, savedStateHandle) { id ->
+            timerNotificationHelper.workoutSessionId = id
         }
     }
 
