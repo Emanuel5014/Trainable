@@ -1562,4 +1562,31 @@
     <string name="speed">Speed</string>
     <string name="cardio_missing_values">Add a duration or a distance</string>
     <string name="cardio_entry_label">Add cardio</string>
+    <string name="routine_group_new">New group</string>
+    <string name="routine_group_name">Group name</string>
+    <string name="routine_group_color">Color</string>
+    <string name="routine_group_color_hint">The first three follow the app theme; the last one you pick yourself.</string>
+    <string name="routine_group_create">Create group</string>
+    <string name="routine_group_move_to">Or move to</string>
+    <string name="routine_group_none">No group</string>
+    <string name="routine_group_archived">archived</string>
+    <string name="routine_group_since">since %1$s</string>
+    <string name="routine_group_action">Group</string>
+    <string name="routine_group_options">Group options</string>
+    <string name="routine_group_expand">Open group</string>
+    <string name="routine_group_collapse">Close group</string>
+    <string name="routine_group_rename">Rename</string>
+    <string name="routine_group_change_color">Change color</string>
+    <string name="routine_group_move_up">Move group up</string>
+    <string name="routine_group_move_down">Move group down</string>
+    <string name="routine_group_archive">Archive group</string>
+    <string name="routine_group_archive_hint">Its routines go to Archived, still together</string>
+    <string name="routine_group_restore">Restore group</string>
+    <string name="routine_group_restore_hint">Its routines go back to Active</string>
+    <string name="routine_group_dissolve">Ungroup</string>
+    <string name="routine_group_dissolve_hint">The routines stay, in no group</string>
+    <plurals name="routine_group_routines">
+        <item quantity="one">%1$d routine</item>
+        <item quantity="other">%1$d routines</item>
+    </plurals>
 </resources>

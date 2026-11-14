@@ -1566,4 +1566,32 @@
     <string name="speed">Velocità</string>
     <string name="cardio_missing_values">Aggiungi una durata o una distanza</string>
     <string name="cardio_entry_label">Aggiungi cardio</string>
+    <string name="routine_group_new">Nuovo gruppo</string>
+    <string name="routine_group_name">Nome del gruppo</string>
+    <string name="routine_group_color">Colore</string>
+    <string name="routine_group_color_hint">I primi tre seguono il tema dell'app; l'ultimo lo scegli tu.</string>
+    <string name="routine_group_create">Crea gruppo</string>
+    <string name="routine_group_move_to">Oppure sposta in</string>
+    <string name="routine_group_none">Senza gruppo</string>
+    <string name="routine_group_archived">archiviato</string>
+    <string name="routine_group_since">da %1$s</string>
+    <string name="routine_group_action">Raggruppa</string>
+    <string name="routine_group_options">Opzioni del gruppo</string>
+    <string name="routine_group_expand">Apri gruppo</string>
+    <string name="routine_group_collapse">Chiudi gruppo</string>
+    <string name="routine_group_rename">Rinomina</string>
+    <string name="routine_group_change_color">Cambia colore</string>
+    <string name="routine_group_move_up">Sposta gruppo su</string>
+    <string name="routine_group_move_down">Sposta gruppo giù</string>
+    <string name="routine_group_archive">Archivia gruppo</string>
+    <string name="routine_group_archive_hint">Le schede vanno in Archiviate, ancora insieme</string>
+    <string name="routine_group_restore">Ripristina gruppo</string>
+    <string name="routine_group_restore_hint">Le schede tornano tra le attive</string>
+    <string name="routine_group_dissolve">Sciogli gruppo</string>
+    <string name="routine_group_dissolve_hint">Le schede restano, senza gruppo</string>
+    <plurals name="routine_group_routines">
+        <item quantity="one">%1$d scheda</item>
+        <item quantity="many">%1$d schede</item>
+        <item quantity="other">%1$d schede</item>
+    </plurals>
 </resources>

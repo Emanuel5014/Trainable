@@ -1566,4 +1566,32 @@
     <string name="speed">Vitesse</string>
     <string name="cardio_missing_values">Ajoutez une durée ou une distance</string>
     <string name="cardio_entry_label">Ajouter du cardio</string>
+    <string name="routine_group_new">Nouveau groupe</string>
+    <string name="routine_group_name">Nom du groupe</string>
+    <string name="routine_group_color">Couleur</string>
+    <string name="routine_group_color_hint">Les trois premières suivent le thème de l'app ; la dernière, tu la choisis.</string>
+    <string name="routine_group_create">Créer le groupe</string>
+    <string name="routine_group_move_to">Ou déplacer vers</string>
+    <string name="routine_group_none">Sans groupe</string>
+    <string name="routine_group_archived">archivé</string>
+    <string name="routine_group_since">depuis %1$s</string>
+    <string name="routine_group_action">Grouper</string>
+    <string name="routine_group_options">Options du groupe</string>
+    <string name="routine_group_expand">Ouvrir le groupe</string>
+    <string name="routine_group_collapse">Fermer le groupe</string>
+    <string name="routine_group_rename">Renommer</string>
+    <string name="routine_group_change_color">Changer la couleur</string>
+    <string name="routine_group_move_up">Monter le groupe</string>
+    <string name="routine_group_move_down">Descendre le groupe</string>
+    <string name="routine_group_archive">Archiver le groupe</string>
+    <string name="routine_group_archive_hint">Les routines passent dans Archivées, toujours ensemble</string>
+    <string name="routine_group_restore">Restaurer le groupe</string>
+    <string name="routine_group_restore_hint">Les routines reviennent dans Actives</string>
+    <string name="routine_group_dissolve">Dissoudre le groupe</string>
+    <string name="routine_group_dissolve_hint">Les routines restent, sans groupe</string>
+    <plurals name="routine_group_routines">
+        <item quantity="one">%1$d routine</item>
+        <item quantity="many">%1$d routines</item>
+        <item quantity="other">%1$d routines</item>
+    </plurals>
 </resources>

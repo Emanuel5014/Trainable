@@ -152,6 +152,14 @@ import com.emanuel5014.trainable.sharedui.resources.unarchive
 import com.emanuel5014.trainable.sharedui.resources.unarchive_routine
 import com.emanuel5014.trainable.sharedui.resources.unarchive_routine_message
 import com.emanuel5014.trainable.sharedui.resources.your_routines
+import com.emanuel5014.trainable.sharedui.resources.routine_group_action
+import com.emanuel5014.trainable.sharedui.resources.routine_group_none
+import com.emanuel5014.trainable.sharedui.resources.routine_group_routines
+import com.emanuel5014.trainable.sharedui.resources.routine_group_since
+import com.emanuel5014.trainable.ui.screens.history.MonthCalendar
+import org.jetbrains.compose.resources.pluralStringResource
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.material.icons.rounded.CreateNewFolder
 import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
 import com.emanuel5014.trainable.ui.components.LocalPlanImage
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
@@ -160,6 +168,7 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.isoDayNumber
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
+import com.emanuel5014.trainable.data.local.entity.RoutineGroupEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.model.NavBarStyle
@@ -238,6 +247,11 @@ fun RoutineListContent(
     var showBulkArchiveDialog by remember { mutableStateOf(false) }
     var planToDelete by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var planToArchive by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
+    var showGroupSheet by remember { mutableStateOf(false) }
+    // The group whose ⋮ was tapped, and whether on the Archived tab
+    var groupMenu by remember { mutableStateOf<Pair<RoutineGroupEntity, Boolean>?>(null) }
+    var groupToRename by remember { mutableStateOf<RoutineGroupEntity?>(null) }
+    var groupToRecolor by remember { mutableStateOf<RoutineGroupEntity?>(null) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
     var startDate by remember { mutableStateOf(Clock.System.now().toEpochMilliseconds()) }
@@ -367,6 +381,13 @@ fun RoutineListContent(
                                 contentColor = Error
                             )
                         }
+                        GymIconButton(
+                            icon = Icons.Rounded.CreateNewFolder,
+                            onClick = { showGroupSheet = true },
+                            containerColor = SurfaceContainerHigh,
+                            contentColor = Primary,
+                            description = stringResource(Res.string.routine_group_action)
+                        )
                         GymIconButton(
                             icon = Icons.Rounded.Assessment,
                             onClick = { onGenerateReport(uiState.selectedPlanIds.toList()) },
@@ -522,6 +543,7 @@ fun RoutineListContent(
                 ) { page ->
                     val isArchivedPage = page == 1
                     val plans = if (isArchivedPage) uiState.archivedPlans else uiState.plans
+                    val sections = remember(plans, uiState.groups) { routineSections(plans, uiState.groups) }
                     
                     // M3 Expressive: Page transformation based on scroll progress
                     val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
@@ -544,11 +566,14 @@ fun RoutineListContent(
                     ) {
                         RoutineListPage(
                             plans = plans,
+                            sections = sections,
+                            lastSessionTimes = uiState.lastSessionTimes,
                             isArchived = isArchivedPage,
                             onNavigateToDetail = onNavigateToDetail,
                             onDelete = { planToDelete = it },
                             onArchiveToggle = { planToArchive = it },
-                            onReorder = { from, to -> state.movePlan(from, to, isArchivedPage) },
+                            onSwap = { planId, otherId -> state.swapPlans(planId, otherId) },
+                            onGroupMenu = { groupMenu = it to isArchivedPage },
                             isLoading = uiState.isLoading,
                             isSelectionMode = uiState.isSelectionMode,
                             swipeActionsEnabled = swipeActionsEnabled,
@@ -562,6 +587,7 @@ fun RoutineListContent(
                                 {
                                     RoutineWeekCard(
                                         plans = plans,
+                                        sections = sections,
                                         collapsed = weekCollapsed == true,
                                         onToggle = { state.setWeekCollapsed(weekCollapsed != true) },
                                         onOpenPlan = onNavigateToDetail
@@ -586,6 +612,93 @@ fun RoutineListContent(
                 )
             }
         }
+    }
+
+    if (showGroupSheet) {
+        val all = uiState.plans + uiState.archivedPlans
+        val selected = all.filter { it.plan.id in uiState.selectedPlanIds }
+        val choices = uiState.groups.mapNotNull { group ->
+            val members = all.filter { it.plan.groupId == group.id }
+            when {
+                members.isEmpty() -> null
+                // Already all in it: nothing to move
+                selected.all { it.plan.groupId == group.id } -> null
+                else -> GroupChoice(group, members.size, archived = members.none { it.plan.isActive })
+            }
+        }
+        RoutineGroupSheet(
+            selectedNames = selected.map { it.plan.nome },
+            choices = choices,
+            canUngroup = selected.any { it.plan.groupId != null },
+            defaultColorRole = nextGroupColorRole(uiState.groups),
+            onCreate = { name, role, custom ->
+                state.groupSelectedPlans(name, role, custom)
+                showGroupSheet = false
+            },
+            onMoveTo = { groupId ->
+                state.moveSelectedPlansToGroup(groupId)
+                showGroupSheet = false
+            },
+            onDismiss = { showGroupSheet = false }
+        )
+    }
+
+    groupMenu?.let { (group, archivedTab) ->
+        val all = uiState.plans + uiState.archivedPlans
+        // Neighbours as this tab shows them, so "move up" never swaps with a group the tab does not show
+        val shown = routineSections(if (archivedTab) uiState.archivedPlans else uiState.plans, uiState.groups)
+            .mapNotNull { it.group }
+        val index = shown.indexOfFirst { it.id == group.id }
+        RoutineGroupMenuSheet(
+            group = group,
+            names = all.filter { it.plan.groupId == group.id }.joinToString(" · ") { it.plan.nome },
+            archivedTab = archivedTab,
+            canMoveUp = index > 0,
+            canMoveDown = index >= 0 && index < shown.lastIndex,
+            onRename = {
+                groupMenu = null
+                groupToRename = group
+            },
+            onChangeColor = {
+                groupMenu = null
+                groupToRecolor = group
+            },
+            onMove = { up ->
+                shown.getOrNull(if (up) index - 1 else index + 1)?.let { state.swapGroups(group, it) }
+                groupMenu = null
+            },
+            onArchive = {
+                state.setGroupArchived(group, archived = !archivedTab)
+                groupMenu = null
+            },
+            onDissolve = {
+                state.dissolveGroup(group)
+                groupMenu = null
+            },
+            onDismiss = { groupMenu = null }
+        )
+    }
+
+    groupToRename?.let { group ->
+        RoutineGroupRenameDialog(
+            initialName = group.name,
+            onDismiss = { groupToRename = null },
+            onSave = { name ->
+                state.renameGroup(group, name)
+                groupToRename = null
+            }
+        )
+    }
+
+    groupToRecolor?.let { group ->
+        RoutineGroupColorDialog(
+            group = group,
+            onDismiss = { groupToRecolor = null },
+            onPick = { role, custom ->
+                state.setGroupColor(group, role, custom)
+                groupToRecolor = null
+            }
+        )
     }
 
     if (showBulkDeleteDialog) {
@@ -1058,18 +1171,21 @@ private fun ExportOptionRow(
 @Composable
 private fun RoutineListPage(
     plans: List<PlanWithDetails>,
+    /** [plans] split by group (see [routineSections]); one section without a group when nothing is grouped. */
+    sections: List<RoutineSection>,
+    lastSessionTimes: Map<Int, Long>,
     isArchived: Boolean,
     onNavigateToDetail: (Int) -> Unit,
     onDelete: (WorkoutPlanEntity) -> Unit,
     onArchiveToggle: (WorkoutPlanEntity) -> Unit,
-    onReorder: (Int, Int) -> Unit,
+    /** Swaps two routines in the order: a routine moving up or down next to its neighbour in its group. */
+    onSwap: (Int, Int) -> Unit,
+    onGroupMenu: (RoutineGroupEntity) -> Unit,
     isLoading: Boolean,
     isSelectionMode: Boolean = false,
     swipeActionsEnabled: Boolean = true,
     selectedPlanIds: Set<Int> = emptySet(),
     onToggleSelection: (Int) -> Unit = {},
-    isFirst: Boolean = false,
-    isLast: Boolean = false,
     languageCode: String = "en",
     listState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState(),
     /** Shown above the routines as the first list item (the week card on the Active tab). */
@@ -1078,7 +1194,9 @@ private fun RoutineListPage(
     headerVisible: Boolean = true
 ) {
     val bottomClearance = navBarBottomClearance()
-    val hasHead = header != null && headerVisible
+    val grouped = sections.isGrouped()
+    // Without groups the week card is the head of the one group of rows; with groups it stands alone
+    val hasHead = header != null && headerVisible && !grouped
     // A header that appears while the list sits at the top would be placed above the screen (the list keeps the
     // first routine in place): scroll back up so it is seen.
     val hasHeader = header != null
@@ -1087,13 +1205,9 @@ private fun RoutineListPage(
             listState.requestScrollToItem(0)
         }
     }
-    val haptic = LocalHapticFeedback.current
-    val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
-    
-    // Reordering State local to page
-    val localPlans = remember(plans) { mutableStateListOf<PlanWithDetails>().apply { addAll(plans) } }
-    var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
-    var dragOffsetY by remember { mutableStateOf(0f) }
+    // Which groups are folded (key -1 = the routines in no group): open on Active, folded on Archived, until tapped
+    val folded = remember(isArchived) { mutableStateMapOf<Int, Boolean>() }
+    val monthNames = remember { MonthCalendar.shortMonthNames() }
 
     if (isLoading && plans.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -1122,113 +1236,204 @@ private fun RoutineListPage(
                     ) { header() }
                 }
             }
-            itemsIndexed(localPlans, key = { _, planWithDetails -> planWithDetails.plan.id }) { index, planWithDetails ->
-                val plan = planWithDetails.plan
-                val isDragging = draggedItemIndex == index
-                val zIndex = if (isDragging) 1f else 0f
-                val isSelected = selectedPlanIds.contains(plan.id)
-
-                val dismissState = rememberSwipeToDismissBoxState()
-
-                LaunchedEffect(dismissState.targetValue) {
-                    if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
-                        if (!isSelectionMode && swipeActionsEnabled) {
-                            when (dismissState.targetValue) {
-                                SwipeToDismissBoxValue.EndToStart -> {
-                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onDelete(plan)
-                                }
-                                SwipeToDismissBoxValue.StartToEnd -> {
-                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onArchiveToggle(plan)
-                                }
-                                else -> {}
-                            }
-                        }
-                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+            sections.forEachIndexed { sectionIndex, section ->
+                val group = section.group
+                val foldKey = group?.id ?: -1
+                val isFolded = grouped && (folded[foldKey] ?: isArchived)
+                if (grouped) item(key = "group_$foldKey") {
+                    val count = section.plans.size
+                    val countText = pluralStringResource(Res.plurals.routine_group_routines, count, count)
+                    val subtitle = when {
+                        group == null -> countText
+                        isArchived -> routineGroupPeriod(section.plans, lastSessionTimes)
+                            ?.let { (start, end) -> formatMonthRange(start, end, monthNames) + " · " + countText }
+                            ?: countText
+                        else -> countText + " · " + stringResource(
+                            Res.string.routine_group_since,
+                            formatMonthYear(section.plans.minOf { it.plan.dataInizio }, monthNames)
+                        )
+                    }
+                    val title = group?.name ?: stringResource(Res.string.routine_group_none)
+                    val colors = if (group != null) routineGroupColors(group) else ungroupedCoverColors()
+                    val onMenu: (() -> Unit)? = if (group != null && !isSelectionMode) {
+                        { onGroupMenu(group) }
+                    } else null
+                    // Air above every group but a first one that opens the list
+                    val top = if (sectionIndex == 0 && header == null) 0.dp else 14.dp
+                    if (isFolded) {
+                        RoutineGroupFoldedCard(
+                            title = title,
+                            subtitle = subtitle,
+                            names = section.plans.joinToString(" · ") { it.plan.nome },
+                            count = count,
+                            colors = colors,
+                            named = group != null,
+                            onExpand = { folded[foldKey] = false },
+                            modifier = Modifier.animateItem().padding(top = top)
+                        )
+                    } else {
+                        RoutineGroupHeader(
+                            title = title,
+                            subtitle = subtitle,
+                            swatch = if (group != null) colors.first else null,
+                            onToggle = { folded[foldKey] = true },
+                            onMenu = onMenu,
+                            modifier = Modifier.animateItem().padding(top = top, bottom = 5.dp)
+                        )
                     }
                 }
-
-                SwipeToDismissBox(
-                    state = dismissState,
-                    enableDismissFromStartToEnd = !isSelectionMode && swipeActionsEnabled,
-                    enableDismissFromEndToStart = !isSelectionMode && swipeActionsEnabled,
-                    backgroundContent = {
-                        val progress = dismissState.progress
-                        
-                        val color by animateColorAsState(
-                            when {
-                                progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
-                                progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
-                                else -> Color.Transparent
-                            }, label = "bg_color"
+                if (!isFolded) {
+                    val sectionPlans = section.plans
+                    itemsIndexed(sectionPlans, key = { _, planWithDetails -> planWithDetails.plan.id }) { index, planWithDetails ->
+                        RoutineListItem(
+                            planWithDetails = planWithDetails,
+                            position = index,
+                            count = sectionPlans.size,
+                            hasHead = hasHead && sectionIndex == 0,
+                            cover = when {
+                                !grouped -> null
+                                group != null -> routineGroupColors(group)
+                                else -> ungroupedCoverColors()
+                            },
+                            isArchived = isArchived,
+                            isSelectionMode = isSelectionMode,
+                            isSelected = planWithDetails.plan.id in selectedPlanIds,
+                            swipeActionsEnabled = swipeActionsEnabled,
+                            languageCode = languageCode,
+                            onNavigateToDetail = onNavigateToDetail,
+                            onToggleSelection = onToggleSelection,
+                            onDelete = onDelete,
+                            onArchiveToggle = onArchiveToggle,
+                            onMoveUp = sectionPlans.getOrNull(index - 1)?.let { previous ->
+                                { onSwap(planWithDetails.plan.id, previous.plan.id) }
+                            },
+                            onMoveDown = sectionPlans.getOrNull(index + 1)?.let { next ->
+                                { onSwap(planWithDetails.plan.id, next.plan.id) }
+                            },
+                            modifier = Modifier.animateItem()
                         )
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(routineRowCorners(index, localPlans.size, hasHead).toShape())
-                                .background(color)
-                                .padding(horizontal = 28.dp)
-                        ) {
-                            if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
-                                Icon(
-                                    if (isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
-                                    contentDescription = "Archive",
-                                    tint = Primary,
-                                    modifier = Modifier.align(Alignment.CenterStart).size(28.dp)
-                                )
-                            }
-                            if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
-                                Icon(
-                                    Icons.Rounded.DeleteSweep,
-                                    contentDescription = "Delete",
-                                    tint = Error,
-                                    modifier = Modifier.align(Alignment.CenterEnd).size(28.dp)
-                                )
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .zIndex(zIndex)
-                        .graphicsLayer {
-                            translationY = if (isDragging) dragOffsetY else 0f
-                            scaleX = if (isDragging) 1.02f else 1f
-                            scaleY = if (isDragging) 1.02f else 1f
-                            shadowElevation = if (isDragging) 12.dp.toPx() else 0f
-                            shape = routineRowCorners(index, localPlans.size, hasHead).toShape()
-                            clip = isDragging
-                        }
-                        // Reordering handled via buttons now to avoid gesture conflicts
-                ) {
-                    RoutineRow(
-                        planWithDetails = planWithDetails,
-                        position = index,
-                        count = localPlans.size,
-                        hasHead = hasHead,
-                        languageCode = languageCode,
-                        onClick = { 
-                            if (isSelectionMode) {
-                                onToggleSelection(plan.id)
-                            } else {
-                                onNavigateToDetail(plan.id) 
-                            }
-                        },
-                        onLongClick = {
-                            if (!isSelectionMode) {
-                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onToggleSelection(plan.id)
-                            }
-                        },
-                        isSelectionMode = isSelectionMode,
-                        isSelected = isSelected,
-                        isArchived = isArchived,
-                        onMoveUp = if (index > 0) { { onReorder(index, index - 1) } } else null,
-                        onMoveDown = if (index < localPlans.size - 1) { { onReorder(index, index + 1) } } else null
-                    )
+                    }
                 }
             }
             item { Spacer(modifier = Modifier.height(bottomClearance)) }
         }
+    }
+}
+
+/** One routine of the list with its swipe actions (archive one way, delete the other). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RoutineListItem(
+    planWithDetails: PlanWithDetails,
+    position: Int,
+    count: Int,
+    hasHead: Boolean,
+    cover: Pair<Color, Color>?,
+    isArchived: Boolean,
+    isSelectionMode: Boolean,
+    isSelected: Boolean,
+    swipeActionsEnabled: Boolean,
+    languageCode: String,
+    onNavigateToDetail: (Int) -> Unit,
+    onToggleSelection: (Int) -> Unit,
+    onDelete: (WorkoutPlanEntity) -> Unit,
+    onArchiveToggle: (WorkoutPlanEntity) -> Unit,
+    onMoveUp: (() -> Unit)?,
+    onMoveDown: (() -> Unit)?,
+    modifier: Modifier = Modifier
+) {
+    val plan = planWithDetails.plan
+    val haptic = LocalHapticFeedback.current
+    val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
+    val dismissState = rememberSwipeToDismissBoxState()
+    val rowShape = routineRowCorners(position, count, hasHead).toShape()
+
+    LaunchedEffect(dismissState.targetValue) {
+        if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
+            if (!isSelectionMode && swipeActionsEnabled) {
+                when (dismissState.targetValue) {
+                    SwipeToDismissBoxValue.EndToStart -> {
+                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onDelete(plan)
+                    }
+                    SwipeToDismissBoxValue.StartToEnd -> {
+                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onArchiveToggle(plan)
+                    }
+                    else -> {}
+                }
+            }
+            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+        }
+    }
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = !isSelectionMode && swipeActionsEnabled,
+        enableDismissFromEndToStart = !isSelectionMode && swipeActionsEnabled,
+        backgroundContent = {
+            val progress = dismissState.progress
+
+            val color by animateColorAsState(
+                when {
+                    progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                    progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
+                    else -> Color.Transparent
+                }, label = "bg_color"
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(rowShape)
+                    .background(color)
+                    .padding(horizontal = 28.dp)
+            ) {
+                if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
+                    Icon(
+                        if (isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
+                        contentDescription = "Archive",
+                        tint = Primary,
+                        modifier = Modifier.align(Alignment.CenterStart).size(28.dp)
+                    )
+                }
+                if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                    Icon(
+                        Icons.Rounded.DeleteSweep,
+                        contentDescription = "Delete",
+                        tint = Error,
+                        modifier = Modifier.align(Alignment.CenterEnd).size(28.dp)
+                    )
+                }
+            }
+        },
+        modifier = modifier
+    ) {
+        RoutineRow(
+            planWithDetails = planWithDetails,
+            position = position,
+            count = count,
+            hasHead = hasHead,
+            languageCode = languageCode,
+            cover = cover,
+            onClick = {
+                if (isSelectionMode) {
+                    onToggleSelection(plan.id)
+                } else {
+                    onNavigateToDetail(plan.id)
+                }
+            },
+            onLongClick = {
+                if (!isSelectionMode) {
+                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onToggleSelection(plan.id)
+                }
+            },
+            isSelectionMode = isSelectionMode,
+            isSelected = isSelected,
+            isArchived = isArchived,
+            onMoveUp = onMoveUp,
+            onMoveDown = onMoveDown
+        )
     }
 }

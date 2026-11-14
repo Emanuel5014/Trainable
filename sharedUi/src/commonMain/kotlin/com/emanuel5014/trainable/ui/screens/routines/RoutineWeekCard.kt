@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.ui.screens.routines
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -56,6 +58,8 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun RoutineWeekCard(
     plans: List<PlanWithDetails>,
+    /** [plans] split by group: with groups each number is drawn in its group's colour and counts within it. */
+    sections: List<RoutineSection> = listOf(RoutineSection(null, plans)),
     collapsed: Boolean,
     onToggle: () -> Unit,
     onOpenPlan: (Int) -> Unit,
@@ -63,12 +67,26 @@ internal fun RoutineWeekCard(
 ) {
     val week = remember(plans) { routineWeek(plans) }
     val today = todayDayIndex()
-    val numberOf: (PlanWithDetails) -> Int = { p -> plans.indexOfFirst { it.plan.id == p.plan.id } + 1 }
+    val grouped = sections.isGrouped()
+    // The number of a routine is its place in its group (or in the whole list when nothing is grouped)
+    val numbers = remember(sections) {
+        sections.flatMap { section -> section.plans.mapIndexed { index, p -> p.plan.id to index + 1 } }.toMap()
+    }
+    val numberOf: (PlanWithDetails) -> Int = { p -> numbers[p.plan.id] ?: 0 }
+    val groupColors = sections.flatMap { section ->
+        val colors = when {
+            !grouped -> null
+            section.group != null -> routineGroupColors(section.group)
+            else -> ungroupedCoverColors()
+        }
+        section.plans.map { it.plan.id to colors }
+    }.toMap()
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(routineWeekCorners().toShape())
+            // With groups the card stands alone above them; without, it is the head of the one group of rows
+            .clip(if (grouped) RoundedCornerShape(ROUTINE_GROUP_END_RADIUS.dp) else routineWeekCorners().toShape())
             .background(SurfaceContainerHigh)
             .animateContentSize()
             .padding(horizontal = 14.dp, vertical = 12.dp)
@@ -107,6 +125,7 @@ internal fun RoutineWeekCard(
                         label = narrowDayName(day),
                         plans = week[index],
                         numbers = week[index].map(numberOf),
+                        chips = if (grouped) week[index].mapNotNull { groupColors[it.plan.id] } else null,
                         isToday = index == today,
                         onOpenPlan = onOpenPlan,
                         modifier = Modifier.weight(1f)
@@ -122,6 +141,8 @@ private fun WeekDay(
     label: String,
     plans: List<PlanWithDetails>,
     numbers: List<Int>,
+    /** The group colours of [numbers] when the list has groups: the numbers are then drawn as small coloured tiles. */
+    chips: List<Pair<Color, Color>>?,
     isToday: Boolean,
     onOpenPlan: (Int) -> Unit,
     modifier: Modifier = Modifier
@@ -151,7 +172,26 @@ private fun WeekDay(
             verticalArrangement = Arrangement.Center
         ) {
             Text(text = label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold, color = labelColor)
-            Text(
+            if (chips != null && numbers.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    numbers.take(2).forEachIndexed { i, number ->
+                        val (fill, ink) = chips.getOrElse(i) { chips.first() }
+                        Box(
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(fill)
+                                .then(if (isToday) Modifier.border(1.5.dp, labelColor, RoundedCornerShape(5.dp)) else Modifier),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "$number", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black, color = ink, maxLines = 1)
+                        }
+                    }
+                    if (numbers.size > 2) {
+                        Text(text = "+", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black, color = numberColor)
+                    }
+                }
+            } else Text(
                 // One routine: its number; two: "1·2"; more: the first and "+"
                 text = when {
                     numbers.isEmpty() -> "·"

@@ -14,6 +14,7 @@ import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.RoutineGroupEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
@@ -22,6 +23,7 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.CardioSetWithSession
 import com.emanuel5014.trainable.data.local.relation.ExerciseSetWithSession
+import com.emanuel5014.trainable.data.local.relation.PlanLastSession
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
@@ -78,6 +80,34 @@ interface WorkoutDao {
 
     @Query("UPDATE workout_plans SET is_active = :active WHERE id = :planId")
     suspend fun setPlanActive(planId: Int, active: Boolean)
+
+    // Routine groups
+
+    @Query("SELECT * FROM routine_groups ORDER BY ordine ASC, id ASC")
+    fun getRoutineGroups(): Flow<List<RoutineGroupEntity>>
+
+    @Insert
+    suspend fun insertRoutineGroup(group: RoutineGroupEntity): Long
+
+    @Update
+    suspend fun updateRoutineGroups(groups: List<RoutineGroupEntity>)
+
+    @Query("UPDATE workout_plans SET group_id = :groupId WHERE id IN (:planIds)")
+    suspend fun setPlansGroup(planIds: List<Int>, groupId: Int?)
+
+    @Query("UPDATE workout_plans SET group_id = NULL WHERE group_id = :groupId")
+    suspend fun clearRoutineGroup(groupId: Int)
+
+    @Query("UPDATE workout_plans SET is_active = :active WHERE group_id = :groupId")
+    suspend fun setRoutineGroupActive(groupId: Int, active: Boolean)
+
+    /** A group is only a label on its routines: once no routine points to it, it goes. */
+    @Query("DELETE FROM routine_groups WHERE id NOT IN (SELECT group_id FROM workout_plans WHERE group_id IS NOT NULL)")
+    suspend fun deleteEmptyRoutineGroups()
+
+    /** The time of the last finished workout of each routine that has one. */
+    @Query("SELECT plan_id AS planId, MAX(timestamp) AS lastTimestamp FROM workout_sessions WHERE is_finished = 1 GROUP BY plan_id")
+    fun getLastSessionTimes(): Flow<List<PlanLastSession>>
 
     @Query("UPDATE workout_plans SET image_uri = NULL WHERE id = :planId")
     suspend fun clearPlanCoverImage(planId: Int)

@@ -113,7 +113,9 @@ internal fun RoutineRow(
     isArchived: Boolean = false,
     onMoveUp: (() -> Unit)? = null,
     onMoveDown: (() -> Unit)? = null,
-    languageCode: String = "en"
+    languageCode: String = "en",
+    /** Cover colour and its ink when the list is split into groups; null keeps the colour by position. */
+    cover: Pair<Color, Color>? = null
 ) {
     val plan = planWithDetails.plan
     val planImage = LocalPlanImage.current
@@ -124,7 +126,7 @@ internal fun RoutineRow(
         planWithDetails.exercises.map { it.exercise.categoria }.distinct().filter { it.isNotBlank() }
     }
     val advancedProgramming = LocalAdvancedProgramming.current
-    val (coverColor, coverInk) = coverColors(routineCoverRole(position))
+    val (coverColor, coverInk) = cover ?: coverColors(routineCoverRole(position))
     val corners = routineRowCorners(position, count, hasHead)
     val rowShape = corners.toShape()
     val coverShape = corners.inset(COVER_INSET).toShape()

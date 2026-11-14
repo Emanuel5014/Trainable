@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.data.local.entity.RoutineGroupEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.repository.PlanRepository
@@ -49,10 +50,12 @@ class RoutinesState(
         scope.launch {
             combine(
                 planRepository.getAllPlansWithDetails(),
-                userPrefsRepository.floatingNavBar
-            ) { allPlans, floating ->
-                allPlans to floating
-            }.collect { (allPlans, floating) ->
+                userPrefsRepository.floatingNavBar,
+                planRepository.getRoutineGroups(),
+                planRepository.getLastSessionTimes()
+            ) { allPlans, floating, groups, lastSessions ->
+                PlansSnapshot(allPlans, floating, groups, lastSessions.associate { it.planId to it.lastTimestamp })
+            }.collect { (allPlans, floating, groups, lastSessions) ->
                 // Auto-tag legacy system plans if they exist without the note
                 allPlans.forEach {
                     if (it.plan.note == null && !it.plan.isActive &&
@@ -68,6 +71,8 @@ class RoutinesState(
                 _uiState.update { it.copy(
                     plans = active,
                     archivedPlans = archived,
+                    groups = groups,
+                    lastSessionTimes = lastSessions,
                     floatingNavBar = floating,
                     isLoading = false
                 )}
@@ -207,6 +212,81 @@ class RoutinesState(
         }
     }
 
+    // Routine groups
+
+    /** Puts the selected routines in a new group named [name] and leaves selection mode. */
+    fun groupSelectedPlans(name: String, colorRole: Int, customColor: Int?) {
+        val ids = _uiState.value.selectedPlanIds.toList()
+        val cleanName = name.trim()
+        if (ids.isEmpty() || cleanName.isEmpty()) return
+        scope.launch {
+            planRepository.createRoutineGroup(cleanName, colorRole, customColor, orderedSelection(ids))
+            clearSelection()
+        }
+    }
+
+    /** Moves the selected routines into the group [groupId], or out of their groups when it is null. */
+    fun moveSelectedPlansToGroup(groupId: Int?) {
+        val ids = _uiState.value.selectedPlanIds.toList()
+        if (ids.isEmpty()) return
+        scope.launch {
+            planRepository.moveRoutinesToGroup(ids, groupId)
+            clearSelection()
+        }
+    }
+
+    fun renameGroup(group: RoutineGroupEntity, name: String) {
+        val cleanName = name.trim()
+        if (cleanName.isEmpty()) return
+        scope.launch { planRepository.updateRoutineGroup(group.copy(name = cleanName)) }
+    }
+
+    /** A theme colour ([customColor] null) or a colour picked freely. */
+    fun setGroupColor(group: RoutineGroupEntity, colorRole: Int, customColor: Int?) {
+        scope.launch { planRepository.updateRoutineGroup(group.copy(colorRole = colorRole, customColor = customColor)) }
+    }
+
+    /** Swaps two groups in the list order (a group moving up or down next to its neighbour). */
+    fun swapGroups(group: RoutineGroupEntity, other: RoutineGroupEntity) {
+        val groups = _uiState.value.groups
+        val swapped = swapInOrder(groups.map { it.id }, group.id, other.id)
+        val byId = groups.associateBy { it.id }
+        scope.launch { planRepository.reorderRoutineGroups(swapped.map { byId.getValue(it) }) }
+    }
+
+    /** Archives every routine of the group (they stay together in Archived), or brings them all back. */
+    fun setGroupArchived(group: RoutineGroupEntity, archived: Boolean) {
+        scope.launch { planRepository.setRoutineGroupActive(group.id, !archived) }
+    }
+
+    /** Removes the group; its routines stay, in no group. */
+    fun dissolveGroup(group: RoutineGroupEntity) {
+        scope.launch { planRepository.dissolveRoutineGroup(group.id) }
+    }
+
+    /** Swaps two routines in the order (a routine moving up or down next to its neighbour in a group). */
+    fun swapPlans(planId: Int, otherPlanId: Int) {
+        scope.launch {
+            val ordered = orderedRoutines()
+            val swapped = swapInOrder(ordered.map { it.id }, planId, otherPlanId)
+            if (swapped == ordered.map { it.id }) return@launch
+            val byId = ordered.associateBy { it.id }
+            planRepository.savePlans(swapped.mapIndexed { index, id -> byId.getValue(id).copy(ordine = index) })
+        }
+    }
+
+    /** Every routine (system plans aside), active ones first, each part in its order: the order [movePlan] saves. */
+    private suspend fun orderedRoutines(): List<WorkoutPlanEntity> {
+        val plans = planRepository.getAllPlansWithDetails().first().map { it.plan }.filter { it.note != "SYSTEM_PLAN" }
+        val (active, archived) = plans.partition { it.isActive }
+        return active + archived
+    }
+
+    private fun orderedSelection(ids: List<Int>): List<Int> {
+        val all = _uiState.value.plans + _uiState.value.archivedPlans
+        return all.map { it.plan.id }.filter { it in ids }
+    }
+
     fun movePlan(fromIndex: Int, toIndex: Int, isArchivedList: Boolean) {
         scope.launch {
             val allPlans: List<PlanWithDetails> = planRepository.getAllPlansWithDetails().first()
@@ -248,8 +328,19 @@ data class RoutinesUiState(
     val isLoading: Boolean = true,
     val plans: List<PlanWithDetails> = emptyList(),
     val archivedPlans: List<PlanWithDetails> = emptyList(),
+    /** The routine groups in their order. */
+    val groups: List<RoutineGroupEntity> = emptyList(),
+    /** When each routine was last trained (plan id → time of its last finished workout). */
+    val lastSessionTimes: Map<Int, Long> = emptyMap(),
     val selectedPlanIds: Set<Int> = emptySet(),
     val isSelectionMode: Boolean = false,
     val floatingNavBar: Boolean = false,
     val error: String? = null
+)
+
+private data class PlansSnapshot(
+    val plans: List<PlanWithDetails>,
+    val floating: Boolean,
+    val groups: List<RoutineGroupEntity>,
+    val lastSessions: Map<Int, Long>
 )

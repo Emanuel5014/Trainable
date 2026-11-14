@@ -1566,4 +1566,32 @@
     <string name="speed">Velocidad</string>
     <string name="cardio_missing_values">Añade una duración o una distancia</string>
     <string name="cardio_entry_label">Añadir cardio</string>
+    <string name="routine_group_new">Nuevo grupo</string>
+    <string name="routine_group_name">Nombre del grupo</string>
+    <string name="routine_group_color">Color</string>
+    <string name="routine_group_color_hint">Los tres primeros siguen el tema de la app; el último lo eliges tú.</string>
+    <string name="routine_group_create">Crear grupo</string>
+    <string name="routine_group_move_to">O mover a</string>
+    <string name="routine_group_none">Sin grupo</string>
+    <string name="routine_group_archived">archivado</string>
+    <string name="routine_group_since">desde %1$s</string>
+    <string name="routine_group_action">Agrupar</string>
+    <string name="routine_group_options">Opciones del grupo</string>
+    <string name="routine_group_expand">Abrir grupo</string>
+    <string name="routine_group_collapse">Cerrar grupo</string>
+    <string name="routine_group_rename">Renombrar</string>
+    <string name="routine_group_change_color">Cambiar color</string>
+    <string name="routine_group_move_up">Subir grupo</string>
+    <string name="routine_group_move_down">Bajar grupo</string>
+    <string name="routine_group_archive">Archivar grupo</string>
+    <string name="routine_group_archive_hint">Las rutinas pasan a Archivadas, siempre juntas</string>
+    <string name="routine_group_restore">Restaurar grupo</string>
+    <string name="routine_group_restore_hint">Las rutinas vuelven a Activas</string>
+    <string name="routine_group_dissolve">Deshacer grupo</string>
+    <string name="routine_group_dissolve_hint">Las rutinas se quedan, sin grupo</string>
+    <plurals name="routine_group_routines">
+        <item quantity="one">%1$d rutina</item>
+        <item quantity="many">%1$d rutinas</item>
+        <item quantity="other">%1$d rutinas</item>
+    </plurals>
 </resources>

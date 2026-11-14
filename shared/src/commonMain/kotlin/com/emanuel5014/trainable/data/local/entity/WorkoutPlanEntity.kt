@@ -16,7 +16,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("user_id")]
+    indices = [Index("user_id"), Index("group_id")]
 )
 data class WorkoutPlanEntity(
     @PrimaryKey(autoGenerate = true)
@@ -47,7 +47,10 @@ data class WorkoutPlanEntity(
     @ColumnInfo(name = "current_week")
     val currentWeek: Int = 1,
     @ColumnInfo(name = "auto_advance_week")
-    val autoAdvanceWeek: Boolean = true
+    val autoAdvanceWeek: Boolean = true,
+    /** The [RoutineGroupEntity] the routine belongs to; null when it is in no group. */
+    @ColumnInfo(name = "group_id")
+    val groupId: Int? = null
 )
 
 /** Note that tags the plans the app creates for itself (Cardio, Quick/Custom Workout): they hold sessions but are not routines. */

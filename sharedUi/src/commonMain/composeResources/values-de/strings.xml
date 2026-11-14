@@ -1561,4 +1561,31 @@
     <string name="speed">Geschwindigkeit</string>
     <string name="cardio_missing_values">Gib eine Dauer oder eine Strecke ein</string>
     <string name="cardio_entry_label">Cardio hinzufügen</string>
+    <string name="routine_group_new">Neue Gruppe</string>
+    <string name="routine_group_name">Gruppenname</string>
+    <string name="routine_group_color">Farbe</string>
+    <string name="routine_group_color_hint">Die ersten drei folgen dem App-Design, die letzte wählst du selbst.</string>
+    <string name="routine_group_create">Gruppe erstellen</string>
+    <string name="routine_group_move_to">Oder verschieben nach</string>
+    <string name="routine_group_none">Ohne Gruppe</string>
+    <string name="routine_group_archived">archiviert</string>
+    <string name="routine_group_since">seit %1$s</string>
+    <string name="routine_group_action">Gruppieren</string>
+    <string name="routine_group_options">Gruppenoptionen</string>
+    <string name="routine_group_expand">Gruppe öffnen</string>
+    <string name="routine_group_collapse">Gruppe schließen</string>
+    <string name="routine_group_rename">Umbenennen</string>
+    <string name="routine_group_change_color">Farbe ändern</string>
+    <string name="routine_group_move_up">Gruppe nach oben</string>
+    <string name="routine_group_move_down">Gruppe nach unten</string>
+    <string name="routine_group_archive">Gruppe archivieren</string>
+    <string name="routine_group_archive_hint">Die Routinen kommen zu Archiviert, weiter zusammen</string>
+    <string name="routine_group_restore">Gruppe wiederherstellen</string>
+    <string name="routine_group_restore_hint">Die Routinen werden wieder aktiv</string>
+    <string name="routine_group_dissolve">Gruppe auflösen</string>
+    <string name="routine_group_dissolve_hint">Die Routinen bleiben, ohne Gruppe</string>
+    <plurals name="routine_group_routines">
+        <item quantity="one">%1$d Routine</item>
+        <item quantity="other">%1$d Routinen</item>
+    </plurals>
 </resources>
