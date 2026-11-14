@@ -5,7 +5,12 @@ import WidgetKit
 
 @main
 struct TrainableTimerWidgets: WidgetBundle {
-    var body: some Widget { TrainableTimerWidget() }
+    var body: some Widget {
+        TrainableTimerWidget()
+        RoutineHomeWidget()
+        WeeklyGoalHomeWidget()
+        QuickStartHomeWidget()
+    }
 }
 
 struct TrainableTimerWidget: Widget {

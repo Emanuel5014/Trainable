@@ -1590,4 +1590,27 @@
         <item quantity="one">%1$d Routine</item>
         <item quantity="other">%1$d Routinen</item>
     </plurals>
+    <string name="widget_action_resume">Fortsetzen</string>
+    <string name="widget_action_start">Starten</string>
+    <string name="widget_action_open_app">App öffnen</string>
+    <string name="widget_started_at">Gestartet um %1$s</string>
+    <string name="widget_create_routine">Routine erstellen</string>
+    <string name="widget_goal_title">Wochenziel</string>
+    <string name="widget_goal_unit">Trainings</string>
+    <string name="widget_goal_met">Ziel erreicht</string>
+    <string name="widget_goal_cardio">davon %1$d Cardio</string>
+    <string name="widget_cd_start">%1$s starten</string>
+    <string name="widget_cd_resume">%1$s fortsetzen</string>
+    <string name="widget_cd_open">Trainable öffnen</string>
+    <plurals name="widget_exercise_count">
+        <item quantity="one">%1$d Übung</item>
+        <item quantity="other">%1$d Übungen</item>
+    </plurals>
+    <plurals name="widget_goal_remaining">
+        <item quantity="one">Noch %1$d</item>
+        <item quantity="other">Noch %1$d</item>
+    </plurals>
+    <string name="widget_label_up_next">Als Nächstes</string>
+    <string name="widget_label_suggested_today">Heute empfohlen</string>
+    <string name="widget_label_in_progress">Läuft</string>
 </resources>

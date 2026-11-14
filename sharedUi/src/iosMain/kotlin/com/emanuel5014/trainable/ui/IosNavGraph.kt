@@ -51,6 +51,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import kotlinx.coroutines.flow.first
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
@@ -135,6 +136,7 @@ internal fun IosNavGraph(
     val pagerState = rememberPagerState(pageCount = { 4 })
     val hazeState = rememberHazeState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    IosWidgetLinkEffect(navController)
 
     // As MainActivity: the floating bar turns to glass when the user wants glass on the navigation, and the
     // expressive navbar's action button bends the same copy of the screens
@@ -413,6 +415,34 @@ private fun IosMainTabs(
                     IosOneRepMaxesEntry(modifier = modifier, onClick = { navController.navigate(OneRepMaxes) })
                 }
             )
+        }
+    }
+}
+
+/**
+ * A widget's Start or Resume (IosWidgetLinks): the workout opens over the tabs, like the Android widget. What is open
+ * now decides, not the widget, which can be a few minutes old: an open workout is resumed rather than a second one
+ * started, a finished one is not reopened, and the workout already on screen stays as it is.
+ */
+@Composable
+private fun IosWidgetLinkEffect(navController: NavHostController) {
+    val link by com.emanuel5014.trainable.ui.widgets.IosWidgetLinks.pending.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(link) {
+        val wanted = link ?: return@LaunchedEffect
+        com.emanuel5014.trainable.ui.widgets.IosWidgetLinks.consume(wanted)
+        val open = IosAppGraph.workouts.getUnfinishedSessionsWithPlanName().first().map { it.session }
+        val target = when {
+            wanted.sessionId != null -> open.firstOrNull { it.id == wanted.sessionId } ?: return@LaunchedEffect
+            else -> open.firstOrNull { it.planId == wanted.planId } ?: open.firstOrNull()
+        }
+        val planId = target?.planId ?: wanted.planId
+        val current = navController.currentBackStackEntry
+        if (current?.destination?.hasRoute<WorkoutExecution>() == true) {
+            val shown = current.toRoute<WorkoutExecution>()
+            if (shown.planId == planId && (shown.sessionId == null || shown.sessionId == target?.id)) return@LaunchedEffect
+        }
+        navController.navigate(WorkoutExecution(planId = planId, sessionId = target?.id)) {
+            popUpTo<MainTabs>()
         }
     }
 }

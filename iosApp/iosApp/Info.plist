@@ -52,6 +52,16 @@
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>
 	</dict>
+	<!-- trainable:// links from the home-screen widgets (IosWidgetLinks.kt) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.emanuel5014.trainable.widgets</string>
+			<key>CFBundleURLSchemes</key>
+			<array><string>trainable</string></array>
+		</dict>
+	</array>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<!-- Compose draws at the full refresh rate of ProMotion screens (120 Hz) only with this -->

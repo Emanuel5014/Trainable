@@ -34,7 +34,7 @@ internal fun documentsFolder(name: String): String {
 
 /**
  * Routine photos as files in Documents/routine_images (like Android's filesDir/routine_images).
- * Widgets are not on iOS yet. CSV export supplies its own localized technique labels.
+ * Workout changes tick IosWorkoutsChanged for the home-screen widgets. CSV export supplies its own localized technique labels.
  */
 class IosWorkoutPlatform : WorkoutPlatform {
     @OptIn(ExperimentalForeignApi::class)
@@ -52,7 +52,7 @@ class IosWorkoutPlatform : WorkoutPlatform {
         return if (data.writeToFile(path, atomically = true)) "file://$path" else null
     }
 
-    override fun onWorkoutsChanged() {}
+    override fun onWorkoutsChanged() = IosWorkoutsChanged.notifyChanged()
 
     override fun techniqueLabel(technique: Technique): String = TechniqueCodec.encode(listOf(technique)).orEmpty()
 

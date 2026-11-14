@@ -1596,4 +1596,27 @@
         <item quantity="many">%1$d routines</item>
         <item quantity="other">%1$d routines</item>
     </plurals>
+    <string name="widget_action_resume">Reprendre</string>
+    <string name="widget_action_start">Commencer</string>
+    <string name="widget_action_open_app">Ouvrir l'app</string>
+    <string name="widget_started_at">Commencée à %1$s</string>
+    <string name="widget_create_routine">Créer une routine</string>
+    <string name="widget_goal_title">Objectif hebdomadaire</string>
+    <string name="widget_goal_unit">séances</string>
+    <string name="widget_goal_met">Objectif atteint</string>
+    <string name="widget_goal_cardio">dont %1$d cardio</string>
+    <string name="widget_cd_start">Commencer %1$s</string>
+    <string name="widget_cd_resume">Reprendre %1$s</string>
+    <string name="widget_cd_open">Ouvrir Trainable</string>
+    <plurals name="widget_exercise_count">
+        <item quantity="one">%1$d exercice</item>
+        <item quantity="other">%1$d exercices</item>
+    </plurals>
+    <plurals name="widget_goal_remaining">
+        <item quantity="one">Encore %1$d</item>
+        <item quantity="other">Encore %1$d</item>
+    </plurals>
+    <string name="widget_label_up_next">À suivre</string>
+    <string name="widget_label_suggested_today">Conseillée aujourd'hui</string>
+    <string name="widget_label_in_progress">En cours</string>
 </resources>

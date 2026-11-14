@@ -13,6 +13,8 @@ struct TrainableApp: App {
         // On-device Gemma E2B (LiteRT-LM is Swift only); used by the local scan backend (A5)
         IosLocalLlmBridge.shared.engine = LocalLlmService()
         IosWorkoutLiveActivityBridge.shared.service = WorkoutLiveActivityService()
+        // Home-screen and Lock Screen widgets: Kotlin computes, Swift writes the App Group file
+        IosHomeWidgetBridge.shared.publisher = HomeWidgetPublisher()
         // Automatic backups (B4): the system task must be registered before launch ends
         IosBackgroundTasksBridge.shared.tasks = AutoBackupTasks()
         AutoBackupTasks.register()
@@ -22,7 +24,10 @@ struct TrainableApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .onOpenURL { url in IosRoutineFiles.shared.open(url: url) }
+                .onOpenURL { url in
+                    // trainable:// links come from the widgets; anything else may be a routine file
+                    if !IosWidgetLinks.shared.open(url: url.absoluteString) { IosRoutineFiles.shared.open(url: url) }
+                }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background { IosAutoBackup.shared.onEnteredBackground() }

@@ -1591,4 +1591,27 @@
         <item quantity="one">%1$d routine</item>
         <item quantity="other">%1$d routines</item>
     </plurals>
+    <string name="widget_action_resume">Resume</string>
+    <string name="widget_action_start">Start</string>
+    <string name="widget_action_open_app">Open app</string>
+    <string name="widget_started_at">Started at %1$s</string>
+    <string name="widget_create_routine">Create a routine</string>
+    <string name="widget_goal_title">Weekly goal</string>
+    <string name="widget_goal_unit">workouts</string>
+    <string name="widget_goal_met">Goal met</string>
+    <string name="widget_goal_cardio">of which %1$d cardio</string>
+    <string name="widget_cd_start">Start %1$s</string>
+    <string name="widget_cd_resume">Resume %1$s</string>
+    <string name="widget_cd_open">Open Trainable</string>
+    <plurals name="widget_exercise_count">
+        <item quantity="one">%1$d exercise</item>
+        <item quantity="other">%1$d exercises</item>
+    </plurals>
+    <plurals name="widget_goal_remaining">
+        <item quantity="one">%1$d to go</item>
+        <item quantity="other">%1$d to go</item>
+    </plurals>
+    <string name="widget_label_up_next">Up next</string>
+    <string name="widget_label_suggested_today">Suggested today</string>
+    <string name="widget_label_in_progress">In progress</string>
 </resources>

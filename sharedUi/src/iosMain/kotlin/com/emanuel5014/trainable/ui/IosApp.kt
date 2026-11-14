@@ -195,6 +195,10 @@ private fun TrainableIosApp() {
     LaunchedEffect(Unit) {
         IosAppGraph.workouts.deletedSessions.collect { IosWorkoutSessionEnd.deleted(it) }
     }
+    // The home-screen and Lock Screen widgets follow the workouts while the app runs
+    LaunchedEffect(Unit) {
+        com.emanuel5014.trainable.ui.widgets.IosHomeWidgets.run(IosAppGraph.workouts, preferences)
+    }
     val scope = rememberCoroutineScope()
     val state = remember {
         val db = IosAppGraph.database
