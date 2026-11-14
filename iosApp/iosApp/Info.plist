@@ -45,7 +45,7 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array><string>com.emanuel5014.trainable.autobackup</string></array>
 	<key>UIBackgroundModes</key>
-	<array><string>processing</string></array>
+	<array><string>processing</string><string>workout-processing</string></array>
 	<!-- The same background as the first frame of the animated splash (IosSplash.kt) -->
 	<key>UILaunchScreen</key>
 	<dict>
@@ -73,5 +73,10 @@
 	<string>Take photos for your routines, sheet scans, and physical checks.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Unlock your physical checks with Face ID.</string>
+	<!-- A HealthKit workout session keeps the app running while locked, for the long rest-end vibration -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>Keep Trainable running during your workout so it can vibrate when the rest ends.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Keep Trainable running during your workout so it can vibrate when the rest ends.</string>
 </dict>
 </plist>

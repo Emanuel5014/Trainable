@@ -66,6 +66,10 @@ final class TimerLiveActivityCoordinator {
     private var revision = 0
     private var synchronization: Task<Void, Never>?
     private var expirations: [String: Task<Void, Never>] = [:]
+    /// Redraws at the deadline of a card that stays after it (a finished rest with buttons).
+    private var deadlines: [String: Task<Void, Never>] = [:]
+    /// Kinds whose card must be redrawn even though its state did not change.
+    private var redraw: Set<String> = []
     private var observers: [NSObjectProtocol] = []
     /// A finished rest card with buttons stays at zero this long at most, then it ends.
     private let restFinishedKeepSeconds: TimeInterval = 1800
@@ -199,7 +203,10 @@ final class TimerLiveActivityCoordinator {
             let content = ActivityContent(state: state, staleDate: state.roundEndsAt ?? state.endsAt,
                 relevanceScore: kind == "workout.warmup" ? 50 : 100)
             if let existing {
-                if existing.content.state != state { await existing.update(content) }
+                // At the deadline the same state must be drawn again to show "rest finished": iOS does that by
+                // itself only for a suspended app (when the card turns stale), not for one kept running.
+                let force = redraw.remove(kind) != nil
+                if force || existing.content.state != state { await existing.update(content) }
                 knownInstances[kind] = state.instanceID
             } else if knownInstances[kind] == state.instanceID {
                 // The OS/user removed the activity while we were suspended.
@@ -222,7 +229,20 @@ final class TimerLiveActivityCoordinator {
     private func armExpirations() {
         expirations.values.forEach { $0.cancel() }
         expirations.removeAll()
+        deadlines.values.forEach { $0.cancel() }
+        deadlines.removeAll()
         for (kind, state) in desired {
+            let toEnd = state.endsAt.timeIntervalSinceNow
+            if toEnd > 0, expiry(state) > state.endsAt {
+                deadlines[kind] = Task { [weak self] in
+                    do { try await Task.sleep(nanoseconds: UInt64((min(toEnd, 86_400) + 0.3) * 1_000_000_000)) }
+                    catch { return }
+                    guard let self, desired[kind] == state else { return }
+                    // Only runs while the app is running at that moment (the long-vibration workout session)
+                    redraw.insert(kind)
+                    refresh()
+                }
+            }
             let delay = max(0, expiry(state).timeIntervalSinceNow)
             expirations[kind] = Task { [weak self] in
                 do { try await Task.sleep(nanoseconds: UInt64(min(delay, 86_400) * 1_000_000_000)) }
