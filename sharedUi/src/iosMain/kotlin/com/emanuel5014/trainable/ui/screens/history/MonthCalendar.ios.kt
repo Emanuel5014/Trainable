@@ -38,5 +38,8 @@ actual object MonthCalendar {
         return s == LocalDate(year, monthIndex + 1, 1) && e == lastDay(monthIndex, year)
     }
 
-    actual fun shortMonthNames(): List<String> = NSDateFormatter().shortMonthSymbols.map { it as String }
+    // In the app's language, like the other dates on iOS (not the phone's)
+    actual fun shortMonthNames(): List<String> = NSDateFormatter()
+        .apply { locale = com.emanuel5014.trainable.platform.IosAppLocale.formattingLocale() }
+        .shortMonthSymbols.map { it as String }
 }
