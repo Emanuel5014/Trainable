@@ -13,6 +13,8 @@ struct TrainableApp: App {
         // On-device Gemma E2B (LiteRT-LM is Swift only); used by the local scan backend (A5)
         IosLocalLlmBridge.shared.engine = LocalLlmService()
         IosWorkoutLiveActivityBridge.shared.service = WorkoutLiveActivityService()
+        // Long rest-end vibration while locked: a HealthKit workout session keeps the app running (iOS 26+)
+        IosRestVibrationBridge.shared.service = RestVibrationService()
         // Home-screen and Lock Screen widgets: Kotlin computes, Swift writes the App Group file
         IosHomeWidgetBridge.shared.publisher = HomeWidgetPublisher()
         // Automatic backups (B4): the system task must be registered before launch ends
