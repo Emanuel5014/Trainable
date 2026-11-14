@@ -337,6 +337,12 @@ class SettingsState(
         initialValue = true
     )
 
+    val autoAdvanceTimedSets = userPrefsRepository.autoAdvanceTimedSets.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val keepScreenOnCardioTimer = userPrefsRepository.keepScreenOnCardioTimer.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -607,6 +613,12 @@ class SettingsState(
     fun setAutoStopTimeWeightAtTarget(enabled: Boolean) {
         scope.launch {
             userPrefsRepository.setAutoStopTimeWeightAtTarget(enabled)
+        }
+    }
+
+    fun setAutoAdvanceTimedSets(enabled: Boolean) {
+        scope.launch {
+            userPrefsRepository.setAutoAdvanceTimedSets(enabled)
         }
     }
 

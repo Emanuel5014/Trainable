@@ -91,6 +91,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Workout execution state and actions shared by Android and iOS. The owner supplies its lifecycle scope. */
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
@@ -408,6 +409,14 @@ class WorkoutModel(
         modelScope.launch {
             userPreferencesRepository.autoStopTimeWeightAtTarget.collect { enabled ->
                 _state.update { it.copy(autoStopTimeWeightAtTarget = enabled) }
+                if (!enabled) stopAutoAdvance()
+            }
+        }
+
+        modelScope.launch {
+            userPreferencesRepository.autoAdvanceTimedSets.collect { enabled ->
+                _state.update { it.copy(autoAdvanceTimedSets = enabled) }
+                if (!enabled) stopAutoAdvance()
             }
         }
 
@@ -2015,6 +2024,8 @@ class WorkoutModel(
         val setState = exState.sets.getOrNull(setIndex) ?: return
         
         val newIsCompleted = !setState.isCompleted
+        // Unticking a set is the lifter taking over: an auto-advance chain stops there
+        if (!newIsCompleted) stopAutoAdvance()
         // A set short of its reps can be finished after a short pause; unchecking it takes the offer back
         val missing = if (newIsCompleted && currentState.setPerformanceEnabled) SetPerformance.missingReps(miniSetTargetOf(exState, setState), setState.reps) else 0
         _state.update {
@@ -2356,7 +2367,7 @@ class WorkoutModel(
     /** "+s" on the rest card: more time on a running rest, or a new rest of that length once it is over. */
     fun extendRest() {
         // A rest that ran out while the app slept is closed first, so "+s" gives the whole extra rest
-        _state.value.restTimerEndTime?.let { end -> if (end <= nowMillis()) handleTimerFinished() }
+        _state.value.restTimerEndTime?.let { end -> if (end <= nowMillis()) handleTimerFinished(advance = false) }
         if (_state.value.restTimerEndTime != null) {
             adjustRestTime(_state.value.timerAddSeconds)
         } else {
@@ -2582,8 +2593,10 @@ class WorkoutModel(
         }
     }
 
-    private fun handleTimerFinished() {
-        if (_state.value.restTimerEndTime != null) {
+    /** The rest is over. [advance] lets an auto-advance chain start the next set (not when "+s" gives more rest). */
+    private fun handleTimerFinished(advance: Boolean = true) {
+        val end = _state.value.restTimerEndTime
+        if (end != null) {
             endMiniSetPause()
             _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
             workoutTimers.cancelFinishAlarm()
@@ -2593,6 +2606,8 @@ class WorkoutModel(
             clearTimerInSession()
             timerJob?.cancel()
             timerJob = null
+            // Late when the app slept through the end of the rest: the next set keeps time with the clock
+            if (advance && _state.value.autoAdvanceChain) startAutoAdvanceSet(lateMillis = nowMillis() - end)
         }
     }
 
@@ -2610,6 +2625,10 @@ class WorkoutModel(
                 
                 if (remaining != _state.value.remainingRestSeconds) {
                     _state.update { it.copy(remainingRestSeconds = remaining) }
+                    // An auto-advance chain counts the lifter in: the next set starts when the rest ends
+                    if (remaining <= AutoAdvance.LEAD_IN_SECONDS && _state.value.autoAdvanceChain && autoAdvanceTarget() != null) {
+                        emomCue(EmomCue.TICK)
+                    }
                     if (workoutTimers.isLiveNotificationSupported() && _state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
                         _state.value.sessionId?.let { sessionId ->
                             val info = buildNextSetLabel()
@@ -2681,6 +2700,8 @@ class WorkoutModel(
     }
 
     fun skipRestTimer() {
+        // Every way to skip a rest is the lifter's: an auto-advance chain stops there
+        stopAutoAdvance()
         endMiniSetPause()
         stopRestTimer()
         clearTimerInSession()
@@ -4050,6 +4071,17 @@ class WorkoutModel(
         if (!_state.value.autoStopTimeWeightAtTarget) return false
         val target = activeTimeWeightTargetSeconds() ?: return false
         if (elapsed < target) return false
+        if (autoAdvanceEnabled()) {
+            // Auto-advance: the set is done at its target, logged with the reps it shows, and its rest starts
+            val state = _state.value
+            val exercise = state.currentExercise
+            val setIndex = exercise?.sets?.indexOfFirst { !it.isCompleted } ?: -1
+            if (exercise != null && setIndex >= 0) {
+                _state.update { it.copy(setTimerSeconds = target) }
+                finishSetTimer(state.currentExerciseIndex, setIndex, exercise.sets[setIndex].weight)
+                return true
+            }
+        }
         setTimerJob?.cancel()
         setTimerJob = null
         _state.update {
@@ -4066,6 +4098,7 @@ class WorkoutModel(
     }
 
     fun pauseSetTimer() {
+        stopAutoAdvance()
         setTimerJob?.cancel()
         setTimerJob = null
         val elapsed = _state.value.setTimerSeconds
@@ -4073,7 +4106,13 @@ class WorkoutModel(
         saveSetTimerToSession(elapsed, false, true, null)
     }
 
+    /** The reset button: the lifter takes over, so an auto-advance chain stops too. */
     fun resetSetTimer() {
+        stopAutoAdvance()
+        clearSetTimer()
+    }
+
+    private fun clearSetTimer() {
         setTimerJob?.cancel()
         setTimerJob = null
         _state.update { it.copy(setTimerRunning = false, setTimerPaused = false, setTimerSeconds = 0, setTimerStartedAt = null, setTimerBaseSeconds = 0) }
@@ -4087,15 +4126,91 @@ class WorkoutModel(
         val targetSeconds = set?.timeSeconds ?: ex?.timeTargetSeconds ?: 45
         val finalDuration = if (elapsed > 0) elapsed else targetSeconds
 
-        resetSetTimer()
+        clearSetTimer()
         updateSetState(exerciseIndex, setIndex) { it.copy(weight = weight, timeSeconds = finalDuration) }
         toggleSetComplete(exerciseIndex, setIndex)
+        // Done at the target or by the button, a timed set goes on to its rest and the next set by itself
+        armAutoAdvance(exerciseIndex, setIndex)
     }
 
     fun skipTimerAndLogSet(exerciseIndex: Int, setIndex: Int, weight: Float, durationSeconds: Int) {
-        resetSetTimer()
+        clearSetTimer()
         updateSetState(exerciseIndex, setIndex) { it.copy(weight = weight, timeSeconds = durationSeconds) }
         toggleSetComplete(exerciseIndex, setIndex)
+    }
+
+    // ---- Auto-advance (issue #65) ----
+    // A timed set done at its target (or by its button) is logged, its rest runs, and the next timed set starts
+    // when the rest ends. With no rest in between (inside a superset round) a short get-ready comes first. The chain
+    // stops wherever the lifter takes over (pause, reset, skipped rest, an unticked set) and before any set that does
+    // not run on the set timer. AutoAdvance holds the decisions.
+
+    private var autoAdvanceJob: Job? = null
+
+    private fun autoAdvanceEnabled(): Boolean {
+        val state = _state.value
+        return state.autoStopTimeWeightAtTarget && state.autoAdvanceTimedSets && state.emomRun == null && !state.isFinishing
+    }
+
+    /** The set the chain would start now, or null where it stops. */
+    private fun autoAdvanceTarget(): AutoAdvance.Target? {
+        val state = _state.value
+        val exercises = state.exercises.map { ex ->
+            AutoAdvance.Exercise(
+                runsOnSetTimer = ex.isTimed && !ex.isCardio,
+                sets = ex.sets.map { AutoAdvance.Set(done = it.isCompleted, emom = it.isEmom) }
+            )
+        }
+        return AutoAdvance.next(exercises, state.currentExerciseIndex)
+    }
+
+    private fun stopAutoAdvance() {
+        autoAdvanceJob?.cancel()
+        autoAdvanceJob = null
+        if (_state.value.autoAdvanceChain) _state.update { it.copy(autoAdvanceChain = false) }
+    }
+
+    /** The set at [setIndex] was just finished on its timer: the chain goes on from it. */
+    private fun armAutoAdvance(exerciseIndex: Int, setIndex: Int) {
+        if (!autoAdvanceEnabled()) return
+        _state.update { it.copy(autoAdvanceChain = true) }
+        autoAdvanceJob?.cancel()
+        autoAdvanceJob = modelScope.launch {
+            // toggleSetComplete logs the set and starts its rest in a coroutine of its own: wait for it
+            val logged = withTimeoutOrNull(5_000L) {
+                _state.first { it.exercises.getOrNull(exerciseIndex)?.sets?.getOrNull(setIndex)?.isCompleted == true }
+            }
+            if (logged == null) return@launch stopAutoAdvance()
+            // A superset moves on to its next exercise just after the tick
+            delay(AutoAdvance.SETTLE_MILLIS)
+            // A rest is running: its end takes the chain on (handleTimerFinished)
+            if (_state.value.restTimerEndTime != null) return@launch
+            if (autoAdvanceTarget() == null) return@launch stopAutoAdvance()
+            repeat(AutoAdvance.LEAD_IN_SECONDS) {
+                emomCue(EmomCue.TICK)
+                delay(1000L)
+            }
+            emomCue(EmomCue.GO)
+            startAutoAdvanceSet(lateMillis = 0L)
+        }
+    }
+
+    /** Starts the chain's next set on the set timer, [lateMillis] after it was due. */
+    private fun startAutoAdvanceSet(lateMillis: Long) {
+        if (!_state.value.autoAdvanceChain) return
+        if (!autoAdvanceEnabled()) return stopAutoAdvance()
+        val state = _state.value
+        // The lifter started the set already: the chain goes on when it reaches its target
+        if (state.setTimerRunning) return
+        if (state.setTimerPaused) return stopAutoAdvance()
+        val target = autoAdvanceTarget() ?: return stopAutoAdvance()
+        if (target.exerciseIndex != state.currentExerciseIndex) {
+            _state.update { it.copy(currentExerciseIndex = target.exerciseIndex) }
+        }
+        val targetSeconds = activeTimeWeightTargetSeconds() ?: return stopAutoAdvance()
+        val start = AutoAdvance.startSeconds(lateMillis, targetSeconds) ?: return stopAutoAdvance()
+        _state.update { it.copy(setTimerSeconds = start, setTimerBaseSeconds = start) }
+        startSetTimer()
     }
 
     // ---- EMOM ----
@@ -4124,6 +4239,7 @@ class WorkoutModel(
         val exercise = state.currentExercise ?: return
         val startIndex = exercise.emomStartIndex ?: return
         val rounds = EmomClock.runLength(exercise.sets.map { it.isEmom }, startIndex)
+        stopAutoAdvance()
         stopRestTimer()
         resetEmomTracking()
         _state.update {
@@ -4248,7 +4364,7 @@ class WorkoutModel(
         val state = _state.value
         val exercise = state.emomRun?.let { state.exercises.getOrNull(it.exerciseIndex) }
         resetEmomTracking()
-        resetSetTimer()
+        clearSetTimer()
         _state.update { it.copy(emomRun = null) }
         if (completed && byClock && exercise != null && emomNotificationsAllowed()) {
             val words = workoutText()

@@ -509,6 +509,8 @@
     <string name="auto_stop_cardio_at_target_desc">Pause the timer automatically when the time target is reached</string>
     <string name="auto_stop_time_weight_at_target">Auto-stop timed sets at target</string>
     <string name="auto_stop_time_weight_at_target_desc">Pause the timer automatically when the set time target is reached</string>
+    <string name="auto_advance_timed_sets">Auto-advance timed sets</string>
+    <string name="auto_advance_timed_sets_desc">At the target the set is logged and the rest starts; when the rest ends the next timed set starts by itself. The screen stays on meanwhile</string>
     <string name="edit_username">Edit Username</string>
     <string name="exercises_manage_desc">Create exercises, add media and manage categories</string>
     <string name="exercises_title">Exercises</string>

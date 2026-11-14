@@ -166,9 +166,11 @@ fun WorkoutExecutionContent(
 
     // Keep the screen on while a cardio or set timer is active (running or paused).
     // Released automatically when the timer finishes, is reset, or the screen is left.
+    // An auto-advance chain keeps it on through the rests too: the next set must start while nobody touches the phone.
     val platform = LocalWorkoutScreenPlatform.current
     val keepScreenOn = (state.keepScreenOnCardioTimer && (state.cardioTimerRunning || state.cardioTimerPaused)) ||
-        (state.keepScreenOnSetTimer && (state.setTimerRunning || state.setTimerPaused))
+        (state.keepScreenOnSetTimer && (state.setTimerRunning || state.setTimerPaused)) ||
+        state.autoAdvanceChain
     platform.KeepScreenOn(keepScreenOn)
     val ui = rememberWorkoutScreenUiState(state.currentExerciseIndex, state.planName)
     // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg

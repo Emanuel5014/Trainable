@@ -105,6 +105,10 @@ data class WorkoutState(
     val emomRun: EmomRun? = null,
     val autoStopCardioAtTarget: Boolean = false,
     val autoStopTimeWeightAtTarget: Boolean = false,
+    /** Workout settings: a timed set stopped at its target is logged and the next one starts after the rest. */
+    val autoAdvanceTimedSets: Boolean = false,
+    /** An auto-advance chain is running (from a set logged at its target until the lifter or the workout stops it). */
+    val autoAdvanceChain: Boolean = false,
     val keepScreenOnCardioTimer: Boolean = true,
     val keepScreenOnSetTimer: Boolean = true,
     val sessionStartTime: Long? = null,

@@ -9,6 +9,8 @@ import com.emanuel5014.trainable.sharedui.resources.advanced_programming
 import com.emanuel5014.trainable.sharedui.resources.advanced_programming_desc
 import com.emanuel5014.trainable.sharedui.resources.auto_stop_cardio_at_target
 import com.emanuel5014.trainable.sharedui.resources.auto_stop_cardio_at_target_desc
+import com.emanuel5014.trainable.sharedui.resources.auto_advance_timed_sets
+import com.emanuel5014.trainable.sharedui.resources.auto_advance_timed_sets_desc
 import com.emanuel5014.trainable.sharedui.resources.auto_stop_time_weight_at_target
 import com.emanuel5014.trainable.sharedui.resources.auto_stop_time_weight_at_target_desc
 import com.emanuel5014.trainable.sharedui.resources.inline_exercise_modifications
@@ -77,6 +79,7 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Scale
@@ -300,6 +303,7 @@ private fun TimersAndCardioCard(state: SettingsState) {
     val autoStopCardioAtTarget by state.autoStopCardioAtTarget.collectAsState()
     val keepScreenOnCardioTimer by state.keepScreenOnCardioTimer.collectAsState()
     val autoStopTimeWeightAtTarget by state.autoStopTimeWeightAtTarget.collectAsState()
+    val autoAdvanceTimedSets by state.autoAdvanceTimedSets.collectAsState()
     val keepScreenOnSetTimer by state.keepScreenOnSetTimer.collectAsState()
 
     GymCard(containerColor = SurfaceContainerHigh) {
@@ -381,6 +385,21 @@ private fun TimersAndCardioCard(state: SettingsState) {
                 checked = autoStopTimeWeightAtTarget,
                 onCheckedChange = { state.setAutoStopTimeWeightAtTarget(it) }
             )
+
+            // Builds on the auto-stop: the set stopped at its target is logged and the chain goes on (issue #65)
+            AnimatedVisibility(visible = autoStopTimeWeightAtTarget) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SettingDivider()
+
+                    SettingSwitchRow(
+                        icon = Icons.Rounded.FastForward,
+                        title = stringResource(Res.string.auto_advance_timed_sets),
+                        description = stringResource(Res.string.auto_advance_timed_sets_desc),
+                        checked = autoAdvanceTimedSets,
+                        onCheckedChange = { state.setAutoAdvanceTimedSets(it) }
+                    )
+                }
+            }
 
             SettingDivider()
 

@@ -512,6 +512,8 @@
     <string name="auto_stop_cardio_at_target_desc">Pausar o temporizador automaticamente ao atingir a meta de tempo</string>
     <string name="auto_stop_time_weight_at_target">Parada automática de séries cronometradas na meta</string>
     <string name="auto_stop_time_weight_at_target_desc">Pausar o temporizador automaticamente ao atingir o tempo da série</string>
+    <string name="auto_advance_timed_sets">Avançar sozinho (séries cronometradas)</string>
+    <string name="auto_advance_timed_sets_desc">Na meta a série é registrada e o descanso começa; ao terminar, a próxima série cronometrada começa sozinha. A tela fica ligada enquanto isso</string>
     <string name="edit_username">Editar Nome de Usuário</string>
     <string name="exercises_manage_desc">Crie exercícios, adicione mídia e gerencie categorias</string>
     <string name="exercises_title">Exercícios</string>

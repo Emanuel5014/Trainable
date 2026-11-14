@@ -512,6 +512,8 @@
     <string name="auto_stop_cardio_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo objetivo</string>
     <string name="auto_stop_time_weight_at_target">Parada automática de series temporizadas en el objetivo</string>
     <string name="auto_stop_time_weight_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo de la serie</string>
+    <string name="auto_advance_timed_sets">Avanzar solo (series temporizadas)</string>
+    <string name="auto_advance_timed_sets_desc">Al llegar al objetivo la serie se registra y empieza el descanso; al terminar, la siguiente serie temporizada empieza sola. La pantalla sigue encendida mientras tanto</string>
     <string name="edit_username">Editar Nombre de Usuario</string>
     <string name="exercises_manage_desc">Crea ejercicios, añade multimedia y gestiona las categorías</string>
     <string name="exercises_title">Ejercicios</string>

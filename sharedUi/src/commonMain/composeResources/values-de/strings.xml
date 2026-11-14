@@ -509,6 +509,8 @@
     <string name="auto_stop_cardio_at_target_desc">Timer beim Erreichen des Zeitziels automatisch pausieren</string>
     <string name="auto_stop_time_weight_at_target">Zeitsätze am Ziel automatisch stoppen</string>
     <string name="auto_stop_time_weight_at_target_desc">Timer beim Erreichen der Satzzielzeit automatisch pausieren</string>
+    <string name="auto_advance_timed_sets">Zeitsätze automatisch fortsetzen</string>
+    <string name="auto_advance_timed_sets_desc">Am Ziel wird der Satz gespeichert und die Pause beginnt; danach startet der nächste Zeitsatz von selbst. Der Bildschirm bleibt dabei an</string>
     <string name="edit_username">Benutzernamen bearbeiten</string>
     <string name="exercises_manage_desc">Übungen erstellen, Medien hinzufügen und Kategorien verwalten</string>
     <string name="exercises_title">Übungen</string>

@@ -104,6 +104,8 @@ class UserPreferencesRepository(
     val AI_ACTIVE_BACKEND = stringPreferencesKey("ai_active_backend")
     val AUTO_STOP_CARDIO_AT_TARGET = booleanPreferencesKey("auto_stop_cardio_at_target")
     val AUTO_STOP_TIME_WEIGHT_AT_TARGET = booleanPreferencesKey("auto_stop_time_weight_at_target")
+    /** A timed set stopped at its target is logged, rests, and the next timed set starts by itself (issue #65). */
+    val AUTO_ADVANCE_TIMED_SETS = booleanPreferencesKey("auto_advance_timed_sets")
     /** Master switch for %1RM / technique / weekly-program features. Off by default. */
     val ADVANCED_PROGRAMMING_ENABLED = booleanPreferencesKey("advanced_programming_enabled")
     /** Shows the user's own image/GIF of each exercise during a workout. Off by default. */
@@ -420,6 +422,11 @@ class UserPreferencesRepository(
     val autoStopTimeWeightAtTarget: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[AUTO_STOP_TIME_WEIGHT_AT_TARGET] ?: true
+        }
+
+    val autoAdvanceTimedSets: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[AUTO_ADVANCE_TIMED_SETS] ?: false
         }
 
     val keepScreenOnCardioTimer: Flow<Boolean> = dataStore.data
@@ -758,6 +765,12 @@ class UserPreferencesRepository(
     suspend fun setAutoStopTimeWeightAtTarget(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[AUTO_STOP_TIME_WEIGHT_AT_TARGET] = enabled
+        }
+    }
+
+    suspend fun setAutoAdvanceTimedSets(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[AUTO_ADVANCE_TIMED_SETS] = enabled
         }
     }
 

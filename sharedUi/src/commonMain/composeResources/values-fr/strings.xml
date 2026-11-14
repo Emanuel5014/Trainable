@@ -512,6 +512,8 @@
     <string name="auto_stop_cardio_at_target_desc">Mettre le minuteur en pause automatiquement à l'objectif de temps</string>
     <string name="auto_stop_time_weight_at_target">Arrêt auto des séries chronométrées à l'objectif</string>
     <string name="auto_stop_time_weight_at_target_desc">Mettre le minuteur en pause automatiquement à l'objectif de la série</string>
+    <string name="auto_advance_timed_sets">Enchaîner les séries chronométrées</string>
+    <string name="auto_advance_timed_sets_desc">À l'objectif, la série est enregistrée et le repos démarre ; ensuite la série chronométrée suivante démarre toute seule. L'écran reste allumé pendant ce temps</string>
     <string name="edit_username">Modifier le Nom d'Utilisateur</string>
     <string name="exercises_manage_desc">Créez des exercices, ajoutez des médias et gérez les catégories</string>
     <string name="exercises_title">Exercices</string>
