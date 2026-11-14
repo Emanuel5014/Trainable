@@ -1351,6 +1351,21 @@
     <string name="ai_scan_save_to_library_checkbox">In der Übungsbibliothek speichern</string>
     <string name="ai_scan_select_from_catalog">Mit vorhandener Übung verknüpfen</string>
     <string name="ai_scan_tap_to_change">Tippen zum Ändern der Übung</string>
+    <string name="ai_scan_review_title">Plan prüfen</string>
+    <string name="ai_scan_needs_review">Prüfen</string>
+    <string name="ai_scan_read_as">Gelesen: %1$s</string>
+    <string name="ai_scan_add_count">%1$d hinzufügen</string>
+    <string name="ai_scan_remove_exercise">Übung entfernen</string>
+    <plurals name="ai_scan_exercises_read">
+        <item quantity="one">%1$d Übung gelesen</item>
+        <item quantity="other">%1$d Übungen gelesen</item>
+    </plurals>
+    <plurals name="ai_scan_to_check">
+        <item quantity="one">%1$d zu prüfen</item>
+        <item quantity="other">%1$d zu prüfen</item>
+    </plurals>
+    <string name="ai_scan_removed">%1$s entfernt</string>
+    <string name="ai_scan_new_will_be_created">Neu · wird angelegt</string>
     <string name="ai_scan_zoom_hint">Zum Zoomen zusammenziehen oder doppeltippen</string>
     <string name="scan_one_rep_max_found">1RM auf dem Blatt: %1$s · wird gespeichert</string>
     <string name="scan_programmed_hint">Die Vorgabe steht auf einem separaten Programmblatt: Wähle Erweitert, um die Blöcke hier hinzuzufügen, oder scanne die Programmseite nach dem Import.</string>

@@ -1,17 +1,39 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
-import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
-import com.emanuel5014.trainable.domain.prescription.TimeAndReps
-import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
 import com.emanuel5014.trainable.ui.util.PlatformBackHandler
-import com.emanuel5014.trainable.util.sortedByKeys
 import com.emanuel5014.trainable.ui.util.fullscreenDialogProperties
 import com.emanuel5014.trainable.ui.util.fullscreenDialogTopInset
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.runtime.mutableLongStateOf
+import kotlinx.coroutines.Job
+import org.jetbrains.compose.resources.pluralStringResource
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_exercises_read
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_removed
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_to_check
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.unit.coerceIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import com.emanuel5014.trainable.data.ai.hasValidReps
+import com.emanuel5014.trainable.domain.prescription.RepsMode
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_add_count
+import com.emanuel5014.trainable.sharedui.resources.ai_scan_review_title
+import com.emanuel5014.trainable.ui.components.isKeyboardVisible
+import com.emanuel5014.trainable.ui.screens.onboarding.joinedPosition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -33,19 +55,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddPhotoAlternate
-import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Fullscreen
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.RestartAlt
@@ -60,86 +77,55 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SheetValue
-import com.emanuel5014.trainable.ui.components.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.collectAsState
-import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
-import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
-import com.emanuel5014.trainable.domain.prescription.WeekShift
-import com.emanuel5014.trainable.ui.components.AdvancedPrescriptionEditor
-import com.emanuel5014.trainable.ui.components.ExerciseTypeSelector
-import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
-import com.emanuel5014.trainable.ui.components.OneRepMaxBinding
-import com.emanuel5014.trainable.ui.components.WeekEditing
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalHapticFeedback
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.emanuel5014.trainable.sharedui.resources.Res
-import com.emanuel5014.trainable.sharedui.resources.ai_scan_add_all
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_add_missing_exercise
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_category_label
-import com.emanuel5014.trainable.sharedui.resources.ai_scan_collapse_photo
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_confirm_dialog_confirm
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_confirm_dialog_desc
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_confirm_dialog_review
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_confirm_dialog_title
-import com.emanuel5014.trainable.sharedui.resources.ai_scan_custom_badge
-import com.emanuel5014.trainable.sharedui.resources.ai_scan_custom_label
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_custom_options_desc
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_custom_options_title
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_exercise_name_label
-import com.emanuel5014.trainable.sharedui.resources.ai_scan_expand_photo
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_fullscreen_photo
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_original_sheet
-import com.emanuel5014.trainable.sharedui.resources.ai_scan_preview_subtitle
-import com.emanuel5014.trainable.sharedui.resources.ai_scan_preview_title
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_save_changes
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_save_image_to_routine
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_save_to_library_checkbox
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_select_from_catalog
-import com.emanuel5014.trainable.sharedui.resources.ai_scan_tap_to_change
 import com.emanuel5014.trainable.sharedui.resources.ai_scan_zoom_hint
 import com.emanuel5014.trainable.sharedui.resources.cancel
-import com.emanuel5014.trainable.sharedui.resources.cardio_duration_slider
 import com.emanuel5014.trainable.sharedui.resources.compare_exercises
 import com.emanuel5014.trainable.sharedui.resources.reps
-import com.emanuel5014.trainable.sharedui.resources.rest_seconds
-import com.emanuel5014.trainable.sharedui.resources.scan_one_rep_max_found
-import com.emanuel5014.trainable.sharedui.resources.scan_programmed_hint
 import com.emanuel5014.trainable.sharedui.resources.sets
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.ai.ScannedExerciseEntry
@@ -150,12 +136,9 @@ import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.SheetFormBody
 import com.emanuel5014.trainable.ui.components.SheetFormFooter
 import com.emanuel5014.trainable.ui.components.SheetFormLayout
-import com.emanuel5014.trainable.ui.components.TargetSecondsSlider
-import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
-import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
@@ -220,6 +203,100 @@ fun AiScanPreviewSheet(
     var saveImageToPlan by remember { mutableStateOf(imageUri != null) }
     var showFullscreenPhoto by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    // Rows carry a session-only id, so the open row, the checks and the swipe state follow their exercise when
+    // rows are removed or put back. One row is open at a time.
+    val rowIds = remember { mutableStateListOf<Long>().apply { addAll(editableEntries.indices.map { it.toLong() }) } }
+    var nextRowId by remember { mutableLongStateOf(editableEntries.size.toLong()) }
+    // Every row starts closed, flagged ones too: the "da controllare" chip leads to them
+    var openId by remember { mutableStateOf<Long?>(null) }
+    val seenIds = remember { mutableStateListOf<Long>() }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val panel = rememberScanPanelState()
+    val snackbar = remember { SnackbarHostState() }
+    var scrollJob by remember { mutableStateOf<Job?>(null) }
+    // Typing needs the room: the panel goes up to Alto, a strip of the photo stays visible
+    val keyboardOpen = isKeyboardVisible
+    LaunchedEffect(keyboardOpen) { if (keyboardOpen) panel.expand() }
+    /**
+     * Only when a row is reached from elsewhere (the "da controllare" chip, Aggiungi, a new exercise): if it is off
+     * screen, scroll just enough to show it. Opening a row by tapping it never moves the list.
+     */
+    fun revealRow(index: Int) {
+        scrollJob?.cancel()
+        scrollJob = scope.launch {
+            // Let a row closing above finish first, then look where this one is (item 0 = header)
+            delay(ROW_ANIMATION_SETTLE_MS)
+            val info = listState.layoutInfo
+            val item = info.visibleItemsInfo.firstOrNull { it.index == index + 1 }
+            val inView = item != null && item.offset >= info.viewportStartOffset && item.offset < info.viewportEndOffset - item.size.coerceAtMost(200)
+            if (!inView) listState.animateScrollToItem(index + 1)
+        }
+    }
+    fun closeOpenRow() {
+        openId?.let { if (it !in seenIds) seenIds.add(it) }
+        openId = null
+    }
+    fun openRow(index: Int, reveal: Boolean) {
+        val id = rowIds.getOrNull(index) ?: return
+        if (openId != id) {
+            closeOpenRow()
+            openId = id
+        }
+        if (reveal) {
+            panel.raise()
+            revealRow(index)
+        }
+    }
+    fun toggleRow(index: Int) {
+        if (openId == rowIds.getOrNull(index)) closeOpenRow() else openRow(index, reveal = false)
+    }
+    val removedText = stringResource(Res.string.ai_scan_removed)
+    val undoText = stringResource(Res.string.cancel)
+    fun removeRow(index: Int) {
+        val id = rowIds.getOrNull(index) ?: return
+        val entry = editableEntries[index]
+        val wasSeen = id in seenIds
+        editableEntries.removeAt(index)
+        rowIds.removeAt(index)
+        seenIds.remove(id)
+        if (openId == id) openId = null
+        scope.launch {
+            snackbar.currentSnackbarData?.dismiss()
+            val name = ExerciseTranslations.translate(entry.matchedName ?: entry.rawName, languageCode)
+            val result = snackbar.showSnackbar(removedText.replace("%1\$s", name), actionLabel = undoText, duration = SnackbarDuration.Long)
+            if (result == SnackbarResult.ActionPerformed) {
+                // Back where it was (or at the end if rows above were removed meanwhile)
+                // A new id: under the old one the list would restore the swiped-away state and remove it again
+                val at = index.coerceAtMost(editableEntries.size)
+                val restoredId = nextRowId++
+                editableEntries.add(at, entry)
+                rowIds.add(at, restoredId)
+                if (wasSeen) seenIds.add(restoredId)
+            }
+        }
+    }
+    fun addEntry(entry: ScannedExerciseEntry) {
+        editableEntries.add(entry)
+        rowIds.add(nextRowId++)
+        openRow(editableEntries.lastIndex, reveal = true)
+    }
+    fun needsAttention(entry: ScannedExerciseEntry) = entry.needsReview || !entry.hasValidReps
+    fun openNextToCheck() {
+        if (editableEntries.isEmpty()) return
+        val from = openId?.let { rowIds.indexOf(it) } ?: -1
+        val next = (1..editableEntries.size).map { (from + it) % editableEntries.size }.firstOrNull { needsAttention(editableEntries[it]) }
+        next?.let { openRow(it, reveal = true) }
+    }
+    fun confirm() {
+        val invalid = editableEntries.indexOfFirst { !it.hasValidReps }
+        if (invalid < 0) {
+            showConfirmDialog = true
+        } else {
+            // Never save a row whose reps cannot be stored: show it instead
+            openRow(invalid, reveal = true)
+        }
+    }
 
     // System BackHandler ensuring the back button always dismisses cleanly
     val isChildSheetOpen = pickingIndex != null || customEditIndex != null || showFullscreenPhoto || isAddingNewExercise || showConfirmDialog
@@ -233,15 +310,10 @@ fun AiScanPreviewSheet(
         containerColor = Surface,
         contentColor = OnSurface,
         tonalElevation = 0.dp,
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 12.dp)
-                    .size(width = 32.dp, height = 4.dp)
-                    .clip(CircleShape)
-                    .background(OnSurfaceVariant.copy(alpha = 0.4f))
-            )
-        }
+        // The exercise panel inside is the thing to drag; the sheet itself does not move (no fighting over the finger,
+        // no closing by accident). It closes with Annulla, back or a tap outside.
+        sheetGesturesEnabled = false,
+        dragHandle = null
     ) {
         BoxWithConstraints(
             modifier = Modifier
@@ -249,24 +321,52 @@ fun AiScanPreviewSheet(
                 .navigationBarsPadding()
         ) {
             val isWideScreen = maxWidth >= 600.dp
+            val listContent: LazyListScope.() -> Unit = {
+                scanReviewList(
+                    entries = editableEntries,
+                    rowIds = rowIds,
+                    openId = openId,
+                    seenIds = seenIds,
+                    showHeader = isWideScreen || imageUri == null,
+                    languageCode = languageCode,
+                    onToggle = { toggleRow(it) },
+                    onUpdate = { index, updated -> editableEntries[index] = updated },
+                    onRemove = { removeRow(it) },
+                    onChangeExercise = { index ->
+                        val entry = editableEntries.getOrNull(index)
+                        if (entry?.exerciseId == null) customEditIndex = index else pickingIndex = index
+                    },
+                    onAddExerciseClick = { isAddingNewExercise = true },
+                    // A one-time choice: at the end of the list instead of taking room under the photo
+                    footer = if (imageUri != null) {
+                        { SaveImageToggleCard(checked = saveImageToPlan, onCheckedChange = { saveImageToPlan = it }) }
+                    } else null
+                )
+            }
+            val actions: @Composable () -> Unit = {
+                ActionButtonsSection(
+                    onDismiss = dismiss,
+                    onConfirm = { confirm() },
+                    count = editableEntries.size
+                )
+            }
 
             if (isWideScreen) {
-                // Adaptive 2-Column Split for tablets and foldables
+                // Two columns on tablets and foldables: the sheet on the left, the exercises on the right
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fillMaxHeight(0.9f)
                         .padding(horizontal = ResponsiveSize.cardPadding)
                         .padding(bottom = ResponsiveSize.cardPadding),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.large)
                 ) {
-                    // Left Column: Photo Inspector
                     if (imageUri != null) {
                         val tabletZoomState = rememberZoomState()
-
                         Column(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight(0.85f),
+                                .fillMaxHeight(),
                             verticalArrangement = Arrangement.spacedBy(Spacing.medium)
                         ) {
                             Row(
@@ -286,7 +386,6 @@ fun AiScanPreviewSheet(
                                         color = OnSurface
                                     )
                                 }
-
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -296,23 +395,11 @@ fun AiScanPreviewSheet(
                                         enter = fadeIn(),
                                         exit = fadeOut()
                                     ) {
-                                        IconButton(
-                                            onClick = { tabletZoomState.reset() },
-                                            modifier = Modifier.size(32.dp)
-                                        ) {
-                                            Icon(
-                                                Icons.Rounded.RestartAlt,
-                                                contentDescription = "Reset Zoom",
-                                                tint = OnSurfaceVariant,
-                                                modifier = Modifier.size(18.dp)
-                                            )
+                                        IconButton(onClick = { tabletZoomState.reset() }, modifier = Modifier.size(32.dp)) {
+                                            Icon(Icons.Rounded.RestartAlt, contentDescription = "Reset Zoom", tint = OnSurfaceVariant, modifier = Modifier.size(18.dp))
                                         }
                                     }
-
-                                    IconButton(
-                                        onClick = { showFullscreenPhoto = true },
-                                        modifier = Modifier.size(32.dp)
-                                    ) {
+                                    IconButton(onClick = { showFullscreenPhoto = true }, modifier = Modifier.size(32.dp)) {
                                         Icon(
                                             Icons.Rounded.Fullscreen,
                                             contentDescription = stringResource(Res.string.ai_scan_fullscreen_photo),
@@ -322,7 +409,6 @@ fun AiScanPreviewSheet(
                                     }
                                 }
                             }
-
                             ZoomablePhotoInspector(
                                 imageUri = imageUri,
                                 photo = photo,
@@ -334,90 +420,106 @@ fun AiScanPreviewSheet(
                         }
                     }
 
-                    // Right Column: Exercise list & actions
                     Column(
                         modifier = Modifier
                             .weight(1.2f)
-                            .verticalScroll(rememberScrollState()),
+                            .fillMaxHeight(),
                         verticalArrangement = Arrangement.spacedBy(Spacing.medium)
                     ) {
                         HeaderSection()
-
-                        if (imageUri != null) {
-                            SaveImageToggleCard(
-                                checked = saveImageToPlan,
-                                onCheckedChange = { saveImageToPlan = it }
-                            )
-                        }
-
-                        ExerciseListSection(
-                            entries = editableEntries,
-                            languageCode = languageCode,
-                            onRemove = { editableEntries.removeAt(it) },
-                            onUpdate = { index, updated -> editableEntries[index] = updated },
-                            onChangeExercise = { index ->
-                                val entry = editableEntries.getOrNull(index)
-                                if (entry?.exerciseId == null) {
-                                    customEditIndex = index
-                                } else {
-                                    pickingIndex = index
-                                }
-                            },
-                            onAddExerciseClick = { isAddingNewExercise = true }
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                            content = listContent
                         )
-
-                        ActionButtonsSection(
-                            onDismiss = dismiss,
-                            onConfirm = { showConfirmDialog = true },
-                            canConfirm = editableEntries.isNotEmpty()
-                        )
+                        actions()
+                    }
+                }
+            } else if (imageUri == null) {
+                // No photo to compare with: a plain list
+                Column(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
+                    Box(modifier = Modifier.padding(horizontal = ResponsiveSize.cardPadding)) { HeaderSection() }
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.small),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        content = listContent
+                    )
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = ResponsiveSize.cardPadding).padding(top = 12.dp, bottom = 16.dp)) {
+                        actions()
                     }
                 }
             } else {
-                // Single Column (Compact Phone)
-                SheetFormLayout {
-                    SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.medium) {
-                        HeaderSection()
-
-                        // Collapsible Photo Inspector for Phone
-                        if (imageUri != null) {
-                            CollapsiblePhotoInspector(
+                // Phone: the photo of the sheet behind, the exercises on a panel dragged over it (Alto / Metà / Basso)
+                val zoomState = rememberZoomState()
+                ScanPhotoPanel(
+                    state = panel,
+                    photo = { area, coveredPx ->
+                        Box(modifier = area) {
+                            ZoomablePhotoInspector(
                                 imageUri = imageUri,
                                 photo = photo,
-                                onOpenFullscreen = { showFullscreenPhoto = true }
+                                zoomState = zoomState,
+                                modifier = Modifier.fillMaxSize(),
+                                coveredPx = coveredPx
                             )
-
-                            SaveImageToggleCard(
-                                checked = saveImageToPlan,
-                                onCheckedChange = { saveImageToPlan = it }
-                            )
+                            IconButton(
+                                onClick = { showFullscreenPhoto = true },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Surface.copy(alpha = 0.8f))
+                            ) {
+                                Icon(
+                                    Icons.Rounded.Fullscreen,
+                                    contentDescription = stringResource(Res.string.ai_scan_fullscreen_photo),
+                                    tint = OnSurface
+                                )
+                            }
                         }
-
-                        ExerciseListSection(
-                            entries = editableEntries,
-                            languageCode = languageCode,
-                            onRemove = { editableEntries.removeAt(it) },
-                            onUpdate = { index, updated -> editableEntries[index] = updated },
-                            onChangeExercise = { index ->
-                                val entry = editableEntries.getOrNull(index)
-                                if (entry?.exerciseId == null) {
-                                    customEditIndex = index
-                                } else {
-                                    pickingIndex = index
-                                }
-                            },
-                            onAddExerciseClick = { isAddingNewExercise = true }
+                    },
+                    header = {
+                        ReviewSummary(
+                            count = editableEntries.size,
+                            toCheck = editableEntries.count { needsAttention(it) },
+                            onOpenNextToCheck = { openNextToCheck() }
                         )
-                    }
-                    SheetFormFooter(horizontalPadding = ResponsiveSize.cardPadding) {
-                        ActionButtonsSection(
-                            onDismiss = dismiss,
-                            onConfirm = { showConfirmDialog = true },
-                            canConfirm = editableEntries.isNotEmpty()
+                    },
+                    list = {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.small),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                            content = listContent
                         )
+                    },
+                    footer = {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            // Always there, only shown while the list goes on below: the footer keeps its height,
+                            // otherwise the panel's heights change under the finger
+                            HorizontalDivider(color = OnSurfaceVariant.copy(alpha = if (listState.canScrollForward) 0.15f else 0f))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = ResponsiveSize.cardPadding)
+                                    .padding(top = 12.dp, bottom = 16.dp)
+                            ) {
+                                actions()
+                            }
+                        }
                     }
-                }
+                )
             }
+            SnackbarHost(
+                hostState = snackbar,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 88.dp)
+            )
         }
     }
 
@@ -541,16 +643,19 @@ fun AiScanPreviewSheet(
             categories = categories,
             onExerciseSelected = { exercise ->
                 val isCardio = exercise.categoria.equals("Cardio", ignoreCase = true)
-                editableEntries.add(
+                addEntry(
                     ScannedExerciseEntry(
                         rawName = exercise.nome,
                         exerciseId = exercise.id,
                         matchedName = exercise.nome,
                         suggestedCategory = exercise.categoria,
                         sets = if (isCardio) 1 else 3,
-                        reps = if (isCardio) "1" else "8-12",
+                        reps = if (isCardio) "1" else "8",
                         restSeconds = 120,
-                        cardioMinutes = if (isCardio) 20 else null
+                        cardioMinutes = if (isCardio) 20 else null,
+                        // A new strength exercise starts as a range, 8–12
+                        repsMode = if (isCardio) null else RepsMode.RANGE,
+                        repsMax = if (isCardio) null else 12
                     )
                 )
                 isAddingNewExercise = false
@@ -566,40 +671,61 @@ fun AiScanPreviewSheet(
     }
 }
 
+/** The panel's head: how many exercises were read and, when some need the user, a chip that opens the next one. */
 @Composable
-private fun HeaderSection() {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Primary.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Rounded.AutoAwesome,
-                contentDescription = null,
-                tint = Primary,
-                modifier = Modifier.size(22.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Column {
-            Text(
-                text = stringResource(Res.string.ai_scan_preview_title),
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineSmall.fontSize)
-                ),
-                color = OnSurface,
-                fontWeight = FontWeight.Black
-            )
-            Text(
-                text = stringResource(Res.string.ai_scan_preview_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = OnSurfaceVariant
-            )
+private fun ReviewSummary(count: Int, toCheck: Int, onOpenNextToCheck: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = ResponsiveSize.cardPadding)
+            .padding(bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = pluralStringResource(Res.plurals.ai_scan_exercises_read, count, count),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = OnSurface,
+            modifier = Modifier.weight(1f)
+        )
+        if (toCheck > 0) {
+            Row(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .clickable(onClick = onOpenNextToCheck)
+                    .padding(start = 12.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = pluralStringResource(Res.plurals.ai_scan_to_check, toCheck, toCheck),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Icon(
+                    Icons.Rounded.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun HeaderSection() {
+    Text(
+        text = stringResource(Res.string.ai_scan_review_title),
+        style = MaterialTheme.typography.headlineSmall.copy(
+            fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineSmall.fontSize)
+        ),
+        color = OnSurface,
+        fontWeight = FontWeight.Black,
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
 }
 
 @Composable
@@ -657,118 +783,13 @@ private fun SaveImageToggleCard(
 }
 
 @Composable
-private fun CollapsiblePhotoInspector(
-    imageUri: String,
-    photo: ScanPhotoUi,
-    onOpenFullscreen: () -> Unit
-) {
-    var isCollapsed by remember { mutableStateOf(false) }
-    val zoomState = rememberZoomState()
-
-    Card(
-        shape = Shapes.large,
-        colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, OutlineVariant.copy(alpha = 0.4f), Shapes.large)
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            // Header Bar with all actions in the top bar outside the photo
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isCollapsed = !isCollapsed }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        Icons.Rounded.Photo,
-                        contentDescription = null,
-                        tint = Primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = stringResource(Res.string.ai_scan_original_sheet),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = OnSurface
-                    )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    AnimatedVisibility(
-                        visible = !isCollapsed && zoomState.scale > 1.05f,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        IconButton(
-                            onClick = { zoomState.reset() },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                Icons.Rounded.RestartAlt,
-                                contentDescription = "Reset Zoom",
-                                tint = OnSurfaceVariant,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-
-                    IconButton(
-                        onClick = onOpenFullscreen,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Rounded.Fullscreen,
-                            contentDescription = stringResource(Res.string.ai_scan_fullscreen_photo),
-                            tint = OnSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { isCollapsed = !isCollapsed },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isCollapsed) Icons.Rounded.KeyboardArrowDown else Icons.Rounded.KeyboardArrowUp,
-                            contentDescription = if (isCollapsed) stringResource(Res.string.ai_scan_expand_photo) else stringResource(Res.string.ai_scan_collapse_photo),
-                            tint = OnSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-
-            AnimatedVisibility(visible = !isCollapsed) {
-                ZoomablePhotoInspector(
-                    imageUri = imageUri,
-                    photo = photo,
-                    zoomState = zoomState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(230.dp)
-                        .padding(horizontal = 8.dp, vertical = 6.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun ZoomablePhotoInspector(
     imageUri: String,
     photo: ScanPhotoUi,
     zoomState: ZoomState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Pixels of the photo's bottom hidden under the exercise panel: they can be dragged up into view. */
+    coveredPx: () -> Float = { 0f }
 ) {
     var imageSize by remember { mutableStateOf(IntSize.Zero) }
 
@@ -800,9 +821,11 @@ private fun ZoomablePhotoInspector(
                     val newScale = (zoomState.scale * zoom).coerceIn(1f, 5f)
                     zoomState.scale = newScale
 
+                    val covered = coveredPx().coerceAtLeast(0f)
                     if (newScale <= 1f) {
+                        // Not zoomed: only the part under the panel can be pulled up into view
                         zoomState.offsetX = 0f
-                        zoomState.offsetY = 0f
+                        zoomState.offsetY = (zoomState.offsetY + pan.y).coerceIn(-covered, 0f)
                     } else {
                         val maxX = ((imageSize.width * newScale) - imageSize.width) / 2f
                         val maxY = ((imageSize.height * newScale) - imageSize.height) / 2f
@@ -812,7 +835,7 @@ private fun ZoomablePhotoInspector(
                         val newOffsetY = zoomState.offsetY + pan.y
 
                         zoomState.offsetX = newOffsetX.coerceIn(-maxX.coerceAtLeast(0f), maxX.coerceAtLeast(0f))
-                        zoomState.offsetY = newOffsetY.coerceIn(-maxY.coerceAtLeast(0f), maxY.coerceAtLeast(0f))
+                        zoomState.offsetY = newOffsetY.coerceIn(-maxY.coerceAtLeast(0f) - covered, maxY.coerceAtLeast(0f))
                     }
                 }
             }
@@ -823,12 +846,14 @@ private fun ZoomablePhotoInspector(
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged { imageSize = it }
-                .graphicsLayer(
-                    scaleX = zoomState.scale,
-                    scaleY = zoomState.scale,
-                    translationX = zoomState.offsetX,
-                    translationY = zoomState.offsetY
-                )
+                .graphicsLayer {
+                    scaleX = zoomState.scale
+                    scaleY = zoomState.scale
+                    translationX = zoomState.offsetX
+                    // The panel going back down uncovers the photo: never leave it pulled up past what is hidden
+                    val maxY = ((imageSize.height * zoomState.scale) - imageSize.height) / 2f
+                    translationY = zoomState.offsetY.coerceIn(-maxY.coerceAtLeast(0f) - coveredPx().coerceAtLeast(0f), maxY.coerceAtLeast(0f))
+                }
         )
 
         // Subtle Zoom hint at bottom when not zoomed in
@@ -1190,512 +1215,74 @@ private fun EditCustomExerciseSheet(
     }
 }
 
-@Composable
-private fun ExerciseListSection(
+/** The exercises of the review: a header with the count, the joined rows, then "add a missing exercise". */
+private fun LazyListScope.scanReviewList(
     entries: List<ScannedExerciseEntry>,
+    rowIds: List<Long>,
+    openId: Long?,
+    seenIds: List<Long>,
+    showHeader: Boolean,
     languageCode: String,
-    onRemove: (Int) -> Unit,
+    onToggle: (Int) -> Unit,
     onUpdate: (Int, ScannedExerciseEntry) -> Unit,
+    onRemove: (Int) -> Unit,
     onChangeExercise: (Int) -> Unit,
-    onAddExerciseClick: () -> Unit
+    onAddExerciseClick: () -> Unit,
+    footer: (@Composable () -> Unit)?
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+    if (showHeader) item(key = "header") {
+        Text(
+            text = "${stringResource(Res.string.compare_exercises)} · ${entries.size}",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = OnSurface,
+            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+        )
+    }
+    if (!showHeader) item(key = "header") { Spacer(Modifier.height(0.dp)) }
+    itemsIndexed(entries, key = { index, _ -> rowIds.getOrElse(index) { -1L - index } }) { index, entry ->
+        val id = rowIds.getOrNull(index)
+        ScanReviewRow(
+            entry = entry,
+            number = index + 1,
+            position = joinedPosition(index, entries.size),
+            expanded = id != null && openId == id,
+            seen = id != null && id in seenIds,
+            languageCode = languageCode,
+            onToggle = { onToggle(index) },
+            onUpdate = { onUpdate(index, it) },
+            onRemove = { onRemove(index) },
+            onChangeExercise = { onChangeExercise(index) },
+            modifier = Modifier.animateItem()
+        )
+    }
+    item(key = "add") {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .clip(Shapes.small)
+                .clickable(onClick = onAddExerciseClick)
+                .padding(horizontal = 8.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
             Text(
-                text = "${stringResource(Res.string.compare_exercises)} (${entries.size})",
-                style = MaterialTheme.typography.titleMedium,
+                text = stringResource(Res.string.ai_scan_add_missing_exercise),
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = OnSurface
-            )
-
-            Row(
-                modifier = Modifier
-                    .clip(Shapes.small)
-                    .clickable { onAddExerciseClick() }
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    Icons.Rounded.Add,
-                    contentDescription = null,
-                    tint = Primary,
-                    modifier = Modifier.size(18.dp)
-                )
-                Text(
-                    text = stringResource(Res.string.ai_scan_add_missing_exercise),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Primary
-                )
-            }
-        }
-
-        entries.forEachIndexed { index, entry ->
-            ScanEntryCard(
-                entry = entry,
-                index = index,
-                languageCode = languageCode,
-                onRemove = { onRemove(index) },
-                onUpdate = { updated -> onUpdate(index, updated) },
-                onChangeExercise = { onChangeExercise(index) }
+                color = Primary
             )
         }
     }
-}
-
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun ScanEntryCard(
-    entry: ScannedExerciseEntry,
-    index: Int,
-    languageCode: String,
-    onRemove: () -> Unit,
-    onUpdate: (ScannedExerciseEntry) -> Unit,
-    onChangeExercise: () -> Unit
-) {
-    val haptic = LocalHapticFeedback.current
-    var setsText by remember(entry.rawName, index, entry.isAdvanced) { mutableStateOf(entry.sets.toString()) }
-    var repsText by remember(entry.rawName, index, entry.isAdvanced) { mutableStateOf(entry.reps) }
-    // Android: the same PrescriptionEnvironmentViewModel as before, from the current back stack entry
-    val environment = com.emanuel5014.trainable.ui.components.LocalPrescriptionEnvironment.current()
-    val storedMaxes = environment.oneRepMaxes
-    val storedEstimates = environment.estimatedOneRepMaxes
-    var advancedWeeksCount by remember(entry.rawName, index) { mutableIntStateOf(entry.blocksByWeek.keys.maxOrNull() ?: 1) }
-
-    val displayTitle = if (entry.exerciseId != null) {
-        ExerciseTranslations.translate(entry.matchedName ?: entry.rawName, languageCode)
-    } else {
-        ExerciseTranslations.translate(entry.rawName, languageCode)
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(Shapes.large)
-            .background(SurfaceContainerHigh)
-            .padding(Spacing.medium),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(if (entry.exerciseId != null) Primary else Primary.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "${index + 1}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (entry.exerciseId != null) OnPrimary else Primary,
-                    fontWeight = FontWeight.ExtraBold
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onChangeExercise() }
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = displayTitle,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-
-                    if (entry.exerciseId == null) {
-                        Text(
-                            text = stringResource(Res.string.ai_scan_custom_badge),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Primary,
-                            fontWeight = FontWeight.Black,
-                            modifier = Modifier
-                                .background(Primary.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 5.dp, vertical = 1.dp)
-                        )
-                    }
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    if (entry.exerciseId == null) {
-                        Text(
-                            text = stringResource(Res.string.ai_scan_custom_label),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Primary
-                        )
-                        Icon(
-                            Icons.Rounded.Edit,
-                            contentDescription = null,
-                            tint = Primary,
-                            modifier = Modifier.size(12.dp)
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(Res.string.ai_scan_tap_to_change),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = OnSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            IconButton(onClick = onRemove) {
-                Icon(
-                    Icons.Rounded.Close,
-                    contentDescription = stringResource(Res.string.cancel),
-                    tint = OnSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-
-        if (entry.isProgrammed && !entry.isAdvanced) {
-            Text(
-                text = stringResource(Res.string.scan_programmed_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = Primary,
-                fontWeight = FontWeight.Bold
-            )
-        }
-        entry.oneRepMaxKg?.let { kg ->
-            Text(
-                text = stringResource(Res.string.scan_one_rep_max_found, com.emanuel5014.trainable.ui.components.formatWeight(kg, "kg")),
-                style = MaterialTheme.typography.bodySmall,
-                color = OnSurfaceVariant
-            )
-        }
-
-        if (entry.isCardio) {
-            CardioDurationSlider(
-                valueMinutes = entry.cardioMinutes ?: 20,
-                onValueChange = { onUpdate(entry.copy(cardioMinutes = it)) },
-                hapticEnabled = true,
-                haptic = haptic,
-                modifier = Modifier.fillMaxWidth()
-            )
-        } else {
-            ExerciseTypeSelector(
-                selectedType = when {
-                    entry.isAdvanced -> "advanced"
-                    entry.isTimeAndWeight -> "time_and_weight"
-                    entry.isTimeAndReps -> TIME_AND_REPS
-                    else -> "strength"
-                },
-                showAdvanced = LocalAdvancedProgramming.current,
-                onTypeSelected = { type ->
-                    val currentTarget = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
-                    when (type) {
-                        "strength" -> onUpdate(
-                            entry.copy(
-                                exerciseType = "strength",
-                                reps = if (entry.reps.endsWith("s")) "$currentTarget" else entry.reps,
-                                blocksByWeek = emptyMap()
-                            )
-                        )
-                        TIME_AND_REPS -> onUpdate(
-                            entry.copy(
-                                exerciseType = TIME_AND_REPS,
-                                // A hold's "45s" is its time; plain reps ("8-12") give their first number as the goal
-                                timeSeconds = entry.timeSeconds ?: TimeAndReps.DEFAULT_SECONDS,
-                                reps = TimeAndReps.goalOf(entry.reps.takeUnless { it.endsWith("s") }?.substringBefore("-")).toString(),
-                                blocksByWeek = emptyMap()
-                            )
-                        )
-                        "time_and_weight" -> onUpdate(
-                            entry.copy(
-                                exerciseType = "time_and_weight",
-                                timeSeconds = currentTarget,
-                                reps = "${currentTarget}s",
-                                blocksByWeek = emptyMap()
-                            )
-                        )
-                        "advanced" -> if (!entry.isAdvanced) {
-                            // Carry the plain sets × reps over as a first free block
-                            val reps = entry.reps.takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
-                            onUpdate(
-                                entry.copy(
-                                    exerciseType = "strength",
-                                    timeSeconds = null,
-                                    blocksByWeek = mapOf(1 to listOf(PrescriptionBlock(sets = entry.sets, reps = reps)))
-                                )
-                            )
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (entry.isAdvanced) {
-                fun withBlocks(blocks: Map<Int, List<PrescriptionBlock>>): ScannedExerciseEntry {
-                    val firstWeek = blocks.filterValues { it.isNotEmpty() }.sortedByKeys().values.firstOrNull()
-                    val (sets, reps) = firstWeek?.let { PrescriptionExpander.legacyTargets(it) } ?: (entry.sets to entry.reps)
-                    return entry.copy(blocksByWeek = blocks, sets = sets.coerceIn(1, 30), reps = reps)
-                }
-                AdvancedPrescriptionEditor(
-                    blocksByWeek = entry.blocksByWeek,
-                    onBlocksByWeekChange = { onUpdate(withBlocks(it)) },
-                    exerciseId = entry.exerciseId,
-                    exerciseName = displayTitle,
-                    oneRepMax = OneRepMaxBinding(
-                        kg = entry.oneRepMaxKg ?: entry.exerciseId?.let { storedMaxes[it] },
-                        estimatedKg = entry.exerciseId?.let { storedEstimates[it] },
-                        onChange = { kg, _ -> onUpdate(entry.copy(oneRepMaxKg = kg)) }
-                    ),
-                    weeks = WeekEditing(
-                        weeksCount = advancedWeeksCount,
-                        onWeeksCountChange = { advancedWeeksCount = it },
-                        onDeleteWeek = { week ->
-                            onUpdate(withBlocks(WeekShift.removeWeek(entry.blocksByWeek, week)))
-                            advancedWeeksCount = (advancedWeeksCount - 1).coerceAtLeast(1)
-                        },
-                        persistedWeeksCount = 0
-                    ),
-                    // Each card scans on its own; the routine scan and its draft are untouched by this
-                    aiScanKey = "program_scan_$index"
-                )
-            } else if (entry.isTimeAndReps) {
-                var goalText by remember(entry.rawName, index) { mutableStateOf(entry.reps) }
-                TimeAndRepsEditor(
-                    setsText = setsText,
-                    onSetsChange = { value ->
-                        setsText = value
-                        value.toIntOrNull()?.let { onUpdate(entry.copy(sets = it)) }
-                    },
-                    repsGoalText = goalText,
-                    onRepsGoalChange = { value ->
-                        goalText = value
-                        TimeAndReps.parseGoal(value)?.let { onUpdate(entry.copy(reps = it.toString())) }
-                    },
-                    seconds = entry.timeSeconds ?: TimeAndReps.DEFAULT_SECONDS,
-                    onSecondsChange = { onUpdate(entry.copy(timeSeconds = it)) },
-                    hapticEnabled = true,
-                    haptic = haptic,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else if (entry.isTimeAndWeight) {
-                GymInputField(
-                    value = setsText,
-                    onValueChange = { value ->
-                        setsText = value
-                        value.toIntOrNull()?.let { onUpdate(entry.copy(sets = it)) }
-                    },
-                    label = stringResource(Res.string.sets),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                val targetSec = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
-                TargetSecondsSlider(
-                    valueSeconds = targetSec,
-                    onValueChange = { newSec ->
-                        onUpdate(entry.copy(timeSeconds = newSec, reps = "${newSec}s"))
-                    },
-                    hapticEnabled = true,
-                    haptic = haptic,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                ) {
-                    GymInputField(
-                        value = setsText,
-                        onValueChange = { value ->
-                            setsText = value
-                            value.toIntOrNull()?.let { onUpdate(entry.copy(sets = it)) }
-                        },
-                        label = stringResource(Res.string.sets),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f)
-                    )
-                    GymInputField(
-                        value = repsText,
-                        onValueChange = { value ->
-                            repsText = value
-                            onUpdate(entry.copy(reps = value))
-                        },
-                        label = stringResource(Res.string.reps),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-
-        RestSlider(
-            value = entry.restSeconds,
-            onValueChange = { onUpdate(entry.copy(restSeconds = it)) },
-            hapticEnabled = true,
-            haptic = haptic,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun RestSlider(
-    value: Int,
-    onValueChange: (Int) -> Unit,
-    hapticEnabled: Boolean,
-    haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    modifier: Modifier = Modifier
-) {
-    val steps = listOf(0, 30, 60, 90, 120, 180, 240, 300)
-    val currentIndex = remember(value) {
-        val exactIndex = steps.indexOf(value)
-        if (exactIndex != -1) exactIndex
-        else steps.indexOf(steps.minByOrNull { kotlin.math.abs(it - value) } ?: 120).coerceAtLeast(0)
-    }
-
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(Res.string.rest_seconds),
-            style = MaterialTheme.typography.labelSmall,
-            color = OnSurfaceVariant
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "${value}s",
-                style = MaterialTheme.typography.titleMedium,
-                color = Primary,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Text(
-                text = formatRestTime(value),
-                style = MaterialTheme.typography.labelSmall,
-                color = OnSurfaceVariant
-            )
-        }
-
-        Slider(
-            value = currentIndex.toFloat(),
-            onValueChange = { rawValue ->
-                val index = kotlin.math.round(rawValue).toInt()
-                val clampedIndex = index.coerceIn(0, steps.size - 1)
-                if (clampedIndex != currentIndex) {
-                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onValueChange(steps[clampedIndex])
-                }
-            },
-            valueRange = 0f..(steps.size - 1).toFloat(),
-            steps = steps.size - 2,
-            colors = SliderDefaults.colors(
-                thumbColor = Primary,
-                activeTrackColor = Primary,
-                inactiveTrackColor = SurfaceContainerHighest
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun CardioDurationSlider(
-    valueMinutes: Int,
-    onValueChange: (Int) -> Unit,
-    hapticEnabled: Boolean,
-    haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    modifier: Modifier = Modifier
-) {
-    val steps = listOf(5, 10, 15, 20, 25, 30, 45, 60, 90, 120)
-    val closestIndex = remember(valueMinutes) {
-        steps.indexOf(steps.minByOrNull { kotlin.math.abs(it - valueMinutes) } ?: 20).coerceAtLeast(0)
-    }
-
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(Res.string.cardio_duration_slider),
-            style = MaterialTheme.typography.labelSmall,
-            color = OnSurfaceVariant
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "${valueMinutes} min",
-                style = MaterialTheme.typography.titleMedium,
-                color = Primary,
-                fontWeight = FontWeight.ExtraBold
-            )
-            val displayMinutes = valueMinutes / 60
-            val displaySecs = valueMinutes % 60
-            if (displayMinutes > 0 || displaySecs > 0) {
-                Text(
-                    text = when {
-                        displayMinutes == 0 -> "${displaySecs}s"
-                        displaySecs == 0 -> "${displayMinutes}m"
-                        else -> "${displayMinutes}m ${displaySecs}s"
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant
-                )
-            }
-        }
-
-        Slider(
-            value = closestIndex.toFloat(),
-            onValueChange = { rawValue ->
-                val index = kotlin.math.round(rawValue).toInt()
-                val clampedIndex = index.coerceIn(0, steps.size - 1)
-                if (clampedIndex != closestIndex) {
-                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onValueChange(steps[clampedIndex])
-                }
-            },
-            valueRange = 0f..(steps.size - 1).toFloat(),
-            steps = steps.size - 2,
-            colors = SliderDefaults.colors(
-                thumbColor = Primary,
-                activeTrackColor = Primary,
-                inactiveTrackColor = SurfaceContainerHighest
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun formatRestTime(seconds: Int): String {
-    val minutes = seconds / 60
-    val secs = seconds % 60
-    return when {
-        minutes == 0 -> "${secs}s"
-        secs == 0 -> "${minutes}m"
-        else -> "${minutes}m ${secs}s"
-    }
+    footer?.let { content -> item(key = "footer") { Box(modifier = Modifier.padding(top = 8.dp)) { content() } } }
 }
 
 @Composable
 private fun ActionButtonsSection(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
-    canConfirm: Boolean
+    count: Int
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1712,12 +1299,13 @@ private fun ActionButtonsSection(
 
         GymButton(
             onClick = onConfirm,
-            enabled = canConfirm,
+            enabled = count > 0,
             modifier = Modifier.weight(1f)
         ) {
-            Text(stringResource(Res.string.ai_scan_add_all).uppercase(), fontWeight = FontWeight.Black)
+            Text(stringResource(Res.string.ai_scan_add_count, count).uppercase(), fontWeight = FontWeight.Black)
         }
     }
 }
 
-
+/** Longer than a row's expand/collapse animation. */
+private const val ROW_ANIMATION_SETTLE_MS = 350L

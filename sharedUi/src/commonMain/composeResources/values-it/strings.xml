@@ -1354,6 +1354,23 @@
     <string name="ai_scan_save_to_library_checkbox">Salva nella libreria esercizi personalizzati</string>
     <string name="ai_scan_select_from_catalog">Collega a esercizio esistente</string>
     <string name="ai_scan_tap_to_change">Tocca per cambiare esercizio</string>
+    <string name="ai_scan_review_title">Controlla la scheda</string>
+    <string name="ai_scan_needs_review">Da controllare</string>
+    <string name="ai_scan_read_as">Letto: %1$s</string>
+    <string name="ai_scan_add_count">Aggiungi %1$d</string>
+    <string name="ai_scan_remove_exercise">Rimuovi esercizio</string>
+    <plurals name="ai_scan_exercises_read">
+        <item quantity="one">%1$d esercizio letto</item>
+        <item quantity="many">%1$d esercizi letti</item>
+        <item quantity="other">%1$d esercizi letti</item>
+    </plurals>
+    <plurals name="ai_scan_to_check">
+        <item quantity="one">%1$d da controllare</item>
+        <item quantity="many">%1$d da controllare</item>
+        <item quantity="other">%1$d da controllare</item>
+    </plurals>
+    <string name="ai_scan_removed">%1$s rimosso</string>
+    <string name="ai_scan_new_will_be_created">Nuovo · verrà creato</string>
     <string name="ai_scan_zoom_hint">Pizzica o tocca due volte per ingrandire</string>
     <string name="scan_one_rep_max_found">Massimale sul foglio: %1$s · verrà salvato</string>
     <string name="scan_programmed_hint">La prescrizione è su un foglio di programmazione a parte: scegli Avanzata per aggiungere qui i blocchi, oppure scansiona la pagina della programmazione dopo l'importazione.</string>

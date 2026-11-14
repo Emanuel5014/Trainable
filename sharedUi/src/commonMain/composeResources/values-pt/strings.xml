@@ -1354,6 +1354,23 @@
     <string name="ai_scan_save_to_library_checkbox">Guardar na biblioteca de exercícios personalizados</string>
     <string name="ai_scan_select_from_catalog">Associar a exercício existente</string>
     <string name="ai_scan_tap_to_change">Toque para alterar o exercício</string>
+    <string name="ai_scan_review_title">Confira a ficha</string>
+    <string name="ai_scan_needs_review">A verificar</string>
+    <string name="ai_scan_read_as">Lido: %1$s</string>
+    <string name="ai_scan_add_count">Adicionar %1$d</string>
+    <string name="ai_scan_remove_exercise">Remover exercício</string>
+    <plurals name="ai_scan_exercises_read">
+        <item quantity="one">%1$d exercício lido</item>
+        <item quantity="many">%1$d exercícios lidos</item>
+        <item quantity="other">%1$d exercícios lidos</item>
+    </plurals>
+    <plurals name="ai_scan_to_check">
+        <item quantity="one">%1$d a verificar</item>
+        <item quantity="many">%1$d a verificar</item>
+        <item quantity="other">%1$d a verificar</item>
+    </plurals>
+    <string name="ai_scan_removed">%1$s removido</string>
+    <string name="ai_scan_new_will_be_created">Novo · será criado</string>
     <string name="ai_scan_zoom_hint">Aperte ou toque duas vezes para ampliar</string>
     <string name="scan_one_rep_max_found">1RM na folha: %1$s · será salvo</string>
     <string name="scan_programmed_hint">A prescrição está em uma folha de programação à parte: escolha Avançado para adicionar os blocos aqui, ou escaneie a página da programação após importar.</string>

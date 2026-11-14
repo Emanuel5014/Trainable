@@ -1,5 +1,11 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.role
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.advanced_prescription_hint
 import com.emanuel5014.trainable.sharedui.resources.exercise_type_advanced
@@ -102,11 +108,17 @@ fun ExerciseTypeSelector(
     selectedType: String,
     onTypeSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
-    showAdvanced: Boolean = false
+    showAdvanced: Boolean = false,
+    /** Chips instead of tiles and no hint line, for a row inside a list (the AI scan review). */
+    compact: Boolean = false
 ) {
     val options = remember(showAdvanced) {
         if (showAdvanced) listOf(StrengthOption, TimeAndWeightOption, TimeAndRepsOption, AdvancedOption)
         else listOf(StrengthOption, TimeAndWeightOption, TimeAndRepsOption)
+    }
+    if (compact) {
+        CompactExerciseTypeSelector(options, selectedType, onTypeSelected, modifier)
+        return
     }
     val fontScale = LocalDensity.current.fontScale
 
@@ -214,5 +226,36 @@ private fun ExerciseTypeTile(
             textAlign = TextAlign.Center,
             maxLines = 2
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CompactExerciseTypeSelector(
+    options: List<ExerciseTypeOption>,
+    selectedType: String,
+    onTypeSelected: (String) -> Unit,
+    modifier: Modifier
+) {
+    FlowRow(
+        modifier = modifier.selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        options.forEach { option ->
+            val selected = option.type == selectedType
+            FilterChip(
+                selected = selected,
+                onClick = { onTypeSelected(option.type) },
+                label = { Text(stringResource(option.label), maxLines = 1) },
+                leadingIcon = { Icon(option.icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Primary,
+                    selectedLabelColor = OnPrimary,
+                    selectedLeadingIconColor = OnPrimary
+                ),
+                modifier = Modifier.semantics { role = Role.RadioButton }
+            )
+        }
     }
 }
