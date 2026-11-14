@@ -34,10 +34,12 @@ data class OnboardingSettings(
     val timerAddSeconds: Int,
     val timerSubtractEnabled: Boolean,
     val timerSubtractSeconds: Int,
+    val timerShowNextSetButton: Boolean,
     val keepScreenOnSetTimer: Boolean,
     val keepScreenOnCardioTimer: Boolean,
     val autoStopCardioAtTarget: Boolean,
     val autoStopTimeWeightAtTarget: Boolean,
+    val autoAdvanceTimedSets: Boolean,
     val exerciseMedia: Boolean,
     val exerciseMediaLarge: Boolean,
     val plateCalculator: Boolean,
@@ -86,10 +88,12 @@ fun OnboardingChoices.toSettings(theme: ThemeChoice, aiModelVariant: String) = O
     timerAddSeconds = timerAddSeconds.intValue,
     timerSubtractEnabled = timerSubtractEnabled.value,
     timerSubtractSeconds = timerSubtractSeconds.intValue,
+    timerShowNextSetButton = timerShowNextSetButton.value,
     keepScreenOnSetTimer = keepScreenOnSetTimer.value,
     keepScreenOnCardioTimer = keepScreenOnCardioTimer.value,
     autoStopCardioAtTarget = autoStopCardioAtTarget.value,
     autoStopTimeWeightAtTarget = autoStopTimeWeightAtTarget.value,
+    autoAdvanceTimedSets = autoAdvanceTimedSets.value,
     exerciseMedia = exerciseMedia.value,
     exerciseMediaLarge = exerciseMediaLarge.value,
     plateCalculator = plateCalculator.value,
@@ -162,8 +166,8 @@ private fun OnboardingChoices.rows(group: TweakGroup): List<Boolean> = when (gro
     )
     TweakGroup.Timers -> listOf(
         restTimerEnabled.value, warmupTimerEnabled.value, workoutTimerEnabled.value, timerAddEnabled.value,
-        timerSubtractEnabled.value, keepScreenOnSetTimer.value, keepScreenOnCardioTimer.value,
-        autoStopCardioAtTarget.value, autoStopTimeWeightAtTarget.value
+        timerSubtractEnabled.value, timerShowNextSetButton.value, keepScreenOnSetTimer.value,
+        keepScreenOnCardioTimer.value, autoStopCardioAtTarget.value, autoStopTimeWeightAtTarget.value
     )
     TweakGroup.ExercisesAndGestures -> listOf(
         exerciseMedia.value, plateCalculator.value, editablePresets.value, swipeActionsEnabled.value,

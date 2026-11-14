@@ -124,10 +124,13 @@ private fun groupRows(group: TweakGroup, c: OnboardingChoices): List<@Composable
             OptionLabel(stringResource(Res.string.onboarding_step_seconds))
             OptionGroup(TimerAdjustment.SUBTRACT_OPTIONS, c.timerSubtractSeconds.intValue, { "−${it}s" }, { c.timerSubtractSeconds.intValue = it })
         },
+        rowOf(c.timerShowNextSetButton, Res.string.timer_next_set_button, Res.string.timer_next_set_button_desc),
         rowOf(c.keepScreenOnSetTimer, Res.string.keep_screen_on_set_timer, Res.string.keep_screen_on_set_timer_desc),
         rowOf(c.keepScreenOnCardioTimer, Res.string.keep_screen_on_cardio_timer, Res.string.keep_screen_on_cardio_timer_desc),
         rowOf(c.autoStopCardioAtTarget, Res.string.auto_stop_cardio_at_target, Res.string.auto_stop_cardio_at_target_desc),
-        rowOf(c.autoStopTimeWeightAtTarget, Res.string.auto_stop_time_weight_at_target, Res.string.auto_stop_time_weight_at_target_desc)
+        rowOf(c.autoStopTimeWeightAtTarget, Res.string.auto_stop_time_weight_at_target, Res.string.auto_stop_time_weight_at_target_desc) {
+            InnerSwitch(c.autoAdvanceTimedSets, Res.string.auto_advance_timed_sets)
+        }
     )
     TweakGroup.ExercisesAndGestures -> listOf(
         rowOf(c.exerciseMedia, Res.string.exercise_media_show, Res.string.exercise_media_desc) {

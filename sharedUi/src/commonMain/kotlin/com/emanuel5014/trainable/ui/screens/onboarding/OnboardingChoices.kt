@@ -37,10 +37,13 @@ class OnboardingChoices {
     val timerAddSeconds = mutableIntStateOf(TimerAdjustment.DEFAULT_ADD_SECONDS)
     val timerSubtractEnabled = mutableStateOf(true)
     val timerSubtractSeconds = mutableIntStateOf(TimerAdjustment.DEFAULT_SUBTRACT_SECONDS)
+    val timerShowNextSetButton = mutableStateOf(true)
     val keepScreenOnSetTimer = mutableStateOf(true)
     val keepScreenOnCardioTimer = mutableStateOf(true)
     val autoStopCardioAtTarget = mutableStateOf(true)
     val autoStopTimeWeightAtTarget = mutableStateOf(true)
+    /** Sub-option of [autoStopTimeWeightAtTarget], as in Workout settings. */
+    val autoAdvanceTimedSets = mutableStateOf(false)
 
     // Exercises and gestures
     val exerciseMedia = mutableStateOf(false)
