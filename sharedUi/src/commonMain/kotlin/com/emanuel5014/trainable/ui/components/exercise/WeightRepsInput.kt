@@ -353,7 +353,8 @@ private fun <T> WheelPickerBox(
             LazyColumn(
                 state = listState,
                 flingBehavior = rememberSnapFlingBehavior(lazyListState = listState),
-                modifier = Modifier.nestedScroll(WheelEdgeStop).fillMaxSize(),
+                // Turning the wheel never pulls the hub that holds it, not even with a hard flick
+                modifier = Modifier.keepsHubStill().nestedScroll(WheelEdgeStop).fillMaxSize(),
                 contentPadding = PaddingValues(vertical = 36.dp)
             ) {
                 items(

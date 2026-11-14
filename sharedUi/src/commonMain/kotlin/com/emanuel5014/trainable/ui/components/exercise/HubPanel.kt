@@ -30,7 +30,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.util.fastAny
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
@@ -239,7 +246,8 @@ fun HubPanel(
         }
     }
     val dismiss = if (onDismissInput == null) null else closeEditor
-    val pullToDismiss = remember(sheet) { HubPullToDismiss(sheet) }
+    val wheelTouch = remember { HubWheelTouch() }
+    val pullToDismiss = remember(sheet) { HubPullToDismiss(sheet, wheelTouch) }
     SideEffect { pullToDismiss.onDismiss = dismiss }
 
     AnimatedVisibility(
@@ -280,7 +288,7 @@ fun HubPanel(
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = if (glass == null) horizontalPadding else (horizontalPadding - GLASS_PANEL_INSET).coerceAtLeast(8.dp))
                 ) {
-                    content(expansion)
+                    CompositionLocalProvider(LocalHubWheelTouch provides wheelTouch) { content(expansion) }
                     Spacer(modifier = Modifier.hubSpace(expansion, closed = 8.dp, open = 16.dp))
                 }
             }
@@ -289,28 +297,81 @@ fun HubPanel(
 }
 
 /**
+ * Whether a finger is on one of the number wheels inside the hub. A wheel is turned with the same vertical drag
+ * that pulls the hub, so while one is touched the hub leaves the whole gesture to it, however hard the lifter
+ * flicks; only the pill still moves the hub.
+ */
+internal class HubWheelTouch {
+    private var fingers = 0
+    val active: Boolean get() = fingers > 0
+
+    fun down() { fingers++ }
+    fun up() { fingers = (fingers - 1).coerceAtLeast(0) }
+}
+
+internal val LocalHubWheelTouch = staticCompositionLocalOf<HubWheelTouch?> { null }
+
+/**
+ * Marks a control of the hub that turns under a vertical drag, like a number wheel: from the moment a finger lands
+ * on it until the last one lifts, a drag on the content never pulls the hub. Outside a hub it does nothing.
+ */
+@Composable
+internal fun Modifier.keepsHubStill(): Modifier {
+    val touch = LocalHubWheelTouch.current ?: return this
+    return pointerInput(touch) {
+        awaitEachGesture {
+            // The Initial pass sees the finger before the wheel and the hub do anything with it
+            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            touch.down()
+            try {
+                do {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                } while (event.changes.fastAny { it.pressed })
+            } finally {
+                // Also when the wheel leaves the screen in the middle of the gesture
+                touch.up()
+            }
+        }
+    }
+}
+
+/**
  * Lets a swipe down on the content of a locked hub pull the hub as the pill does, and close its editor when the
  * finger lifts far enough down ([HubSheetState.settle]). An open hub, or one without [onDismiss], leaves every
- * gesture to its content.
+ * gesture to its content, and so does a hub whose number wheel is being turned ([wheelTouch]).
  */
-private class HubPullToDismiss(private val sheet: HubSheetState) : NestedScrollConnection {
+private class HubPullToDismiss(
+    private val sheet: HubSheetState,
+    private val wheelTouch: HubWheelTouch
+) : NestedScrollConnection {
     var onDismiss: (() -> Unit)? = null
+
+    /**
+     * Whether this gesture is pulling the hub. It is not enough that a locked hub is below open: it is also there
+     * while it opens, and a fling of a wheel at that moment must not close the editor.
+     */
+    private var pulling = false
 
     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
         // Back up first: the hub the finger pulled down returns before the content scrolls again
-        if (source != NestedScrollSource.UserInput || !sheet.pulledWhileLocked || available.y >= 0f) return Offset.Zero
+        if (source != NestedScrollSource.UserInput || !pulling || !sheet.pulledWhileLocked || available.y >= 0f) return Offset.Zero
         sheet.dragBy(available.y)
         return Offset(0f, available.y)
     }
 
     override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-        if (source != NestedScrollSource.UserInput || onDismiss == null || !sheet.locked || available.y <= 0f) return Offset.Zero
+        if (source != NestedScrollSource.UserInput || wheelTouch.active || onDismiss == null || !sheet.locked || available.y <= 0f) {
+            return Offset.Zero
+        }
+        if (!pulling) sheet.dragStarted()
+        pulling = true
         sheet.dragBy(available.y)
         return Offset(0f, available.y)
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
-        if (!sheet.pulledWhileLocked) return Velocity.Zero
+        if (!pulling) return Velocity.Zero
+        pulling = false
         sheet.settle(available.y, onDismiss)
         return available
     }
