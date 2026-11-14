@@ -5,6 +5,8 @@ import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionNotationParser
+import com.emanuel5014.trainable.domain.prescription.RepMode
+import com.emanuel5014.trainable.domain.prescription.RepsMode
 import com.emanuel5014.trainable.domain.prescription.Technique
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.util.sortedByKeys
@@ -25,7 +27,18 @@ data class ScannedExerciseEntry(
     /** 1RM written on the sheet (e.g. "Stacco (230kg)"). */
     val oneRepMaxKg: Float? = null,
     /** "PROGRAMMAZIONE": the prescription is on a separate program sheet. */
-    val isProgrammed: Boolean = false
+    val isProgrammed: Boolean = false,
+    /**
+     * How [reps] is written for a plain strength row; null only on entries from a draft saved before rep modes
+     * existed (see [ScanDraftCodec]). [reps] holds the text typed for this mode, valid or not.
+     */
+    val repsMode: RepsMode? = null,
+    /** Top of the range in [RepsMode.RANGE], like `PlanExerciseEntity.repsMax`. */
+    val repsMax: Int? = null,
+    /** What the AI wrote when it could not be read as reps ("6+6+6", "MAX"), shown on the row. */
+    val readReps: String? = null,
+    /** "Da controllare": the AI's reps could not be used, the user has to fill them in. */
+    val needsReview: Boolean = false
 ) {
     val isCardio: Boolean get() = exerciseType == "cardio" || cardioMinutes != null
     val isTimeAndWeight: Boolean get() = exerciseType == "time_and_weight"
@@ -342,7 +355,20 @@ object RoutineScanResults {
                 ?: matcher.suggestCategory(item.name, categories)
 
             val program = if (advanced) item.notation?.let { PrescriptionNotationParser.parseProgram(it) } else null
-            val blocksByWeek = program?.weeks.orEmpty().mapValues { (_, blocks) ->
+            val resolvedType = when {
+                item.cardioMinutes != null || item.exerciseType == "cardio" -> "cardio"
+                item.exerciseType == TIME_AND_REPS -> TIME_AND_REPS
+                item.exerciseType == "time_and_weight" || item.timeSeconds != null || item.reps.endsWith("s", ignoreCase = true) -> "time_and_weight"
+                else -> "strength"
+            }
+            val strengthReps = if (resolvedType == "strength" && program?.weeks.isNullOrEmpty()) {
+                ScannedReps.classify(item.reps, advanced, item.sets.coerceIn(1, 30))
+            } else null
+            // "MAX" with advanced programming: a block of max-rep sets, like "3xMAX" in a notation
+            val amrapWeeks = (strengthReps as? ScannedRepsResult.Amrap)?.let {
+                mapOf(1 to listOf(PrescriptionBlock(sets = it.sets, repMode = RepMode.AMRAP)))
+            }
+            val blocksByWeek = (program?.weeks ?: amrapWeeks).orEmpty().mapValues { (_, blocks) ->
                 blocks.map { block -> block.copy(techniques = (nameTechniques + block.techniques).distinct()) }
             }
             if (blocksByWeek.isNotEmpty()) {
@@ -363,12 +389,6 @@ object RoutineScanResults {
                 )
             }
 
-            val resolvedType = when {
-                item.cardioMinutes != null || item.exerciseType == "cardio" -> "cardio"
-                item.exerciseType == TIME_AND_REPS -> TIME_AND_REPS
-                item.exerciseType == "time_and_weight" || item.timeSeconds != null || item.reps.endsWith("s", ignoreCase = true) -> "time_and_weight"
-                else -> "strength"
-            }
             val resolvedTimeSeconds = if (resolvedType == "time_and_weight") {
                 item.timeSeconds ?: item.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
             } else if (resolvedType == TIME_AND_REPS) {
@@ -385,14 +405,25 @@ object RoutineScanResults {
                     resolvedType == "time_and_weight" && !item.reps.endsWith("s") -> "${resolvedTimeSeconds ?: 45}s"
                     // The goal only: a duration slipped into the reps ("45s") is not one
                     resolvedType == TIME_AND_REPS -> TimeAndReps.goalOf(item.reps.takeUnless { it.endsWith("s", ignoreCase = true) }).toString()
-                    else -> item.reps.ifBlank { "8-12" }
+                    strengthReps is ScannedRepsResult.Strength -> strengthReps.reps
+                    strengthReps != null -> ""
+                    else -> item.reps
                 },
                 restSeconds = item.restSeconds.coerceAtLeast(0),
                 cardioMinutes = item.cardioMinutes?.takeIf { it > 0 },
                 exerciseType = resolvedType,
                 timeSeconds = resolvedTimeSeconds,
                 oneRepMaxKg = item.oneRepMaxKg.takeIf { advanced },
-                isProgrammed = item.programmed && advanced
+                isProgrammed = item.programmed && advanced,
+                repsMode = when (strengthReps) {
+                    is ScannedRepsResult.Strength -> strengthReps.mode
+                    null -> null
+                    else -> RepsMode.FIXED
+                },
+                repsMax = (strengthReps as? ScannedRepsResult.Strength)?.repsMax,
+                // A notation cell the parser left blank is still worth showing as what was read
+                readReps = (strengthReps as? ScannedRepsResult.Flagged)?.let { it.read ?: item.notation },
+                needsReview = strengthReps != null && strengthReps !is ScannedRepsResult.Strength
             )
         }
     }

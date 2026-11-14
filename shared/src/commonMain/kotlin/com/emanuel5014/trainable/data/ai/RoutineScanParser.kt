@@ -75,7 +75,8 @@ object RoutineScanParser {
         val programmed = obj.optBoolean("programmed", false) ||
             listOf(rawReps, obj.optString("sets")).any { it.contains("PROGRAMM", ignoreCase = true) }
         val oneRepMax = obj.optDouble("one_rep_max_kg").takeIf { !it.isNaN() && it > 0 }?.toFloat()
-        val reps = if (notation != null && notation == uncleanedReps(obj)) "8-12" else rawReps
+        // A notation cell is not reps: left blank so the review flags it with the notation
+        val reps = if (notation != null && notation == uncleanedReps(obj)) "" else rawReps
         val sets = parseSets(obj, reps)
         val rest = parseRest(obj)
         val cardio = parseCardioMinutes(obj, cleanName)
@@ -229,12 +230,15 @@ object RoutineScanParser {
         if (raw != null) {
             return cleanRepsString(raw)
         }
-        return "8-12"
+        // Not read: blank, so the review asks instead of guessing
+        return ""
     }
 
     fun cleanRepsString(raw: String): String {
         var reps = raw.trim().trim('"', '\'', '`')
-        if (reps.isBlank()) return "8-12"
+            // Typeset sheets write ranges with an en/em dash or "÷" ("8–12", "8÷12")
+            .replace(Regex("[–—÷]"), "-")
+        if (reps.isBlank()) return ""
 
         // If it's a multi-number sequence separated by slashes, commas, dots, or spaces (e.g. "8/6/4/2", "12, 10, 8, 6", "8 6 4 2")
         if ((reps.contains("/") || reps.contains(",") || reps.contains(" ") || (reps.contains(".") && !reps.contains(".."))) && !reps.contains("+")) {

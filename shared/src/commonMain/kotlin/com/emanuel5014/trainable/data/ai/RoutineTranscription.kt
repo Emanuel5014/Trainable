@@ -69,7 +69,7 @@ object RoutineTranscriptionParser {
             val rawReps = reps?.trim().orEmpty()
             val cleanReps = rawReps.takeIf { it.isNotEmpty() }?.let {
                 if (it.equals("max", ignoreCase = true)) "MAX" else RoutineScanParser.cleanRepsString(it)
-            } ?: "8-12"
+            } ?: ""
             // A time in the reps cell (45", 45s, 45 sec) makes a timed exercise
             val timed = Regex("""^\d+\s*(?:"|”|″|s|sec|secondi|seconds)$""", RegexOption.IGNORE_CASE).matches(rawReps)
             val timeSeconds = if (timed) cleanReps.filter(Char::isDigit).toIntOrNull() else null

@@ -4,6 +4,7 @@ import com.emanuel5014.trainable.data.remote.dto.PrescriptionBlockExportDto
 import com.emanuel5014.trainable.domain.prescription.IntensityType
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.RepMode
+import com.emanuel5014.trainable.domain.prescription.RepsMode
 import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -52,7 +53,12 @@ object ScanDraftCodec {
         val timeSeconds: Int? = null,
         val blocks: List<PrescriptionBlockExportDto> = emptyList(),
         val oneRepMaxKg: Float? = null,
-        val isProgrammed: Boolean = false
+        val isProgrammed: Boolean = false,
+        /** [RepsMode] name; missing in drafts saved before rep modes, which are then read again once. */
+        val repsMode: String? = null,
+        val repsMax: Int? = null,
+        val readReps: String? = null,
+        val needsReview: Boolean = false
     )
 
     private fun ScannedExerciseEntry.toDto() = EntryDto(
@@ -84,10 +90,21 @@ object ScanDraftCodec {
             }
         },
         oneRepMaxKg = oneRepMaxKg,
-        isProgrammed = isProgrammed
+        isProgrammed = isProgrammed,
+        repsMode = repsMode?.name,
+        repsMax = repsMax,
+        readReps = readReps,
+        needsReview = needsReview
     )
 
-    private fun EntryDto.toEntry() = ScannedExerciseEntry(
+    private fun EntryDto.toEntry(): ScannedExerciseEntry {
+        val entry = baseEntry()
+        val mode = RepsMode.entries.firstOrNull { it.name == repsMode }
+        // A row without a known mode comes from an older draft: its reps get the scan's rules once
+        return if (mode == null && entry.isPlainStrength) entry.strengthFrom(entry.reps) else entry.copy(repsMode = mode)
+    }
+
+    private fun EntryDto.baseEntry() = ScannedExerciseEntry(
         rawName = rawName,
         exerciseId = exerciseId,
         matchedName = matchedName,
@@ -114,6 +131,9 @@ object ScanDraftCodec {
             }
         },
         oneRepMaxKg = oneRepMaxKg,
-        isProgrammed = isProgrammed
+        isProgrammed = isProgrammed,
+        repsMax = repsMax,
+        readReps = readReps,
+        needsReview = needsReview
     )
 }

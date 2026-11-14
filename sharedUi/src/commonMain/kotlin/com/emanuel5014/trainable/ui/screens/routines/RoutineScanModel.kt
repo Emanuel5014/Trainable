@@ -4,6 +4,8 @@ import com.emanuel5014.trainable.data.ai.ScanDraft
 import com.emanuel5014.trainable.data.ai.RoutineScanDraftStore
 import com.emanuel5014.trainable.data.ai.ScanPhase
 import com.emanuel5014.trainable.data.ai.ScannedExerciseEntry
+import com.emanuel5014.trainable.data.ai.repsDraft
+import com.emanuel5014.trainable.domain.prescription.RepsTarget
 import com.emanuel5014.trainable.data.ai.backend.ConsentRequest
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
@@ -350,11 +352,14 @@ class RoutineScanModel<Metrics>(
                                 durataTargetSecondi = sec
                             )
                         } else {
+                            // The review never lets invalid reps through; the fallback only avoids a crash
+                            val target = entry.repsDraft().target ?: RepsTarget(entry.reps, null)
                             PlanExerciseEntity(
                                 planId = details.plan.id,
                                 exerciseId = exerciseId,
                                 serieTarget = entry.sets,
-                                repsTarget = entry.reps,
+                                repsTarget = target.repsTarget,
+                                repsMax = target.repsMax,
                                 recuperoTarget = entry.restSeconds,
                                 ordine = nextOrder++,
                                 exerciseType = "strength"
