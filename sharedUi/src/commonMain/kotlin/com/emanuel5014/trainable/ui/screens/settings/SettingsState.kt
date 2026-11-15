@@ -343,6 +343,12 @@ class SettingsState(
         initialValue = false
     )
 
+    val exerciseSetupVisible = userPrefsRepository.exerciseSetupVisible.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
     val keepScreenOnCardioTimer = userPrefsRepository.keepScreenOnCardioTimer.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -619,6 +625,12 @@ class SettingsState(
     fun setAutoAdvanceTimedSets(enabled: Boolean) {
         scope.launch {
             userPrefsRepository.setAutoAdvanceTimedSets(enabled)
+        }
+    }
+
+    fun setExerciseSetupVisible(visible: Boolean) {
+        scope.launch {
+            userPrefsRepository.setExerciseSetupVisible(visible)
         }
     }
 

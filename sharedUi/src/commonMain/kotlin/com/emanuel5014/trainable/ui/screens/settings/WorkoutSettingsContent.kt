@@ -50,6 +50,8 @@ import com.emanuel5014.trainable.sharedui.resources.timer_subtract_time
 import com.emanuel5014.trainable.sharedui.resources.timer_next_set_button
 import com.emanuel5014.trainable.sharedui.resources.timer_next_set_button_desc
 import com.emanuel5014.trainable.sharedui.resources.workout_section_after
+import com.emanuel5014.trainable.sharedui.resources.exercise_setup_setting
+import com.emanuel5014.trainable.sharedui.resources.exercise_setup_setting_desc
 import com.emanuel5014.trainable.sharedui.resources.workout_section_programming
 import com.emanuel5014.trainable.sharedui.resources.workout_section_session
 import com.emanuel5014.trainable.sharedui.resources.workout_section_timers
@@ -86,6 +88,7 @@ import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.EventSeat
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -196,6 +199,7 @@ private fun DuringWorkoutCard(state: SettingsState) {
     val plateCalculatorPlates by state.plateCalculatorPlates.collectAsState()
     val rpeEnabled by state.rpeEnabled.collectAsState()
     val rpeScale by state.rpeScale.collectAsState()
+    val exerciseSetupVisible by state.exerciseSetupVisible.collectAsState()
 
     GymCard(containerColor = SurfaceContainerHigh) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -215,6 +219,17 @@ private fun DuringWorkoutCard(state: SettingsState) {
                 description = stringResource(Res.string.inline_exercise_modifications_desc),
                 checked = inlineExerciseModificationsEnabled,
                 onCheckedChange = { state.setInlineExerciseModificationsEnabled(it) }
+            )
+
+            SettingDivider()
+
+            // The machine setup above the sets (issue #67)
+            SettingSwitchRow(
+                icon = Icons.Rounded.EventSeat,
+                title = stringResource(Res.string.exercise_setup_setting),
+                description = stringResource(Res.string.exercise_setup_setting_desc),
+                checked = exerciseSetupVisible,
+                onCheckedChange = { state.setExerciseSetupVisible(it) }
             )
 
             SettingDivider()

@@ -1639,4 +1639,16 @@
     <string name="history_filter_previous_year">Año anterior</string>
     <string name="history_filter_next_year">Año siguiente</string>
     <string name="history_filter_reset">Restablecer</string>
+    <string name="exercise_setup_setting">Ajustes de la máquina</string>
+    <string name="exercise_setup_setting_desc">Muestra encima de las series cómo ajustas cada máquina (asiento, respaldo, pasadores)</string>
+    <string name="exercise_setup_title">Ajustes</string>
+    <string name="exercise_setup_subtitle">%1$s · los mismos en cada rutina</string>
+    <string name="exercise_setup_field">Cómo ajustas la máquina</string>
+    <string name="exercise_setup_hint">Un elemento por línea, o separados por comas</string>
+    <string name="exercise_setup_preview">En el entrenamiento</string>
+    <string name="exercise_setup_clear">Quitar</string>
+    <string name="exercise_setup_add_cd">Añadir ajustes de la máquina</string>
+    <string name="exercise_setup_edit_cd">Ajustes de la máquina: %1$s. Toca para editar</string>
+    <string name="exercise_setup_detail_hint">Se muestran encima de las series en cada entrenamiento con este ejercicio.</string>
+    <string name="exercise_setup_detail_empty">Altura del asiento, respaldo, pasadores: escríbelos una vez y los verás en cada entrenamiento.</string>
 </resources>

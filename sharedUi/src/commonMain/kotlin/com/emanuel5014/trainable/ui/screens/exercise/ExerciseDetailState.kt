@@ -46,6 +46,9 @@ data class ExerciseDetailActions(
     /** The star: offered for an exercise that is in the library and was not merged into another. */
     val canFavorite: Boolean = false
 ) {
+    /** The machine setup can be written or changed under the same rule as the star: in the library, not merged away. */
+    val canEditSetup: Boolean get() = canFavorite
+
     companion object {
         val NONE = ExerciseDetailActions()
 
@@ -234,6 +237,14 @@ class ExerciseDetailState(
         val exercise = current.exercise ?: return
         if (!current.actions.canFavorite) return
         scope.launch { exerciseRepository.setFavorite(exercise.id, favorite) }
+    }
+
+    /** Saves the machine setup of the open exercise (null or blank clears it), when its actions allow it. */
+    fun setSetupNote(text: String?) {
+        val current = state.value
+        val exercise = current.exercise ?: return
+        if (!current.actions.canEditSetup) return
+        scope.launch { exerciseRepository.setSetupNote(exercise.id, text) }
     }
 
     /** Stores the image or GIF the user picked as the media of [exerciseId], replacing the one it had. */

@@ -52,6 +52,8 @@ data class WorkoutState(
     val swipeActionsEnabled: Boolean = true,
     val exerciseMediaEnabled: Boolean = false,
     val exerciseMediaLarge: Boolean = true,
+    /** The machine setup (or a chip to add one) shows above the sets (issue #67). */
+    val exerciseSetupVisible: Boolean = true,
     /** Seconds the + and - buttons of the rest and warmup timers move the countdown by. */
     val timerAddSeconds: Int = TimerAdjustment.DEFAULT_ADD_SECONDS,
     val timerSubtractSeconds: Int = TimerAdjustment.DEFAULT_SUBTRACT_SECONDS,

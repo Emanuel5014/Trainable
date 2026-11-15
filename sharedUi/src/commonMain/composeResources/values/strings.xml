@@ -1634,4 +1634,16 @@
     <string name="history_filter_previous_year">Previous year</string>
     <string name="history_filter_next_year">Next year</string>
     <string name="history_filter_reset">Reset</string>
+    <string name="exercise_setup_setting">Machine setup</string>
+    <string name="exercise_setup_setting_desc">Show how you set up each machine (seat, backrest, pins) above its sets</string>
+    <string name="exercise_setup_title">Setup</string>
+    <string name="exercise_setup_subtitle">%1$s · the same in every routine</string>
+    <string name="exercise_setup_field">How you set up the machine</string>
+    <string name="exercise_setup_hint">One item per line, or separated by commas</string>
+    <string name="exercise_setup_preview">In the workout</string>
+    <string name="exercise_setup_clear">Remove</string>
+    <string name="exercise_setup_add_cd">Add machine setup</string>
+    <string name="exercise_setup_edit_cd">Machine setup: %1$s. Tap to edit</string>
+    <string name="exercise_setup_detail_hint">Shown above the sets in every workout with this exercise.</string>
+    <string name="exercise_setup_detail_empty">Seat height, backrest, pins: write them once and see them in every workout.</string>
 </resources>

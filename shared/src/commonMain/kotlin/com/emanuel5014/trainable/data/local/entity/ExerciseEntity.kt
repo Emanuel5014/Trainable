@@ -42,7 +42,13 @@ data class ExerciseEntity(
     val muscles: String? = null,
     /** The equipment the user chose, as a stable key. Null: nothing set (a preset has the catalog's); empty: none chosen. */
     @ColumnInfo(name = "equipment")
-    val equipment: String? = null
+    val equipment: String? = null,
+    /**
+     * How the lifter sets up the machine (seat height, backrest angle, pins), as typed: shown above the sets in every
+     * workout with the exercise, one chip per line (issue #67). Null: none. Read it through `SetupNote`.
+     */
+    @ColumnInfo(name = "setup_note")
+    val setupNote: String? = null
 ) {
     companion object {
         /** Built-in exercises have ids below this, the ones the user creates start from it. */

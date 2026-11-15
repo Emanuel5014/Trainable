@@ -153,6 +153,16 @@ class WorkoutModel(
         .map { exercises -> exercises.mapNotNull { exercise -> exercise.mediaPath?.let { exercise.id to it } }.toMap() }
         .stateIn(modelScope, SharingStarted.Eagerly, emptyMap())
 
+    /** Exercise id -> machine setup as typed, for the exercises that have one (issue #67). */
+    val exerciseSetupNotes: StateFlow<Map<Int, String>> = _allExercises
+        .map { exercises -> exercises.mapNotNull { e -> e.setupNote?.takeIf { it.isNotBlank() }?.let { e.id to it } }.toMap() }
+        .stateIn(modelScope, SharingStarted.Eagerly, emptyMap())
+
+    /** Saves the machine setup of the exercise; every run of it in the workout shows it through [exerciseSetupNotes]. */
+    fun setExerciseSetup(exerciseId: Int, text: String?) {
+        modelScope.launch { exerciseRepository.setSetupNote(exerciseId, text) }
+    }
+
     /** Exercise id -> bar weight in kg (null = the default bar), for the exercises that use the plate calculator. */
     val plateCalculatorExercises: StateFlow<Map<Int, Float?>> = _allExercises
         .map { exercises -> exercises.filter { it.plateCalculator }.associate { it.id to it.plateBarKg } }
@@ -284,6 +294,12 @@ class WorkoutModel(
         modelScope.launch {
             userPreferencesRepository.exerciseMediaEnabled.collect { enabled ->
                 _state.update { it.copy(exerciseMediaEnabled = enabled) }
+            }
+        }
+
+        modelScope.launch {
+            userPreferencesRepository.exerciseSetupVisible.collect { visible ->
+                _state.update { it.copy(exerciseSetupVisible = visible) }
             }
         }
 

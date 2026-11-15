@@ -1,5 +1,13 @@
 package com.emanuel5014.trainable.ui.screens.exercise
 
+import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.ExerciseSetupCard
+import com.emanuel5014.trainable.ui.components.ExerciseSetupSheet
+import com.emanuel5014.trainable.sharedui.resources.exercise_setup_title
+import com.emanuel5014.trainable.sharedui.resources.exercise_setup_detail_hint
+import com.emanuel5014.trainable.sharedui.resources.exercise_setup_detail_empty
+import com.emanuel5014.trainable.sharedui.resources.edit
+import com.emanuel5014.trainable.sharedui.resources.add
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.back
@@ -184,6 +192,7 @@ fun ExerciseDetailDialogContent(
     var willBeDeleted by remember { mutableStateOf<Boolean?>(null) }
     var lastMergeTarget by remember { mutableStateOf("") }
     var editOpen by remember { mutableStateOf(false) }
+    var setupOpen by remember { mutableStateOf(false) }
     var editRetry by remember { mutableStateOf<ExerciseForm?>(null) }
     var editRound by remember { mutableIntStateOf(0) }
     val categories by controller.categories.collectAsState()
@@ -250,13 +259,26 @@ fun ExerciseDetailDialogContent(
                         state = state,
                         onOpenMedia = { mediaOpen = true },
                         onAddMedia = { pickMedia(exercise.id) },
-                        onUndoMerge = controller::undoMerge
+                        onUndoMerge = controller::undoMerge,
+                        onEditSetup = { setupOpen = true }.takeIf { state.actions.canEditSetup }
                     )
                 } else if (!state.notFound) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 }
             }
         }
+    }
+
+    if (setupOpen && exercise != null) {
+        ExerciseSetupSheet(
+            exerciseName = name,
+            initial = exercise.setupNote,
+            onSave = { text ->
+                controller.setSetupNote(text)
+                setupOpen = false
+            },
+            onDismiss = { setupOpen = false }
+        )
     }
 
     val mediaFile = exercise?.mediaPath
@@ -472,7 +494,8 @@ fun ExerciseDetailContent(
     state: ExerciseDetailUiState,
     onOpenMedia: () -> Unit,
     onAddMedia: () -> Unit,
-    onUndoMerge: (Int) -> Unit
+    onUndoMerge: (Int) -> Unit,
+    onEditSetup: (() -> Unit)? = null
 ) {
     val mediaUi = com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi.current
     val exercise = state.exercise ?: return
@@ -513,6 +536,11 @@ fun ExerciseDetailContent(
         }
         if (state.merges.asWinner.isNotEmpty() || state.merges.asLoser != null) {
             item(key = "merges") { MergeRows(state = state.merges, languageCode = state.languageCode, onUndo = onUndoMerge) }
+        }
+        // The machine setup (issue #67): shown when there is one, offered when it can be written
+        val setupNote = exercise.setupNote?.takeIf { it.isNotBlank() }
+        if (setupNote != null || onEditSetup != null) {
+            item(key = "setup") { SetupCard(note = setupNote, onEdit = onEditSetup) }
         }
         // Cardio keeps its workouts apart from the sets: shown for any exercise that has cardio logs linked to it
         val cardio = state.cardioHistory?.takeIf { it.performances.isNotEmpty() }
@@ -844,14 +872,41 @@ private fun RecordsCard(history: ExerciseHistory, weightUnit: String) {
     }
 }
 
+/** The machine setup as chips with the button that edits it; empty, a line on what it is for and an Add button. */
 @Composable
-private fun SectionTitle(text: String) {
+private fun SetupCard(note: String?, onEdit: (() -> Unit)?) {
+    GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SectionTitle(stringResource(Res.string.exercise_setup_title), Modifier.weight(1f).padding(bottom = 0.dp))
+            if (onEdit != null) {
+                TextButton(onClick = onEdit) {
+                    Text(
+                        stringResource(if (note != null) Res.string.edit else Res.string.add).uppercase(),
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+            }
+        }
+        if (note != null) {
+            ExerciseSetupCard(note = note, onClick = onEdit, modifier = Modifier.padding(top = 4.dp))
+        }
+        Text(
+            text = stringResource(if (note != null) Res.string.exercise_setup_detail_hint else Res.string.exercise_setup_detail_empty),
+            style = MaterialTheme.typography.bodySmall,
+            color = OnSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String, modifier: Modifier = Modifier.padding(bottom = 8.dp)) {
     Text(
         text = text.uppercase(),
         style = MaterialTheme.typography.labelMedium,
         color = OnSurfaceVariant,
         fontWeight = FontWeight.ExtraBold,
-        modifier = Modifier.padding(bottom = 8.dp)
+        modifier = modifier
     )
 }
 

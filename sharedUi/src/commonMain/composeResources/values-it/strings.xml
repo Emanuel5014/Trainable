@@ -1639,4 +1639,16 @@
     <string name="history_filter_previous_year">Anno precedente</string>
     <string name="history_filter_next_year">Anno successivo</string>
     <string name="history_filter_reset">Azzera</string>
+    <string name="exercise_setup_setting">Regolazioni macchina</string>
+    <string name="exercise_setup_setting_desc">Mostra sopra le serie come imposti ogni macchina (sedile, schienale, perni)</string>
+    <string name="exercise_setup_title">Regolazioni</string>
+    <string name="exercise_setup_subtitle">%1$s · le stesse in ogni scheda</string>
+    <string name="exercise_setup_field">Come imposti la macchina</string>
+    <string name="exercise_setup_hint">Una voce per riga, o separate da virgole</string>
+    <string name="exercise_setup_preview">Nell'allenamento</string>
+    <string name="exercise_setup_clear">Rimuovi</string>
+    <string name="exercise_setup_add_cd">Aggiungi le regolazioni della macchina</string>
+    <string name="exercise_setup_edit_cd">Regolazioni: %1$s. Tocca per modificare</string>
+    <string name="exercise_setup_detail_hint">Le vedi sopra le serie in ogni allenamento con questo esercizio.</string>
+    <string name="exercise_setup_detail_empty">Altezza del sedile, schienale, perni: scrivili una volta e li ritrovi in ogni allenamento.</string>
 </resources>

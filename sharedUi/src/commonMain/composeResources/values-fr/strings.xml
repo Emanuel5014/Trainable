@@ -1639,4 +1639,16 @@
     <string name="history_filter_previous_year">Année précédente</string>
     <string name="history_filter_next_year">Année suivante</string>
     <string name="history_filter_reset">Réinitialiser</string>
+    <string name="exercise_setup_setting">Réglages de la machine</string>
+    <string name="exercise_setup_setting_desc">Affiche au-dessus des séries comment tu règles chaque machine (siège, dossier, goupilles)</string>
+    <string name="exercise_setup_title">Réglages</string>
+    <string name="exercise_setup_subtitle">%1$s · les mêmes dans chaque programme</string>
+    <string name="exercise_setup_field">Comment tu règles la machine</string>
+    <string name="exercise_setup_hint">Un élément par ligne, ou séparés par des virgules</string>
+    <string name="exercise_setup_preview">Pendant l'entraînement</string>
+    <string name="exercise_setup_clear">Retirer</string>
+    <string name="exercise_setup_add_cd">Ajouter les réglages de la machine</string>
+    <string name="exercise_setup_edit_cd">Réglages de la machine : %1$s. Touche pour modifier</string>
+    <string name="exercise_setup_detail_hint">Affichés au-dessus des séries dans chaque entraînement avec cet exercice.</string>
+    <string name="exercise_setup_detail_empty">Hauteur du siège, dossier, goupilles : note-les une fois et retrouve-les à chaque entraînement.</string>
 </resources>

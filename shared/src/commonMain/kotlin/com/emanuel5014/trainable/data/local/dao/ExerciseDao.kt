@@ -165,6 +165,10 @@ interface ExerciseDao {
     @Query("UPDATE exercises SET is_favorite = :favorite WHERE id = :id")
     suspend fun setFavorite(id: Int, favorite: Boolean)
 
+    /** Saves the machine setup of an exercise (null clears it): only that column. */
+    @Query("UPDATE exercises SET setup_note = :note WHERE id = :id")
+    suspend fun setSetupNote(id: Int, note: String?)
+
     @Query("SELECT media_path FROM exercises WHERE id = :id")
     suspend fun getExerciseMedia(id: Int): String?
 

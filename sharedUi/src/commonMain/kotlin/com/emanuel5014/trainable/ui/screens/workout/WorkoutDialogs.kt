@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -59,6 +60,7 @@ import com.emanuel5014.trainable.ui.components.PlateCalculatorSheet
 import androidx.compose.ui.semantics.contentDescription
 import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
+import com.emanuel5014.trainable.ui.components.ExerciseSetupSheet
 import com.emanuel5014.trainable.ui.components.RestSlider
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
@@ -111,6 +113,19 @@ fun WorkoutEarlyDialogs(
                 onRemove = { viewModel.removeExerciseMedia(exerciseId) }
             )
         }
+    }
+
+    ui.setupSheetFor?.let { (exerciseId, exerciseName) ->
+        val setupNotes by viewModel.exerciseSetupNotes.collectAsState()
+        ExerciseSetupSheet(
+            exerciseName = exerciseName,
+            initial = setupNotes[exerciseId],
+            onSave = { text ->
+                viewModel.setExerciseSetup(exerciseId, text)
+                ui.setupSheetFor = null
+            },
+            onDismiss = { ui.setupSheetFor = null }
+        )
     }
 
     detailExerciseId?.let { LocalExercisePlatformUi.current.ExerciseDetail(exerciseId = it, onDismiss = onDetailDismiss) }

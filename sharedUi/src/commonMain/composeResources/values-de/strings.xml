@@ -1633,4 +1633,16 @@
     <string name="history_filter_previous_year">Vorheriges Jahr</string>
     <string name="history_filter_next_year">Nächstes Jahr</string>
     <string name="history_filter_reset">Zurücksetzen</string>
+    <string name="exercise_setup_setting">Geräteeinstellung</string>
+    <string name="exercise_setup_setting_desc">Zeigt über den Sätzen, wie du jedes Gerät einstellst (Sitz, Lehne, Stifte)</string>
+    <string name="exercise_setup_title">Einstellung</string>
+    <string name="exercise_setup_subtitle">%1$s · in jedem Plan gleich</string>
+    <string name="exercise_setup_field">Wie du das Gerät einstellst</string>
+    <string name="exercise_setup_hint">Ein Eintrag pro Zeile oder durch Kommas getrennt</string>
+    <string name="exercise_setup_preview">Im Training</string>
+    <string name="exercise_setup_clear">Entfernen</string>
+    <string name="exercise_setup_add_cd">Geräteeinstellung hinzufügen</string>
+    <string name="exercise_setup_edit_cd">Geräteeinstellung: %1$s. Zum Bearbeiten tippen</string>
+    <string name="exercise_setup_detail_hint">Steht in jedem Training mit dieser Übung über den Sätzen.</string>
+    <string name="exercise_setup_detail_empty">Sitzhöhe, Lehne, Stifte: einmal notieren und in jedem Training sehen.</string>
 </resources>

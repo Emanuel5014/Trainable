@@ -50,6 +50,9 @@ class WorkoutScreenUiState internal constructor(initialSessionName: String) {
 
     /** The exercise (id, name) whose own image or GIF is open in the viewer. */
     var mediaViewer by mutableStateOf<Pair<Int, String>?>(null)
+
+    /** The exercise (id, name) whose machine setup is being edited. */
+    var setupSheetFor by mutableStateOf<Pair<Int, String>?>(null)
 }
 
 @Composable

@@ -1639,4 +1639,16 @@
     <string name="history_filter_previous_year">Ano anterior</string>
     <string name="history_filter_next_year">Próximo ano</string>
     <string name="history_filter_reset">Redefinir</string>
+    <string name="exercise_setup_setting">Ajustes da máquina</string>
+    <string name="exercise_setup_setting_desc">Mostra acima das séries como você ajusta cada máquina (banco, encosto, pinos)</string>
+    <string name="exercise_setup_title">Ajustes</string>
+    <string name="exercise_setup_subtitle">%1$s · os mesmos em toda rotina</string>
+    <string name="exercise_setup_field">Como você ajusta a máquina</string>
+    <string name="exercise_setup_hint">Um item por linha, ou separados por vírgulas</string>
+    <string name="exercise_setup_preview">No treino</string>
+    <string name="exercise_setup_clear">Remover</string>
+    <string name="exercise_setup_add_cd">Adicionar ajustes da máquina</string>
+    <string name="exercise_setup_edit_cd">Ajustes da máquina: %1$s. Toque para editar</string>
+    <string name="exercise_setup_detail_hint">Aparecem acima das séries em todo treino com este exercício.</string>
+    <string name="exercise_setup_detail_empty">Altura do banco, encosto, pinos: escreva uma vez e veja em todo treino.</string>
 </resources>

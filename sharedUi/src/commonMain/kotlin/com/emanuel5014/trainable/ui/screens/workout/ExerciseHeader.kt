@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -73,6 +74,9 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.components.ProgramEditPill
+import com.emanuel5014.trainable.ui.components.ExerciseSetupAddChip
+import com.emanuel5014.trainable.ui.components.ExerciseSetupCard
+import com.emanuel5014.trainable.ui.components.ExerciseSetupLine
 import com.emanuel5014.trainable.ui.components.ProgressionSuggestionCard
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
@@ -88,6 +92,8 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 private val COMPACT_HEIGHT = 56.dp
+/** What the one-line machine setup adds under the collapsed header (issue #67). */
+private val COMPACT_SETUP_HEIGHT = 40.dp
 private const val EXPANDED_ID = "expanded"
 private const val COMPACT_ID = "compact"
 
@@ -115,6 +121,10 @@ fun ExerciseHeader(
     // Both are composed only while they can be seen: the tools of the one that is gone cannot be tapped
     val showExpanded by remember(collapse) { derivedStateOf { collapse.fraction < 0.99f } }
     val showCompact by remember(collapse) { derivedStateOf { collapse.fraction > 0.01f } }
+    // The machine setup of the exercise (issue #67): null when it has none or the setting hides it
+    val setupNotes by viewModel.exerciseSetupNotes.collectAsState()
+    val setupNote = setupNotes[targetExState.exercise.id]?.takeIf { state.exerciseSetupVisible }
+    val compactHeight = if (setupNote != null) COMPACT_HEIGHT + COMPACT_SETUP_HEIGHT else COMPACT_HEIGHT
     Layout(
         modifier = Modifier.fillMaxWidth().clipToBounds(),
         content = {
@@ -122,19 +132,19 @@ fun ExerciseHeader(
                 Box(Modifier.layoutId(EXPANDED_ID).graphicsLayer { alpha = HeaderCollapse.expandedAlpha(collapse.fraction) }) {
                     ExpandedHeader(
                         targetExState, targetIndex, state, ui, viewModel, languageCode, exerciseMedia,
-                        largeMediaVisible, pickMedia, prescriptionLabels, onOpenDetail
+                        largeMediaVisible, pickMedia, prescriptionLabels, onOpenDetail, setupNote
                     )
                 }
             }
             if (showCompact) {
                 Box(Modifier.layoutId(COMPACT_ID).graphicsLayer { alpha = HeaderCollapse.compactAlpha(collapse.fraction) }) {
-                    CompactHeader(targetExState, targetIndex, state, ui, viewModel, languageCode, onOpenDetail)
+                    CompactHeader(targetExState, targetIndex, state, ui, viewModel, languageCode, onOpenDetail, setupNote)
                 }
             }
         }
     ) { measurables, constraints ->
         val width = constraints.maxWidth
-        val compactPx = COMPACT_HEIGHT.roundToPx()
+        val compactPx = compactHeight.roundToPx()
         val expanded = measurables.firstOrNull { it.layoutId == EXPANDED_ID }
             ?.measure(Constraints(minWidth = width, maxWidth = width, minHeight = 0, maxHeight = Constraints.Infinity))
         if (expanded != null) {
@@ -164,7 +174,8 @@ private fun ExpandedHeader(
     largeMediaVisible: Boolean,
     pickMedia: (Int) -> Unit,
     prescriptionLabels: PrescriptionLabels,
-    onOpenDetail: (Int) -> Unit
+    onOpenDetail: (Int) -> Unit,
+    setupNote: String?
 ) {
     val toolsOnOwnRow = HeaderLayout.toolsOnOwnRow(
         widthDp = workoutWindowWidthDp().toFloat(),
@@ -225,6 +236,13 @@ private fun ExpandedHeader(
                     fontWeight = FontWeight.Black
                 )
             }
+            // How the machine is set up, always in sight; a faint chip to add it when there is none (issue #67)
+            if (state.exerciseSetupVisible) {
+                Spacer(modifier = Modifier.height(12.dp))
+                val openSetup = { ui.setupSheetFor = targetExState.exercise.id to exerciseDisplayName }
+                if (setupNote != null) ExerciseSetupCard(note = setupNote, onClick = openSetup)
+                else ExerciseSetupAddChip(onClick = openSetup)
+            }
         }
 
         targetExState.progressionToShow?.let { suggestion ->
@@ -251,36 +269,48 @@ private fun CompactHeader(
     ui: WorkoutScreenUiState,
     viewModel: WorkoutModel,
     languageCode: String,
-    onOpenDetail: (Int) -> Unit
+    onOpenDetail: (Int) -> Unit,
+    setupNote: String?
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(COMPACT_HEIGHT)
-            .padding(horizontal = 20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = ExerciseTranslations.translate(targetExState.exercise.nome, languageCode),
-            style = MaterialTheme.typography.titleMedium,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
-        if (targetExState.isAdvanced) {
-            state.programWeek?.let { week ->
-                PrescriptionPill(
-                    text = stringResource(Res.string.week_short, week),
-                    containerColor = Primary,
-                    contentColor = OnPrimary,
-                    emphasized = true
-                )
+    val exerciseDisplayName = ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(COMPACT_HEIGHT)
+                .padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = exerciseDisplayName,
+                style = MaterialTheme.typography.titleMedium,
+                color = OnSurface,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            if (targetExState.isAdvanced) {
+                state.programWeek?.let { week ->
+                    PrescriptionPill(
+                        text = stringResource(Res.string.week_short, week),
+                        containerColor = Primary,
+                        contentColor = OnPrimary,
+                        emphasized = true
+                    )
+                }
             }
+            ExerciseTools(targetExState, targetIndex, state, ui, viewModel, onOpenDetail)
         }
-        ExerciseTools(targetExState, targetIndex, state, ui, viewModel, onOpenDetail)
+        // The setup stays readable once the header is collapsed, on one line
+        if (setupNote != null) {
+            ExerciseSetupLine(
+                note = setupNote,
+                onClick = { ui.setupSheetFor = targetExState.exercise.id to exerciseDisplayName },
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 4.dp)
+            )
+        }
     }
 }
 

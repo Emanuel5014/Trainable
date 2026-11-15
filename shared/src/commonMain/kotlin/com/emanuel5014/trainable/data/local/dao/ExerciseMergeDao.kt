@@ -46,7 +46,8 @@ sealed interface MergeOutcome {
 
 /**
  * The merge log and the SQL that merges two exercises and undoes it. A merge only ever changes the `exercise_id` of
- * rows (and, when the loser was a favorite and the winner was not, stars the winner): nothing is deleted, renumbered or
+ * rows (and, when the loser was a favorite and the winner was not, stars the winner; when only the loser has a machine
+ * setup, copies it to the winner): nothing is deleted, renumbered or
  * copied, which is what makes undoing it exact.
  */
 @Dao
@@ -71,6 +72,9 @@ interface ExerciseMergeDao {
 
     @Query("UPDATE exercises SET is_favorite = :favorite WHERE id = :id")
     suspend fun setFavorite(id: Int, favorite: Boolean)
+
+    @Query("UPDATE exercises SET setup_note = :note WHERE id = :id")
+    suspend fun setSetupNote(id: Int, note: String?)
 
     @Query("DELETE FROM exercise_merges WHERE id = :mergeId")
     suspend fun deleteMerge(mergeId: Int)
@@ -203,10 +207,13 @@ interface ExerciseMergeDao {
 
         // The star of the loser goes to the winner; the log remembers it did, so that undoing takes back only that
         val moveStar = loser.isFavorite && !winner.isFavorite
+        // Likewise the machine setup, when only the loser has one
+        val moveSetup = !loser.setupNote.isNullOrBlank() && winner.setupNote.isNullOrBlank()
         val mergeId = insertMerge(
             ExerciseMergeEntity(
                 winnerId = winnerId, loserId = loserId, loserName = loser.nome,
-                loserWasHidden = loser.isDeleted, timestamp = now, favoriteMoved = moveStar
+                loserWasHidden = loser.isDeleted, timestamp = now, favoriteMoved = moveStar,
+                setupMoved = moveSetup
             )
         ).toInt()
         recordSetLogs(mergeId, loserId)
@@ -223,6 +230,7 @@ interface ExerciseMergeDao {
         repointCardioLogs(loserId, winnerId)
         if (!loser.isDeleted) setHidden(loserId, true)
         if (moveStar) setFavorite(winnerId, true)
+        if (moveSetup) setSetupNote(winnerId, loser.setupNote)
         return MergeOutcome.Merged(mergeId)
     }
 
@@ -241,6 +249,11 @@ interface ExerciseMergeDao {
         restoreCardioLogs(mergeId, merge.winnerId, merge.loserId)
         if (!merge.loserWasHidden) setHidden(merge.loserId, false)
         if (merge.favoriteMoved) setFavorite(merge.winnerId, false)
+        // The copied setup goes, unless the lifter has changed it on the winner since
+        if (merge.setupMoved) {
+            val copied = getExercise(merge.loserId)?.setupNote
+            if (getExercise(merge.winnerId)?.setupNote == copied) setSetupNote(merge.winnerId, null)
+        }
         deleteMerge(mergeId)
         return true
     }

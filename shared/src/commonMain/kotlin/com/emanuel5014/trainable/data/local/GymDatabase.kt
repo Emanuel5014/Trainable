@@ -62,7 +62,7 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
         SkippedPresetEntity::class,
         RoutineGroupEntity::class
     ],
-    version = 44,
+    version = 45,
     exportSchema = false
 )
 @ConstructedBy(GymDatabaseConstructor::class)
@@ -549,6 +549,14 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_44_45 = object : Migration(44, 45) {
+            override fun migrate(connection: SQLiteConnection) {
+                // How the lifter sets up the machine of an exercise (issue #67), and whether a merge copied it to the winner
+                connection.execSQL("ALTER TABLE exercises ADD COLUMN setup_note TEXT")
+                connection.execSQL("ALTER TABLE exercise_merges ADD COLUMN setup_moved INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         const val DATABASE_NAME = "gym_tracking_database"
 
         val ALL_MIGRATIONS: Array<Migration> = arrayOf(
@@ -559,7 +567,7 @@ abstract class GymDatabase : RoomDatabase() {
             MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32,
             MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36, MIGRATION_36_37, MIGRATION_37_38,
             MIGRATION_38_39, MIGRATION_39_40, MIGRATION_40_41, MIGRATION_41_42, MIGRATION_42_43,
-            MIGRATION_43_44
+            MIGRATION_43_44, MIGRATION_44_45
         )
     }
 }

@@ -6,6 +6,7 @@ import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.RecentCardio
 import com.emanuel5014.trainable.domain.exercise.CardioSuggestions
+import com.emanuel5014.trainable.domain.exercise.SetupNote
 import com.emanuel5014.trainable.domain.exercise.SuggestedExercise
 import com.emanuel5014.trainable.domain.exercise.CategoryChangeBlock
 import com.emanuel5014.trainable.domain.exercise.ExerciseNames
@@ -142,6 +143,11 @@ class ExerciseRepository(
     /** Stars or unstars the exercise; the rest of its row is not touched. */
     suspend fun setFavorite(id: Int, favorite: Boolean) {
         exerciseDao.setFavorite(id, favorite)
+    }
+
+    /** Saves the machine setup of the exercise as typed (cleaned by [SetupNote.clean]); blank clears it. */
+    suspend fun setSetupNote(id: Int, text: String?) {
+        exerciseDao.setSetupNote(id, SetupNote.clean(text))
     }
 
     /**

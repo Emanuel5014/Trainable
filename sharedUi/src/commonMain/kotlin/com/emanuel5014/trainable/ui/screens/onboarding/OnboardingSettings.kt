@@ -41,6 +41,7 @@ data class OnboardingSettings(
     val autoStopTimeWeightAtTarget: Boolean,
     val autoAdvanceTimedSets: Boolean,
     val exerciseMedia: Boolean,
+    val exerciseSetup: Boolean,
     val exerciseMediaLarge: Boolean,
     val plateCalculator: Boolean,
     val editablePresets: Boolean,
@@ -95,6 +96,7 @@ fun OnboardingChoices.toSettings(theme: ThemeChoice, aiModelVariant: String) = O
     autoStopTimeWeightAtTarget = autoStopTimeWeightAtTarget.value,
     autoAdvanceTimedSets = autoAdvanceTimedSets.value,
     exerciseMedia = exerciseMedia.value,
+    exerciseSetup = exerciseSetup.value,
     exerciseMediaLarge = exerciseMediaLarge.value,
     plateCalculator = plateCalculator.value,
     editablePresets = editablePresets.value,
@@ -170,8 +172,8 @@ private fun OnboardingChoices.rows(group: TweakGroup): List<Boolean> = when (gro
         keepScreenOnCardioTimer.value, autoStopCardioAtTarget.value, autoStopTimeWeightAtTarget.value
     )
     TweakGroup.ExercisesAndGestures -> listOf(
-        exerciseMedia.value, plateCalculator.value, editablePresets.value, swipeActionsEnabled.value,
-        hapticEnabled.value
+        exerciseMedia.value, exerciseSetup.value, plateCalculator.value, editablePresets.value,
+        swipeActionsEnabled.value, hapticEnabled.value
     )
     TweakGroup.Journal -> listOf(journalEnabled.value)
 }

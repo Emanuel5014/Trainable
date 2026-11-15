@@ -119,6 +119,7 @@ class OnboardingModelTest {
             autoStopCardioAtTarget.value = false; autoStopTimeWeightAtTarget.value = true
             timerShowNextSetButton.value = false; autoAdvanceTimedSets.value = true
             exerciseMedia.value = true; exerciseMediaLarge.value = false; plateCalculator.value = true
+            exerciseSetup.value = false
             editablePresets.value = true; journalEnabled.value = true; journalPromptAtFinish.value = false
             journalRating.value = false; pickMembershipDate(1_800_000_000_000L)
         })
@@ -133,6 +134,7 @@ class OnboardingModelTest {
         assertTrue(prefs.autoStopTimeWeightAtTarget.first())
         assertFalse(prefs.timerShowNextSetButton.first()); assertTrue(prefs.autoAdvanceTimedSets.first())
         assertTrue(prefs.exerciseMediaEnabled.first()); assertFalse(prefs.exerciseMediaLarge.first())
+        assertFalse(prefs.exerciseSetupVisible.first())
         assertTrue(prefs.plateCalculatorEnabled.first()); assertTrue(prefs.editablePresetExercises.first())
         assertTrue(prefs.journalEnabled.first()); assertFalse(prefs.journalPromptAtFinish.first())
         assertFalse(prefs.journalRatingEnabled.first())

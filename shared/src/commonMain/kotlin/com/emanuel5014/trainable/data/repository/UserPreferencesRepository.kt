@@ -112,6 +112,8 @@ class UserPreferencesRepository(
     val EXERCISE_MEDIA_ENABLED = booleanPreferencesKey("exercise_media_enabled")
     /** With exercise media on: also fill the free space under the sets with a large preview when there is room. */
     val EXERCISE_MEDIA_LARGE = booleanPreferencesKey("exercise_media_large")
+    /** Shows the machine setup of each exercise above its sets, or a chip to add one (issue #67). On by default. */
+    val EXERCISE_SETUP_VISIBLE = booleanPreferencesKey("exercise_setup_visible")
     /** Master switch for the plate calculator (which plates go on each side of the bar). Off by default. */
     val PLATE_CALCULATOR_ENABLED = booleanPreferencesKey("plate_calculator_enabled")
     /**
@@ -515,6 +517,15 @@ class UserPreferencesRepository(
     suspend fun setExerciseMediaEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[EXERCISE_MEDIA_ENABLED] = enabled
+        }
+    }
+
+    val exerciseSetupVisible: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[EXERCISE_SETUP_VISIBLE] ?: true }
+
+    suspend fun setExerciseSetupVisible(visible: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[EXERCISE_SETUP_VISIBLE] = visible
         }
     }
 

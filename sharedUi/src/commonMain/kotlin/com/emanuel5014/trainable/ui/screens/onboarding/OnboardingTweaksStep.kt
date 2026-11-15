@@ -139,6 +139,7 @@ private fun groupRows(group: TweakGroup, c: OnboardingChoices): List<@Composable
             OptionLabel(stringResource(Res.string.exercise_media_large))
             OptionGroup(listOf(false, true), c.exerciseMediaLarge.value, { if (it) large else small }, { c.exerciseMediaLarge.value = it })
         },
+        rowOf(c.exerciseSetup, Res.string.exercise_setup_setting, Res.string.exercise_setup_setting_desc),
         rowOf(c.plateCalculator, Res.string.plate_calculator, Res.string.plate_calculator_desc),
         rowOf(c.editablePresets, Res.string.editable_preset_exercises, Res.string.editable_preset_exercises_desc),
         rowOf(c.swipeActionsEnabled, Res.string.swipe_actions, Res.string.swipe_actions_desc),

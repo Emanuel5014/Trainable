@@ -47,6 +47,8 @@ class OnboardingChoices {
 
     // Exercises and gestures
     val exerciseMedia = mutableStateOf(false)
+    /** The machine setup above the sets (issue #67): on by default, as in Workout settings. */
+    val exerciseSetup = mutableStateOf(true)
     val exerciseMediaLarge = mutableStateOf(true)
     val plateCalculator = mutableStateOf(false)
     val editablePresets = mutableStateOf(false)

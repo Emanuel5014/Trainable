@@ -137,6 +137,7 @@ class OnboardingModel(
         userPrefsRepository.setKeepScreenOnCardioTimer(keepScreenOnCardioTimer)
         userPrefsRepository.setExerciseMediaEnabled(exerciseMedia)
         userPrefsRepository.setExerciseMediaLarge(exerciseMediaLarge)
+        userPrefsRepository.setExerciseSetupVisible(exerciseSetup)
         userPrefsRepository.setPlateCalculatorEnabled(plateCalculator)
         userPrefsRepository.setEditablePresetExercises(editablePresets)
         userPrefsRepository.setJournalEnabled(journalEnabled)
