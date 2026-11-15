@@ -13,7 +13,9 @@ data class GitHubRelease(
     @SerialName("prerelease") val prerelease: Boolean = false,
     @SerialName("draft") val draft: Boolean = false,
     /** The release page on GitHub, where the APK can be downloaded by hand. */
-    @SerialName("html_url") val htmlUrl: String = ""
+    @SerialName("html_url") val htmlUrl: String = "",
+    /** ISO date-time, such as "2026-11-11T22:14:38Z"; empty when unknown. */
+    @SerialName("published_at") val publishedAt: String = ""
 )
 
 @Serializable

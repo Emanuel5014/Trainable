@@ -411,6 +411,17 @@
     <string name="update_open_release">Abrir en GitHub</string>
     <string name="update_error_other_source">Esta copia de Trainable está firmada con una clave distinta a la de las versiones de GitHub (por ejemplo, viene de otra tienda o es una compilación propia), así que Android no puede actualizarla desde aquí. Para pasar a la versión de GitHub: haz una copia de seguridad, desinstala la app, instala el APK desde la página de la versión y restaura la copia.</string>
     <string name="update_error_wrong_app">El archivo de esta versión no es esta app, así que no se instaló. Avísalo en GitHub.</string>
+    <string name="update_sheet_title">Trainable %s</string>
+    <string name="update_beta_chip">Beta</string>
+    <string name="update_section_new">Novedades</string>
+    <string name="update_section_improved">Mejoras</string>
+    <string name="update_download_size">Actualizar · %s</string>
+    <string name="update_show_details">Ver detalles</string>
+    <plurals name="update_fixes_count">
+        <item quantity="one">%d corrección</item>
+        <item quantity="other">%d correcciones</item>
+        <item quantity="many">%d correcciones</item>
+    </plurals>
 
     <!-- Camera & Photos -->
     <string name="camera">Cámara</string>

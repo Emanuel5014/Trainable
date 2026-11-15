@@ -57,7 +57,7 @@ import com.emanuel5014.trainable.ui.components.BottomNavBar
 import com.emanuel5014.trainable.ui.components.BottomNavBarExpressive
 import com.emanuel5014.trainable.ui.components.BottomNavBarFlo
 import com.emanuel5014.trainable.ui.components.ImportConfirmationDialog
-import com.emanuel5014.trainable.ui.components.UpdateDialog
+import com.emanuel5014.trainable.ui.components.UpdateSheet
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.domain.rpe.RpeSettings
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
@@ -243,6 +243,7 @@ class MainActivity : FragmentActivity() {
 
             // One update dialog for the whole app: the check at start and the one from Settings both open it
             val updateUi by updateManager.state.collectAsState()
+            val updateNotes by updateManager.notes.collectAsState()
             val scope = rememberCoroutineScope()
 
             var plansToImport by remember { mutableStateOf<List<WorkoutPlanExportDto>?>(null) }
@@ -446,13 +447,14 @@ class MainActivity : FragmentActivity() {
                     }
 
                     if (updateUi.dialogOpen) {
-                        UpdateDialog(
+                        UpdateSheet(
                             phase = updateUi.phase,
+                            notes = updateNotes?.takeIf { it.first == updateUi.release?.tagName }?.second,
                             onDownload = updateManager::startDownload,
                             onInstall = updateManager::installNow,
                             onCancelDownload = updateManager::cancelDownload,
                             onSkip = updateManager::skipVersion,
-                            onOpenRelease = { url ->
+                            onOpenUrl = { url ->
                                 runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }
                             },
                             onDismiss = updateManager::dismissDialog

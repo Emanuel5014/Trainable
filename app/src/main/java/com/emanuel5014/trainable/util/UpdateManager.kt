@@ -9,6 +9,7 @@ import android.util.Log
 import com.emanuel5014.trainable.BuildConfig
 import com.emanuel5014.trainable.data.remote.GitHubAsset
 import com.emanuel5014.trainable.data.remote.GitHubRelease
+import com.emanuel5014.trainable.data.remote.ReleaseNotes
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -75,6 +76,14 @@ class UpdateManager @Inject constructor(
     private val _state = MutableStateFlow(UpdateUiState())
     val state: StateFlow<UpdateUiState> = _state.asStateFlow()
 
+    private val _notes = MutableStateFlow<Pair<String, ReleaseNotes?>?>(null)
+
+    /**
+     * The notes of the release on offer, as tag to notes: from its `changelog.json`, else read from its markdown
+     * table; null notes = neither, the sheet shows the release text as it is.
+     */
+    val notes: StateFlow<Pair<String, ReleaseNotes?>?> = _notes.asStateFlow()
+
     private val updateDir: File get() = File(context.cacheDir, UPDATE_DIR)
 
     /**
@@ -133,6 +142,7 @@ class UpdateManager @Inject constructor(
                         else -> UpdatePhase.Available(release)
                     }
                     val open = !fromLaunch || (!otherSource && release.tagName != preferences.updateSkippedTag.first())
+                    if (open) loadNotes(release)
                     _state.update {
                         when {
                             it.isBusy -> it.copy(dialogOpen = it.dialogOpen || open)
@@ -176,6 +186,36 @@ class UpdateManager @Inject constructor(
     } catch (e: Exception) {
         Log.w(TAG, "Release list unreadable", e)
         UpdateCheck.Failed(UpdateError.SERVER)
+    }
+
+    /** Fetches the notes of [release] once (a few KB), so the sheet opens with them. */
+    private fun loadNotes(release: GitHubRelease) {
+        if (_notes.value?.first == release.tagName) return
+        val asset = release.assets.firstOrNull { it.name.equals(NOTES_ASSET, ignoreCase = true) }
+        val notes = asset?.let(::fetchNotes) ?: ReleaseNotesParser.fromMarkdown(release.body)
+        _notes.value = release.tagName to notes
+    }
+
+    private fun fetchNotes(asset: GitHubAsset): ReleaseNotes? {
+        if (asset.size > MAX_NOTES_BYTES) return null
+        return try {
+            client.newCall(Request.Builder().url(asset.downloadUrl).build()).execute().use { response ->
+                if (!response.isSuccessful) {
+                    Log.w(TAG, "Release notes: HTTP ${response.code}")
+                    null
+                } else {
+                    json.decodeFromString<ReleaseNotes>(response.body.string()).takeIf { it.items.isNotEmpty() }
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IOException) {
+            Log.w(TAG, "Release notes: ${e.message}")
+            null
+        } catch (e: Exception) {
+            Log.w(TAG, "Release notes unreadable", e)
+            null
+        }
     }
 
     /** "Skip this version": the start of the app no longer offers this release (a newer one is offered again). */
@@ -491,6 +531,9 @@ class UpdateManager @Inject constructor(
         private const val GITHUB_RELEASES_URL = "https://api.github.com/repos/Emanuel5014/Trainable/releases?per_page=50"
 
         private const val UPDATE_DIR = "updates"
+        /** The release asset with the notes in every language (see tools/release_notes.py). */
+        private const val NOTES_ASSET = "changelog.json"
+        private const val MAX_NOTES_BYTES = 512L * 1024
         /** Where the updater before this one saved the APK; never cleaned up by it. */
         private const val LEGACY_APK_NAME = "app_update.apk"
 
