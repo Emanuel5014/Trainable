@@ -3,8 +3,17 @@ package com.emanuel5014.trainable.ui.screens.history
 import com.emanuel5014.trainable.data.local.entity.isSystemPlan
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.domain.journal.JournalFilters
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
-/** What the history is narrowed to: a routine, a date range and, with the workout journal on, tags, rating and notes. */
+/**
+ * What the history is narrowed to: a routine, a date range and, with the workout journal on, tags, rating and notes.
+ * [startDate] and [endDate] are both inclusive, in local time: the first and the last millisecond that count.
+ */
 data class HistoryFilters(
     /** A routine, [NO_ROUTINE_PLAN_ID] for the workouts of no routine, or null for all. */
     val planId: Int? = null,
@@ -26,17 +35,24 @@ data class HistoryFilters(
             NO_ROUTINE_PLAN_ID -> details.plan.isSystemPlan
             else -> session.planId == planId
         }
-        // The whole end day counts
+        // The end already is the last millisecond of its day: a whole day more let the 1st of the next month into a month (#69)
         val matchesDate = (startDate == null || session.timestamp >= startDate) &&
-            (endDate == null || session.timestamp <= endDate + END_OF_DAY_MS)
+            (endDate == null || session.timestamp <= endDate)
         val matchesJournal = !journalEnabled ||
             journal.matches(session.rating, session.journalNote, details.tags.map { it.id }.toSet())
         return matchesPlan && matchesDate && matchesJournal
     }
+}
 
-    private companion object {
-        const val END_OF_DAY_MS = 86_399_999L
-    }
+/**
+ * The days picked in the date range picker, which gives each one as UTC midnight, as a range of the history filter:
+ * from the first millisecond of the first day to the last of the last one, in the phone's time zone.
+ */
+fun pickedDaysRange(startUtcDay: Long, endUtcDay: Long, zone: TimeZone = TimeZone.currentSystemDefault()): Pair<Long, Long> {
+    fun day(utcMillis: Long) = Instant.fromEpochMilliseconds(utcMillis).toLocalDateTime(TimeZone.UTC).date
+    val start = day(startUtcDay).atStartOfDayIn(zone).toEpochMilliseconds()
+    val end = day(endUtcDay).plus(1, DateTimeUnit.DAY).atStartOfDayIn(zone).toEpochMilliseconds() - 1
+    return start to end
 }
 
 /**

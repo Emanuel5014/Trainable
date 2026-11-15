@@ -888,7 +888,8 @@ fun HistoryContent(
                         val start = dateRangePickerState.selectedStartDateMillis
                         val end = dateRangePickerState.selectedEndDateMillis
                         if (start != null && end != null) {
-                            state.setFilters(uiState.filters.copy(startDate = start, endDate = end))
+                            val (from, to) = pickedDaysRange(start, end)
+                            state.setFilters(uiState.filters.copy(startDate = from, endDate = to))
                         }
                         showDatePicker = false
                     },
