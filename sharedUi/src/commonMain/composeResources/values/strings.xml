@@ -999,6 +999,7 @@
     <string name="prescription_remove_sets_message">%1$d logged sets don't fit the new prescription and will be removed.</string>
     <string name="prescription_remove_sets_title">Remove sets?</string>
     <string name="rename_workout">Rename Workout</string>
+    <string name="open_routine">Open routine</string>
     <string name="session_details">Session Details</string>
     <string name="share_exercises">Exercises</string>
     <string name="workout_duration">Workout Duration</string>

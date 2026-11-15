@@ -1002,6 +1002,7 @@
     <string name="prescription_remove_sets_message">%1$d séries enregistrées ne correspondent pas à la nouvelle prescription et seront supprimées.</string>
     <string name="prescription_remove_sets_title">Supprimer des séries ?</string>
     <string name="rename_workout">Renommer l'Entraînement</string>
+    <string name="open_routine">Ouvrir la routine</string>
     <string name="session_details">Détails de la Session</string>
     <string name="share_exercises">Exercices</string>
     <string name="workout_duration">Durée de l'entraînement</string>

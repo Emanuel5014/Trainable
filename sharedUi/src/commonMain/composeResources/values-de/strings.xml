@@ -999,6 +999,7 @@
     <string name="prescription_remove_sets_message">%1$d geloggte Sätze passen nicht zur neuen Vorgabe und werden entfernt.</string>
     <string name="prescription_remove_sets_title">Sätze entfernen?</string>
     <string name="rename_workout">Training umbenennen</string>
+    <string name="open_routine">Routine öffnen</string>
     <string name="session_details">Sitzungsdetails</string>
     <string name="share_exercises">Übungen</string>
     <string name="workout_duration">Trainingsdauer</string>

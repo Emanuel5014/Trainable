@@ -1002,6 +1002,7 @@
     <string name="prescription_remove_sets_message">%1$d series registradas no encajan en la nueva prescripción y se quitarán.</string>
     <string name="prescription_remove_sets_title">¿Quitar series?</string>
     <string name="rename_workout">Renombrar Entrenamiento</string>
+    <string name="open_routine">Abrir rutina</string>
     <string name="session_details">Detalles de la Sesión</string>
     <string name="share_exercises">Ejercicios</string>
     <string name="workout_duration">Duración del entrenamiento</string>

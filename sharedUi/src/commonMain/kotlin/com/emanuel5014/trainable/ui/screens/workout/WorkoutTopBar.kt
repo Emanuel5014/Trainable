@@ -26,6 +26,16 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.automirrored.rounded.ListAlt
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import com.emanuel5014.trainable.sharedui.resources.open_routine
+import com.emanuel5014.trainable.sharedui.resources.rename_workout
+import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,14 +72,18 @@ fun WorkoutTopBar(
     TopAppBar(
         title = { 
             Column {
+                // With inline changes on, a workout from a routine can be renamed or open its routine: ask which
+                var showTitleMenu by remember { mutableStateOf(false) }
+                val routineId = state.planId?.takeUnless { state.isQuickWorkout }
+                Box {
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
-                        .clickable { 
-                        if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
-                                ui.showRenameDialog = true
-                            } else {
-                                state.planId?.let { onNavigateToRoutine(it) }
+                        .clickable {
+                            when {
+                                routineId != null && state.inlineExerciseModificationsEnabled -> showTitleMenu = true
+                                state.isQuickWorkout || state.inlineExerciseModificationsEnabled -> ui.showRenameDialog = true
+                                else -> routineId?.let { onNavigateToRoutine(it) }
                             }
                         },
                     verticalAlignment = Alignment.CenterVertically
@@ -82,6 +96,26 @@ fun WorkoutTopBar(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
+                }
+                DropdownMenu(expanded = showTitleMenu, onDismissRequest = { showTitleMenu = false }) {
+                    LocalPlatformGlass.current.NotAnOverlay()
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.rename_workout)) },
+                        leadingIcon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
+                        onClick = {
+                            showTitleMenu = false
+                            ui.showRenameDialog = true
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.open_routine)) },
+                        leadingIcon = { Icon(Icons.AutoMirrored.Rounded.ListAlt, contentDescription = null) },
+                        onClick = {
+                            showTitleMenu = false
+                            routineId?.let { onNavigateToRoutine(it) }
+                        }
+                    )
+                }
                 }
                 Text(
                     text = stringResource(Res.string.session_in_progress_title), 
