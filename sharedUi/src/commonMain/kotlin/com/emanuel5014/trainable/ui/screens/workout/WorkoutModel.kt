@@ -119,9 +119,6 @@ class WorkoutModel(
     private val _navigationEvent = MutableSharedFlow<WorkoutNavEvent>()
     val navigationEvent: SharedFlow<WorkoutNavEvent> = _navigationEvent.asSharedFlow()
 
-    private var lastActionTime = 0L
-    private val actionDebounce = 400L // 400ms hard debounce for physical clicks
-
     /** Serialises the creation of set rows so a set is never inserted twice (draft rows vs. completing it). */
     private val setRowsLock = Mutex()
 
@@ -2240,43 +2237,25 @@ class WorkoutModel(
         }
     }
 
+    // Moving between exercises only changes the index shown: every tap counts, however fast.
+    // Leaving the screen is guarded where it happens (popOnce), so there is no delay between taps.
     fun previousExercise() {
-        val now = nowMillis()
-        if (now - lastActionTime < actionDebounce) return
-        lastActionTime = now
-
-        if (_state.value.isNavigating || _state.value.isFinishing || _state.value.emomRun != null) return
-
-        val currentIndex = _state.value.currentExerciseIndex
-        if (currentIndex > 0) {
-            _state.update { it.copy(isNavigating = true) }
-            _state.update { it.copy(currentExerciseIndex = currentIndex - 1, isNavigating = false) }
-        }
+        if (_state.value.isFinishing || _state.value.emomRun != null) return
+        _state.update { if (it.currentExerciseIndex > 0) it.copy(currentExerciseIndex = it.currentExerciseIndex - 1) else it }
     }
 
     fun nextExercise() {
-        val now = nowMillis()
-        if (now - lastActionTime < actionDebounce) return
-        lastActionTime = now
-
-        if (_state.value.isNavigating || _state.value.isFinishing || _state.value.emomRun != null) return
-
-        val currentIndex = _state.value.currentExerciseIndex
-        val maxIndex = _state.value.exercises.size - 1
-        if (currentIndex < maxIndex) {
-            _state.update { it.copy(isNavigating = true) }
-            _state.update { it.copy(currentExerciseIndex = currentIndex + 1, isNavigating = false) }
+        if (_state.value.isFinishing || _state.value.emomRun != null) return
+        _state.update {
+            if (it.currentExerciseIndex < it.exercises.size - 1) it.copy(currentExerciseIndex = it.currentExerciseIndex + 1) else it
         }
     }
 
     private var oneRepMaxReviewDone = false
 
     fun finishWorkout() {
-        val now = nowMillis()
-        if (now - lastActionTime < actionDebounce) return
-        lastActionTime = now
-
-        if (_state.value.isFinishing) return
+        // Already closing, or the "new 1RM?" prompts are open and will finish it themselves
+        if (_state.value.isFinishing || _state.value.oneRepMaxSuggestions.isNotEmpty()) return
         if (!oneRepMaxReviewDone) {
             oneRepMaxReviewDone = true
             val suggestions = computeOneRepMaxSuggestions()

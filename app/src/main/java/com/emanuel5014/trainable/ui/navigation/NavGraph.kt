@@ -115,9 +115,9 @@ fun MainNavGraph(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable<WorkoutExecution> {
+        composable<WorkoutExecution> { entry ->
             WorkoutExecutionScreen(
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.popOnce(entry) },
                 onNavigateToRoutine = { planId ->
                     navController.navigate(RoutineDetail(planId = planId))
                 }

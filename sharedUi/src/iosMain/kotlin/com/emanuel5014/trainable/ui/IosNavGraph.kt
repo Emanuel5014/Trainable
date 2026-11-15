@@ -99,6 +99,7 @@ import com.emanuel5014.trainable.ui.screens.history.HistoryState
 import com.emanuel5014.trainable.ui.navigation.RoutineDetail
 import com.emanuel5014.trainable.ui.navigation.Settings
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
+import com.emanuel5014.trainable.ui.navigation.popOnce
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardContent
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardState
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardUiState
@@ -258,7 +259,7 @@ internal fun IosNavGraph(
             composable<WorkoutExecution> { entry ->
                 val route = entry.toRoute<WorkoutExecution>()
                 IosWorkoutScreen(entry, route.planId, route.sessionId, route.quickStart, route.workoutName,
-                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateBack = { navController.popOnce(entry) },
                     onNavigateToRoutine = { id -> navController.navigate(RoutineDetail(id)) })
             }
             composable<PhysicalCheck> { entry ->
