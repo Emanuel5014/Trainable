@@ -301,308 +301,316 @@ fun WorkoutExecutionContent(
         }
     }
 
-    Scaffold(
-        topBar = {
-            WorkoutTopBar(
-                state = state,
-                ui = ui,
-                onClose = safeNavigateBack,
-                onNavigateToRoutine = onNavigateToRoutine
-            )
-        },
-        containerColor = Surface
-    ) { paddingValues ->
-        val panelGlass = platform.rememberPanel()
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues.bodyPadding())) {
-            if (state.totalExercises == 0) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.padding(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.DoneAll,
-                            contentDescription = null,
-                            tint = OnSurfaceVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Text(
-                            text = stringResource(Res.string.no_exercises_in_session),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = OnSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                        GymButton(onClick = { ui.showAddExerciseSheet = true }) {
-                            Text(stringResource(Res.string.add_exercise_to_workout).uppercase(), fontWeight = FontWeight.ExtraBold)
-                        }
-                    }
-                }
-            } else if (currentExState != null) {
-                AnimatedContent(
-                    targetState = state.currentExerciseIndex,
-                    transitionSpec = {
-                        val direction = if (targetState > initialState) 1 else -1
-                        (slideInHorizontally(
-                            animationSpec = spring(
-                                dampingRatio = 0.85f,
-                                stiffness = 380f
-                            )
-                        ) { width -> direction * width } + fadeIn(
-                            animationSpec = spring(stiffness = 380f)
-                        )).togetherWith(
-                            slideOutHorizontally(
-                                animationSpec = spring(
-                                    dampingRatio = 0.85f,
-                                    stiffness = 380f
+    // Holding the previous/next buttons shows every exercise of the workout over the screen
+    val exerciseOverview = remember { ExerciseOverviewState() }
+    exerciseOverview.hapticEnabled = state.hapticEnabled
+    CompositionLocalProvider(LocalExerciseOverview provides exerciseOverview) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
+                topBar = {
+                    WorkoutTopBar(
+                        state = state,
+                        ui = ui,
+                        onClose = safeNavigateBack,
+                        onNavigateToRoutine = onNavigateToRoutine
+                    )
+                },
+                containerColor = Surface
+            ) { paddingValues ->
+                val panelGlass = platform.rememberPanel()
+                Box(modifier = Modifier.fillMaxSize().padding(paddingValues.bodyPadding())) {
+                    if (state.totalExercises == 0) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                modifier = Modifier.padding(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.DoneAll,
+                                    contentDescription = null,
+                                    tint = OnSurfaceVariant.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(64.dp)
                                 )
-                            ) { width -> -direction * width } + fadeOut(
-                                animationSpec = spring(stiffness = 380f)
-                            )
-                        )
-                    },
-                    label = "exercise_transition",
-                    // The bottom panel frosts this content
-                    modifier = Modifier.fillMaxSize().then(panelGlass?.record(Modifier) ?: Modifier)
-                ) { targetIndex ->
-                    val targetExState = state.exercises.getOrNull(targetIndex)
-                    if (targetExState != null) {
-                        val exerciseListState = rememberLazyListState()
-                        val targetActiveSetIndex = remember(targetExState.sets) {
-                            targetExState.sets.indexOfFirst { !it.isCompleted }.takeIf { it != -1 } ?: ((targetExState.sets.size) - 1)
-                        }
-                        val targetActiveSet = remember(targetExState.sets, targetActiveSetIndex) {
-                            targetExState.sets.getOrNull(targetActiveSetIndex)
-                        }
-                        val targetIsExerciseCompleted = remember(targetActiveSet) {
-                            targetActiveSet == null || targetActiveSet.isCompleted
-                        }
-
-                        LaunchedEffect(targetActiveSetIndex) {
-                            if (targetActiveSetIndex != -1 && targetExState.sets.isNotEmpty()) {
-                                exerciseListState.animateScrollToItem(targetActiveSetIndex)
+                                Text(
+                                    text = stringResource(Res.string.no_exercises_in_session),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = OnSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                GymButton(onClick = { ui.showAddExerciseSheet = true }) {
+                                    Text(stringResource(Res.string.add_exercise_to_workout).uppercase(), fontWeight = FontWeight.ExtraBold)
+                                }
                             }
                         }
-
-                        // Bring the set being edited above the hub that opens under it
-                        LaunchedEffect(ui.editingSetIndex) {
-                            val editing = ui.editingSetIndex
-                            if (editing != null && targetIndex == state.currentExerciseIndex && editing in targetExState.sets.indices) {
-                                exerciseListState.animateScrollToItem(editing)
-                            }
-                        }
-
-                        val swipeOffset = remember { Animatable(0f) }
-                        // The header of this exercise shrinks to one row while its sets are scrolled
-                        val headerCollapse = rememberHeaderCollapseState(targetIndex)
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .nestedScroll(headerCollapse.connection)
-                                .then(
-                                    if (state.swipeActionsEnabled) {
-                                        Modifier
-                                            .graphicsLayer { translationX = swipeOffset.value }
-                                            .pointerInput(state.currentExerciseIndex) {
-                                                detectHorizontalDragGestures(
-                                                    onDragStart = { coroutineScope.launch { swipeOffset.snapTo(0f) } },
-                                                    onDragEnd = {
-                                                        val threshold = with(density) { 50.dp.toPx() }
-                                                        if (swipeOffset.value > threshold && targetIndex > 0) {
-                                                            coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
-                                                            viewModel.previousExercise()
-                                                        } else if (swipeOffset.value < -threshold && targetIndex < state.exercises.size - 1) {
-                                                            coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
-                                                            viewModel.nextExercise()
-                                                        } else {
-                                                            coroutineScope.launch { swipeOffset.animateTo(0f, spring()) }
-                                                        }
-                                                    },
-                                                    onHorizontalDrag = { change, dragAmount ->
-                                                        change.consume()
-                                                        coroutineScope.launch { swipeOffset.snapTo(swipeOffset.value + dragAmount) }
-                                                    }
-                                                )
-                                            }
-                                    } else Modifier
+                    } else if (currentExState != null) {
+                        AnimatedContent(
+                            targetState = state.currentExerciseIndex,
+                            transitionSpec = {
+                                val direction = if (targetState > initialState) 1 else -1
+                                (slideInHorizontally(
+                                    animationSpec = spring(
+                                        dampingRatio = 0.85f,
+                                        stiffness = 380f
+                                    )
+                                ) { width -> direction * width } + fadeIn(
+                                    animationSpec = spring(stiffness = 380f)
+                                )).togetherWith(
+                                    slideOutHorizontally(
+                                        animationSpec = spring(
+                                            dampingRatio = 0.85f,
+                                            stiffness = 380f
+                                        )
+                                    ) { width -> -direction * width } + fadeOut(
+                                        animationSpec = spring(stiffness = 380f)
+                                    )
                                 )
-                        ) {
-                            if (targetExState.isCardio) {
-                                val showBottomHubForCardio = targetExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)
-                                // The content stays above the hub, whatever step it is on
-                                val cardioBottomPadding = if (showBottomHubForCardio || state.remainingRestSeconds > 0) {
-                                    with(screenDensity) { hubHeightPx.toDp() } + 16.dp
-                                } else 32.dp + paddingValues.scrollEndInset()
-                                CardioExerciseContent(
-                                    exerciseIndex = targetIndex,
-                                    exerciseState = targetExState,
-                                    languageCode = languageCode,
-                                    state = state,
-                                    viewModel = viewModel,
-                                    onSwap = { ui.showSwapExerciseSheet = true },
-                                    onAddExercise = {
-                                        ui.isAddingAfterCurrent = false
-                                        ui.showAddExerciseSheet = true
-                                    },
-                                    distanceInput = cardioDistanceInput,
-                                    onDistanceChange = { cardioDistanceInput = it },
-                                    distanceKm = { CardioEntryValues.fieldKm(it, cardioDistanceStartKm, distanceUnit) },
-                                    bottomPadding = cardioBottomPadding
-                                )
-                            } else if (usesEmomClock(targetExState)) {
-                                val emomIdle = state.emomRun == null
-                                // The content stays above the hub, whatever step it is on
-                                val emomBottomPadding = if (emomIdle) with(screenDensity) { hubHeightPx.toDp() } + 16.dp else 32.dp + paddingValues.scrollEndInset()
-                                EmomExerciseContent(
-                                    exerciseIndex = targetIndex,
-                                    exerciseState = targetExState,
-                                    languageCode = languageCode,
-                                    state = state,
-                                    viewModel = viewModel,
-                                    onSwap = { ui.showSwapExerciseSheet = true },
-                                    onLogManually = { ui.emomManualExercises = ui.emomManualExercises + targetExState.exercise.id },
-                                    bottomPadding = emomBottomPadding
-                                )
-                            } else {
-                                var expandedSetIndex by remember(targetIndex) { mutableStateOf<Int?>(targetActiveSetIndex) }
+                            },
+                            label = "exercise_transition",
+                            // The bottom panel frosts this content
+                            modifier = Modifier.fillMaxSize().then(panelGlass?.record(Modifier) ?: Modifier)
+                        ) { targetIndex ->
+                            val targetExState = state.exercises.getOrNull(targetIndex)
+                            if (targetExState != null) {
+                                val exerciseListState = rememberLazyListState()
+                                val targetActiveSetIndex = remember(targetExState.sets) {
+                                    targetExState.sets.indexOfFirst { !it.isCompleted }.takeIf { it != -1 } ?: ((targetExState.sets.size) - 1)
+                                }
+                                val targetActiveSet = remember(targetExState.sets, targetActiveSetIndex) {
+                                    targetExState.sets.getOrNull(targetActiveSetIndex)
+                                }
+                                val targetIsExerciseCompleted = remember(targetActiveSet) {
+                                    targetActiveSet == null || targetActiveSet.isCompleted
+                                }
+
                                 LaunchedEffect(targetActiveSetIndex) {
-                                    if (targetExState.isTimed) {
-                                        expandedSetIndex = targetActiveSetIndex
+                                    if (targetActiveSetIndex != -1 && targetExState.sets.isNotEmpty()) {
+                                        exerciseListState.animateScrollToItem(targetActiveSetIndex)
                                     }
                                 }
 
-                                // Large exercise media: fills the room left between the last set and the hub, and
-                                // gives way (header thumbnail only) as soon as the sets or the hub need that room.
-                                val localDensity = LocalDensity.current
-                                val largeMediaFile = exerciseMedia[targetExState.exercise.id]
-                                    ?.takeIf { state.exerciseMediaEnabled && state.exerciseMediaLarge }
-                                var freeMediaPx by remember(targetIndex) { mutableIntStateOf(0) }
-                                val largeMediaVisible = largeMediaFile != null &&
-                                    freeMediaPx >= with(localDensity) { MEDIA_CARD_MIN_HEIGHT.roundToPx() }
-                                LaunchedEffect(largeMediaFile != null) {
-                                    if (largeMediaFile == null) {
-                                        freeMediaPx = 0
-                                        return@LaunchedEffect
+                                // Bring the set being edited above the hub that opens under it
+                                LaunchedEffect(ui.editingSetIndex) {
+                                    val editing = ui.editingSetIndex
+                                    if (editing != null && targetIndex == state.currentExerciseIndex && editing in targetExState.sets.indices) {
+                                        exerciseListState.animateScrollToItem(editing)
                                     }
-                                    val bottomGapPx = with(localDensity) { 16.dp.roundToPx() }
-                                    snapshotFlow {
-                                        // While the list is scrolled the sets' position says nothing about free room: keep the last value
-                                        if (hubHeightPx <= 0) {
-                                            0
-                                        } else if (exerciseListState.firstVisibleItemIndex != 0 || exerciseListState.firstVisibleItemScrollOffset != 0) {
-                                            null
-                                        } else {
-                                            val info = exerciseListState.layoutInfo
-                                            info.visibleItemsInfo.firstOrNull { it.key == MEDIA_CARD_KEY }
-                                                ?.let { card -> info.viewportSize.height - card.offset - hubHeightPx - bottomGapPx - headerCollapse.offsetPx.roundToInt() }
-                                                ?.coerceAtLeast(0)
-                                                ?: 0
+                                }
+
+                                val swipeOffset = remember { Animatable(0f) }
+                                // The header of this exercise shrinks to one row while its sets are scrolled
+                                val headerCollapse = rememberHeaderCollapseState(targetIndex)
+
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .nestedScroll(headerCollapse.connection)
+                                        .then(
+                                            if (state.swipeActionsEnabled) {
+                                                Modifier
+                                                    .graphicsLayer { translationX = swipeOffset.value }
+                                                    .pointerInput(state.currentExerciseIndex) {
+                                                        detectHorizontalDragGestures(
+                                                            onDragStart = { coroutineScope.launch { swipeOffset.snapTo(0f) } },
+                                                            onDragEnd = {
+                                                                val threshold = with(density) { 50.dp.toPx() }
+                                                                if (swipeOffset.value > threshold && targetIndex > 0) {
+                                                                    coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
+                                                                    viewModel.previousExercise()
+                                                                } else if (swipeOffset.value < -threshold && targetIndex < state.exercises.size - 1) {
+                                                                    coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
+                                                                    viewModel.nextExercise()
+                                                                } else {
+                                                                    coroutineScope.launch { swipeOffset.animateTo(0f, spring()) }
+                                                                }
+                                                            },
+                                                            onHorizontalDrag = { change, dragAmount ->
+                                                                change.consume()
+                                                                coroutineScope.launch { swipeOffset.snapTo(swipeOffset.value + dragAmount) }
+                                                            }
+                                                        )
+                                                    }
+                                            } else Modifier
+                                        )
+                                ) {
+                                    if (targetExState.isCardio) {
+                                        val showBottomHubForCardio = targetExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)
+                                        // The content stays above the hub, whatever step it is on
+                                        val cardioBottomPadding = if (showBottomHubForCardio || state.remainingRestSeconds > 0) {
+                                            with(screenDensity) { hubHeightPx.toDp() } + 16.dp
+                                        } else 32.dp + paddingValues.scrollEndInset()
+                                        CardioExerciseContent(
+                                            exerciseIndex = targetIndex,
+                                            exerciseState = targetExState,
+                                            languageCode = languageCode,
+                                            state = state,
+                                            viewModel = viewModel,
+                                            onSwap = { ui.showSwapExerciseSheet = true },
+                                            onAddExercise = {
+                                                ui.isAddingAfterCurrent = false
+                                                ui.showAddExerciseSheet = true
+                                            },
+                                            distanceInput = cardioDistanceInput,
+                                            onDistanceChange = { cardioDistanceInput = it },
+                                            distanceKm = { CardioEntryValues.fieldKm(it, cardioDistanceStartKm, distanceUnit) },
+                                            bottomPadding = cardioBottomPadding
+                                        )
+                                    } else if (usesEmomClock(targetExState)) {
+                                        val emomIdle = state.emomRun == null
+                                        // The content stays above the hub, whatever step it is on
+                                        val emomBottomPadding = if (emomIdle) with(screenDensity) { hubHeightPx.toDp() } + 16.dp else 32.dp + paddingValues.scrollEndInset()
+                                        EmomExerciseContent(
+                                            exerciseIndex = targetIndex,
+                                            exerciseState = targetExState,
+                                            languageCode = languageCode,
+                                            state = state,
+                                            viewModel = viewModel,
+                                            onSwap = { ui.showSwapExerciseSheet = true },
+                                            onLogManually = { ui.emomManualExercises = ui.emomManualExercises + targetExState.exercise.id },
+                                            bottomPadding = emomBottomPadding
+                                        )
+                                    } else {
+                                        var expandedSetIndex by remember(targetIndex) { mutableStateOf<Int?>(targetActiveSetIndex) }
+                                        LaunchedEffect(targetActiveSetIndex) {
+                                            if (targetExState.isTimed) {
+                                                expandedSetIndex = targetActiveSetIndex
+                                            }
                                         }
-                                    }.collect { free -> if (free != null) freeMediaPx = free }
+
+                                        // Large exercise media: fills the room left between the last set and the hub, and
+                                        // gives way (header thumbnail only) as soon as the sets or the hub need that room.
+                                        val localDensity = LocalDensity.current
+                                        val largeMediaFile = exerciseMedia[targetExState.exercise.id]
+                                            ?.takeIf { state.exerciseMediaEnabled && state.exerciseMediaLarge }
+                                        var freeMediaPx by remember(targetIndex) { mutableIntStateOf(0) }
+                                        val largeMediaVisible = largeMediaFile != null &&
+                                            freeMediaPx >= with(localDensity) { MEDIA_CARD_MIN_HEIGHT.roundToPx() }
+                                        LaunchedEffect(largeMediaFile != null) {
+                                            if (largeMediaFile == null) {
+                                                freeMediaPx = 0
+                                                return@LaunchedEffect
+                                            }
+                                            val bottomGapPx = with(localDensity) { 16.dp.roundToPx() }
+                                            snapshotFlow {
+                                                // While the list is scrolled the sets' position says nothing about free room: keep the last value
+                                                if (hubHeightPx <= 0) {
+                                                    0
+                                                } else if (exerciseListState.firstVisibleItemIndex != 0 || exerciseListState.firstVisibleItemScrollOffset != 0) {
+                                                    null
+                                                } else {
+                                                    val info = exerciseListState.layoutInfo
+                                                    info.visibleItemsInfo.firstOrNull { it.key == MEDIA_CARD_KEY }
+                                                        ?.let { card -> info.viewportSize.height - card.offset - hubHeightPx - bottomGapPx - headerCollapse.offsetPx.roundToInt() }
+                                                        ?.coerceAtLeast(0)
+                                                        ?: 0
+                                                }
+                                            }.collect { free -> if (free != null) freeMediaPx = free }
+                                        }
+
+                                        ExerciseHeader(
+                                            targetExState = targetExState,
+                                            targetIndex = targetIndex,
+                                            state = state,
+                                            ui = ui,
+                                            viewModel = viewModel,
+                                            languageCode = languageCode,
+                                            exerciseMedia = exerciseMedia,
+                                            largeMediaVisible = largeMediaVisible,
+                                            pickMedia = pickMedia,
+                                            prescriptionLabels = prescriptionLabels,
+                                            onOpenDetail = { detailExerciseId = it },
+                                            collapse = headerCollapse
+                                        )
+
+                                        // Only a list that does not fit on screen has anything to gain from a collapsed header
+                                        headerCollapse.canCollapse = { exerciseListState.canScrollForward || exerciseListState.canScrollBackward }
+
+                                        // A list moved by code (to the set being done) away from the top takes the header with it.
+                                        // Each step runs to its end: a list that settles back while the header collapses must not
+                                        // leave the header half way.
+                                        LaunchedEffect(headerCollapse, exerciseListState) {
+                                            snapshotFlow { exerciseListState.firstVisibleItemIndex > 0 || exerciseListState.firstVisibleItemScrollOffset > 0 }
+                                                .filter { it }
+                                                .collect { headerCollapse.snapTo(HeaderCollapse.snapTarget(listScrolled = true)) }
+                                        }
+                                        // Whatever leaves the header half way (a drag that stopped, a list that settled) ends at the nearer end
+                                        LaunchedEffect(headerCollapse, exerciseListState) {
+                                            snapshotFlow { headerCollapse.offsetPx }
+                                                .debounce(400)
+                                                .collect { if (!exerciseListState.isScrollInProgress) headerCollapse.settle() }
+                                        }
+
+                                        SetList(
+                                            targetExState = targetExState,
+                                            targetIndex = targetIndex,
+                                            targetActiveSetIndex = targetActiveSetIndex,
+                                            exerciseListState = exerciseListState,
+                                            expandedSetIndex = expandedSetIndex,
+                                            onExpandedSetIndexChange = { expandedSetIndex = it },
+                                            largeMediaFile = largeMediaFile,
+                                            largeMediaVisible = largeMediaVisible,
+                                            freeMediaPx = freeMediaPx,
+                                            hubHeightPx = hubHeightPx,
+                                            isExerciseCompleted = isExerciseCompleted,
+                                            state = state,
+                                            ui = ui,
+                                            viewModel = viewModel,
+                                            languageCode = languageCode,
+                                            prescriptionLabels = prescriptionLabels
+                                        )
+                                    }
                                 }
-
-                                ExerciseHeader(
-                                    targetExState = targetExState,
-                                    targetIndex = targetIndex,
-                                    state = state,
-                                    ui = ui,
-                                    viewModel = viewModel,
-                                    languageCode = languageCode,
-                                    exerciseMedia = exerciseMedia,
-                                    largeMediaVisible = largeMediaVisible,
-                                    pickMedia = pickMedia,
-                                    prescriptionLabels = prescriptionLabels,
-                                    onOpenDetail = { detailExerciseId = it },
-                                    collapse = headerCollapse
-                                )
-
-                                // Only a list that does not fit on screen has anything to gain from a collapsed header
-                                headerCollapse.canCollapse = { exerciseListState.canScrollForward || exerciseListState.canScrollBackward }
-
-                                // A list moved by code (to the set being done) away from the top takes the header with it.
-                                // Each step runs to its end: a list that settles back while the header collapses must not
-                                // leave the header half way.
-                                LaunchedEffect(headerCollapse, exerciseListState) {
-                                    snapshotFlow { exerciseListState.firstVisibleItemIndex > 0 || exerciseListState.firstVisibleItemScrollOffset > 0 }
-                                        .filter { it }
-                                        .collect { headerCollapse.snapTo(HeaderCollapse.snapTarget(listScrolled = true)) }
-                                }
-                                // Whatever leaves the header half way (a drag that stopped, a list that settled) ends at the nearer end
-                                LaunchedEffect(headerCollapse, exerciseListState) {
-                                    snapshotFlow { headerCollapse.offsetPx }
-                                        .debounce(400)
-                                        .collect { if (!exerciseListState.isScrollInProgress) headerCollapse.settle() }
-                                }
-
-                                SetList(
-                                    targetExState = targetExState,
-                                    targetIndex = targetIndex,
-                                    targetActiveSetIndex = targetActiveSetIndex,
-                                    exerciseListState = exerciseListState,
-                                    expandedSetIndex = expandedSetIndex,
-                                    onExpandedSetIndexChange = { expandedSetIndex = it },
-                                    largeMediaFile = largeMediaFile,
-                                    largeMediaVisible = largeMediaVisible,
-                                    freeMediaPx = freeMediaPx,
-                                    hubHeightPx = hubHeightPx,
-                                    isExerciseCompleted = isExerciseCompleted,
-                                    state = state,
-                                    ui = ui,
-                                    viewModel = viewModel,
-                                    languageCode = languageCode,
-                                    prescriptionLabels = prescriptionLabels
-                                )
                             }
+                        }
+
+                        // DYNAMIC INTERACTION HUB
+                        val currentExState = state.currentExercise
+                        platform.PanelProvider(panelGlass) {
+                        WorkoutHub(
+                            state = state,
+                            ui = ui,
+                            viewModel = viewModel,
+                            currentExState = currentExState,
+                            activeSet = activeSet,
+                            activeSetIndex = activeSetIndex,
+                            isExerciseCompleted = isExerciseCompleted,
+                            setBeingEdited = setBeingEdited,
+                            usesEmomClock = usesEmomClock,
+                            hubSheet = hubSheet,
+                            onHubHeightChanged = { hubHeightPx = it },
+                            languageCode = languageCode,
+                            prescriptionLabels = prescriptionLabels,
+                            plateExercises = plateExercises
+                        )
+                        }
+                    }
+
+                    if (state.isFinishing) {
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            GymLoadingIndicator()
                         }
                     }
                 }
 
-                // DYNAMIC INTERACTION HUB
-                val currentExState = state.currentExercise
-                platform.PanelProvider(panelGlass) {
-                WorkoutHub(
+                WorkoutDialogs(
                     state = state,
                     ui = ui,
                     viewModel = viewModel,
                     currentExState = currentExState,
                     activeSet = activeSet,
                     activeSetIndex = activeSetIndex,
-                    isExerciseCompleted = isExerciseCompleted,
-                    setBeingEdited = setBeingEdited,
-                    usesEmomClock = usesEmomClock,
-                    hubSheet = hubSheet,
-                    onHubHeightChanged = { hubHeightPx = it },
+                    plateExercises = plateExercises,
                     languageCode = languageCode,
-                    prescriptionLabels = prescriptionLabels,
-                    plateExercises = plateExercises
+                    availableExercises = availableExercises,
+                    categories = categories,
+                    safeNavigateBack = safeNavigateBack
                 )
-                }
             }
-
-            if (state.isFinishing) {
-                Box(
-                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    GymLoadingIndicator()
-                }
-            }
+            ExerciseOverview(state = state, overview = exerciseOverview, languageCode = languageCode)
         }
-
-        WorkoutDialogs(
-            state = state,
-            ui = ui,
-            viewModel = viewModel,
-            currentExState = currentExState,
-            activeSet = activeSet,
-            activeSetIndex = activeSetIndex,
-            plateExercises = plateExercises,
-            languageCode = languageCode,
-            availableExercises = availableExercises,
-            categories = categories,
-            safeNavigateBack = safeNavigateBack
-        )
     }
 }
 
@@ -932,7 +940,7 @@ fun CardioHubSection(
 
             // Bottom Row (in basso): Exercise Navigation Controls
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().holdForExerciseOverview(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (state.currentExerciseIndex > 0) {
@@ -997,7 +1005,7 @@ fun CardioHubSection(
         }
     } else {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().holdForExerciseOverview(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (state.currentExerciseIndex > 0) {

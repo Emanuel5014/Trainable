@@ -1074,6 +1074,7 @@
     <string name="optional_suffix">(optional)</string>
     <string name="session_in_progress_title">SITZUNG LÄUFT</string>
     <string name="workout_progress_description">Übung %1$d von %2$d, %3$d abgeschlossen</string>
+    <string name="workout_overview_summary">Übungen %1$d/%2$d · Sätze %3$d/%4$d</string>
     <string name="log_set">SATZ AUFZEICHNEN</string>
     <string name="previous_exercise_btn">Vorherige</string>
     <string name="mini_set_notification">Minisatz</string>

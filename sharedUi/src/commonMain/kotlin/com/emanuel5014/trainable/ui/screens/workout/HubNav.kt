@@ -69,7 +69,7 @@ fun HubNav(
     val quietColor = if (glass) Color.Transparent else SurfaceContainerHigh
     val quietGlass = if (glass) Modifier.surfaceGlass(GlassPart.WorkoutNav) else Modifier
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().holdForExerciseOverview(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (previousName != null) {

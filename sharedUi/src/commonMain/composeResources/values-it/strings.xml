@@ -1077,6 +1077,7 @@
     <string name="optional_suffix">(facoltativo)</string>
     <string name="session_in_progress_title">SESSIONE IN CORSO</string>
     <string name="workout_progress_description">Esercizio %1$d di %2$d, %3$d completati</string>
+    <string name="workout_overview_summary">Esercizi %1$d/%2$d · Serie %3$d/%4$d</string>
     <string name="log_set">REGISTRA SERIE</string>
     <string name="previous_exercise_btn">Precedente</string>
     <string name="mini_set_notification">Mini-serie</string>

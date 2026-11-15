@@ -1074,6 +1074,7 @@
     <string name="optional_suffix">(optional)</string>
     <string name="session_in_progress_title">SESSION IN PROGRESS</string>
     <string name="workout_progress_description">Exercise %1$d of %2$d, %3$d completed</string>
+    <string name="workout_overview_summary">Exercises %1$d/%2$d · Sets %3$d/%4$d</string>
     <string name="log_set">LOG SET</string>
     <string name="previous_exercise_btn">Previous</string>
     <string name="mini_set_notification">Mini-set</string>
