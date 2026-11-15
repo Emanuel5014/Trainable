@@ -2502,8 +2502,12 @@ class WorkoutModel(
         if (state.isLoading || state.isFinished || state.exercises.isEmpty()) return null
         val exercises = state.exercises.map { ex ->
             val name = ExerciseTranslations.translate(ex.exercise.nome, _languageCode.value)
-            if (ex.isCardio) LiveExercise(name, ex.cardioSets.count { it.isCompleted }, ex.cardioSets.size.coerceAtLeast(1))
-            else LiveExercise(name, ex.sets.count { it.isCompleted }, ex.sets.size)
+            val detail = nextSetInfoOf(ex)?.let { info ->
+                info.text ?: (WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(info.weight, info.weightUnit), info.weightUnit) +
+                    " × " + (info.repsLabel ?: info.reps.toString()))
+            }
+            if (ex.isCardio) LiveExercise(name, ex.cardioSets.count { it.isCompleted }, ex.cardioSets.size.coerceAtLeast(1), detail)
+            else LiveExercise(name, ex.sets.count { it.isCompleted }, ex.sets.size, detail)
         }
         val target = nextSetTarget()
         val next = target?.let { t ->

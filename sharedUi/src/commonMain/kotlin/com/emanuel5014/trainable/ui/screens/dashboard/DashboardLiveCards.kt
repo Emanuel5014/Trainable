@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.FitnessCenter
@@ -96,6 +97,7 @@ import com.emanuel5014.trainable.sharedui.resources.dashboard_live_then
 import com.emanuel5014.trainable.sharedui.resources.dashboard_live_warmup
 import com.emanuel5014.trainable.sharedui.resources.next_set_done
 import com.emanuel5014.trainable.sharedui.resources.resume_workout
+import com.emanuel5014.trainable.sharedui.resources.routine_sets_count
 import com.emanuel5014.trainable.ui.screens.onboarding.rememberReduceMotion
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
@@ -183,10 +185,13 @@ private fun timerFootnote(ui: LiveWorkoutUi): String? = when {
     else -> null
 }
 
-/** How far a ring is: what is left of a rest, the share of a set or cardio target, the minute of a stopwatch, EMOM rounds done. */
+/**
+ * How far a ring is: the rest or warm-up gone (it fills clockwise, as the rest card of the workout does), the share of
+ * a set or cardio target, the minute of a stopwatch, the EMOM rounds done.
+ */
 private fun LiveWorkoutUi.ringProgress(): Float = when (phase) {
     LiveWorkoutUi.Phase.REST, LiveWorkoutUi.Phase.WARMUP ->
-        if (totalSeconds > 0) seconds.toFloat() / totalSeconds else 0f
+        if (totalSeconds > 0) 1f - seconds.toFloat() / totalSeconds else 0f
     LiveWorkoutUi.Phase.SET_TIMER, LiveWorkoutUi.Phase.CARDIO ->
         if (totalSeconds > 0) seconds.toFloat() / totalSeconds else (seconds % 60) / 60f
     LiveWorkoutUi.Phase.EMOM -> next?.let { n ->
@@ -303,20 +308,36 @@ private fun LivePlayButton(isActive: Boolean, size: Dp, contentDescription: Stri
     }
 }
 
-/** One dot per set of the exercise: done filled, the one to do a ring, the rest faint. */
+/**
+ * One dash per set, like the segments of the workout's strip: done ones full, the one to do half tinted, the others
+ * faint. Past 16 sets one bar filled up to the sets done.
+ */
 @Composable
-private fun SetDots(dots: List<Boolean>, dotSize: Dp, color: Color = ResumeInk, markNext: Boolean = true) {
-    if (dots.isEmpty() || dots.size > 10) return
-    val current = if (markNext) dots.indexOfFirst { !it } else -1
-    Row(horizontalArrangement = Arrangement.spacedBy(dotSize / 2)) {
+private fun SetDashes(
+    dots: List<Boolean>,
+    modifier: Modifier,
+    height: Dp,
+    color: Color = ResumeInk,
+    track: Color = color.copy(alpha = 0.18f),
+    markNext: Boolean = true
+) {
+    if (dots.isEmpty()) return
+    if (dots.size > 16) {
+        val fill = dots.count { it }.toFloat() / dots.size
+        Box(modifier.height(height).clip(CircleShape).background(track).drawBehind { drawRect(color, size = Size(size.width * fill, size.height)) })
+        return
+    }
+    val next = if (markNext) dots.indexOfFirst { !it } else -1
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(if (dots.size > 8) 3.dp else 4.dp)) {
         dots.forEachIndexed { i, done ->
-            val m = Modifier.size(dotSize).clip(CircleShape)
             Box(
-                when {
-                    done -> m.background(color)
-                    i == current -> m.drawBehind { drawCircle(color, style = Stroke(dotSize.toPx() / 4f), radius = size.minDimension / 2f - dotSize.toPx() / 8f) }
-                    else -> m.background(color.copy(alpha = 0.18f))
-                }
+                Modifier.weight(1f).height(height).clip(CircleShape).background(
+                    when {
+                        done -> color
+                        i == next -> color.copy(alpha = 0.45f)
+                        else -> track
+                    }
+                )
             )
         }
     }
@@ -507,7 +528,7 @@ private fun LiveCardMiddle(ui: LiveWorkoutUi, isActive: Boolean) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(next.loadText(), style = ink.bodyMedium, fontWeight = FontWeight.ExtraBold, color = ResumeInk, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                         Spacer(Modifier.width(8.dp))
-                        SetDots(ui.setDots, 8.dp)
+                        SetDashes(ui.setDots, Modifier.width((ui.setDots.size * 14).coerceIn(28, 96).dp), 5.dp)
                     }
                 }
             }
@@ -647,7 +668,7 @@ internal fun LiveWorkoutPanel(
                         fontWeight = FontWeight.ExtraBold, color = ResumeInk, maxLines = 2, overflow = TextOverflow.Ellipsis
                     )
                     Spacer(Modifier.height(10.dp))
-                    SetDots(ui.setDots, 14.dp)
+                    SetDashes(ui.setDots, Modifier.fillMaxWidth(), 8.dp)
                     Spacer(Modifier.height(18.dp))
                     val token = next.keyToken
                     if (buttons.showSetDone && token != null) {
@@ -739,8 +760,9 @@ private fun PanelPill(label: String, onClick: () -> Unit) {
 }
 
 /**
- * The exercise list of workout mode: the last one done, the one under way and the next two, joined like the set
- * list; a tap opens the workout.
+ * The exercise list of workout mode: the last one done, the one under way and the next ones, joined like the set
+ * list. Each row has its sets as dashes (the same segments as the workout's strip) and, while sets are left, what its
+ * next set asks; a tap opens the workout.
  */
 @Composable
 internal fun LiveExerciseList(ui: LiveWorkoutUi, onOpen: () -> Unit, modifier: Modifier = Modifier) {
@@ -761,50 +783,95 @@ internal fun LiveExerciseList(ui: LiveWorkoutUi, onOpen: () -> Unit, modifier: M
         }
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             for (i in from..to) {
-                val ex = ui.exercises[i]
-                val done = ex.total > 0 && ex.done >= ex.total
-                val isCurrent = i == current
-                val top = if (i == from) 20.dp else 6.dp
-                val bottom = if (i == to) 20.dp else 6.dp
-                val shape = if (isCurrent) RoundedCornerShape(20.dp) else RoundedCornerShape(top, top, bottom, bottom)
+                val outerTop = if (i == from) 24.dp else 8.dp
+                val outerBottom = if (i == to && more == 0) 24.dp else 8.dp
+                LiveExerciseRow(
+                    number = i + 1,
+                    exercise = ui.exercises[i],
+                    isCurrent = i == current,
+                    shape = if (i == current) RoundedCornerShape(24.dp) else RoundedCornerShape(outerTop, outerTop, outerBottom, outerBottom),
+                    onOpen = onOpen
+                )
+            }
+            if (more > 0) {
                 Row(
-                    Modifier.fillMaxWidth().heightIn(min = if (isCurrent) 56.dp else 52.dp).clip(shape)
-                        .background(if (isCurrent) scheme.secondaryContainer else scheme.surfaceContainerHigh)
-                        .then(if (isCurrent) Modifier.drawBehind {
-                            drawRoundRect(scheme.primary.copy(alpha = 0.7f), cornerRadius = CornerRadius(20.dp.toPx()), style = Stroke(2.dp.toPx()))
-                        } else Modifier)
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp, 8.dp, 24.dp, 24.dp))
+                        .background(scheme.surfaceContainerHigh)
                         .clickable(onClick = onOpen)
-                        .padding(horizontal = 14.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    when {
-                        done -> Box(Modifier.size(24.dp).clip(CircleShape).background(scheme.tertiary), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Rounded.Check, contentDescription = null, tint = scheme.onTertiary, modifier = Modifier.size(16.dp))
-                        }
-                        else -> Box(
-                            Modifier.size(24.dp).clip(RoundedCornerShape(7.dp)).background(if (isCurrent) scheme.primary else scheme.surfaceContainerHighest),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text((i + 1).toString(), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = if (isCurrent) scheme.onPrimary else scheme.onSurfaceVariant)
-                        }
-                    }
-                    Spacer(Modifier.width(12.dp))
                     Text(
-                        ex.name, style = MaterialTheme.typography.titleSmall,
-                        fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Bold,
-                        color = if (done) scheme.onSurfaceVariant else scheme.onSurface,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
+                        pluralStringResource(Res.plurals.dashboard_live_more_exercises, more, more),
+                        style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = scheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(Modifier.width(8.dp))
-                    if (i == to && more > 0) {
-                        Text(pluralStringResource(Res.plurals.dashboard_live_more_exercises, more, more), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
-                    } else if (ex.total in 1..10) {
-                        SetDots(List(ex.total) { it < ex.done }, 8.dp, color = if (done) scheme.tertiary else scheme.onSurfaceVariant, markNext = isCurrent)
-                    } else {
-                        Text("${ex.done}/${ex.total}", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
-                    }
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = scheme.onSurfaceVariant)
                 }
             }
+        }
+    }
+}
+
+/** One exercise of the list: number (a check once done), name, sets done of all, what comes next, the set dashes. */
+@Composable
+private fun LiveExerciseRow(number: Int, exercise: LiveExercise, isCurrent: Boolean, shape: Shape, onOpen: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val done = exercise.total > 0 && exercise.done >= exercise.total
+    val accent = when {
+        done -> scheme.tertiary
+        isCurrent -> scheme.primary
+        else -> scheme.onSurfaceVariant
+    }
+    Row(
+        Modifier.fillMaxWidth().clip(shape)
+            .background(if (isCurrent) scheme.secondaryContainer else scheme.surfaceContainerHigh)
+            .then(if (isCurrent) Modifier.drawBehind {
+                drawRoundRect(scheme.primary.copy(alpha = 0.7f), cornerRadius = CornerRadius(24.dp.toPx()), style = Stroke(2.dp.toPx()))
+            } else Modifier)
+            .clickable(onClick = onOpen)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (done) {
+            Box(Modifier.size(28.dp).clip(CircleShape).background(scheme.tertiary), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Check, contentDescription = null, tint = scheme.onTertiary, modifier = Modifier.size(18.dp))
+            }
+        } else {
+            Box(
+                Modifier.size(28.dp).clip(RoundedCornerShape(9.dp)).background(if (isCurrent) scheme.primary else scheme.surfaceContainerHighest),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(number.toString(), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = if (isCurrent) scheme.onPrimary else scheme.onSurfaceVariant)
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    exercise.name, style = MaterialTheme.typography.titleSmall,
+                    fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Bold,
+                    color = if (done) scheme.onSurfaceVariant else scheme.onSurface,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("${exercise.done}/${exercise.total}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = accent)
+            }
+            if (!done && exercise.detail != null) {
+                Text(
+                    pluralStringResource(Res.plurals.routine_sets_count, exercise.total, exercise.total) + " · " + exercise.detail,
+                    style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            SetDashes(
+                List(exercise.total) { it < exercise.done },
+                Modifier.fillMaxWidth(),
+                height = if (isCurrent) 6.dp else 5.dp,
+                color = accent,
+                track = scheme.onSurface.copy(alpha = 0.12f),
+                markNext = isCurrent
+            )
         }
     }
 }

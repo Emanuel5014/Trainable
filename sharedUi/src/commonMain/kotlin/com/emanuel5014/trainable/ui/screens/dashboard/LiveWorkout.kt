@@ -32,7 +32,13 @@ data class LiveWorkoutSnapshot(
 }
 
 @Serializable
-data class LiveExercise(val name: String, val done: Int, val total: Int)
+data class LiveExercise(
+    val name: String,
+    val done: Int,
+    val total: Int,
+    /** What its next set asks ("50 kg × 8", "20 min"); null once it is done. */
+    val detail: String? = null
+)
 
 /** The next set, with what the rest notification needs to be drawn again (weight in kg, as the notification takes it). */
 @Serializable
