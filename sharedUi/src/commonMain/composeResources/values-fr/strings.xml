@@ -1619,4 +1619,24 @@
     <string name="widget_label_up_next">À suivre</string>
     <string name="widget_label_suggested_today">Conseillée aujourd'hui</string>
     <string name="widget_label_in_progress">En cours</string>
+    <plurals name="history_filter_count">
+        <item quantity="one">%1$d sur %2$d séance</item>
+        <item quantity="other">%1$d sur %2$d séances</item>
+    </plurals>
+    <plurals name="history_filter_show">
+        <item quantity="one">Afficher %1$d séance</item>
+        <item quantity="other">Afficher %1$d séances</item>
+    </plurals>
+    <string name="history_filter_none_shown">Aucune séance</string>
+    <string name="history_filter_routine">Programme</string>
+    <string name="history_filter_period">Période</string>
+    <string name="history_filter_journal">Journal</string>
+    <string name="history_filter_whole_group">Tout le groupe</string>
+    <string name="history_filter_any_time">Depuis le début</string>
+    <string name="history_filter_last_30_days">30 derniers jours</string>
+    <string name="history_filter_this_year">Cette année</string>
+    <string name="history_filter_custom_range">Période personnalisée</string>
+    <string name="history_filter_previous_year">Année précédente</string>
+    <string name="history_filter_next_year">Année suivante</string>
+    <string name="history_filter_reset">Réinitialiser</string>
 </resources>

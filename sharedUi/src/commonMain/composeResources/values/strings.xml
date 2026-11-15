@@ -1614,4 +1614,24 @@
     <string name="widget_label_up_next">Up next</string>
     <string name="widget_label_suggested_today">Suggested today</string>
     <string name="widget_label_in_progress">In progress</string>
+    <plurals name="history_filter_count">
+        <item quantity="one">%1$d of %2$d workout</item>
+        <item quantity="other">%1$d of %2$d workouts</item>
+    </plurals>
+    <plurals name="history_filter_show">
+        <item quantity="one">Show %1$d workout</item>
+        <item quantity="other">Show %1$d workouts</item>
+    </plurals>
+    <string name="history_filter_none_shown">No workouts</string>
+    <string name="history_filter_routine">Routine</string>
+    <string name="history_filter_period">Period</string>
+    <string name="history_filter_journal">Journal</string>
+    <string name="history_filter_whole_group">Whole group</string>
+    <string name="history_filter_any_time">All time</string>
+    <string name="history_filter_last_30_days">Last 30 days</string>
+    <string name="history_filter_this_year">This year</string>
+    <string name="history_filter_custom_range">Custom range</string>
+    <string name="history_filter_previous_year">Previous year</string>
+    <string name="history_filter_next_year">Next year</string>
+    <string name="history_filter_reset">Reset</string>
 </resources>

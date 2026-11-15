@@ -1619,4 +1619,24 @@
     <string name="widget_label_up_next">Prossima</string>
     <string name="widget_label_suggested_today">Consigliata oggi</string>
     <string name="widget_label_in_progress">In corso</string>
+    <plurals name="history_filter_count">
+        <item quantity="one">%1$d di %2$d allenamento</item>
+        <item quantity="other">%1$d di %2$d allenamenti</item>
+    </plurals>
+    <plurals name="history_filter_show">
+        <item quantity="one">Mostra %1$d allenamento</item>
+        <item quantity="other">Mostra %1$d allenamenti</item>
+    </plurals>
+    <string name="history_filter_none_shown">Nessun allenamento</string>
+    <string name="history_filter_routine">Scheda</string>
+    <string name="history_filter_period">Periodo</string>
+    <string name="history_filter_journal">Diario</string>
+    <string name="history_filter_whole_group">Tutto il gruppo</string>
+    <string name="history_filter_any_time">Sempre</string>
+    <string name="history_filter_last_30_days">Ultimi 30 giorni</string>
+    <string name="history_filter_this_year">Quest'anno</string>
+    <string name="history_filter_custom_range">Intervallo personalizzato</string>
+    <string name="history_filter_previous_year">Anno precedente</string>
+    <string name="history_filter_next_year">Anno successivo</string>
+    <string name="history_filter_reset">Azzera</string>
 </resources>

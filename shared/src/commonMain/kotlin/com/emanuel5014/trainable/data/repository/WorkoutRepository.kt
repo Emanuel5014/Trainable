@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.data.repository
 
 import com.emanuel5014.trainable.data.local.entity.RecentCardio
+import com.emanuel5014.trainable.data.local.entity.RoutineGroupEntity
 import com.emanuel5014.trainable.data.local.entity.parts
 import com.emanuel5014.trainable.data.local.entity.pauses
 import com.emanuel5014.trainable.data.local.entity.performed
@@ -100,6 +101,9 @@ class WorkoutRepository(
     fun getAllPlansSorted(): Flow<List<WorkoutPlanEntity>> = workoutDao.getAllPlansSorted()
 
     fun getAllPlansWithDetails(): Flow<List<PlanWithDetails>> = workoutDao.getAllPlansWithDetails()
+
+    /** The groups of routines, for the history's routine filter. */
+    fun getRoutineGroups(): Flow<List<RoutineGroupEntity>> = workoutDao.getRoutineGroups()
     
     fun getPlanWithDetails(planId: Int): Flow<PlanWithDetails?> = workoutDao.getPlanWithDetails(planId)
     

@@ -1613,4 +1613,24 @@
     <string name="widget_label_up_next">Als Nächstes</string>
     <string name="widget_label_suggested_today">Heute empfohlen</string>
     <string name="widget_label_in_progress">Läuft</string>
+    <plurals name="history_filter_count">
+        <item quantity="one">%1$d von %2$d Training</item>
+        <item quantity="other">%1$d von %2$d Trainings</item>
+    </plurals>
+    <plurals name="history_filter_show">
+        <item quantity="one">%1$d Training anzeigen</item>
+        <item quantity="other">%1$d Trainings anzeigen</item>
+    </plurals>
+    <string name="history_filter_none_shown">Keine Trainings</string>
+    <string name="history_filter_routine">Plan</string>
+    <string name="history_filter_period">Zeitraum</string>
+    <string name="history_filter_journal">Tagebuch</string>
+    <string name="history_filter_whole_group">Ganze Gruppe</string>
+    <string name="history_filter_any_time">Gesamte Zeit</string>
+    <string name="history_filter_last_30_days">Letzte 30 Tage</string>
+    <string name="history_filter_this_year">Dieses Jahr</string>
+    <string name="history_filter_custom_range">Eigener Zeitraum</string>
+    <string name="history_filter_previous_year">Vorheriges Jahr</string>
+    <string name="history_filter_next_year">Nächstes Jahr</string>
+    <string name="history_filter_reset">Zurücksetzen</string>
 </resources>

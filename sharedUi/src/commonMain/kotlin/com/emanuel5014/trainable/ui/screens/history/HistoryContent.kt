@@ -517,10 +517,11 @@ fun HistoryContent(
                 val noRoutineLabel = stringResource(Res.string.no_routine)
                 ActiveFiltersBar(
                     filters = uiState.filters,
-                    planName = uiState.filters.planId?.let { id ->
-                        if (id == NO_ROUTINE_PLAN_ID) noRoutineLabel
-                        else uiState.availablePlans.firstOrNull { it.id == id }?.nome ?: noRoutineLabel
-                    },
+                    planName = uiState.filters.groupId?.let { id -> uiState.routineGroups.firstOrNull { it.id == id }?.name }
+                        ?: uiState.filters.planId?.let { id ->
+                            if (id == NO_ROUTINE_PLAN_ID) noRoutineLabel
+                            else uiState.availablePlans.firstOrNull { it.id == id }?.nome ?: noRoutineLabel
+                        },
                     tags = uiState.availableTags,
                     journalEnabled = uiState.journalEnabled,
                     onFiltersChange = state::setFilters
@@ -851,30 +852,17 @@ fun HistoryContent(
 
         if (showFilterSheet) {
             HistoryFilterBottomSheet(
-                selectedPlanId = uiState.filters.planId,
+                filters = uiState.filters,
+                counts = uiState.filterCounts,
                 availablePlans = uiState.availablePlans,
+                routineGroups = uiState.routineGroups,
                 hasUnassignedSessions = uiState.sessions.any { it.plan.isSystemPlan },
-                startDate = uiState.filters.startDate,
-                endDate = uiState.filters.endDate,
-                onPlanSelected = { planId ->
-                    state.setFilters(uiState.filters.copy(planId = planId))
-                },
-                onDateRangeSelected = { start, end ->
-                    state.setFilters(uiState.filters.copy(startDate = start, endDate = end))
-                },
-                onDateClick = { showDatePicker = true },
-                onClearDate = {
-                    state.setFilters(uiState.filters.copy(startDate = null, endDate = null))
-                },
-                onClearAll = {
-                    state.setFilters(HistoryFilters())
-                },
+                onFiltersChanged = state::setFilters,
+                onCustomRangeClick = { showDatePicker = true },
                 onDismiss = { showFilterSheet = false },
                 journalEnabled = uiState.journalEnabled,
                 ratingEnabled = uiState.journalRatingEnabled,
-                availableTags = uiState.availableTags,
-                journalFilters = uiState.filters.journal,
-                onJournalFiltersChanged = { state.setFilters(uiState.filters.copy(journal = it)) }
+                availableTags = uiState.availableTags
             )
         }
         if (showDatePicker) {

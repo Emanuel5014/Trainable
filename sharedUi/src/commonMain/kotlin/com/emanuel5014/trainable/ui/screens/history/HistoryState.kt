@@ -5,6 +5,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlin.time.Clock
+import com.emanuel5014.trainable.data.local.entity.RoutineGroupEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.isSystemPlan
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
@@ -44,6 +45,10 @@ data class HistoryUiState(
     val weightUnit: String = "kg",
     /** What [filteredSessions] is narrowed to. */
     val filters: HistoryFilters = HistoryFilters(),
+    /** How many workouts each choice of the filter sheet would show. */
+    val filterCounts: HistoryFilterCounts = HistoryFilterCounts(),
+    /** The groups of routines, for the routine filter. */
+    val routineGroups: List<RoutineGroupEntity> = emptyList(),
     /** The workout journal is on: its filters apply and its tags, rating and notes are shown. */
     val journalEnabled: Boolean = false,
     /** With the journal on: workouts can be rated, so the rating filter shows. */
@@ -108,6 +113,14 @@ class HistoryState(
 
     private fun loadPlans() {
         scope.launch {
+            repository.getRoutineGroups().collect { groups ->
+                _uiState.update { it.copy(routineGroups = groups) }
+                // A group that was dissolved can no longer be filtered on
+                val groupId = _uiState.value.filters.groupId
+                if (groupId != null && groups.none { it.id == groupId }) setFilters(_uiState.value.filters.copy(groupId = null))
+            }
+        }
+        scope.launch {
             repository.getAllPlansWithDetails().collect { plans ->
                 // Routines only: the plans the app makes for cardio / quick / custom workouts are not listed
                 val routines = plans.filter { !it.plan.isSystemPlan }
@@ -153,7 +166,12 @@ class HistoryState(
 
     private fun applyFilters() {
         val state = _uiState.value
-        _uiState.update { it.copy(filteredSessions = state.filters.apply(state.sessions, state.journalEnabled)) }
+        _uiState.update {
+            it.copy(
+                filteredSessions = state.filters.apply(state.sessions, state.journalEnabled),
+                filterCounts = historyFilterCounts(state.sessions, state.filters, state.journalEnabled)
+            )
+        }
     }
 
     /** The collection of the opened workout's details; only one runs, so an earlier workout cannot overwrite it. */

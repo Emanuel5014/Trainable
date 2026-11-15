@@ -11,28 +11,38 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
 /**
- * What the history is narrowed to: a routine, a date range and, with the workout journal on, tags, rating and notes.
- * [startDate] and [endDate] are both inclusive, in local time: the first and the last millisecond that count.
+ * What the history is narrowed to: a routine or a whole group of routines, a date range and, with the workout journal
+ * on, tags, rating and notes. [startDate] and [endDate] are both inclusive, in local time: the first and the last
+ * millisecond that count.
  */
 data class HistoryFilters(
     /** A routine, [NO_ROUTINE_PLAN_ID] for the workouts of no routine, or null for all. */
     val planId: Int? = null,
+    /** Every routine of this group (`routine_groups.id`); never set together with [planId]. */
+    val groupId: Int? = null,
     val startDate: Long? = null,
     val endDate: Long? = null,
     val journal: JournalFilters = JournalFilters()
 ) {
     /** Whether anything narrows the list; the journal filters count only while the journal is on. */
     fun isActive(journalEnabled: Boolean): Boolean =
-        planId != null || startDate != null || endDate != null || (journalEnabled && journal.isActive)
+        planId != null || groupId != null || startDate != null || endDate != null || (journalEnabled && journal.isActive)
+
+    /** The same filters on any routine. */
+    fun anyRoutine(): HistoryFilters = copy(planId = null, groupId = null)
+
+    /** The same filters on any date. */
+    fun anyDate(): HistoryFilters = copy(startDate = null, endDate = null)
 
     fun apply(sessions: List<SessionWithDetails>, journalEnabled: Boolean): List<SessionWithDetails> =
         sessions.filter { matches(it, journalEnabled) }
 
-    private fun matches(details: SessionWithDetails, journalEnabled: Boolean): Boolean {
+    fun matches(details: SessionWithDetails, journalEnabled: Boolean): Boolean {
         val session = details.session
-        val matchesPlan = when (planId) {
-            null -> true
-            NO_ROUTINE_PLAN_ID -> details.plan.isSystemPlan
+        val matchesPlan = when {
+            groupId != null -> !details.plan.isSystemPlan && details.plan.groupId == groupId
+            planId == null -> true
+            planId == NO_ROUTINE_PLAN_ID -> details.plan.isSystemPlan
             else -> session.planId == planId
         }
         // The end already is the last millisecond of its day: a whole day more let the 1st of the next month into a month (#69)

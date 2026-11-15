@@ -1,34 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.history
 
-import com.emanuel5014.trainable.sharedui.resources.Res
-import com.emanuel5014.trainable.sharedui.resources.active_routines
-import com.emanuel5014.trainable.sharedui.resources.all
-import com.emanuel5014.trainable.sharedui.resources.archived_routines_header
-import com.emanuel5014.trainable.sharedui.resources.clear_all
-import com.emanuel5014.trainable.sharedui.resources.clear_date
-import com.emanuel5014.trainable.sharedui.resources.clear_routine_filter
-import com.emanuel5014.trainable.sharedui.resources.date_range
-import com.emanuel5014.trainable.sharedui.resources.done
-import com.emanuel5014.trainable.sharedui.resources.filters
-import com.emanuel5014.trainable.sharedui.resources.journal_bucket_high
-import com.emanuel5014.trainable.sharedui.resources.journal_bucket_low
-import com.emanuel5014.trainable.sharedui.resources.journal_bucket_mid
-import com.emanuel5014.trainable.sharedui.resources.journal_filter_rating
-import com.emanuel5014.trainable.sharedui.resources.journal_filter_with_note
-import com.emanuel5014.trainable.sharedui.resources.journal_match_all
-import com.emanuel5014.trainable.sharedui.resources.journal_match_any
-import com.emanuel5014.trainable.sharedui.resources.journal_not_rated
-import com.emanuel5014.trainable.sharedui.resources.journal_note
-import com.emanuel5014.trainable.sharedui.resources.journal_tags
-import com.emanuel5014.trainable.sharedui.resources.last_month
-import com.emanuel5014.trainable.sharedui.resources.no_archived
-import com.emanuel5014.trainable.sharedui.resources.no_results_filters
-import com.emanuel5014.trainable.sharedui.resources.no_routine
-import com.emanuel5014.trainable.sharedui.resources.routine_group_other
-import com.emanuel5014.trainable.sharedui.resources.routines
-import com.emanuel5014.trainable.sharedui.resources.search_routines
-import com.emanuel5014.trainable.sharedui.resources.select_date_range
-import com.emanuel5014.trainable.sharedui.resources.this_month
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,43 +7,45 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ChevronLeft
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import com.emanuel5014.trainable.data.local.relation.TagWithUsage
-import com.emanuel5014.trainable.domain.journal.JournalFilters
-import com.emanuel5014.trainable.domain.journal.RatingBucket
-import com.emanuel5014.trainable.ui.components.journal.TagChip
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -82,122 +55,125 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.emanuel5014.trainable.data.local.entity.RoutineGroupEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.isArchived
+import com.emanuel5014.trainable.data.local.relation.TagWithUsage
+import com.emanuel5014.trainable.domain.journal.JournalFilters
+import com.emanuel5014.trainable.domain.journal.RatingBucket
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.active_routines
+import com.emanuel5014.trainable.sharedui.resources.archived_routines_header
+import com.emanuel5014.trainable.sharedui.resources.clear_date
+import com.emanuel5014.trainable.sharedui.resources.filters
+import com.emanuel5014.trainable.sharedui.resources.history_filter_any_time
+import com.emanuel5014.trainable.sharedui.resources.history_filter_count
+import com.emanuel5014.trainable.sharedui.resources.history_filter_custom_range
+import com.emanuel5014.trainable.sharedui.resources.history_filter_journal
+import com.emanuel5014.trainable.sharedui.resources.history_filter_last_30_days
+import com.emanuel5014.trainable.sharedui.resources.history_filter_next_year
+import com.emanuel5014.trainable.sharedui.resources.history_filter_none_shown
+import com.emanuel5014.trainable.sharedui.resources.history_filter_period
+import com.emanuel5014.trainable.sharedui.resources.history_filter_previous_year
+import com.emanuel5014.trainable.sharedui.resources.history_filter_reset
+import com.emanuel5014.trainable.sharedui.resources.history_filter_routine
+import com.emanuel5014.trainable.sharedui.resources.history_filter_show
+import com.emanuel5014.trainable.sharedui.resources.history_filter_this_year
+import com.emanuel5014.trainable.sharedui.resources.history_filter_whole_group
+import com.emanuel5014.trainable.sharedui.resources.journal_bucket_high
+import com.emanuel5014.trainable.sharedui.resources.journal_bucket_low
+import com.emanuel5014.trainable.sharedui.resources.journal_bucket_mid
+import com.emanuel5014.trainable.sharedui.resources.journal_filter_rating
+import com.emanuel5014.trainable.sharedui.resources.journal_filter_with_note
+import com.emanuel5014.trainable.sharedui.resources.journal_match_all
+import com.emanuel5014.trainable.sharedui.resources.journal_match_any
+import com.emanuel5014.trainable.sharedui.resources.journal_not_rated
+import com.emanuel5014.trainable.sharedui.resources.journal_tags
+import com.emanuel5014.trainable.sharedui.resources.no_results_filters
+import com.emanuel5014.trainable.sharedui.resources.no_routine
+import com.emanuel5014.trainable.sharedui.resources.routine_group_none
+import com.emanuel5014.trainable.sharedui.resources.routine_group_routines
+import com.emanuel5014.trainable.sharedui.resources.search_routines
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.SheetFormFooter
+import com.emanuel5014.trainable.ui.components.journal.TagChip
+import com.emanuel5014.trainable.ui.screens.routines.GroupSwatch
+import com.emanuel5014.trainable.ui.screens.routines.formatMonthRange
+import com.emanuel5014.trainable.ui.screens.routines.routineGroupColors
 import com.emanuel5014.trainable.ui.theme.Error
+import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
-import com.emanuel5014.trainable.ui.theme.Shapes
+import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Clock
+import kotlin.time.Instant
 
-/** Which routines the picker lists: every one, only the active ones or only the archived ones. */
-private enum class RoutineStatus { All, Active, Archived }
+/** From this many routines the picker gets a search field; below it the folded groups keep the list short. */
+private const val SEARCH_MIN_ROUTINES = 20
 
-/** Below this many routines the picker is short enough that a search field would only be noise. */
-private const val SEARCH_MIN_ROUTINES = 6
-
+/**
+ * The history's filters on one page, in three parts: the routine (a whole group or one routine of it, or the workouts of
+ * no routine), the period (a shortcut, a month of any year or a range from the calendar) and, with the journal on, tags,
+ * rating and note. Every change applies at once; each choice shows how many workouts it leaves, and the button at the
+ * bottom how many the list shows.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryFilterBottomSheet(
-    selectedPlanId: Int?,
+    filters: HistoryFilters,
+    counts: HistoryFilterCounts,
     availablePlans: List<WorkoutPlanEntity>,
+    routineGroups: List<RoutineGroupEntity>,
     hasUnassignedSessions: Boolean,
-    startDate: Long?,
-    endDate: Long?,
-    onPlanSelected: (Int?) -> Unit,
-    onDateRangeSelected: (Long?, Long?) -> Unit,
-    onDateClick: () -> Unit,
-    onClearDate: () -> Unit,
-    onClearAll: () -> Unit,
+    onFiltersChanged: (HistoryFilters) -> Unit,
+    onCustomRangeClick: () -> Unit,
     onDismiss: () -> Unit,
     /** The workout journal is on: the tag, rating and note filters show. */
     journalEnabled: Boolean = false,
     ratingEnabled: Boolean = true,
-    availableTags: List<TagWithUsage> = emptyList(),
-    journalFilters: JournalFilters = JournalFilters(),
-    onJournalFiltersChanged: (JournalFilters) -> Unit = {}
+    availableTags: List<TagWithUsage> = emptyList()
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-
-    // Resolve colors
-    val onSurfaceColor = OnSurface
-    val onSurfaceVariantColor = OnSurfaceVariant
-    val primaryColor = Primary
-    val errorColor = Error
-    val surfaceContainerHighColor = SurfaceContainerHigh
-    val surfaceContainerHighestColor = SurfaceContainerHighest
-
-    val today = remember { MonthCalendar.currentMonthAndYear() }
-    val currentMonth = today.first
-    val currentYear = today.second
-
-    val monthNames = remember<List<String>> { MonthCalendar.shortMonthNames() }
-
-    var routineSearchQuery by remember { mutableStateOf("") }
-    var routineStatus by remember { mutableStateOf(RoutineStatus.All) }
-
-    val (archivedPlans, activePlans) = remember(availablePlans) { availablePlans.partition { it.isArchived } }
-    val selectedPlan = remember(selectedPlanId, availablePlans) { availablePlans.find { it.id == selectedPlanId } }
-    val showSearch = availablePlans.size > SEARCH_MIN_ROUTINES
-    val query = if (showSearch) routineSearchQuery.trim() else ""
-
-    val visibleActive = remember(activePlans, query, routineStatus) {
-        if (routineStatus == RoutineStatus.Archived) emptyList()
-        else activePlans.filter { it.nome.contains(query, ignoreCase = true) }
-    }
-    val visibleArchived = remember(archivedPlans, query, routineStatus) {
-        if (routineStatus == RoutineStatus.Active) emptyList()
-        else archivedPlans.filter { it.nome.contains(query, ignoreCase = true) }
-    }
-
-    // Workouts that belong to no routine (cardio, custom, quick, deleted routines) have no plan to pick
-    val noRoutineLabel = stringResource(Res.string.no_routine)
-    val noRoutineSelected = selectedPlanId == NO_ROUTINE_PLAN_ID
-    val showNoRoutine = (hasUnassignedSessions || noRoutineSelected) &&
-        routineStatus == RoutineStatus.All &&
-        noRoutineLabel.contains(query, ignoreCase = true)
-
-    fun getMonthRange(monthIndex: Int, year: Int = currentYear): Pair<Long, Long> = MonthCalendar.monthRange(monthIndex, year)
-
-    fun isMonthSelected(monthIndex: Int): Boolean {
-        if (startDate == null || endDate == null) return false
-        return MonthCalendar.isWholeMonth(startDate, endDate, monthIndex, currentYear)
+    fun close() {
+        scope.launch { sheetState.hide() }.invokeOnCompletion { if (!sheetState.isVisible) onDismiss() }
     }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = surfaceContainerHighColor,
+        containerColor = Surface,
+        tonalElevation = 0.dp,
         dragHandle = {
-            Column(
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 32.dp, height = 4.dp)
-                        .clip(CircleShape)
-                        .background(onSurfaceVariantColor.copy(alpha = 0.4f))
-                )
-            }
+                    .padding(vertical = 12.dp)
+                    .size(width = 32.dp, height = 4.dp)
+                    .clip(CircleShape)
+                    .background(OnSurfaceVariant.copy(alpha = 0.4f))
+            )
         }
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -205,443 +181,607 @@ fun HistoryFilterBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false)
-                    .heightIn(max = 600.dp)
-                    .padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .padding(horizontal = 20.dp)
             ) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.filters).uppercase(),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                            color = onSurfaceColor,
-                            letterSpacing = (-0.5).sp
-                        )
-
-                        if (selectedPlanId != null || startDate != null || (journalEnabled && journalFilters.isActive)) {
-                            Text(
-                                text = stringResource(Res.string.clear_all),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = errorColor,
-                                fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier.clickable { onClearAll() }
-                            )
-                        }
-                    }
+                item(key = "header") {
+                    FilterHeader(
+                        shown = counts.shown,
+                        total = counts.total,
+                        canReset = filters.isActive(journalEnabled),
+                        onReset = { onFiltersChanged(HistoryFilters()) }
+                    )
                 }
-
-                // Routines Section
-                if (availablePlans.isNotEmpty() || hasUnassignedSessions || noRoutineSelected) {
-                    item {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 32.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.routines),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = primaryColor,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 1.sp
-                                )
-
-                                if (selectedPlan != null || noRoutineSelected) {
-                                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                                        SelectedRoutinePill(
-                                            label = selectedPlan?.nome ?: noRoutineLabel,
-                                            leadingIcon = when {
-                                                selectedPlan?.isArchived == true -> Icons.Rounded.Archive
-                                                selectedPlan == null -> Icons.Rounded.LinkOff
-                                                else -> null
-                                            },
-                                            onClear = { onPlanSelected(null) }
-                                        )
-                                    }
-                                }
-                            }
-
-                            if (availablePlans.isNotEmpty()) {
-                                // Status: every routine, only the active ones or only the archived ones
-                                val statusCounts = listOf(
-                                    RoutineStatus.All to availablePlans.size,
-                                    RoutineStatus.Active to activePlans.size,
-                                    RoutineStatus.Archived to archivedPlans.size
-                                )
-                                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                                    statusCounts.forEachIndexed { index, (status, count) ->
-                                        val selected = routineStatus == status
-                                        val label = stringResource(
-                                            when (status) {
-                                                RoutineStatus.All -> Res.string.all
-                                                RoutineStatus.Active -> Res.string.active_routines
-                                                RoutineStatus.Archived -> Res.string.archived_routines_header
-                                            }
-                                        )
-                                        SegmentedButton(
-                                            selected = selected,
-                                            onClick = { routineStatus = status },
-                                            enabled = count > 0 || selected,
-                                            shape = SegmentedButtonDefaults.itemShape(index, statusCounts.size),
-                                            icon = {},
-                                            contentPadding = PaddingValues(horizontal = 4.dp),
-                                            colors = SegmentedButtonDefaults.colors(
-                                                activeContainerColor = primaryColor.copy(alpha = 0.15f),
-                                                activeContentColor = primaryColor,
-                                                activeBorderColor = primaryColor.copy(alpha = 0.3f),
-                                                inactiveContainerColor = Color.Transparent,
-                                                inactiveContentColor = onSurfaceVariantColor,
-                                                inactiveBorderColor = surfaceContainerHighestColor,
-                                                disabledInactiveContainerColor = Color.Transparent,
-                                                disabledInactiveContentColor = onSurfaceVariantColor.copy(alpha = 0.38f),
-                                                disabledInactiveBorderColor = surfaceContainerHighestColor
-                                            ),
-                                            label = {
-                                                val countColor = LocalContentColor.current.copy(alpha = 0.6f)
-                                                Text(
-                                                    text = buildAnnotatedString {
-                                                        append(label)
-                                                        append("  ")
-                                                        withStyle(SpanStyle(fontWeight = FontWeight.Normal, color = countColor)) {
-                                                            append(count.toString())
-                                                        }
-                                                    },
-                                                    style = MaterialTheme.typography.labelLarge,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            }
-                                        )
-                                    }
-                                }
-
-                                if (showSearch) {
-                                    GymInputField(
-                                        value = routineSearchQuery,
-                                        onValueChange = { routineSearchQuery = it },
-                                        label = stringResource(Res.string.search_routines),
-                                        leadingIcon = {
-                                            Icon(Icons.Rounded.Search, contentDescription = null, tint = onSurfaceVariantColor, modifier = Modifier.size(20.dp))
-                                        },
-                                        trailingIcon = if (routineSearchQuery.isNotEmpty()) {
-                                            {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(32.dp)
-                                                        .clip(CircleShape)
-                                                        .clickable { routineSearchQuery = "" },
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(Icons.Rounded.Close, contentDescription = null, tint = onSurfaceVariantColor, modifier = Modifier.size(18.dp))
-                                                }
-                                            }
-                                        } else null,
-                                        containerColor = surfaceContainerHighestColor
-                                    )
-                                }
-                            }
-
-                            if (visibleActive.isEmpty() && visibleArchived.isEmpty() && !showNoRoutine) {
-                                Text(
-                                    text = stringResource(
-                                        if (query.isEmpty() && routineStatus == RoutineStatus.Archived) Res.string.no_archived
-                                        else Res.string.no_results_filters
-                                    ),
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = onSurfaceVariantColor
-                                )
-                            } else {
-                                // Labelled groups only when several kinds are on screen, otherwise the status already says it
-                                val showGroupLabels = listOf(
-                                    visibleActive.isNotEmpty(),
-                                    visibleArchived.isNotEmpty(),
-                                    showNoRoutine
-                                ).count { it } > 1
-                                if (visibleActive.isNotEmpty()) {
-                                    RoutineChipGroup(
-                                        label = if (showGroupLabels) stringResource(Res.string.active_routines) else null,
-                                        archived = false,
-                                        plans = visibleActive,
-                                        selectedPlanId = selectedPlanId,
-                                        onPlanSelected = onPlanSelected
-                                    )
-                                }
-                                if (visibleArchived.isNotEmpty()) {
-                                    RoutineChipGroup(
-                                        label = if (showGroupLabels) stringResource(Res.string.archived_routines_header) else null,
-                                        archived = true,
-                                        plans = visibleArchived,
-                                        selectedPlanId = selectedPlanId,
-                                        onPlanSelected = onPlanSelected
-                                    )
-                                }
-                                if (showNoRoutine) {
-                                    ChipGroup(label = if (showGroupLabels) stringResource(Res.string.routine_group_other) else null) {
-                                        FilterOptionChip(
-                                            label = noRoutineLabel,
-                                            selected = noRoutineSelected,
-                                            onClick = { onPlanSelected(if (noRoutineSelected) null else NO_ROUTINE_PLAN_ID) },
-                                            leadingIcon = Icons.Rounded.LinkOff
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                item(key = "routines") {
+                    RoutineSection(
+                        filters = filters,
+                        counts = counts,
+                        availablePlans = availablePlans,
+                        routineGroups = routineGroups,
+                        hasUnassignedSessions = hasUnassignedSessions,
+                        onFiltersChanged = onFiltersChanged
+                    )
                 }
-
-                // Date Filter Section
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            text = stringResource(Res.string.date_range),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = primaryColor,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.sp
-                        )
-
-                        // Quick Presets
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            item {
-                                FilterOptionChip(
-                                    label = stringResource(Res.string.all),
-                                    selected = startDate == null,
-                                    onClick = { onDateRangeSelected(null, null) }
-                                )
-                            }
-
-                            item {
-                                val range = getMonthRange(currentMonth)
-                                FilterOptionChip(
-                                    label = stringResource(Res.string.this_month),
-                                    selected = startDate == range.first && endDate == range.second,
-                                    onClick = { onDateRangeSelected(range.first, range.second) }
-                                )
-                            }
-
-                            item {
-                                val lastMonthIndex = if (currentMonth == 0) 11 else currentMonth - 1
-                                val lastMonthYear = if (currentMonth == 0) currentYear - 1 else currentYear
-                                val range = getMonthRange(lastMonthIndex, lastMonthYear)
-                                FilterOptionChip(
-                                    label = stringResource(Res.string.last_month),
-                                    selected = startDate == range.first && endDate == range.second,
-                                    onClick = { onDateRangeSelected(range.first, range.second) }
-                                )
-                            }
-                        }
-
-                        // Month Selector
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            itemsIndexed(monthNames) { index, month ->
-                                FilterOptionChip(
-                                    label = month,
-                                    selected = isMonthSelected(index),
-                                    onClick = {
-                                        val range = getMonthRange(index)
-                                        onDateRangeSelected(range.first, range.second)
-                                    }
-                                )
-                            }
-                        }
-
-                        // Custom Range Row
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(Shapes.medium)
-                                .background(surfaceContainerHighestColor)
-                                .clickable { onDateClick() }
-                                .padding(horizontal = 16.dp, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Rounded.CalendarMonth,
-                                    contentDescription = null,
-                                    tint = primaryColor,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = if (startDate != null && endDate != null) {
-                                        "${DateFormatter.formatShort(startDate)} - ${DateFormatter.formatShort(endDate)}"
-                                    } else {
-                                        stringResource(Res.string.select_date_range)
-                                    },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = onSurfaceColor
-                                )
-                            }
-                            if (startDate != null) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .clickable(onClickLabel = stringResource(Res.string.clear_date)) { onClearDate() },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.Close,
-                                        contentDescription = stringResource(Res.string.clear_date),
-                                        tint = onSurfaceVariantColor,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
+                item(key = "period") {
+                    PeriodSection(
+                        filters = filters,
+                        counts = counts,
+                        onFiltersChanged = onFiltersChanged,
+                        onCustomRangeClick = onCustomRangeClick
+                    )
                 }
-
-                // Workout journal: tags, rating and notes
                 if (journalEnabled) {
-                    if (availableTags.isNotEmpty()) {
-                        item {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                ChipGroup(label = stringResource(Res.string.journal_tags)) {
-                                    availableTags.forEach { tag ->
-                                        key(tag.id) {
-                                            TagChip(
-                                                name = tag.name,
-                                                colorIndex = tag.colorIndex,
-                                                customColor = tag.customColor,
-                                                selected = tag.id in journalFilters.tagIds,
-                                                onClick = {
-                                                    val ids = journalFilters.tagIds
-                                                    onJournalFiltersChanged(
-                                                        journalFilters.copy(tagIds = if (tag.id in ids) ids - tag.id else ids + tag.id)
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                                // Several tags: a workout needs at least one of them, or all
-                                if (journalFilters.tagIds.size > 1) {
-                                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                                        listOf(false to Res.string.journal_match_any, true to Res.string.journal_match_all)
-                                            .forEachIndexed { index, (matchAll, label) ->
-                                                SegmentedButton(
-                                                    selected = journalFilters.matchAllTags == matchAll,
-                                                    onClick = { onJournalFiltersChanged(journalFilters.copy(matchAllTags = matchAll)) },
-                                                    shape = SegmentedButtonDefaults.itemShape(index, 2),
-                                                    icon = {},
-                                                    colors = SegmentedButtonDefaults.colors(
-                                                        activeContainerColor = primaryColor.copy(alpha = 0.15f),
-                                                        activeContentColor = primaryColor,
-                                                        activeBorderColor = primaryColor.copy(alpha = 0.3f),
-                                                        inactiveContainerColor = Color.Transparent,
-                                                        inactiveContentColor = onSurfaceVariantColor,
-                                                        inactiveBorderColor = surfaceContainerHighestColor
-                                                    ),
-                                                    label = { Text(stringResource(label)) }
-                                                )
-                                            }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (ratingEnabled) {
-                        item {
-                            ChipGroup(label = stringResource(Res.string.journal_filter_rating)) {
-                                RatingBucket.entries.forEach { bucket ->
-                                    val selected = bucket in journalFilters.ratingBuckets
-                                    FilterOptionChip(
-                                        label = stringResource(
-                                            when (bucket) {
-                                                RatingBucket.LOW -> Res.string.journal_bucket_low
-                                                RatingBucket.MID -> Res.string.journal_bucket_mid
-                                                RatingBucket.HIGH -> Res.string.journal_bucket_high
-                                                RatingBucket.UNRATED -> Res.string.journal_not_rated
-                                            }
-                                        ),
-                                        selected = selected,
-                                        onClick = {
-                                            val buckets = journalFilters.ratingBuckets
-                                            onJournalFiltersChanged(
-                                                journalFilters.copy(ratingBuckets = if (selected) buckets - bucket else buckets + bucket)
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    item {
-                        ChipGroup(label = stringResource(Res.string.journal_note)) {
-                            FilterOptionChip(
-                                label = stringResource(Res.string.journal_filter_with_note),
-                                selected = journalFilters.onlyWithNote,
-                                onClick = { onJournalFiltersChanged(journalFilters.copy(onlyWithNote = !journalFilters.onlyWithNote)) }
-                            )
-                        }
+                    item(key = "journal") {
+                        JournalSection(
+                            journalFilters = filters.journal,
+                            ratingEnabled = ratingEnabled,
+                            availableTags = availableTags,
+                            onJournalFiltersChanged = { onFiltersChanged(filters.copy(journal = it)) }
+                        )
                     }
                 }
+                item(key = "end") { Spacer(modifier = Modifier.height(16.dp)) }
             }
 
-            SheetFormFooter(horizontalPadding = 24.dp) {
-                GymButton(
-                    onClick = {
-                        scope.launch {
-                            sheetState.hide()
-                        }.invokeOnCompletion {
-                            if (!sheetState.isVisible) {
-                                onDismiss()
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(Res.string.done).uppercase(), fontWeight = FontWeight.ExtraBold)
+            SheetFormFooter(horizontalPadding = 20.dp) {
+                GymButton(onClick = ::close, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = if (counts.shown == 0) stringResource(Res.string.history_filter_none_shown).uppercase()
+                        else pluralStringResource(Res.plurals.history_filter_show, counts.shown, counts.shown).uppercase(),
+                        fontWeight = FontWeight.ExtraBold
+                    )
                 }
             }
         }
     }
 }
 
-/**
- * The routines of one kind as wrapping chips, so every name is readable without sideways scrolling.
- * Tapping the selected chip again drops the routine filter.
- */
 @Composable
-private fun RoutineChipGroup(
-    label: String?,
-    archived: Boolean,
-    plans: List<WorkoutPlanEntity>,
-    selectedPlanId: Int?,
-    onPlanSelected: (Int?) -> Unit
+private fun FilterHeader(shown: Int, total: Int, canReset: Boolean, onReset: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(Res.string.filters),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+                color = OnSurface
+            )
+            Text(
+                text = pluralStringResource(Res.plurals.history_filter_count, total, shown, total),
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnSurfaceVariant
+            )
+        }
+        if (canReset) {
+            TextButton(onClick = onReset) {
+                Text(stringResource(Res.string.history_filter_reset), color = Error, fontWeight = FontWeight.ExtraBold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Black,
+        color = OnSurfaceVariant,
+        modifier = Modifier.padding(start = 4.dp, top = 24.dp, bottom = 10.dp)
+    )
+}
+
+/** Corners of a row in a joined list: round at its ends, tight where rows touch. */
+private fun joinedShape(index: Int, count: Int): RoundedCornerShape {
+    val top = if (index == 0) 24.dp else 8.dp
+    val bottom = if (index == count - 1) 24.dp else 8.dp
+    return RoundedCornerShape(topStart = top, topEnd = top, bottomStart = bottom, bottomEnd = bottom)
+}
+
+// --- Routine -----------------------------------------------------------------------------------------------------
+
+/** One row of the routine list: a block's head, its open content, or "no routine". */
+private sealed interface RoutineRow {
+    data class Head(val block: RoutinePickerBlock, val open: Boolean) : RoutineRow
+    data class Content(val block: RoutinePickerBlock, val routines: List<RoutinePickerItem>) : RoutineRow
+    data object NoRoutine : RoutineRow
+}
+
+@Composable
+private fun RoutineSection(
+    filters: HistoryFilters,
+    counts: HistoryFilterCounts,
+    availablePlans: List<WorkoutPlanEntity>,
+    routineGroups: List<RoutineGroupEntity>,
+    hasUnassignedSessions: Boolean,
+    onFiltersChanged: (HistoryFilters) -> Unit
 ) {
-    ChipGroup(label = label, labelIcon = if (archived) Icons.Rounded.Archive else null) {
-        plans.forEach { plan ->
-            key(plan.id) {
-                val selected = selectedPlanId == plan.id
-                FilterOptionChip(
-                    label = plan.nome,
-                    selected = selected,
-                    onClick = { onPlanSelected(if (selected) null else plan.id) },
-                    leadingIcon = if (archived) Icons.Rounded.Archive else null
+    var query by remember { mutableStateOf("") }
+    // Blocks the lifter opened or closed; the others follow [RoutinePickerBlock.openByDefault] and the selection
+    val toggled = remember { mutableStateMapOf<String, Boolean>() }
+    val noRoutineLabel = stringResource(Res.string.no_routine)
+    val blocks = remember(availablePlans, routineGroups, counts) { routinePickerBlocks(availablePlans, routineGroups, counts) }
+    val routineCount = blocks.sumOf { it.routines.size }
+    val noRoutineSelected = filters.planId == NO_ROUTINE_PLAN_ID
+    if (routineCount == 0 && !hasUnassignedSessions && !noRoutineSelected) return
+    val search = if (routineCount >= SEARCH_MIN_ROUTINES) query.trim() else ""
+
+    val rows = buildList {
+        blocks.forEach { block ->
+            val routines = if (search.isEmpty()) block.routines else block.routines.filter { it.plan.nome.contains(search, ignoreCase = true) }
+            if (routines.isEmpty()) return@forEach
+            val holdsSelection = block.contains(filters.planId) || (block.group != null && block.group.id == filters.groupId)
+            val open = search.isNotEmpty() || (toggled[block.key] ?: (block.openByDefault || holdsSelection))
+            add(RoutineRow.Head(block, open))
+            if (open) add(RoutineRow.Content(block, routines))
+        }
+        if ((hasUnassignedSessions || noRoutineSelected) && noRoutineLabel.contains(search, ignoreCase = true)) add(RoutineRow.NoRoutine)
+    }
+
+    Column {
+        SectionLabel(stringResource(Res.string.history_filter_routine))
+        if (routineCount >= SEARCH_MIN_ROUTINES) {
+            GymInputField(
+                value = query,
+                onValueChange = { query = it },
+                label = stringResource(Res.string.search_routines),
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp)) },
+                trailingIcon = if (query.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { query = "" }) {
+                            Icon(Icons.Rounded.Close, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                } else null,
+                containerColor = SurfaceContainerHigh,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+        }
+        if (rows.isEmpty()) {
+            Text(
+                text = stringResource(Res.string.no_results_filters),
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+            )
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            rows.forEachIndexed { index, row ->
+                val shape = joinedShape(index, rows.size)
+                when (row) {
+                    is RoutineRow.Head -> key(row.block.key) {
+                        RoutineBlockHead(
+                            block = row.block,
+                            open = row.open,
+                            filters = filters,
+                            shape = shape,
+                            onToggle = { toggled[row.block.key] = !row.open }
+                        )
+                    }
+                    is RoutineRow.Content -> key(row.block.key + "-content") {
+                        RoutineBlockContent(
+                            block = row.block,
+                            routines = row.routines,
+                            filters = filters,
+                            shape = shape,
+                            onFiltersChanged = onFiltersChanged
+                        )
+                    }
+                    RoutineRow.NoRoutine -> key("no-routine") {
+                        NoRoutineRow(
+                            label = noRoutineLabel,
+                            workouts = counts.noRoutine,
+                            selected = noRoutineSelected,
+                            shape = shape,
+                            onClick = { onFiltersChanged(filters.anyRoutine().copy(planId = if (noRoutineSelected) null else NO_ROUTINE_PLAN_ID)) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoutineBlockHead(
+    block: RoutinePickerBlock,
+    open: Boolean,
+    filters: HistoryFilters,
+    shape: RoundedCornerShape,
+    onToggle: () -> Unit
+) {
+    val monthNames = remember { MonthCalendar.shortMonthNames() }
+    val title = when (block.kind) {
+        RoutineBlockKind.Group -> block.group?.name.orEmpty()
+        RoutineBlockKind.Active -> stringResource(Res.string.active_routines)
+        RoutineBlockKind.Archived -> stringResource(Res.string.archived_routines_header)
+        RoutineBlockKind.Loose -> stringResource(Res.string.routine_group_none)
+    }
+    // What is picked inside the block, in the accent colour; otherwise how many routines and when they were used
+    val picked = when {
+        block.group != null && block.group.id == filters.groupId -> stringResource(Res.string.history_filter_whole_group)
+        else -> block.routines.firstOrNull { it.plan.id == filters.planId }?.let { routineLabel(it, monthNames) }
+    }
+    val summary = listOfNotNull(
+        pluralStringResource(Res.plurals.routine_group_routines, block.routines.size, block.routines.size),
+        block.period?.let { formatMonthRange(it.first, it.second, monthNames) }
+    ).joinToString(" · ")
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(SurfaceContainerHigh)
+            .clickable(role = Role.Button, onClick = onToggle)
+            .heightIn(min = 64.dp)
+            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        when (block.kind) {
+            RoutineBlockKind.Group -> GroupSwatch(block.group?.let { routineGroupColors(it).first }, size = 18)
+            RoutineBlockKind.Loose -> GroupSwatch(null, size = 18)
+            RoutineBlockKind.Active -> Icon(Icons.Rounded.FitnessCenter, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
+            RoutineBlockKind.Archived -> Icon(Icons.Rounded.Archive, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (block.kind == RoutineBlockKind.Loose) OnSurfaceVariant else OnSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
+                if (block.kind == RoutineBlockKind.Group && block.archived) {
+                    Icon(Icons.Rounded.Archive, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(16.dp))
+                }
+            }
+            Text(
+                text = picked ?: summary,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = if (picked != null) FontWeight.Bold else FontWeight.Normal,
+                color = if (picked != null) Primary else OnSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Text(
+            text = block.workouts.toString(),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = OnSurfaceVariant
+        )
+        Icon(
+            if (open) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+            contentDescription = null,
+            tint = OnSurfaceVariant
+        )
+    }
+}
+
+/** The name of a routine, with its months when another routine of the block has the same name. */
+private fun routineLabel(item: RoutinePickerItem, monthNames: List<String>): String {
+    val period = item.period
+    return if (item.showPeriod && period != null) "${item.plan.nome} · ${formatMonthRange(period.first, period.second, monthNames)}"
+    else item.plan.nome
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RoutineBlockContent(
+    block: RoutinePickerBlock,
+    routines: List<RoutinePickerItem>,
+    filters: HistoryFilters,
+    shape: RoundedCornerShape,
+    onFiltersChanged: (HistoryFilters) -> Unit
+) {
+    val monthNames = remember { MonthCalendar.shortMonthNames() }
+    // No chip moves when one is picked: the counts are of the routines, not of the list
+    FlowRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(SurfaceContainerHigh)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val group = block.group
+        if (group != null) {
+            val selected = filters.groupId == group.id
+            FilterOptionChip(
+                label = stringResource(Res.string.history_filter_whole_group),
+                count = block.workouts,
+                selected = selected,
+                onClick = { onFiltersChanged(filters.anyRoutine().copy(groupId = if (selected) null else group.id)) }
+            )
+        }
+        routines.forEach { item ->
+            key(item.plan.id) {
+                val selected = filters.planId == item.plan.id
+                FilterOptionChip(
+                    label = routineLabel(item, monthNames),
+                    count = item.workouts,
+                    selected = selected,
+                    // A whole archived block needs no mark on each routine
+                    leadingIcon = if (item.plan.isArchived && !block.archived) Icons.Rounded.Archive else null,
+                    onClick = { onFiltersChanged(filters.anyRoutine().copy(planId = if (selected) null else item.plan.id)) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoRoutineRow(label: String, workouts: Int, selected: Boolean, shape: RoundedCornerShape, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(if (selected) Primary.copy(alpha = 0.14f) else SurfaceContainerHigh)
+            .clickable(role = Role.Checkbox, onClick = onClick)
+            .semantics { this.selected = selected }
+            .heightIn(min = 56.dp)
+            .padding(start = 16.dp, end = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Icon(Icons.Rounded.LinkOff, contentDescription = null, tint = if (selected) Primary else OnSurfaceVariant, modifier = Modifier.size(20.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = if (selected) Primary else OnSurface,
+            modifier = Modifier.weight(1f)
+        )
+        if (selected) Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+        Text(text = workouts.toString(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = OnSurfaceVariant)
+    }
+}
+
+// --- Period ------------------------------------------------------------------------------------------------------
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PeriodSection(
+    filters: HistoryFilters,
+    counts: HistoryFilterCounts,
+    onFiltersChanged: (HistoryFilters) -> Unit,
+    onCustomRangeClick: () -> Unit
+) {
+    val zone = remember { TimeZone.currentSystemDefault() }
+    val today = remember { Clock.System.todayIn(zone) }
+    val currentYear = today.year
+    val firstYear = minOf(counts.firstYear ?: currentYear, currentYear)
+    val start = filters.startDate
+    val end = filters.endDate
+    val startDate = start?.let { Instant.fromEpochMilliseconds(it).toLocalDateTime(zone).date }
+
+    val last30 = remember(today) { lastDaysRange(30, today, zone) }
+    val thisYear = remember(currentYear) { yearRange(currentYear, zone) }
+    val pickedMonth = if (start != null && end != null && startDate != null &&
+        MonthCalendar.isWholeMonth(start, end, startDate.month.ordinal, startDate.year)
+    ) startDate.year to startDate.month.ordinal else null
+    val isLast30 = start == last30.first && end == last30.second
+    val isThisYear = start == thisYear.first && end == thisYear.second
+    val isCustom = start != null && pickedMonth == null && !isLast30 && !isThisYear
+
+    var shownYear by remember { mutableStateOf((pickedMonth?.first ?: startDate?.year ?: currentYear).coerceIn(firstYear, currentYear)) }
+    val monthNames = remember { MonthCalendar.shortMonthNames() }
+
+    fun pick(range: Pair<Long, Long>?, selected: Boolean) {
+        onFiltersChanged(if (range == null || selected) filters.anyDate() else filters.copy(startDate = range.first, endDate = range.second))
+    }
+
+    Column {
+        SectionLabel(stringResource(Res.string.history_filter_period))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterOptionChip(stringResource(Res.string.history_filter_any_time), null, start == null) { pick(null, false) }
+            FilterOptionChip(stringResource(Res.string.history_filter_last_30_days), null, isLast30) { pick(last30, isLast30) }
+            FilterOptionChip(stringResource(Res.string.history_filter_this_year), null, isThisYear) { pick(thisYear, isThisYear) }
+        }
+
+        // The year whose months the grid shows
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { shownYear-- }, enabled = shownYear > firstYear) {
+                Icon(Icons.Rounded.ChevronLeft, contentDescription = stringResource(Res.string.history_filter_previous_year))
+            }
+            Text(
+                text = shownYear.toString(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                color = OnSurface,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center
+            )
+            IconButton(onClick = { shownYear++ }, enabled = shownYear < currentYear) {
+                Icon(Icons.Rounded.ChevronRight, contentDescription = stringResource(Res.string.history_filter_next_year))
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (rowStart in 0 until 12 step 4) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    for (month in rowStart until rowStart + 4) {
+                        val selected = pickedMonth == (shownYear to month)
+                        MonthCell(
+                            name = monthNames.getOrElse(month) { (month + 1).toString() },
+                            workouts = counts.byMonth[shownYear to month] ?: 0,
+                            selected = selected,
+                            modifier = Modifier.weight(1f),
+                            onClick = { pick(MonthCalendar.monthRange(month, shownYear), selected) }
+                        )
+                    }
+                }
+            }
+        }
+
+        CustomRangeRow(
+            range = if (isCustom && start != null && end != null) "${DateFormatter.formatShort(start)} – ${DateFormatter.formatShort(end)}" else null,
+            onClick = onCustomRangeClick,
+            onClear = { onFiltersChanged(filters.anyDate()) }
+        )
+    }
+}
+
+@Composable
+private fun MonthCell(name: String, workouts: Int, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    // A month without workouts cannot be picked: it would only empty the list
+    val enabled = workouts > 0 || selected
+    val content = when {
+        selected -> OnPrimary
+        enabled -> OnSurface
+        else -> OnSurfaceVariant.copy(alpha = 0.45f)
+    }
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                when {
+                    selected -> Primary
+                    enabled -> SurfaceContainerHigh
+                    else -> SurfaceContainerHigh.copy(alpha = 0.45f)
+                }
+            )
+            .clickable(enabled = enabled, role = Role.Checkbox, onClick = onClick)
+            .semantics { this.selected = selected }
+            .heightIn(min = 56.dp)
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = name, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = content, maxLines = 1)
+        Text(
+            text = if (workouts > 0) workouts.toString() else "–",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) OnPrimary.copy(alpha = 0.8f) else content.copy(alpha = if (enabled) 0.7f else 1f)
+        )
+    }
+}
+
+@Composable
+private fun CustomRangeRow(range: String?, onClick: () -> Unit, onClear: () -> Unit) {
+    val active = range != null
+    Row(
+        modifier = Modifier
+            .padding(top = 10.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(if (active) Primary.copy(alpha = 0.14f) else SurfaceContainerHigh)
+            .clickable(onClick = onClick)
+            .heightIn(min = 56.dp)
+            .padding(start = 16.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Icon(Icons.Rounded.CalendarMonth, contentDescription = null, tint = if (active) Primary else OnSurfaceVariant, modifier = Modifier.size(20.dp))
+        Text(
+            text = range ?: stringResource(Res.string.history_filter_custom_range),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = if (active) Primary else OnSurface,
+            modifier = Modifier.weight(1f)
+        )
+        if (active) {
+            val clearLabel = stringResource(Res.string.clear_date)
+            IconButton(onClick = onClear, modifier = Modifier.semantics { contentDescription = clearLabel }) {
+                Icon(Icons.Rounded.Close, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+            }
+        } else {
+            Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+            }
+        }
+    }
+}
+
+// --- Journal -----------------------------------------------------------------------------------------------------
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun JournalSection(
+    journalFilters: JournalFilters,
+    ratingEnabled: Boolean,
+    availableTags: List<TagWithUsage>,
+    onJournalFiltersChanged: (JournalFilters) -> Unit
+) {
+    Column {
+        SectionLabel(stringResource(Res.string.history_filter_journal))
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (availableTags.isNotEmpty()) {
+                ChipGroup(label = stringResource(Res.string.journal_tags)) {
+                    availableTags.forEach { tag ->
+                        key(tag.id) {
+                            TagChip(
+                                name = tag.name,
+                                colorIndex = tag.colorIndex,
+                                customColor = tag.customColor,
+                                selected = tag.id in journalFilters.tagIds,
+                                onClick = {
+                                    val ids = journalFilters.tagIds
+                                    onJournalFiltersChanged(journalFilters.copy(tagIds = if (tag.id in ids) ids - tag.id else ids + tag.id))
+                                }
+                            )
+                        }
+                    }
+                }
+                // Several tags: a workout needs at least one of them, or all
+                if (journalFilters.tagIds.size > 1) {
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        listOf(false to Res.string.journal_match_any, true to Res.string.journal_match_all)
+                            .forEachIndexed { index, (matchAll, label) ->
+                                SegmentedButton(
+                                    selected = journalFilters.matchAllTags == matchAll,
+                                    onClick = { onJournalFiltersChanged(journalFilters.copy(matchAllTags = matchAll)) },
+                                    shape = SegmentedButtonDefaults.itemShape(index, 2),
+                                    icon = {},
+                                    colors = SegmentedButtonDefaults.colors(
+                                        activeContainerColor = Primary.copy(alpha = 0.15f),
+                                        activeContentColor = Primary,
+                                        activeBorderColor = Primary.copy(alpha = 0.3f),
+                                        inactiveContainerColor = Color.Transparent,
+                                        inactiveContentColor = OnSurfaceVariant,
+                                        inactiveBorderColor = SurfaceContainerHighest
+                                    ),
+                                    label = { Text(stringResource(label)) }
+                                )
+                            }
+                    }
+                }
+            }
+            // Rating buckets and "with a note" in one row: both narrow by what was written about the workout
+            ChipGroup(label = if (ratingEnabled) stringResource(Res.string.journal_filter_rating) else null) {
+                if (ratingEnabled) {
+                    RatingBucket.entries.forEach { bucket ->
+                        val selected = bucket in journalFilters.ratingBuckets
+                        FilterOptionChip(
+                            label = stringResource(
+                                when (bucket) {
+                                    RatingBucket.LOW -> Res.string.journal_bucket_low
+                                    RatingBucket.MID -> Res.string.journal_bucket_mid
+                                    RatingBucket.HIGH -> Res.string.journal_bucket_high
+                                    RatingBucket.UNRATED -> Res.string.journal_not_rated
+                                }
+                            ),
+                            count = null,
+                            selected = selected
+                        ) {
+                            val buckets = journalFilters.ratingBuckets
+                            onJournalFiltersChanged(journalFilters.copy(ratingBuckets = if (selected) buckets - bucket else buckets + bucket))
+                        }
+                    }
+                }
+                FilterOptionChip(
+                    label = stringResource(Res.string.journal_filter_with_note),
+                    count = null,
+                    selected = journalFilters.onlyWithNote
+                ) { onJournalFiltersChanged(journalFilters.copy(onlyWithNote = !journalFilters.onlyWithNote)) }
             }
         }
     }
@@ -650,111 +790,67 @@ private fun RoutineChipGroup(
 /** A wrapping row of chips with an optional small caption above it. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ChipGroup(
-    label: String?,
-    labelIcon: ImageVector? = null,
-    content: @Composable () -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+private fun ChipGroup(label: String?, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (label != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                if (labelIcon != null) {
-                    Icon(
-                        labelIcon,
-                        contentDescription = null,
-                        tint = OnSurfaceVariant,
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
-                Text(
-                    text = label.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.sp
-                )
-            }
-        }
-        // No vertical spacing: each chip already reserves a 48dp touch target around its 32dp body
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            content()
-        }
-    }
-}
-
-/** The routine currently filtered on, tappable to remove the filter. */
-@Composable
-private fun SelectedRoutinePill(
-    label: String,
-    leadingIcon: ImageVector?,
-    onClear: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .heightIn(min = 32.dp)
-            .clip(CircleShape)
-            .background(Primary.copy(alpha = 0.12f))
-            .clickable(onClickLabel = stringResource(Res.string.clear_routine_filter), onClick = onClear)
-            .padding(start = 12.dp, end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        if (leadingIcon != null) {
-            Icon(
-                leadingIcon,
-                contentDescription = null,
-                tint = Primary,
-                modifier = Modifier.size(14.dp)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = OnSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp)
             )
         }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = Primary,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false)
-        )
-        Icon(
-            Icons.Rounded.Close,
-            contentDescription = null,
-            tint = Primary,
-            modifier = Modifier.size(16.dp)
-        )
+        // No vertical spacing: each chip already reserves a 48dp touch target around its 32dp body
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { content() }
     }
 }
 
+/** A filter chip; [count] (how many workouts it leaves) follows the label in a lighter weight. */
 @Composable
 private fun FilterOptionChip(
     label: String,
+    count: Int?,
     selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    leadingIcon: ImageVector? = null
+    leadingIcon: ImageVector? = null,
+    onClick: () -> Unit
 ) {
     FilterChip(
         selected = selected,
         onClick = onClick,
-        modifier = modifier,
-        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        leadingIcon = leadingIcon?.let { icon ->
-            { Icon(icon, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
+        label = {
+            Text(
+                text = buildAnnotatedString {
+                    append(label)
+                    if (count != null) {
+                        append("  ")
+                        withStyle(SpanStyle(fontWeight = FontWeight.Normal, color = (if (selected) Primary else OnSurfaceVariant).copy(alpha = 0.7f))) {
+                            append(count.toString())
+                        }
+                    }
+                },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        leadingIcon = when {
+            selected -> { { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) } }
+            leadingIcon != null -> { { Icon(leadingIcon, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) } }
+            else -> null
         },
         colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = Primary.copy(alpha = 0.15f),
+            containerColor = SurfaceContainerHighest,
+            selectedContainerColor = Primary.copy(alpha = 0.18f),
             selectedLabelColor = Primary,
             selectedLeadingIconColor = Primary,
-            labelColor = OnSurfaceVariant
+            labelColor = OnSurface,
+            iconColor = OnSurfaceVariant
         ),
         border = FilterChipDefaults.filterChipBorder(
             enabled = true,
             selected = selected,
-            borderColor = SurfaceContainerHighest,
-            selectedBorderColor = Primary.copy(alpha = 0.3f)
+            borderColor = Color.Transparent,
+            selectedBorderColor = Primary.copy(alpha = 0.35f)
         )
     )
 }

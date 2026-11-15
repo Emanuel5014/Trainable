@@ -59,8 +59,8 @@ fun ActiveFiltersBar(
     val withNoteLabel = stringResource(Res.string.journal_filter_with_note)
 
     val active = buildList {
-        if (filters.planId != null && planName != null) {
-            add(ActiveFilter("plan", planName, filters.copy(planId = null)))
+        if ((filters.planId != null || filters.groupId != null) && planName != null) {
+            add(ActiveFilter("plan", planName, filters.anyRoutine()))
         }
         if (filters.startDate != null || filters.endDate != null) {
             val label = listOfNotNull(filters.startDate, filters.endDate).joinToString(" – ") { DateFormatter.formatShort(it) }
