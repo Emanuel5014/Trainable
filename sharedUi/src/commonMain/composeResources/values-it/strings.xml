@@ -1653,4 +1653,38 @@
     <string name="exercise_setup_edit_cd">Regolazioni: %1$s. Tocca per modificare</string>
     <string name="exercise_setup_detail_hint">Le vedi sopra le serie in ogni allenamento con questo esercizio.</string>
     <string name="exercise_setup_detail_empty">Altezza del sedile, schienale, perni: scrivili una volta e li ritrovi in ogni allenamento.</string>
+    <string name="dashboard_workout_mode">Home in modalità allenamento</string>
+    <string name="dashboard_workout_mode_desc">Mentre ti alleni la home mette in alto il riposo con i suoi tasti, la serie da fare e la lista degli esercizi</string>
+    <string name="dashboard_live_in_progress">In corso · %1$s</string>
+    <string name="dashboard_live_minutes">%1$s min</string>
+    <string name="dashboard_live_hours">%1$s h %2$s</string>
+    <string name="dashboard_live_rest">Riposo</string>
+    <string name="dashboard_live_warmup">Riscaldamento</string>
+    <string name="dashboard_live_now_set">Ora · serie %1$s di %2$s</string>
+    <string name="dashboard_live_then">Poi %1$s · serie %2$s di %3$s</string>
+    <string name="dashboard_live_your_turn">Tocca a te: %1$s · serie %2$s di %3$s</string>
+    <string name="dashboard_live_next_exercise">Dopo: %1$s</string>
+    <string name="dashboard_live_exercise_of">Esercizio %1$s di %2$s</string>
+    <string name="dashboard_live_all_done">Tutto fatto: termina l'allenamento</string>
+    <string name="dashboard_live_of_total">di %1$s</string>
+    <string name="dashboard_live_exercises_header">Esercizi · %1$s di %2$s</string>
+    <string name="dashboard_live_open_workout">Apri allenamento</string>
+    <string name="dashboard_live_skip_rest">Salta il riposo</string>
+    <plurals name="dashboard_live_sets_left">
+        <item quantity="one">%1$d serie rimasta</item>
+        <item quantity="many">%1$d serie rimaste</item>
+        <item quantity="other">%1$d serie rimaste</item>
+    </plurals>
+    <plurals name="dashboard_live_more_exercises">
+        <item quantity="one">+%1$d esercizio</item>
+        <item quantity="many">+%1$d esercizi</item>
+        <item quantity="other">+%1$d esercizi</item>
+    </plurals>
+    <string name="dashboard_live_continue">Continua nell'allenamento</string>
+    <string name="dashboard_live_resume_emom">Riprendi l'EMOM</string>
+    <string name="dashboard_live_emom_round">EMOM · round %1$s di %2$s</string>
+    <string name="dashboard_live_every_minute">Ogni minuto · %1$s</string>
+    <string name="dashboard_live_paused">In pausa</string>
+    <string name="dashboard_live_delete">Elimina allenamento</string>
+    <string name="dashboard_live_emom_hint">Il minuto riparte quando riapri l'allenamento</string>
 </resources>

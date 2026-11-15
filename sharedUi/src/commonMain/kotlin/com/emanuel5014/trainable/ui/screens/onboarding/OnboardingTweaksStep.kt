@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.rpe.RpeScale
+import com.emanuel5014.trainable.ui.screens.dashboard.WorkoutModePreview
 import com.emanuel5014.trainable.sharedui.resources.*
 import com.emanuel5014.trainable.util.TimerAdjustment
 import org.jetbrains.compose.resources.StringResource
@@ -114,6 +115,9 @@ private fun groupRows(group: TweakGroup, c: OnboardingChoices): List<@Composable
     )
     TweakGroup.Timers -> listOf(
         rowOf(c.restTimerEnabled, Res.string.rest_timer_setting, Res.string.rest_timer_setting_desc),
+        rowOf(c.dashboardWorkoutMode, Res.string.dashboard_workout_mode, Res.string.dashboard_workout_mode_desc) {
+            WorkoutModePreview()
+        },
         rowOf(c.warmupTimerEnabled, Res.string.warmup_timer, Res.string.warmup_timer_settings_desc),
         rowOf(c.workoutTimerEnabled, Res.string.workout_timer, Res.string.workout_timer_desc),
         rowOf(c.timerAddEnabled, Res.string.timer_add_time, null) {

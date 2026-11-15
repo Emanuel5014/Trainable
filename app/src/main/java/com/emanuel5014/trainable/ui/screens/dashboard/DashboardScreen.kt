@@ -18,6 +18,7 @@ fun DashboardScreen(
     onNavigateToWorkout: (planId: Int?, sessionId: Int?) -> Unit,
     onNavigateToQuickWorkout: (name: String?) -> Unit,
     onNavigateToPhysicalChecks: () -> Unit,
+    onLogSet: (planId: Int, sessionId: Int, token: String) -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -49,6 +50,7 @@ fun DashboardScreen(
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToWorkout = onNavigateToWorkout,
         onNavigateToQuickWorkout = onNavigateToQuickWorkout,
-        onNavigateToPhysicalChecks = handleNavigateToPhysicalChecks
+        onNavigateToPhysicalChecks = handleNavigateToPhysicalChecks,
+        onLogSet = onLogSet
     )
 }

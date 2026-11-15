@@ -82,6 +82,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -92,9 +94,13 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import com.emanuel5014.trainable.ui.screens.dashboard.LiveExercise
+import com.emanuel5014.trainable.ui.screens.dashboard.LiveNextSet
+import com.emanuel5014.trainable.ui.screens.dashboard.LiveWorkoutSnapshot
+import com.emanuel5014.trainable.ui.screens.dashboard.SetKind
 
 /** Workout execution state and actions shared by Android and iOS. The owner supplies its lifecycle scope. */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class, kotlinx.coroutines.FlowPreview::class)
 class WorkoutModel(
     private val workoutRepository: WorkoutRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
@@ -110,6 +116,8 @@ class WorkoutModel(
     sessionId: Int? = null,
     quickStart: Boolean = false,
     workoutName: String? = null,
+    /** Token of the set the dashboard's "Serie fatta" asked for: ticked once the workout is resumed, if still the one to do. */
+    logSetOnOpen: String? = null,
     private val nowMillis: () -> Long = { kotlin.time.Clock.System.now().toEpochMilliseconds() }
 ) {
 
@@ -133,6 +141,9 @@ class WorkoutModel(
     private companion object {
         /** Fetch every set of the previous session (advanced exercises match them per block). */
         const val ALL_SETS = 500
+
+        /** Wait after the last change before the dashboard's copy is written (a tick changes the state several times). */
+        const val LIVE_SNAPSHOT_DEBOUNCE_MILLIS = 300L
     }
 
     private val _languageCode = MutableStateFlow("en")
@@ -193,6 +204,16 @@ class WorkoutModel(
             languageCodes.collect { code ->
                 _languageCode.value = code
             }
+        }
+
+        // What the dashboard shows once this screen is closed: written a moment after each change that matters
+        modelScope.launch {
+            _state.map { liveSnapshotOf(it) }
+                .distinctUntilChanged()
+                .debounce(LIVE_SNAPSHOT_DEBOUNCE_MILLIS)
+                .collect { snapshot ->
+                    if (snapshot != null) userPreferencesRepository.setLiveWorkoutSnapshot(snapshot.copy(writtenAt = nowMillis()).encode())
+                }
         }
 
         modelScope.launch {
@@ -462,6 +483,7 @@ class WorkoutModel(
         modelScope.launch {
             if (sessionId != null && sessionId != 0 && sessionId != -1) {
                 resumeWorkout(sessionId)
+                logSetOnOpen?.let { token -> NextSetKey.parse(token)?.let { logAnnouncedSet(it) } }
             } else if (quickStart) {
                 initializeQuickWorkout(workoutName)
             } else if (planId != null && planId != -1 && planId != 0) {
@@ -2469,6 +2491,71 @@ class WorkoutModel(
         val remaining = state.exercises.sumOf { ex -> ex.sets.count { !it.isCompleted && it !== ticked } }
         if (remaining < 2) return null
         return NextSetKey(exState.exercise.id, set.setNumber, set.weight, set.reps)
+    }
+
+    /**
+     * The dashboard's copy of where this workout stands (see [LiveWorkoutSnapshot]); null while it loads. Its
+     * [LiveWorkoutSnapshot.writtenAt] is left at 0 so that only real changes are written.
+     */
+    private fun liveSnapshotOf(state: WorkoutState): LiveWorkoutSnapshot? {
+        val sessionId = state.sessionId ?: return null
+        if (state.isLoading || state.isFinished || state.exercises.isEmpty()) return null
+        val exercises = state.exercises.map { ex ->
+            val name = ExerciseTranslations.translate(ex.exercise.nome, _languageCode.value)
+            if (ex.isCardio) LiveExercise(name, ex.cardioSets.count { it.isCompleted }, ex.cardioSets.size.coerceAtLeast(1))
+            else LiveExercise(name, ex.sets.count { it.isCompleted }, ex.sets.size)
+        }
+        val target = nextSetTarget()
+        val next = target?.let { t ->
+            val info = t.info
+            val ex = state.exercises.getOrNull(t.exerciseIndex)
+            val set = ex?.sets?.getOrNull(t.setIndex)
+            val kind = when {
+                ex?.isCardio == true -> SetKind.CARDIO
+                set?.isEmom == true -> SetKind.EMOM
+                ex?.isTimed == true -> SetKind.TIMED
+                else -> SetKind.STRENGTH
+            }
+            // The run the EMOM set belongs to: the one on the clock, else the one it would start
+            val emomStart = if (kind == SetKind.EMOM && ex != null) {
+                state.emomRun?.takeIf { it.exerciseIndex == t.exerciseIndex }?.startSetIndex ?: ex.emomStartIndex ?: t.setIndex
+            } else null
+            val emomRounds = if (emomStart != null && ex != null) {
+                state.emomRun?.takeIf { it.exerciseIndex == t.exerciseIndex }?.roundCount
+                    ?: EmomClock.runLength(ex.sets.map { it.isEmom }, emomStart)
+            } else null
+            LiveNextSet(
+                exerciseIndex = t.exerciseIndex,
+                exerciseName = info.exerciseName,
+                setNumber = info.setNumber,
+                setsInExercise = exercises.getOrNull(t.exerciseIndex)?.total ?: info.setNumber,
+                weight = info.weight,
+                reps = info.reps,
+                weightUnit = info.weightUnit,
+                previousReps = info.previousReps,
+                repsLabel = info.repsLabel,
+                detail = info.detail,
+                text = info.text,
+                keyToken = info.key?.token(),
+                kind = kind,
+                targetSeconds = when (kind) {
+                    SetKind.CARDIO -> ex?.cardioDurataTargetSeconds
+                    SetKind.TIMED -> set?.timeSeconds ?: ex?.timeTargetSeconds
+                    else -> null
+                },
+                targetKm = ex?.cardioDistanzaTargetKm?.takeIf { kind == SetKind.CARDIO },
+                emomRound = emomStart?.let { t.setIndex - it + 1 },
+                emomRounds = emomRounds
+            )
+        }
+        return LiveWorkoutSnapshot(
+            sessionId = sessionId,
+            currentIndex = state.currentExerciseIndex,
+            exercises = exercises,
+            next = next,
+            allDone = exercises.all { it.done >= it.total },
+            writtenAt = 0L
+        )
     }
 
     /** Where the announced next set lives, so a button on the card can tick exactly that set. */

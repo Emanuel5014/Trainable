@@ -539,6 +539,14 @@ class WorkoutRepository(
 
     suspend fun updateWarmupTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?) = workoutDao.updateWarmupTimer(sessionId, endTime, totalSeconds)
 
+    /** Writes the rest only if it still ends at [expectedEnd] (a button pressed outside the workout must not undo a newer one). */
+    suspend fun compareAndSetRestTimer(sessionId: Int, startedAt: Long, expectedEnd: Long, endTime: Long?, totalSeconds: Int?): Boolean =
+        workoutDao.compareAndSetRestTimer(sessionId, startedAt, expectedEnd, endTime, totalSeconds) == 1
+
+    /** As [compareAndSetRestTimer], for the warm-up. */
+    suspend fun compareAndSetWarmupTimer(sessionId: Int, startedAt: Long, expectedEnd: Long, endTime: Long?, totalSeconds: Int?): Boolean =
+        workoutDao.compareAndSetWarmupTimer(sessionId, startedAt, expectedEnd, endTime, totalSeconds) == 1
+
     suspend fun updateCardioTimer(sessionId: Int, seconds: Int, running: Boolean, paused: Boolean, startedAt: Long?) = workoutDao.updateCardioTimer(sessionId, seconds, running, paused, startedAt)
 
     suspend fun updateSetTimer(sessionId: Int, seconds: Int, running: Boolean, paused: Boolean, startedAt: Long?) = workoutDao.updateSetTimer(sessionId, seconds, running, paused, startedAt)

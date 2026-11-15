@@ -10,9 +10,13 @@ sealed interface DashboardAction {
     data class Suggested(val plan: WorkoutPlanEntity) : DashboardAction
 }
 
-/** Unfinished workouts first (in their own order), then today's routine, then the suggested one. */
+/**
+ * Unfinished workouts first, the one the live card follows ([DashboardUiState.liveSession]) on top and the others in
+ * their own order, then today's routine, then the suggested one.
+ */
 fun dashboardActions(uiState: DashboardUiState): List<DashboardAction> = buildList {
-    uiState.unfinishedSessions.forEach { add(DashboardAction.Resume(it)) }
+    val followed = uiState.liveSession?.session?.id
+    uiState.unfinishedSessions.sortedByDescending { it.session.id == followed }.forEach { add(DashboardAction.Resume(it)) }
     uiState.todayPlan?.let { add(DashboardAction.Today(it)) }
     uiState.suggestedPlan?.let { add(DashboardAction.Suggested(it)) }
 }

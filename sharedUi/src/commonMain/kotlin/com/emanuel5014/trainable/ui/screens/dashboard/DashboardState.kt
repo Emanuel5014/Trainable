@@ -31,6 +31,8 @@ interface DashboardData {
     fun unfinishedSessions(): Flow<List<SessionWithPlanName>>
     fun cardioSessionCountSince(sinceTimestamp: Long): Flow<Int>
     suspend fun deleteSession(sessionId: Int)
+    /** −/+/Skip on the rest (or warm-up) of [sessionId] with the workout screen closed; the platform moves its notification too. */
+    suspend fun adjustRest(sessionId: Int, button: RestButton)
 }
 
 /** The day the user's week starts on, from the phone's region (Monday in Italy, Sunday in the US). */
@@ -83,8 +85,38 @@ class DashboardState(
         val all: List<WorkoutSessionEntity>,
         val unfinished: List<SessionWithPlanName>,
         val cardioCount: Int,
-        val day: LocalDate
+        val day: LocalDate,
+        val live: LiveData
     )
+
+    private data class LiveData(val snapshot: LiveWorkoutSnapshot?, val workoutMode: Boolean, val buttons: RestButtons)
+
+    /** The open workout's copy for the dashboard, the workout-mode switch and the rest buttons the timer settings allow. */
+    private val liveData = combine(
+        userPrefsRepository.liveWorkoutSnapshot,
+        userPrefsRepository.dashboardWorkoutMode,
+        combine(
+            userPrefsRepository.timerAddSeconds,
+            userPrefsRepository.timerSubtractSeconds,
+            userPrefsRepository.timerAddEnabled,
+            userPrefsRepository.timerSubtractEnabled,
+            userPrefsRepository.timerShowTimeButtons
+        ) { add, subtract, addOn, subtractOn, timeButtons -> listOf(add, subtract, addOn, subtractOn, timeButtons) },
+        combine(userPrefsRepository.timerShowSkipButton, userPrefsRepository.timerShowNextSetButton) { skip, next -> skip to next }
+    ) { snapshotText, mode, time, (skip, next) ->
+        LiveData(
+            snapshot = LiveWorkoutSnapshot.decode(snapshotText),
+            workoutMode = mode,
+            buttons = RestButtons(
+                addSeconds = time[0] as Int,
+                subtractSeconds = time[1] as Int,
+                showAdd = time[4] as Boolean && time[2] as Boolean,
+                showSubtract = time[4] as Boolean && time[3] as Boolean,
+                showSkip = skip,
+                showSetDone = next
+            )
+        )
+    }
 
     private val _selectedSessionIds = MutableStateFlow<Set<Int>>(emptySet())
 
@@ -120,13 +152,14 @@ class DashboardState(
             data.allSessions(),
             data.unfinishedSessions(),
             today.flatMapLatest { data.cardioSessionCountSince(weekStartMillis(it)) },
-            today
-        ) { all, unf, cardioCount, day -> SessionData(all, unf, cardioCount, day) },
+            today,
+            liveData
+        ) { all, unf, cardioCount, day, live -> SessionData(all, unf, cardioCount, day, live) },
         _selectedSessionIds
     ) { planVolumePair, user, prefs, sessionData, selectedIds ->
         val (plans, volume) = planVolumePair
         val (goal, membershipExpiry, dynamic, palette, swipe, floating) = prefs
-        val (allSessions, unfinished, cardioCount, day) = sessionData
+        val (allSessions, unfinished, cardioCount, day, live) = sessionData
         val weekStart = weekStartMillis(day)
         val numWorkoutsThisWeek = allSessions.count { it.timestamp >= weekStart }
 
@@ -149,6 +182,10 @@ class DashboardState(
             floatingNavBar = floating,
             swipeActionsEnabled = swipe,
             selectedSessionIds = selectedIds,
+            liveSession = LiveWorkout.pick(unfinished, live.snapshot, Clock.System.now().toEpochMilliseconds()),
+            liveSnapshot = live.snapshot,
+            workoutMode = live.workoutMode,
+            restButtons = live.buttons,
             isSelectionMode = selectedIds.isNotEmpty(),
             prSnapshots = listOf(
                 PrSnapshot("BENCH PRESS", 120.0f, true),
@@ -184,6 +221,10 @@ class DashboardState(
             current.add(sessionId)
         }
         _selectedSessionIds.value = current
+    }
+
+    override fun adjustRest(sessionId: Int, button: RestButton) {
+        scope.launch { data.adjustRest(sessionId, button) }
     }
 
     override fun clearSelection() {

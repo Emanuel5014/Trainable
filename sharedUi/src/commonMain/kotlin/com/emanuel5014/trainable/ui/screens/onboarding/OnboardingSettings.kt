@@ -66,7 +66,8 @@ data class OnboardingSettings(
     val nextcloudAutoBackupMaxCount: Int,
     val nextcloudAutoBackupIncludeImages: Boolean,
     val nextcloudWifiOnly: Boolean,
-    val theme: ThemeChoice
+    val theme: ThemeChoice,
+    val dashboardWorkoutMode: Boolean = false
 )
 
 fun OnboardingChoices.toSettings(theme: ThemeChoice, aiModelVariant: String) = OnboardingSettings(
@@ -90,6 +91,7 @@ fun OnboardingChoices.toSettings(theme: ThemeChoice, aiModelVariant: String) = O
     timerSubtractEnabled = timerSubtractEnabled.value,
     timerSubtractSeconds = timerSubtractSeconds.intValue,
     timerShowNextSetButton = timerShowNextSetButton.value,
+    dashboardWorkoutMode = dashboardWorkoutMode.value,
     keepScreenOnSetTimer = keepScreenOnSetTimer.value,
     keepScreenOnCardioTimer = keepScreenOnCardioTimer.value,
     autoStopCardioAtTarget = autoStopCardioAtTarget.value,
@@ -167,7 +169,7 @@ private fun OnboardingChoices.rows(group: TweakGroup): List<Boolean> = when (gro
         inlineModifications.value
     )
     TweakGroup.Timers -> listOf(
-        restTimerEnabled.value, warmupTimerEnabled.value, workoutTimerEnabled.value, timerAddEnabled.value,
+        restTimerEnabled.value, dashboardWorkoutMode.value, warmupTimerEnabled.value, workoutTimerEnabled.value, timerAddEnabled.value,
         timerSubtractEnabled.value, timerShowNextSetButton.value, keepScreenOnSetTimer.value,
         keepScreenOnCardioTimer.value, autoStopCardioAtTarget.value, autoStopTimeWeightAtTarget.value
     )

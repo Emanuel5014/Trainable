@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.util.notification
 
+import com.emanuel5014.trainable.ui.screens.dashboard.LiveWorkoutSnapshot
+import com.emanuel5014.trainable.ui.screens.dashboard.SavedTimerChange
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -595,6 +597,35 @@ class TimerNotificationHelper @Inject constructor(
             .setContentIntent(pendingIntent)
             .build()
         notificationManager.notify(notificationId, notification)
+    }
+
+    /**
+     * Redraws or removes the rest / warm-up notification after a button pressed outside the workout ([SavedTimers]),
+     * announcing what the workout last said (its dashboard copy), so the card looks as if the workout had done it.
+     */
+    suspend fun followSavedTimer(change: SavedTimerChange) {
+        val end = change.end
+        if (end == null) {
+            if (change.warmup) cancelWarmupTimer() else cancelTimer()
+            return
+        }
+        if (!userPrefsRepository.timerNotificationsEnabled.first() || !hasNotificationPermission()) return
+        val remaining = ((end - System.currentTimeMillis()) / 1000L).toInt().coerceAtLeast(0)
+        if (change.warmup) {
+            startOrUpdateWarmupTimerNotification(remaining, change.total)
+            return
+        }
+        val next = LiveWorkoutSnapshot.decode(userPrefsRepository.liveWorkoutSnapshot.first())
+            ?.takeIf { it.sessionId == change.sessionId }?.next
+        startOrUpdateTimerNotification(
+            remaining, change.sessionId,
+            next?.exerciseName, next?.setNumber, next?.weight, next?.reps, next?.previousReps, next?.weightUnit,
+            totalSeconds = change.total,
+            nextSetRepsLabel = next?.repsLabel,
+            nextSetDetail = next?.detail,
+            nextSetText = next?.text,
+            nextSetKey = next?.keyToken?.let { NextSetKey.parse(it) }
+        )
     }
 
     fun cancelTimer() {

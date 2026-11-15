@@ -148,6 +148,10 @@ class UserPreferencesRepository(
     val TIMER_SHOW_SKIP_BUTTON = booleanPreferencesKey("timer_show_skip_button")
     /** The "Set done" button of the finished-rest notification / Live Activity. On by default. */
     val TIMER_SHOW_NEXT_SET_BUTTON = booleanPreferencesKey("timer_show_next_set_button")
+    /** Workout mode of the dashboard: while a workout runs, a big panel with the rest and its buttons goes on top. */
+    val DASHBOARD_WORKOUT_MODE = booleanPreferencesKey("dashboard_workout_mode")
+    /** What the open workout last announced (current set, progress), so the dashboard can show it once the workout is closed. */
+    val LIVE_WORKOUT_SNAPSHOT = stringPreferencesKey("live_workout_snapshot")
     /** Each of the two time buttons on its own: with both off the timers carry neither. On by default. */
     val TIMER_ADD_ENABLED = booleanPreferencesKey("timer_add_enabled")
     val TIMER_SUBTRACT_ENABLED = booleanPreferencesKey("timer_subtract_enabled")
@@ -660,6 +664,24 @@ class UserPreferencesRepository(
     suspend fun setTimerShowNextSetButton(show: Boolean) {
         dataStore.edit { preferences ->
             preferences[TIMER_SHOW_NEXT_SET_BUTTON] = show
+        }
+    }
+
+    val dashboardWorkoutMode: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[DASHBOARD_WORKOUT_MODE] ?: false }
+
+    suspend fun setDashboardWorkoutMode(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[DASHBOARD_WORKOUT_MODE] = enabled
+        }
+    }
+
+    val liveWorkoutSnapshot: Flow<String?> = dataStore.data
+        .map { preferences -> preferences[LIVE_WORKOUT_SNAPSHOT] }
+
+    suspend fun setLiveWorkoutSnapshot(json: String?) {
+        dataStore.edit { preferences ->
+            if (json == null) preferences.remove(LIVE_WORKOUT_SNAPSHOT) else preferences[LIVE_WORKOUT_SNAPSHOT] = json
         }
     }
 

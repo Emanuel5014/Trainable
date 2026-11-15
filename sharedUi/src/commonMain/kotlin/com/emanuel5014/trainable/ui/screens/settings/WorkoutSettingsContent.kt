@@ -50,6 +50,8 @@ import com.emanuel5014.trainable.sharedui.resources.timer_subtract_time
 import com.emanuel5014.trainable.sharedui.resources.timer_next_set_button
 import com.emanuel5014.trainable.sharedui.resources.timer_next_set_button_desc
 import com.emanuel5014.trainable.sharedui.resources.workout_section_after
+import com.emanuel5014.trainable.sharedui.resources.dashboard_workout_mode
+import com.emanuel5014.trainable.sharedui.resources.dashboard_workout_mode_desc
 import com.emanuel5014.trainable.sharedui.resources.exercise_setup_setting
 import com.emanuel5014.trainable.sharedui.resources.exercise_setup_setting_desc
 import com.emanuel5014.trainable.sharedui.resources.workout_section_programming
@@ -87,6 +89,7 @@ import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.SpaceDashboard
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.EventSeat
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -200,9 +203,21 @@ private fun DuringWorkoutCard(state: SettingsState) {
     val rpeEnabled by state.rpeEnabled.collectAsState()
     val rpeScale by state.rpeScale.collectAsState()
     val exerciseSetupVisible by state.exerciseSetupVisible.collectAsState()
+    val dashboardWorkoutMode by state.dashboardWorkoutMode.collectAsState()
 
     GymCard(containerColor = SurfaceContainerHigh) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // While a workout runs the dashboard puts the rest, its buttons and the exercise list on top
+            SettingSwitchRow(
+                icon = Icons.Rounded.SpaceDashboard,
+                title = stringResource(Res.string.dashboard_workout_mode),
+                description = stringResource(Res.string.dashboard_workout_mode_desc),
+                checked = dashboardWorkoutMode,
+                onCheckedChange = { state.setDashboardWorkoutMode(it) }
+            )
+
+            SettingDivider()
+
             SettingSwitchRow(
                 icon = Icons.Rounded.Timer,
                 title = stringResource(Res.string.workout_timer),

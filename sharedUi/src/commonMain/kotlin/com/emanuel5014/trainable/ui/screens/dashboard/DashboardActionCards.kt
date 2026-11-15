@@ -102,9 +102,19 @@ private data class ActionStyle(
  * Fixed warm colour of an unfinished workout. Like the red of an expired membership it does not follow the palette,
  * so "resume" stands out even with Monochrome or dynamic colours.
  */
-private val ResumeAmber = Color(0xFFFFA94D)
+internal val ResumeAmber = Color(0xFFFFA94D)
 private val ResumeAmberDark = Color(0xFF8A5300)
-private val ResumeInk = Color(0xFF1A1A1A)
+internal val ResumeInk = Color(0xFF1A1A1A)
+
+/** The amber gradient of an unfinished workout, with the membership card's light/dark strength. */
+@Composable
+internal fun resumeBrush(): Brush {
+    val isDark = with(MaterialTheme.colorScheme.surface) { red + green + blue < 1.5f }
+    return Brush.linearGradient(
+        if (isDark) listOf(ResumeAmber.copy(alpha = 0.9f), ResumeAmber.copy(alpha = 0.6f))
+        else listOf(ResumeAmber.copy(alpha = 0.45f), ResumeAmber.copy(alpha = 0.25f))
+    )
+}
 
 @Composable
 private fun actionStyle(action: DashboardAction): ActionStyle {
@@ -472,7 +482,7 @@ internal fun NoRoutinesInvite(modifier: Modifier = Modifier) {
  * One wave flowing across the whole resume card, the same family as the weekly goal's wave. [phase] runs 0..1, one
  * wavelength.
  */
-private fun DrawScope.drawResumeWave(phase: Float) {
+internal fun DrawScope.drawResumeWave(phase: Float) {
     val wavelength = size.width / 2f
     drawPath(
         wavePath(baseline = size.height * 0.58f, amplitude = 7.dp.toPx(), wavelength, shift = -phase * wavelength),

@@ -133,6 +133,7 @@ class OnboardingModel(
         userPrefsRepository.setTimerSubtractEnabled(timerSubtractEnabled)
         userPrefsRepository.setTimerSubtractSeconds(timerSubtractSeconds)
         userPrefsRepository.setTimerShowNextSetButton(timerShowNextSetButton)
+        userPrefsRepository.setDashboardWorkoutMode(dashboardWorkoutMode)
         userPrefsRepository.setKeepScreenOnSetTimer(keepScreenOnSetTimer)
         userPrefsRepository.setKeepScreenOnCardioTimer(keepScreenOnCardioTimer)
         userPrefsRepository.setExerciseMediaEnabled(exerciseMedia)

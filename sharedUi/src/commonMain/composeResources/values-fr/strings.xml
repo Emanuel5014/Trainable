@@ -1653,4 +1653,38 @@
     <string name="exercise_setup_edit_cd">Réglages de la machine : %1$s. Touche pour modifier</string>
     <string name="exercise_setup_detail_hint">Affichés au-dessus des séries dans chaque entraînement avec cet exercice.</string>
     <string name="exercise_setup_detail_empty">Hauteur du siège, dossier, goupilles : note-les une fois et retrouve-les à chaque entraînement.</string>
+    <string name="dashboard_workout_mode">Mode entraînement sur l'accueil</string>
+    <string name="dashboard_workout_mode_desc">Pendant l'entraînement, l'accueil affiche en haut le repos avec ses boutons, la série à faire et la liste des exercices</string>
+    <string name="dashboard_live_in_progress">En cours · %1$s</string>
+    <string name="dashboard_live_minutes">%1$s min</string>
+    <string name="dashboard_live_hours">%1$s h %2$s</string>
+    <string name="dashboard_live_rest">Repos</string>
+    <string name="dashboard_live_warmup">Échauffement</string>
+    <string name="dashboard_live_now_set">Maintenant · série %1$s sur %2$s</string>
+    <string name="dashboard_live_then">Puis %1$s · série %2$s sur %3$s</string>
+    <string name="dashboard_live_your_turn">À vous : %1$s · série %2$s sur %3$s</string>
+    <string name="dashboard_live_next_exercise">Ensuite : %1$s</string>
+    <string name="dashboard_live_exercise_of">Exercice %1$s sur %2$s</string>
+    <string name="dashboard_live_all_done">Tout est fait : terminez l'entraînement</string>
+    <string name="dashboard_live_of_total">sur %1$s</string>
+    <string name="dashboard_live_exercises_header">Exercices · %1$s sur %2$s</string>
+    <string name="dashboard_live_open_workout">Ouvrir l'entraînement</string>
+    <string name="dashboard_live_skip_rest">Passer le repos</string>
+    <plurals name="dashboard_live_sets_left">
+        <item quantity="one">%1$d série restante</item>
+        <item quantity="many">%1$d séries restantes</item>
+        <item quantity="other">%1$d séries restantes</item>
+    </plurals>
+    <plurals name="dashboard_live_more_exercises">
+        <item quantity="one">+%1$d exercice</item>
+        <item quantity="many">+%1$d exercices</item>
+        <item quantity="other">+%1$d exercices</item>
+    </plurals>
+    <string name="dashboard_live_continue">Continuer dans l'entraînement</string>
+    <string name="dashboard_live_resume_emom">Reprendre l'EMOM</string>
+    <string name="dashboard_live_emom_round">EMOM · tour %1$s sur %2$s</string>
+    <string name="dashboard_live_every_minute">Chaque minute · %1$s</string>
+    <string name="dashboard_live_paused">En pause</string>
+    <string name="dashboard_live_delete">Supprimer l'entraînement</string>
+    <string name="dashboard_live_emom_hint">Le chrono à la minute repart quand vous ouvrez l'entraînement</string>
 </resources>

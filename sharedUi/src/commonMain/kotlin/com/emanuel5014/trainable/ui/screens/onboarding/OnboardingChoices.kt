@@ -38,6 +38,8 @@ class OnboardingChoices {
     val timerSubtractEnabled = mutableStateOf(true)
     val timerSubtractSeconds = mutableIntStateOf(TimerAdjustment.DEFAULT_SUBTRACT_SECONDS)
     val timerShowNextSetButton = mutableStateOf(true)
+    /** Workout mode of the dashboard (rest, its buttons and the exercise list on top); off in every style. */
+    val dashboardWorkoutMode = mutableStateOf(false)
     val keepScreenOnSetTimer = mutableStateOf(true)
     val keepScreenOnCardioTimer = mutableStateOf(true)
     val autoStopCardioAtTarget = mutableStateOf(true)

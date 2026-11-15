@@ -28,7 +28,9 @@ data class WorkoutExecution(
     val planId: Int? = null,
     val sessionId: Int? = null,
     val quickStart: Boolean = false,
-    val workoutName: String? = null
+    val workoutName: String? = null,
+    /** [com.emanuel5014.trainable.util.notification.NextSetKey.token] of a set to tick once the workout is open ("Serie fatta" on the dashboard). */
+    val logSet: String? = null
 )
 
 @Serializable

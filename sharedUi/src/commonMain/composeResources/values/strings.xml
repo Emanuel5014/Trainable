@@ -1648,4 +1648,38 @@
     <string name="exercise_setup_edit_cd">Machine setup: %1$s. Tap to edit</string>
     <string name="exercise_setup_detail_hint">Shown above the sets in every workout with this exercise.</string>
     <string name="exercise_setup_detail_empty">Seat height, backrest, pins: write them once and see them in every workout.</string>
+    <string name="dashboard_workout_mode">Workout mode on the home</string>
+    <string name="dashboard_workout_mode_desc">While you train, the home puts the rest with its buttons, the set to do and the exercise list on top</string>
+    <string name="dashboard_live_in_progress">In progress · %1$s</string>
+    <string name="dashboard_live_minutes">%1$s min</string>
+    <string name="dashboard_live_hours">%1$s h %2$s</string>
+    <string name="dashboard_live_rest">Rest</string>
+    <string name="dashboard_live_warmup">Warm-up</string>
+    <string name="dashboard_live_now_set">Now · set %1$s of %2$s</string>
+    <string name="dashboard_live_then">Then %1$s · set %2$s of %3$s</string>
+    <string name="dashboard_live_your_turn">Your turn: %1$s · set %2$s of %3$s</string>
+    <string name="dashboard_live_next_exercise">Next: %1$s</string>
+    <string name="dashboard_live_exercise_of">Exercise %1$s of %2$s</string>
+    <string name="dashboard_live_all_done">All done: finish the workout</string>
+    <string name="dashboard_live_of_total">of %1$s</string>
+    <string name="dashboard_live_exercises_header">Exercises · %1$s of %2$s</string>
+    <string name="dashboard_live_open_workout">Open workout</string>
+    <string name="dashboard_live_skip_rest">Skip rest</string>
+    <plurals name="dashboard_live_sets_left">
+        <item quantity="one">%1$d set left</item>
+        <item quantity="many">%1$d sets left</item>
+        <item quantity="other">%1$d sets left</item>
+    </plurals>
+    <plurals name="dashboard_live_more_exercises">
+        <item quantity="one">+%1$d exercise</item>
+        <item quantity="many">+%1$d exercises</item>
+        <item quantity="other">+%1$d exercises</item>
+    </plurals>
+    <string name="dashboard_live_continue">Continue in the workout</string>
+    <string name="dashboard_live_resume_emom">Resume the EMOM</string>
+    <string name="dashboard_live_emom_round">EMOM · round %1$s of %2$s</string>
+    <string name="dashboard_live_every_minute">Every minute · %1$s</string>
+    <string name="dashboard_live_paused">Paused</string>
+    <string name="dashboard_live_delete">Delete workout</string>
+    <string name="dashboard_live_emom_hint">The minute clock starts again when you open the workout</string>
 </resources>

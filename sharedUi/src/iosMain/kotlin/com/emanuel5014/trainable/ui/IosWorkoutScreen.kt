@@ -19,11 +19,11 @@ import platform.UIKit.UIApplication
 /** Owns one model for this navigation entry. In-app clocks and local notifications share the same wall-clock deadlines. */
 @Composable
 internal fun IosWorkoutScreen(entry: NavBackStackEntry, planId: Int?, sessionId: Int?, quickStart: Boolean, workoutName: String?,
-    onNavigateBack: () -> Unit, onNavigateToRoutine: (Int) -> Unit) {
+    logSet: String?, onNavigateBack: () -> Unit, onNavigateToRoutine: (Int) -> Unit) {
     val words = rememberIosWorkoutText()
     val language = com.emanuel5014.trainable.platform.IosAppLocale.language()
     val owner = viewModel<IosWorkoutOwner>(viewModelStoreOwner = entry) {
-        IosWorkoutOwner(planId, sessionId, quickStart, workoutName, words, language)
+        IosWorkoutOwner(planId, sessionId, quickStart, workoutName, logSet, words, language)
     }
     SideEffect { owner.updateText(words, language) }
     CompositionLocalProvider(LocalWorkoutScreenPlatform provides IosWorkoutScreenPlatform) {
@@ -32,14 +32,14 @@ internal fun IosWorkoutScreen(entry: NavBackStackEntry, planId: Int?, sessionId:
 }
 
 /** Retained by the navigation entry, so visiting the routine and coming back never creates another session. */
-private class IosWorkoutOwner(planId: Int?, sessionId: Int?, quickStart: Boolean, workoutName: String?,
+private class IosWorkoutOwner(planId: Int?, sessionId: Int?, quickStart: Boolean, workoutName: String?, logSet: String?,
     words: WorkoutText, language: String) : ViewModel() {
     private var currentWords = words
     private val languages = MutableStateFlow(language)
     private val timers = IosWorkoutTimers(context = ::timerContext)
     val model = WorkoutModel(IosAppGraph.workouts, IosAppGraph.preferences, IosAppGraph.exercises,
         timers, { currentWords }, IosWorkoutMiniSetStore(), IosAppGraph.oneRepMaxes,
-        IosAppGraph.journal, languages, viewModelScope, planId, sessionId, quickStart, workoutName)
+        IosAppGraph.journal, languages, viewModelScope, planId, sessionId, quickStart, workoutName, logSet)
 
     init {
         IosWorkoutTimerActions.bind(model, timers)

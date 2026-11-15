@@ -3,7 +3,10 @@ package com.emanuel5014.trainable.util.notification
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.ui.screens.dashboard.RestButton
+import com.emanuel5014.trainable.ui.screens.dashboard.SavedTimers
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +25,9 @@ class TimerNotificationReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var workoutRepository: WorkoutRepository
+
+    @Inject
+    lateinit var userPreferencesRepository: UserPreferencesRepository
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -77,12 +83,8 @@ class TimerNotificationReceiver : BroadcastReceiver() {
                     timerNotificationHelper.cancelTimer()
                 }
             }
-            ACTION_ADD_30S -> {
-                timerEvents.tryEmit(TimerAction.ADD)
-            }
-            ACTION_SUBTRACT -> {
-                timerEvents.tryEmit(TimerAction.SUBTRACT)
-            }
+            ACTION_ADD_30S -> adjust(TimerAction.ADD, RestButton.ADD, sessionId)
+            ACTION_SUBTRACT -> adjust(TimerAction.SUBTRACT, RestButton.SUBTRACT, sessionId)
             ACTION_DISMISS -> {
                 timerEvents.tryEmit(TimerAction.DISMISS)
                 timerNotificationHelper.cancelTimer()
@@ -109,12 +111,8 @@ class TimerNotificationReceiver : BroadcastReceiver() {
                 warmupTimerEvents.tryEmit(WarmupTimerAction.SKIP)
                 timerNotificationHelper.cancelWarmupTimer()
             }
-            ACTION_WARMUP_ADD_30S -> {
-                warmupTimerEvents.tryEmit(WarmupTimerAction.ADD)
-            }
-            ACTION_WARMUP_SUBTRACT -> {
-                warmupTimerEvents.tryEmit(WarmupTimerAction.SUBTRACT)
-            }
+            ACTION_WARMUP_ADD_30S -> adjustWarmup(WarmupTimerAction.ADD, RestButton.ADD, sessionId)
+            ACTION_WARMUP_SUBTRACT -> adjustWarmup(WarmupTimerAction.SUBTRACT, RestButton.SUBTRACT, sessionId)
             ACTION_WARMUP_DISMISS -> {
                 warmupTimerEvents.tryEmit(WarmupTimerAction.DISMISS)
                 timerNotificationHelper.cancelWarmupTimer()
@@ -139,6 +137,36 @@ class TimerNotificationReceiver : BroadcastReceiver() {
             ACTION_EMOM_PAUSE -> forwardEmom(EmomAction.PAUSE)
             ACTION_EMOM_RESUME -> forwardEmom(EmomAction.RESUME)
             ACTION_EMOM_STOP -> forwardEmom(EmomAction.STOP)
+        }
+    }
+
+    /** −/+ go to the open workout; with the workout closed they change the rest saved on the session (see [SavedTimers]). */
+    private fun adjust(action: TimerAction, button: RestButton, sessionId: Int) {
+        if (timerEvents.subscriptionCount.value > 0) {
+            timerEvents.tryEmit(action)
+            return
+        }
+        adjustSaved(button, sessionId.takeIf { it != -1 } ?: timerNotificationHelper.workoutSessionId)
+    }
+
+    private fun adjustWarmup(action: WarmupTimerAction, button: RestButton, sessionId: Int) {
+        if (warmupTimerEvents.subscriptionCount.value > 0) {
+            warmupTimerEvents.tryEmit(action)
+            return
+        }
+        adjustSaved(button, sessionId.takeIf { it != -1 } ?: timerNotificationHelper.workoutSessionId)
+    }
+
+    private fun adjustSaved(button: RestButton, sessionId: Int?) {
+        if (sessionId == null) return
+        val pendingResult = goAsync()
+        scope.launch {
+            try {
+                SavedTimers.adjust(workoutRepository, userPreferencesRepository, sessionId, button, System.currentTimeMillis())
+                    ?.let { timerNotificationHelper.followSavedTimer(it) }
+            } finally {
+                pendingResult.finish()
+            }
         }
     }
 

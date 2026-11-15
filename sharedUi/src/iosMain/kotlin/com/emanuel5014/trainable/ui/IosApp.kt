@@ -64,6 +64,8 @@ import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
 import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
 import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardData
+import com.emanuel5014.trainable.ui.screens.dashboard.RestButton
+import com.emanuel5014.trainable.ui.screens.dashboard.SavedTimers
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardState
 import com.emanuel5014.trainable.ui.screens.routines.RoutinesState
 import com.emanuel5014.trainable.ui.theme.Shapes
@@ -211,6 +213,14 @@ private fun TrainableIosApp() {
                 override fun cardioSessionCountSince(sinceTimestamp: Long): Flow<Int> =
                     db.workoutDao().getCardioSessionCountSince(sinceTimestamp)
                 override suspend fun deleteSession(sessionId: Int) = IosAppGraph.workouts.deleteSession(sessionId)
+                // Through the Live Activity's own path when its card is up (notice and card move with it), else on the row
+                override suspend fun adjustRest(sessionId: Int, button: RestButton) {
+                    val action = when (button) { RestButton.ADD -> "add"; RestButton.SUBTRACT -> "subtract"; RestButton.SKIP -> "skip" }
+                    val live = listOf(REST_NOTICE, WARMUP_NOTICE)
+                        .firstNotNullOfOrNull { kind -> IosLiveTimerSnapshots.get(kind)?.takeIf { it.sessionId == sessionId } }
+                    if (live != null && IosWorkoutTimerActions.perform(live, action)) return
+                    SavedTimers.adjust(IosAppGraph.workouts, preferences, sessionId, button, nowMillis())
+                }
             },
             analyticsRepository = AnalyticsRepository(db.analyticsDao(), db.weightLogDao()),
             userRepository = UserRepository(db.userDao(), db.weightLogDao()),

@@ -42,6 +42,8 @@ class WorkoutViewModel @Inject constructor(
         sessionId = savedStateHandle.get<Int>(WORKOUT_SESSION_ID),
         quickStart = savedStateHandle.get<Boolean>("quickStart") ?: false,
         workoutName = savedStateHandle.get<String>("workoutName"),
+        // Taken once: a screen recreated after process death must not tick it again
+        logSetOnOpen = savedStateHandle.remove<String>("logSet"),
         nowMillis = System::currentTimeMillis
     )
 

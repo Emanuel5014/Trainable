@@ -271,6 +271,12 @@ class SettingsState(
         initialValue = true
     )
 
+    val dashboardWorkoutMode = userPrefsRepository.dashboardWorkoutMode.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val startingWeightEnabled = userPrefsRepository.startingWeightEnabled.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -412,6 +418,12 @@ class SettingsState(
     fun setTimerShowSkipButton(show: Boolean) {
         scope.launch {
             userPrefsRepository.setTimerShowSkipButton(show)
+        }
+    }
+
+    fun setDashboardWorkoutMode(enabled: Boolean) {
+        scope.launch {
+            userPrefsRepository.setDashboardWorkoutMode(enabled)
         }
     }
 

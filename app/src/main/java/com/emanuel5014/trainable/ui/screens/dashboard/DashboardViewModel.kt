@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.notification.GymMembershipWorker
+import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -23,7 +24,8 @@ class DashboardViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     analyticsRepository: AnalyticsRepository,
     userRepository: UserRepository,
-    userPrefsRepository: UserPreferencesRepository,
+    private val userPrefsRepository: UserPreferencesRepository,
+    private val timerNotificationHelper: TimerNotificationHelper,
     @ApplicationContext private val context: Context
 ) : ViewModel(), DashboardActions {
 
@@ -37,6 +39,11 @@ class DashboardViewModel @Inject constructor(
                 workoutRepository.getCardioSessionCountSince(sinceTimestamp)
             // Through the repository, which also refreshes the home screen widgets
             override suspend fun deleteSession(sessionId: Int) = workoutRepository.deleteSession(sessionId)
+            // The workout screen is closed here: the rest saved on the session changes, then its notification follows
+            override suspend fun adjustRest(sessionId: Int, button: RestButton) {
+                SavedTimers.adjust(workoutRepository, userPrefsRepository, sessionId, button, System.currentTimeMillis())
+                    ?.let { timerNotificationHelper.followSavedTimer(it) }
+            }
         },
         analyticsRepository = analyticsRepository,
         userRepository = userRepository,
@@ -60,4 +67,6 @@ class DashboardViewModel @Inject constructor(
     override fun clearSelection() = state.clearSelection()
 
     override fun deleteSelectedSessions() = state.deleteSelectedSessions()
+
+    override fun adjustRest(sessionId: Int, button: RestButton) = state.adjustRest(sessionId, button)
 }

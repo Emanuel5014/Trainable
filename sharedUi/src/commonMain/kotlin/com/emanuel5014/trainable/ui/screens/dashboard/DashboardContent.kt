@@ -119,7 +119,9 @@ fun DashboardContent(
     onNavigateToSettings: () -> Unit,
     onNavigateToWorkout: (planId: Int?, sessionId: Int?) -> Unit,
     onNavigateToQuickWorkout: (name: String?) -> Unit,
-    onNavigateToPhysicalChecks: () -> Unit
+    onNavigateToPhysicalChecks: () -> Unit,
+    /** "Serie fatta" in workout mode: open the workout, which ticks the set of [token] if it is still the one to do. */
+    onLogSet: (planId: Int, sessionId: Int, token: String) -> Unit = { planId, sessionId, _ -> onNavigateToWorkout(planId, sessionId) }
 ) {
     val handleNavigateToPhysicalChecks = onNavigateToPhysicalChecks
     val advancedProgramming = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
@@ -482,6 +484,17 @@ fun DashboardContent(
                 val existing = unfinishedSessionForPlan(uiState, plan.id)
                 if (existing != null) existingSessionForPlan = existing else onNavigateToWorkout(plan.id, null)
             }
+            // The workout the live card follows, read again every second while a timer counts
+            val liveSession = uiState.liveSession
+            val liveNow = rememberLiveNow(
+                isActive = isActive && liveSession != null,
+                counting = liveSession?.session?.let { s ->
+                    val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                    (s.restTimerEndTime ?: 0L) > now || (s.warmupTimerEndTime ?: 0L) > now || s.setTimerRunning || s.cardioTimerRunning
+                } == true
+            )
+            val liveUi = liveSession?.let { LiveWorkoutUi.from(it, uiState.liveSnapshot, liveNow) }
+            val workoutMode = uiState.workoutMode && liveUi != null && !uiState.isSelectionMode
             Scaffold(containerColor = Surface) { paddingValues ->
                 Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                     // Membership and weekly goal on top, the workouts right under them, quick workout last.
@@ -503,6 +516,21 @@ fun DashboardContent(
                                 onClearSelection = { actions.clearSelection() },
                                 onDeleteSelection = { showBulkDeleteDialog = true }
                             )
+                            if (workoutMode && liveUi != null && liveSession != null) {
+                                // Workout mode: the live panel and the exercise list first, the info cards under them
+                                val open = { onNavigateToWorkout(liveSession.session.planId, liveSession.session.id) }
+                                LiveWorkoutPanel(
+                                    ui = liveUi,
+                                    buttons = uiState.restButtons,
+                                    isActive = isActive,
+                                    onOpen = open,
+                                    onRest = { actions.adjustRest(liveSession.session.id, it) },
+                                    onSetDone = { token -> onLogSet(liveSession.session.planId, liveSession.session.id, token) },
+                                    // The same confirmation as swiping a resume card away
+                                    onDelete = { sessionToDelete = liveSession }
+                                )
+                                LiveExerciseList(liveUi, onOpen = open)
+                            }
                             val onMembershipClick = {
                                 if (uiState.gymMembershipExpiryDate == null) {
                                     showDatePicker = true
@@ -529,7 +557,11 @@ fun DashboardContent(
                             verticalArrangement = Arrangement.spacedBy(Spacing.medium)
                         ) {
                             if (dashboardActionList.isEmpty()) NoRoutinesInvite()
-                            dashboardActionList.forEachIndexed { index, action ->
+                            // In workout mode the followed workout is the panel on top and nothing new is offered to start
+                            val shownActions = if (workoutMode) dashboardActionList.filter {
+                                it is DashboardAction.Resume && it.session.session.id != liveSession?.session?.id
+                            } else dashboardActionList
+                            shownActions.forEachIndexed { index, action ->
                                 val card: @Composable (Boolean, Boolean, () -> Unit, (() -> Unit)?) -> Unit =
                                     { selected, selectionMode, onClick, onLongClick ->
                                         val pill = when (action) {
@@ -537,7 +569,12 @@ fun DashboardContent(
                                             is DashboardAction.Today -> weekPillFor(action.plan)
                                             is DashboardAction.Suggested -> weekPillFor(action.plan)
                                         }
-                                        if (index == 0) {
+                                        val live = liveUi?.takeIf {
+                                            action is DashboardAction.Resume && action.session.session.id == it.sessionId && !selectionMode
+                                        }
+                                        if (index == 0 && live != null && !workoutMode) {
+                                            LiveWorkoutCard(live, isActive, onClick, onLongClick)
+                                        } else if (index == 0 && !workoutMode) {
                                             DashboardMainActionCard(action, pill, selected, selectionMode, onClick, onLongClick, isActive = isActive)
                                         } else {
                                             DashboardActionRow(action, pill, selected, selectionMode, onClick, onLongClick)
@@ -574,7 +611,7 @@ fun DashboardContent(
                                     is DashboardAction.Suggested -> card(false, false, { startPlan(action.plan) }, null)
                                 }
                             }
-                            if (showQuickButton) {
+                            if (showQuickButton && !workoutMode) {
                                 QuickWorkoutButton(onClick = { showQuickWorkoutDialog = true })
                             }
                         }

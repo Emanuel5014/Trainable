@@ -20,6 +20,13 @@ data class DashboardUiState(
     val swipeActionsEnabled: Boolean = true,
     val selectedSessionIds: Set<Int> = emptySet(),
     val isSelectionMode: Boolean = false,
+    /** The unfinished workout the live card follows (see [LiveWorkout.pick]); null when none. */
+    val liveSession: SessionWithPlanName? = null,
+    /** What the open workout last wrote about itself; may belong to another session or be missing. */
+    val liveSnapshot: LiveWorkoutSnapshot? = null,
+    /** The switch: while a workout runs, the dashboard puts the live panel and the exercise list on top. */
+    val workoutMode: Boolean = false,
+    val restButtons: RestButtons = RestButtons(),
     val isLoading: Boolean = true
 )
 
@@ -36,4 +43,5 @@ interface DashboardActions {
     fun toggleSelection(sessionId: Int)
     fun clearSelection()
     fun deleteSelectedSessions()
+    fun adjustRest(sessionId: Int, button: RestButton)
 }

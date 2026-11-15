@@ -258,7 +258,7 @@ internal fun IosNavGraph(
             }
             composable<WorkoutExecution> { entry ->
                 val route = entry.toRoute<WorkoutExecution>()
-                IosWorkoutScreen(entry, route.planId, route.sessionId, route.quickStart, route.workoutName,
+                IosWorkoutScreen(entry, route.planId, route.sessionId, route.quickStart, route.workoutName, route.logSet,
                     onNavigateBack = { navController.popOnce(entry) },
                     onNavigateToRoutine = { id -> navController.navigate(RoutineDetail(id)) })
             }
@@ -386,6 +386,9 @@ private fun IosMainTabs(
                 },
                 onNavigateToQuickWorkout = { name ->
                     navController.navigate(WorkoutExecution(quickStart = true, workoutName = name))
+                },
+                onLogSet = { planId, sessionId, token ->
+                    navController.navigate(WorkoutExecution(planId = planId, sessionId = sessionId, logSet = token))
                 },
                 onNavigateToPhysicalChecks = {
                     // As on Android: the biometric/passcode check comes before the section opens
