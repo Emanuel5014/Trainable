@@ -7,8 +7,11 @@ import com.emanuel5014.trainable.data.remote.GitHubRelease
  *
  * Both read the same release list. Stable offers the highest final release (never one marked "Pre-release"); beta
  * offers the highest Android version, pre-release or final, so a beta tester also gets the final release when it
- * comes out. The list is used instead of GitHub's "Latest" release, which an iOS release could take by mistake. Neither channel ever offers an older version: Android refuses to install it over a newer one, and a
- * downgrade would meet a database newer than its code.
+ * comes out. The list is used instead of GitHub's "Latest" release, which an iOS release could take by mistake.
+ *
+ * Neither channel ever offers an older version: a downgrade would meet a database newer than its code. Android
+ * refuses one too, since the versionCode follows the versionName (see versionCodeOf in app/build.gradle.kts); builds
+ * up to 3.0.0-beta2 all had versionCode 2, so between those only this check stood in the way.
  */
 object UpdateChannel {
 

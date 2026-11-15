@@ -8,6 +8,31 @@ plugins {
 
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+/** The app version; versionCode follows from it, so a release only changes this line. */
+val appVersionName = "3.0.0-beta2"
+
+/**
+ * versionCode from a versionName such as "3.0.0", "3.0.0-beta2" or "3.0.0-rc1":
+ * MAJOR·1 000 000 + MINOR·10 000 + PATCH·100 + stage, where stage is N for betaN (1-49), 50+N for rcN (1-48) and 99
+ * for the final release. 3.0.0-beta2 → 3000002, 3.0.0-rc1 → 3000051, 3.0.0 → 3000099, 3.0.1 → 3000199.
+ *
+ * It orders versions like the updater does (beta < rc < final, see AppVersion), so Android itself refuses to install
+ * an older version over a newer one, whose database it could not read. Versions up to 3.0.0-beta2 shipped with
+ * versionCode 2, below every code made here.
+ */
+fun versionCodeOf(name: String): Int {
+    val match = Regex("""(\d+)\.(\d+)\.(\d+)(?:-(beta|rc)\.?(\d+))?""").matchEntire(name)
+        ?: error("versionName \"$name\" must look like 3.0.0, 3.0.0-beta2 or 3.0.0-rc1")
+    val (major, minor, patch, label, number) = match.destructured
+    require(minor.toInt() < 100 && patch.toInt() < 100) { "versionName \"$name\": minor and patch must stay below 100" }
+    val stage = when (label) {
+        "" -> 99
+        "beta" -> number.toInt().also { require(it in 1..49) { "versionName \"$name\": beta number must be 1-49" } }
+        else -> 50 + number.toInt().also { require(it in 1..48) { "versionName \"$name\": rc number must be 1-48" } }
+    }
+    return major.toInt() * 1_000_000 + minor.toInt() * 10_000 + patch.toInt() * 100 + stage
+}
+
 android {
     namespace = "com.emanuel5014.trainable"
     compileSdk = 37
@@ -16,8 +41,8 @@ android {
         applicationId = "com.emanuel5014.trainable"
         minSdk = 28
         targetSdk = 36
-        versionCode = 2
-        versionName = "3.0.0-beta2"
+        versionCode = versionCodeOf(appVersionName)
+        versionName = appVersionName
 
         manifestPlaceholders["appName"] = "Trainable"
 
