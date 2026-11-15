@@ -377,6 +377,35 @@
     <string name="changelog">Nouveautés :</string>
     <string name="downloading">Téléchargement en cours...</string>
     <string name="update_now">Mettre à jour maintenant</string>
+    <string name="update_channel_name">Mises à jour de l\'app</string>
+    <string name="update_channel_desc">Progression du téléchargement d\'une mise à jour de Trainable et moment où elle est prête à installer</string>
+    <string name="update_notification_downloading">Téléchargement de Trainable %s</string>
+    <string name="update_progress_of">%1$s sur %2$s</string>
+    <string name="update_verifying">Vérification du fichier…</string>
+    <string name="update_cancel_download">Annuler le téléchargement</string>
+    <string name="update_hide">Masquer</string>
+    <string name="update_hide_note">Vous pouvez masquer ceci : le téléchargement continue dans la notification.</string>
+    <string name="update_install">Installer</string>
+    <string name="update_ready_note">Téléchargée et vérifiée. Touchez Installer pour terminer.</string>
+    <string name="update_installing_note">Confirmez dans la fenêtre d\'Android. Si elle ne s\'est pas ouverte, touchez Installer.</string>
+    <string name="update_notification_ready">Mise à jour prête</string>
+    <string name="update_notification_ready_text">Touchez pour installer Trainable %s</string>
+    <string name="update_notification_failed">Mise à jour non terminée</string>
+    <string name="update_notification_failed_text">Trainable %s : ouvrez l\'app pour voir pourquoi</string>
+    <string name="update_failed_title">Mise à jour non terminée</string>
+    <string name="update_checking">Recherche de mises à jour…</string>
+    <string name="update_up_to_date">Vous avez la dernière version</string>
+    <string name="update_check_failed">Impossible de rechercher des mises à jour. %s</string>
+    <string name="update_error_network">Pas de connexion, ou elle a été coupée. Réessayez une fois en ligne.</string>
+    <string name="update_error_rate_limited">GitHub limite les requêtes depuis ce réseau. Réessayez dans une heure.</string>
+    <string name="update_error_server">GitHub n\'a pas répondu comme prévu. Réessayez plus tard.</string>
+    <string name="update_error_no_apk">Cette version ne contient pas d\'app Android à télécharger.</string>
+    <string name="update_error_storage">Espace libre insuffisant : %s nécessaires.</string>
+    <string name="update_error_storage_plain">Espace libre insuffisant pour télécharger la mise à jour.</string>
+    <string name="update_error_corrupt">Le fichier téléchargé était endommagé et a été supprimé. Réessayez.</string>
+    <string name="update_error_install_conflict">Android ne peut pas mettre à jour : l\'app installée est signée avec une autre clé (par exemple une version de débogage ou une autre source). Sauvegardez vos données avant de la réinstaller depuis GitHub.</string>
+    <string name="update_error_install_storage">Espace libre insuffisant pour installer la mise à jour.</string>
+    <string name="update_error_install">Android n\'a pas installé la mise à jour. %s</string>
 
     <!-- Camera & Photos -->
     <string name="camera">Appareil photo</string>

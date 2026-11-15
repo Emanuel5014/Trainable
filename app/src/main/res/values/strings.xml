@@ -378,6 +378,35 @@
     <string name="changelog">Changelog:</string>
     <string name="downloading">Download in progress...</string>
     <string name="update_now">Update now</string>
+    <string name="update_channel_name">App updates</string>
+    <string name="update_channel_desc">Download progress of a Trainable update and when it is ready to install</string>
+    <string name="update_notification_downloading">Downloading Trainable %s</string>
+    <string name="update_progress_of">%1$s of %2$s</string>
+    <string name="update_verifying">Checking the file…</string>
+    <string name="update_cancel_download">Cancel download</string>
+    <string name="update_hide">Hide</string>
+    <string name="update_hide_note">You can hide this: the download goes on in the notification.</string>
+    <string name="update_install">Install</string>
+    <string name="update_ready_note">Downloaded and checked. Tap Install to finish.</string>
+    <string name="update_installing_note">Confirm in Android\'s window. If it did not open, tap Install.</string>
+    <string name="update_notification_ready">Update ready</string>
+    <string name="update_notification_ready_text">Tap to install Trainable %s</string>
+    <string name="update_notification_failed">Update not completed</string>
+    <string name="update_notification_failed_text">Trainable %s: open the app to see why</string>
+    <string name="update_failed_title">Update not completed</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_up_to_date">You have the latest version</string>
+    <string name="update_check_failed">Could not check for updates. %s</string>
+    <string name="update_error_network">No connection, or it dropped. Try again when you are online.</string>
+    <string name="update_error_rate_limited">GitHub is limiting requests from this network. Try again in an hour.</string>
+    <string name="update_error_server">GitHub did not answer as expected. Try again later.</string>
+    <string name="update_error_no_apk">This release has no Android app to download.</string>
+    <string name="update_error_storage">Not enough free space: %s needed.</string>
+    <string name="update_error_storage_plain">Not enough free space to download the update.</string>
+    <string name="update_error_corrupt">The downloaded file was damaged and has been deleted. Try again.</string>
+    <string name="update_error_install_conflict">Android cannot update: the installed app is signed with a different key (for example a debug build or another source). Back up your data before reinstalling it from GitHub.</string>
+    <string name="update_error_install_storage">Not enough free space to install the update.</string>
+    <string name="update_error_install">Android did not install the update. %s</string>
 
     <!-- Camera & Photos -->
     <string name="camera">Camera</string>

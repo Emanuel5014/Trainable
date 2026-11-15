@@ -22,6 +22,9 @@ android {
         manifestPlaceholders["appName"] = "Trainable"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Release list the updater reads instead of GitHub's; empty = GitHub. Set only in debug builds (see below).
+        buildConfigField("String", "UPDATE_FEED_URL", "\"\"")
     }
 
     buildTypes {
@@ -37,6 +40,12 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
             manifestPlaceholders["appName"] = "Trainable (debug)"
+            // Testing the updater: -Ptrainable.updateFeed=http://127.0.0.1:8765/releases.json turns it on in debug and
+            // fast builds and points it at a local release list. Never reaches a release build.
+            buildConfigField(
+                "String", "UPDATE_FEED_URL",
+                "\"${(project.findProperty("trainable.updateFeed") as String?).orEmpty()}\""
+            )
         }
         // The debug build without the debugger. A debuggable app runs its code interpreted, so animations stutter on a
         // phone; this one runs like a release build. Same app id and signing key as debug, so the data stays.

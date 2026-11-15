@@ -109,7 +109,6 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
-import com.emanuel5014.trainable.ui.components.UpdateDialog
 import com.emanuel5014.trainable.util.AppVersion
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
@@ -168,9 +167,6 @@ fun SettingsScreen(
     val backupStatus by viewModel.backupStatus.collectAsState()
     val webServerState by viewModel.webServerState.collectAsState()
 
-    val latestRelease by viewModel.latestRelease.collectAsState()
-    val isDownloading by viewModel.isDownloading.collectAsState()
-    val downloadProgress by viewModel.downloadProgress.collectAsState()
     val betaUpdates by viewModel.betaUpdates.collectAsState()
 
     val context = LocalContext.current
@@ -211,16 +207,6 @@ fun SettingsScreen(
             snackbarHostState.showSnackbar(it)
             viewModel.clearStatus()
         }
-    }
-
-    if (latestRelease != null) {
-        UpdateDialog(
-            release = latestRelease!!,
-            onDismiss = { viewModel.clearUpdate() },
-            onConfirm = { viewModel.downloadAndInstall(latestRelease!!) },
-            isDownloading = isDownloading,
-            downloadProgress = downloadProgress
-        )
     }
 
     val exportLauncher = rememberLauncherForActivityResult(

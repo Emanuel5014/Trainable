@@ -17,7 +17,6 @@ import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.ai.ModelImportError
 import com.emanuel5014.trainable.data.local.GymDatabaseInstance
 import com.emanuel5014.trainable.data.model.NavBarStyle
-import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -29,6 +28,9 @@ import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.TimerAdjustment
 import com.emanuel5014.trainable.util.UpdateManager
 import com.emanuel5014.trainable.util.UpdateChannel
+import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.util.UpdateCheck
+import com.emanuel5014.trainable.util.UpdateError
 import com.emanuel5014.trainable.BuildConfig
 import kotlinx.coroutines.flow.map
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
@@ -302,15 +304,6 @@ class SettingsViewModel @Inject constructor(
     private val _resetComplete = MutableStateFlow(false)
     val resetComplete: StateFlow<Boolean> = _resetComplete
 
-    private val _latestRelease = MutableStateFlow<GitHubRelease?>(null)
-    val latestRelease = _latestRelease.asStateFlow()
-
-    private val _isDownloading = MutableStateFlow(false)
-    val isDownloading = _isDownloading.asStateFlow()
-
-    private val _downloadProgress = MutableStateFlow(0f)
-    val downloadProgress = _downloadProgress.asStateFlow()
-
     /** Beta updates on or off; until the user chooses, a beta install counts as on (see [UpdateChannel.isBeta]). */
     val betaUpdates = userPrefsRepository.updateChannelBeta
         .map { UpdateChannel.isBeta(it, BuildConfig.VERSION_NAME) }
@@ -324,37 +317,28 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * The "Check for updates" button: an update opens the app-wide update dialog (see [UpdateManager]); otherwise a
+     * message says the app is up to date or why the check failed.
+     */
     fun checkForUpdates() {
         viewModelScope.launch {
-            _backupStatus.value = "Checking for updates..."
-            val release = updateManager.checkForUpdates()
-            if (release != null) {
-                _latestRelease.value = release
-                _backupStatus.value = "New update available: ${release.tagName}"
-            } else {
-                _backupStatus.value = "No updates found"
+            _backupStatus.value = context.getString(R.string.update_checking)
+            _backupStatus.value = when (val result = updateManager.check()) {
+                is UpdateCheck.Available -> null
+                UpdateCheck.UpToDate, UpdateCheck.Disabled -> context.getString(R.string.update_up_to_date)
+                is UpdateCheck.Failed -> context.getString(R.string.update_check_failed, updateErrorMessage(result.error))
             }
         }
     }
 
-    fun downloadAndInstall(release: GitHubRelease) {
-        viewModelScope.launch {
-            _isDownloading.value = true
-            updateManager.downloadAndInstall(release) { progress ->
-                _downloadProgress.value = progress
-            }.onSuccess {
-                _isDownloading.value = false
-                _latestRelease.value = null
-            }.onFailure {
-                _isDownloading.value = false
-                _backupStatus.value = "Download failed: ${it.message}"
-            }
+    private fun updateErrorMessage(error: UpdateError): String = context.getString(
+        when (error) {
+            UpdateError.RATE_LIMITED -> R.string.update_error_rate_limited
+            UpdateError.NETWORK -> R.string.update_error_network
+            else -> R.string.update_error_server
         }
-    }
-
-    fun clearUpdate() {
-        _latestRelease.value = null
-    }
+    )
 
     fun setWeeklyGoal(goal: Int) = state.setWeeklyGoal(goal)
 

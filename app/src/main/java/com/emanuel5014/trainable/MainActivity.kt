@@ -30,7 +30,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -49,7 +48,6 @@ import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.theme.LocalAppGlassBackdrop
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.ui.theme.overlayGlassBlur
-import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -75,6 +73,7 @@ import com.emanuel5014.trainable.ui.theme.SplashColors
 import com.emanuel5014.trainable.ui.theme.loadSplashColors
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.UpdateManager
+import com.emanuel5014.trainable.util.UpdateNotifications
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import com.emanuel5014.trainable.ui.components.BottomNavBarGlass
@@ -199,6 +198,7 @@ class MainActivity : FragmentActivity() {
         }
         super.onCreate(savedInstanceState)
         workoutIntentState = intent
+        if (intent?.action == UpdateNotifications.ACTION_SHOW_UPDATE) updateManager.openDialog()
 
         // For Android < 13, apply the stored language before setContent
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -241,21 +241,15 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            var showUpdateDialog by remember { mutableStateOf(false) }
-
-            var latestRelease by remember { mutableStateOf<GitHubRelease?>(null) }
-            var isDownloading by remember { mutableStateOf(false) }
-            var downloadProgress by remember { mutableFloatStateOf(0f) }
+            // One update dialog for the whole app: the check at start and the one from Settings both open it
+            val updateUi by updateManager.state.collectAsState()
             val scope = rememberCoroutineScope()
 
             var plansToImport by remember { mutableStateOf<List<WorkoutPlanExportDto>?>(null) }
             var jsonDataToImport by remember { mutableStateOf<String?>(null) }
 
             LaunchedEffect(Unit) {
-                latestRelease = updateManager.checkForUpdates()
-                if (latestRelease != null) {
-                    showUpdateDialog = true
-                }
+                updateManager.checkOnLaunch()
             }
 
             // Handle Import Intent (also triggered again via onNewIntent)
@@ -451,26 +445,13 @@ class MainActivity : FragmentActivity() {
                         )
                     }
 
-                    if (showUpdateDialog && latestRelease != null) {
+                    if (updateUi.dialogOpen) {
                         UpdateDialog(
-                            release = latestRelease!!,
-                            onDismiss = { showUpdateDialog = false },
-                            onConfirm = {
-                                isDownloading = true
-                                scope.launch {
-                                    updateManager.downloadAndInstall(latestRelease!!) { progress ->
-                                        downloadProgress = progress
-                                    }.onSuccess {
-                                        showUpdateDialog = false
-                                        isDownloading = false
-                                    }.onFailure {
-                                        isDownloading = false
-                                        // TODO: Show error
-                                    }
-                                }
-                            },
-                            isDownloading = isDownloading,
-                            downloadProgress = downloadProgress
+                            phase = updateUi.phase,
+                            onDownload = updateManager::startDownload,
+                            onInstall = updateManager::installNow,
+                            onCancelDownload = updateManager::cancelDownload,
+                            onDismiss = updateManager::dismissDialog
                         )
                     }
 
@@ -522,6 +503,7 @@ class MainActivity : FragmentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         workoutIntentState = intent
+        if (intent.action == UpdateNotifications.ACTION_SHOW_UPDATE) updateManager.openDialog()
     }
 
     override fun onResume() {

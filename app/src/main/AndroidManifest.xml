@@ -81,6 +81,15 @@
             android:foregroundServiceType="dataSync"
             android:exported="false" />
 
+        <service
+            android:name=".util.UpdateDownloadService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
+
+        <receiver
+            android:name=".util.UpdateInstallReceiver"
+            android:exported="false" />
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

@@ -377,6 +377,35 @@
     <string name="changelog">Änderungen:</string>
     <string name="downloading">Download läuft...</string>
     <string name="update_now">Jetzt aktualisieren</string>
+    <string name="update_channel_name">App-Updates</string>
+    <string name="update_channel_desc">Download-Fortschritt eines Trainable-Updates und wann es installiert werden kann</string>
+    <string name="update_notification_downloading">Trainable %s wird heruntergeladen</string>
+    <string name="update_progress_of">%1$s von %2$s</string>
+    <string name="update_verifying">Datei wird geprüft…</string>
+    <string name="update_cancel_download">Download abbrechen</string>
+    <string name="update_hide">Ausblenden</string>
+    <string name="update_hide_note">Du kannst das ausblenden: Der Download läuft in der Benachrichtigung weiter.</string>
+    <string name="update_install">Installieren</string>
+    <string name="update_ready_note">Heruntergeladen und geprüft. Tippe auf Installieren, um abzuschließen.</string>
+    <string name="update_installing_note">Bestätige im Android-Fenster. Falls es sich nicht geöffnet hat, tippe auf Installieren.</string>
+    <string name="update_notification_ready">Update bereit</string>
+    <string name="update_notification_ready_text">Tippe, um Trainable %s zu installieren</string>
+    <string name="update_notification_failed">Update nicht abgeschlossen</string>
+    <string name="update_notification_failed_text">Trainable %s: Öffne die App, um den Grund zu sehen</string>
+    <string name="update_failed_title">Update nicht abgeschlossen</string>
+    <string name="update_checking">Suche nach Updates…</string>
+    <string name="update_up_to_date">Du hast die neueste Version</string>
+    <string name="update_check_failed">Suche nach Updates nicht möglich. %s</string>
+    <string name="update_error_network">Keine Verbindung oder Verbindung abgebrochen. Versuche es erneut, wenn du online bist.</string>
+    <string name="update_error_rate_limited">GitHub begrenzt Anfragen aus diesem Netzwerk. Versuche es in einer Stunde erneut.</string>
+    <string name="update_error_server">GitHub hat nicht wie erwartet geantwortet. Versuche es später erneut.</string>
+    <string name="update_error_no_apk">Diese Version enthält keine Android-App zum Herunterladen.</string>
+    <string name="update_error_storage">Nicht genug freier Speicher: %s benötigt.</string>
+    <string name="update_error_storage_plain">Nicht genug freier Speicher, um das Update herunterzuladen.</string>
+    <string name="update_error_corrupt">Die heruntergeladene Datei war beschädigt und wurde gelöscht. Versuche es erneut.</string>
+    <string name="update_error_install_conflict">Android kann nicht aktualisieren: Die installierte App ist mit einem anderen Schlüssel signiert (z. B. ein Debug-Build oder eine andere Quelle). Sichere deine Daten, bevor du sie von GitHub neu installierst.</string>
+    <string name="update_error_install_storage">Nicht genug freier Speicher, um das Update zu installieren.</string>
+    <string name="update_error_install">Android hat das Update nicht installiert. %s</string>
 
     <!-- Camera & Photos -->
     <string name="camera">Kamera</string>

@@ -377,6 +377,35 @@
     <string name="changelog">Novidades:</string>
     <string name="downloading">Baixando...</string>
     <string name="update_now">Atualizar agora</string>
+    <string name="update_channel_name">Atualizações do app</string>
+    <string name="update_channel_desc">Progresso do download de uma atualização do Trainable e quando está pronta para instalar</string>
+    <string name="update_notification_downloading">Baixando Trainable %s</string>
+    <string name="update_progress_of">%1$s de %2$s</string>
+    <string name="update_verifying">Verificando o arquivo…</string>
+    <string name="update_cancel_download">Cancelar download</string>
+    <string name="update_hide">Ocultar</string>
+    <string name="update_hide_note">Você pode ocultar: o download continua na notificação.</string>
+    <string name="update_install">Instalar</string>
+    <string name="update_ready_note">Baixada e verificada. Toque em Instalar para concluir.</string>
+    <string name="update_installing_note">Confirme na janela do Android. Se não abriu, toque em Instalar.</string>
+    <string name="update_notification_ready">Atualização pronta</string>
+    <string name="update_notification_ready_text">Toque para instalar o Trainable %s</string>
+    <string name="update_notification_failed">Atualização não concluída</string>
+    <string name="update_notification_failed_text">Trainable %s: abra o app para ver o motivo</string>
+    <string name="update_failed_title">Atualização não concluída</string>
+    <string name="update_checking">Procurando atualizações…</string>
+    <string name="update_up_to_date">Você tem a versão mais recente</string>
+    <string name="update_check_failed">Não foi possível procurar atualizações. %s</string>
+    <string name="update_error_network">Sem conexão, ou ela caiu. Tente de novo quando estiver online.</string>
+    <string name="update_error_rate_limited">O GitHub está limitando as solicitações desta rede. Tente de novo em uma hora.</string>
+    <string name="update_error_server">O GitHub não respondeu como esperado. Tente mais tarde.</string>
+    <string name="update_error_no_apk">Esta versão não contém o app Android para baixar.</string>
+    <string name="update_error_storage">Espaço livre insuficiente: são necessários %s.</string>
+    <string name="update_error_storage_plain">Espaço livre insuficiente para baixar a atualização.</string>
+    <string name="update_error_corrupt">O arquivo baixado estava danificado e foi apagado. Tente de novo.</string>
+    <string name="update_error_install_conflict">O Android não pode atualizar: o app instalado é assinado com outra chave (por exemplo uma versão de depuração ou outra fonte). Faça um backup antes de reinstalá-lo pelo GitHub.</string>
+    <string name="update_error_install_storage">Espaço livre insuficiente para instalar a atualização.</string>
+    <string name="update_error_install">O Android não instalou a atualização. %s</string>
 
     <!-- Camera & Photos -->
     <string name="camera">Câmera</string>

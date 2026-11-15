@@ -18,5 +18,9 @@ data class GitHubRelease(
 data class GitHubAsset(
     @SerialName("name") val name: String,
     @SerialName("browser_download_url") val downloadUrl: String,
-    @SerialName("content_type") val contentType: String
+    @SerialName("content_type") val contentType: String = "",
+    /** Bytes; 0 when unknown. */
+    @SerialName("size") val size: Long = 0,
+    /** "sha256:<hex>" for files GitHub hashed on upload (since mid-2025); null on older releases. */
+    @SerialName("digest") val digest: String? = null
 )
