@@ -451,6 +451,10 @@ class MainActivity : FragmentActivity() {
                             onDownload = updateManager::startDownload,
                             onInstall = updateManager::installNow,
                             onCancelDownload = updateManager::cancelDownload,
+                            onSkip = updateManager::skipVersion,
+                            onOpenRelease = { url ->
+                                runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }
+                            },
                             onDismiss = updateManager::dismissDialog
                         )
                     }

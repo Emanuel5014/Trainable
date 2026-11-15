@@ -91,18 +91,23 @@ class UpdateManager @Inject constructor(
     suspend fun isBetaChannel(): Boolean =
         UpdateChannel.isBeta(preferences.updateChannelBeta.first(), BuildConfig.VERSION_NAME)
 
-    /** The check at app start: once per process, opening the dialog only when there is something to offer. */
+    /**
+     * The check at app start: once per process, and only once the onboarding is over (a new user meets the app
+     * first). It opens the dialog only for an update the user can install and did not skip.
+     */
     suspend fun checkOnLaunch() {
+        preferences.hasCompletedOnboarding.first { it }
         if (!launchChecked.compareAndSet(false, true)) return
         withContext(Dispatchers.IO) { cleanUpOnLaunch() }
-        check()
+        check(fromLaunch = true)
     }
 
     /**
      * Looks for an update and opens the dialog when there is one. While a download or an install is under way it
-     * only reopens the dialog on it.
+     * only reopens the dialog on it. [fromLaunch] keeps the dialog closed for a skipped version and for a copy
+     * signed with another key (the "Check for updates" button still shows both).
      */
-    suspend fun check(): UpdateCheck = withContext(Dispatchers.IO) {
+    suspend fun check(fromLaunch: Boolean = false): UpdateCheck = withContext(Dispatchers.IO) {
         if (!isEnabled) return@withContext UpdateCheck.Disabled
         checkMutex.withLock {
             _state.value.let { current ->
@@ -118,13 +123,22 @@ class UpdateManager @Inject constructor(
                     deleteStale(release.tagName)
                     val asset = UpdateFiles.apkAsset(release)
                     val apk = UpdateFiles.apkFile(updateDir, release.tagName)
+                    val otherSource = UpdateSignature.isReleaseSigned(
+                        UpdateSignature.installed(context), BuildConfig.RELEASE_CERT_SHA256
+                    ) == false
                     // A file from an earlier try counts only if it still matches what GitHub lists now
-                    val phase = if (asset != null && apk.isFile && UpdateFiles.matches(apk, asset)) {
-                        UpdatePhase.ReadyToInstall(release)
-                    } else {
-                        UpdatePhase.Available(release)
+                    val phase = when {
+                        otherSource -> UpdatePhase.Failed(release, UpdateError.OTHER_SOURCE)
+                        asset != null && apk.isFile && UpdateFiles.matches(apk, asset) -> UpdatePhase.ReadyToInstall(release)
+                        else -> UpdatePhase.Available(release)
                     }
-                    _state.update { if (it.isBusy) it.copy(dialogOpen = true) else UpdateUiState(phase, dialogOpen = true) }
+                    val open = !fromLaunch || (!otherSource && release.tagName != preferences.updateSkippedTag.first())
+                    _state.update {
+                        when {
+                            it.isBusy -> it.copy(dialogOpen = it.dialogOpen || open)
+                            else -> UpdateUiState(phase, dialogOpen = open)
+                        }
+                    }
                 }
                 UpdateCheck.UpToDate -> {
                     deleteStale(null)
@@ -162,6 +176,13 @@ class UpdateManager @Inject constructor(
     } catch (e: Exception) {
         Log.w(TAG, "Release list unreadable", e)
         UpdateCheck.Failed(UpdateError.SERVER)
+    }
+
+    /** "Skip this version": the start of the app no longer offers this release (a newer one is offered again). */
+    fun skipVersion() {
+        val release = _state.value.release ?: return
+        _state.update { it.copy(dialogOpen = false) }
+        scope.launch { preferences.setUpdateSkippedTag(release.tagName) }
     }
 
     fun openDialog() {
@@ -229,6 +250,7 @@ class UpdateManager @Inject constructor(
                 apk.delete()
                 throw UpdateFailure(UpdateError.CORRUPT, null)
             }
+            checkSignature(apk)
             install(release, apk)
         } catch (e: CancellationException) {
             throw e
@@ -313,6 +335,23 @@ class UpdateManager @Inject constructor(
         } finally {
             cancelHandle?.dispose()
         }
+    }
+
+    /**
+     * Refuses an APK Android would not install over this app, with a message of its own: another package (a debug
+     * build uploaded by mistake) or certificates not shared with this install. Unknown certificates pass: Android
+     * still decides.
+     */
+    private fun checkSignature(apk: File) {
+        val archive = UpdateSignature.archive(context, apk) ?: return
+        val error = when {
+            archive.packageName != context.packageName -> UpdateError.WRONG_APP
+            UpdateSignature.compatible(UpdateSignature.installed(context), archive.certs) == false -> UpdateError.INSTALL_CONFLICT
+            else -> return
+        }
+        Log.w(TAG, "APK refused: $error (${archive.packageName})")
+        apk.delete()
+        throw UpdateFailure(error, archive.packageName)
     }
 
     /** Installs the APK already downloaded and checked; downloads it again when it is gone (cache cleared). */

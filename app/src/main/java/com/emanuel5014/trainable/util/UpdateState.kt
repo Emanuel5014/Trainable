@@ -16,7 +16,14 @@ enum class UpdateError {
     STORAGE,
     /** The downloaded file does not match the size or the SHA-256 that GitHub lists. */
     CORRUPT,
-    /** Android refused the update: the installed app is signed with another key (another source or a debug build). */
+    /**
+     * This copy of the app is not signed with the key of the GitHub releases (another store, a build of its own):
+     * Android would refuse the update, so it is not downloaded. Found before downloading.
+     */
+    OTHER_SOURCE,
+    /** The release's APK is another app (another package name), found after downloading. */
+    WRONG_APP,
+    /** The APK is signed with a key Android will not accept over this install (found after downloading, or by Android). */
     INSTALL_CONFLICT,
     /** Android had no room to install. */
     INSTALL_STORAGE,
@@ -47,6 +54,11 @@ sealed interface UpdatePhase {
 
     data class Failed(val release: GitHubRelease?, val error: UpdateError, val detail: String? = null) : UpdatePhase
 }
+
+/** Errors that trying again cannot fix: the dialog offers the release page instead of "Retry". */
+val UpdateError.isFinal: Boolean
+    get() = this == UpdateError.OTHER_SOURCE || this == UpdateError.WRONG_APP ||
+        this == UpdateError.NO_APK || this == UpdateError.INSTALL_CONFLICT
 
 /** The phase plus whether the update dialog is on screen; the dialog can be hidden while a download goes on. */
 data class UpdateUiState(

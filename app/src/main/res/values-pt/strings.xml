@@ -406,6 +406,11 @@
     <string name="update_error_install_conflict">O Android não pode atualizar: o app instalado é assinado com outra chave (por exemplo uma versão de depuração ou outra fonte). Faça um backup antes de reinstalá-lo pelo GitHub.</string>
     <string name="update_error_install_storage">Espaço livre insuficiente para instalar a atualização.</string>
     <string name="update_error_install">O Android não instalou a atualização. %s</string>
+    <string name="update_skip_version">Pular esta versão</string>
+    <string name="update_metered_note">Você está em uma conexão limitada: o download usa %s de dados.</string>
+    <string name="update_open_release">Abrir no GitHub</string>
+    <string name="update_error_other_source">Esta cópia do Trainable é assinada com uma chave diferente da das versões do GitHub (por exemplo, vem de outra loja ou é uma compilação própria), então o Android não pode atualizá-la por aqui. Para mudar para a versão do GitHub: faça um backup, desinstale o app, instale o APK pela página da versão e restaure o backup.</string>
+    <string name="update_error_wrong_app">O arquivo desta versão não é este app, por isso não foi instalado. Avise no GitHub.</string>
 
     <!-- Camera & Photos -->
     <string name="camera">Câmera</string>

@@ -11,7 +11,9 @@ data class GitHubRelease(
     @SerialName("assets") val assets: List<GitHubAsset> = emptyList(),
     /** Marked "Pre-release" on GitHub: only the beta channel is offered it. */
     @SerialName("prerelease") val prerelease: Boolean = false,
-    @SerialName("draft") val draft: Boolean = false
+    @SerialName("draft") val draft: Boolean = false,
+    /** The release page on GitHub, where the APK can be downloaded by hand. */
+    @SerialName("html_url") val htmlUrl: String = ""
 )
 
 @Serializable

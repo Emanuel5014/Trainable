@@ -406,6 +406,11 @@
     <string name="update_error_install_conflict">Android ne peut pas mettre à jour : l\'app installée est signée avec une autre clé (par exemple une version de débogage ou une autre source). Sauvegardez vos données avant de la réinstaller depuis GitHub.</string>
     <string name="update_error_install_storage">Espace libre insuffisant pour installer la mise à jour.</string>
     <string name="update_error_install">Android n\'a pas installé la mise à jour. %s</string>
+    <string name="update_skip_version">Ignorer cette version</string>
+    <string name="update_metered_note">Vous êtes sur une connexion limitée : le téléchargement utilise %s de données.</string>
+    <string name="update_open_release">Ouvrir sur GitHub</string>
+    <string name="update_error_other_source">Cette copie de Trainable est signée avec une clé différente de celle des versions GitHub (par exemple elle vient d\'une autre boutique ou d\'une compilation personnelle), Android ne peut donc pas la mettre à jour d\'ici. Pour passer à la version GitHub : sauvegardez vos données, désinstallez l\'app, installez l\'APK depuis la page de la version et restaurez la sauvegarde.</string>
+    <string name="update_error_wrong_app">Le fichier de cette version n\'est pas cette app, il n\'a donc pas été installé. Signalez-le sur GitHub.</string>
 
     <!-- Camera & Photos -->
     <string name="camera">Appareil photo</string>

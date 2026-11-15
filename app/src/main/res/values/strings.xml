@@ -407,6 +407,11 @@
     <string name="update_error_install_conflict">Android cannot update: the installed app is signed with a different key (for example a debug build or another source). Back up your data before reinstalling it from GitHub.</string>
     <string name="update_error_install_storage">Not enough free space to install the update.</string>
     <string name="update_error_install">Android did not install the update. %s</string>
+    <string name="update_skip_version">Skip this version</string>
+    <string name="update_metered_note">You are on a metered connection: the download uses %s of data.</string>
+    <string name="update_open_release">Open on GitHub</string>
+    <string name="update_error_other_source">This copy of Trainable is signed with a different key from the GitHub releases (for example it comes from another store or is a build of its own), so Android cannot update it from here. To switch to the GitHub version: back up your data, uninstall the app, install the APK from the release page and restore the backup.</string>
+    <string name="update_error_wrong_app">The file in this release is not this app, so it was not installed. Please report it on GitHub.</string>
 
     <!-- Camera & Photos -->
     <string name="camera">Camera</string>

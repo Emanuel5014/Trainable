@@ -158,6 +158,8 @@ class UserPreferencesRepository(
      * version (a beta install stays on beta). Device state like the last backup run: never in a backup.
      */
     val UPDATE_CHANNEL_BETA = booleanPreferencesKey("update_channel_beta")
+    /** Android updater: the release tag the user chose to skip; the start of the app stays quiet about it. Never in a backup. */
+    val UPDATE_SKIPPED_TAG = stringPreferencesKey("update_skipped_tag")
     /** The last warmup the lifter started, in seconds: the warmup slider opens on it. */
     val LAST_WARMUP_SECONDS = intPreferencesKey("last_warmup_seconds")
     /** The last rest chosen when adding or swapping an exercise in a workout, in seconds: that slider opens on it. */
@@ -586,6 +588,16 @@ class UserPreferencesRepository(
     /** The beta-updates choice, or null while the user never touched the switch (see [UPDATE_CHANNEL_BETA]). */
     val updateChannelBeta: Flow<Boolean?> = dataStore.data
         .map { preferences -> preferences[UPDATE_CHANNEL_BETA] }
+
+    /** The release tag skipped with "Skip this version", or null (see [UPDATE_SKIPPED_TAG]). */
+    val updateSkippedTag: Flow<String?> = dataStore.data
+        .map { preferences -> preferences[UPDATE_SKIPPED_TAG] }
+
+    suspend fun setUpdateSkippedTag(tag: String) {
+        dataStore.edit { preferences ->
+            preferences[UPDATE_SKIPPED_TAG] = tag
+        }
+    }
 
     suspend fun setUpdateChannelBeta(beta: Boolean) {
         dataStore.edit { preferences ->

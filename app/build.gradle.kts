@@ -50,10 +50,18 @@ android {
 
         // Release list the updater reads instead of GitHub's; empty = GitHub. Set only in debug builds (see below).
         buildConfigField("String", "UPDATE_FEED_URL", "\"\"")
+        // SHA-256 of the certificate the GitHub releases are signed with; empty = not checked (see release below)
+        buildConfigField("String", "RELEASE_CERT_SHA256", "\"\"")
     }
 
     buildTypes {
         release {
+            // The key every GitHub release is signed with (CN=Emanuel5014). A copy signed otherwise cannot take
+            // those updates, so the updater says so instead of downloading them.
+            buildConfigField(
+                "String", "RELEASE_CERT_SHA256",
+                "\"e7410df96be8deec8243dce02f58da247ca086c31a8a5254ea8b668fbc8be479\""
+            )
             isMinifyEnabled = false
             manifestPlaceholders["appName"] = "Trainable"
             proguardFiles(
@@ -70,6 +78,11 @@ android {
             buildConfigField(
                 "String", "UPDATE_FEED_URL",
                 "\"${(project.findProperty("trainable.updateFeed") as String?).orEmpty()}\""
+            )
+            // Testing the "other key" case: -Ptrainable.updateCert=<sha256 that is not the debug key's>
+            buildConfigField(
+                "String", "RELEASE_CERT_SHA256",
+                "\"${(project.findProperty("trainable.updateCert") as String?).orEmpty()}\""
             )
         }
         // The debug build without the debugger. A debuggable app runs its code interpreted, so animations stutter on a

@@ -37,7 +37,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
+import android.net.ConnectivityManager
 import android.text.format.Formatter
+import com.emanuel5014.trainable.util.isFinal
 import com.emanuel5014.trainable.util.UpdateError
 import com.emanuel5014.trainable.util.UpdateFiles
 import com.emanuel5014.trainable.util.UpdatePhase
@@ -54,6 +56,8 @@ fun UpdateDialog(
     onDownload: () -> Unit,
     onInstall: () -> Unit,
     onCancelDownload: () -> Unit,
+    onSkip: () -> Unit,
+    onOpenRelease: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     val release = when (phase) {
@@ -70,20 +74,25 @@ fun UpdateDialog(
         parseChangelog(release.body)
     }
     val apkSize = UpdateFiles.apkAsset(release)?.size ?: 0L
+    // Nothing went wrong yet when this copy simply cannot take GitHub's updates: no error title for that
+    val showsFailure = phase is UpdatePhase.Failed && phase.error != UpdateError.OTHER_SOURCE
+    val metered = remember(phase is UpdatePhase.Available) {
+        context.getSystemService(ConnectivityManager::class.java)?.isActiveNetworkMetered == true
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                imageVector = if (phase is UpdatePhase.Failed) Icons.Rounded.ErrorOutline else Icons.Rounded.NewReleases,
+                imageVector = if (showsFailure) Icons.Rounded.ErrorOutline else Icons.Rounded.NewReleases,
                 contentDescription = null,
-                tint = if (phase is UpdatePhase.Failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                tint = if (showsFailure) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         },
         title = {
             Text(
-                text = stringResource(if (phase is UpdatePhase.Failed) R.string.update_failed_title else R.string.update_available),
+                text = stringResource(if (showsFailure) R.string.update_failed_title else R.string.update_available),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -102,6 +111,15 @@ fun UpdateDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.update_is_beta),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+                if (phase is UpdatePhase.Available && metered && apkSize > 0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.update_metered_note, Formatter.formatShortFileSize(context, apkSize)),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.tertiary
@@ -161,6 +179,12 @@ fun UpdateDialog(
                 }
 
                 when (phase) {
+                    is UpdatePhase.Available -> TextButton(
+                        onClick = onSkip,
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        Text(stringResource(R.string.update_skip_version))
+                    }
                     is UpdatePhase.Downloading, is UpdatePhase.Verifying -> {
                         Spacer(modifier = Modifier.height(16.dp))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -218,7 +242,13 @@ fun UpdateDialog(
                     Button(onClick = onDismiss) { Text(stringResource(R.string.update_hide)) }
                 is UpdatePhase.ReadyToInstall, is UpdatePhase.Installing ->
                     Button(onClick = onInstall) { Text(stringResource(R.string.update_install)) }
-                is UpdatePhase.Failed -> Button(onClick = onDownload) { Text(stringResource(R.string.retry)) }
+                is UpdatePhase.Failed -> when {
+                    !phase.error.isFinal -> Button(onClick = onDownload) { Text(stringResource(R.string.retry)) }
+                    release.htmlUrl.isNotEmpty() -> Button(onClick = { onOpenRelease(release.htmlUrl) }) {
+                        Text(stringResource(R.string.update_open_release))
+                    }
+                    else -> Unit
+                }
                 UpdatePhase.Idle -> Unit
             }
         },
@@ -248,6 +278,8 @@ fun updateErrorText(error: UpdateError, detail: String?): String = when (error) 
         stringResource(R.string.update_error_storage_plain)
     }
     UpdateError.CORRUPT -> stringResource(R.string.update_error_corrupt)
+    UpdateError.OTHER_SOURCE -> stringResource(R.string.update_error_other_source)
+    UpdateError.WRONG_APP -> stringResource(R.string.update_error_wrong_app)
     UpdateError.INSTALL_CONFLICT -> stringResource(R.string.update_error_install_conflict)
     UpdateError.INSTALL_STORAGE -> stringResource(R.string.update_error_install_storage)
     UpdateError.INSTALL_FAILED -> stringResource(R.string.update_error_install, detail.orEmpty()).trim()
