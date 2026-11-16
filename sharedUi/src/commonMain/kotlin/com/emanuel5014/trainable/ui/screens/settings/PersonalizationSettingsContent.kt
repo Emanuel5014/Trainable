@@ -156,7 +156,8 @@ fun PersonalizationSettingsContent(
     glassParts: Set<GlassPart> = GlassPart.entries.toSet(),
     /** What the overlays switch says; Android names the version it needs, iOS has no such limit. */
     overlaysDescription: org.jetbrains.compose.resources.StringResource = Res.string.glass_part_overlays_desc,
-    dynamicColorUnsupportedText: org.jetbrains.compose.resources.StringResource = Res.string.dynamic_color_not_supported
+    /** False on iOS: the system never shares the wallpaper, so there is no wallpaper-colour switch at all. */
+    showDynamicColor: Boolean = true
 ) {
     val dynamicColor by state.dynamicColor.collectAsState()
     val dynamicColorSeed by state.dynamicColorSeed.collectAsState()
@@ -305,31 +306,34 @@ fun PersonalizationSettingsContent(
                         Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                     }
 
-                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+                    // iOS gives apps no way to read the wallpaper, so the row is not shown there
+                    if (showDynamicColor) {
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column {
-                                val isDynamicColorSupported = dynamicColorSupported
-                                Text(stringResource(Res.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = if (isDynamicColorSupported) OnSurface else OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
-                                Text(
-                                    if (isDynamicColorSupported) stringResource(Res.string.dynamic_color_desc) else stringResource(dynamicColorUnsupportedText),
-                                    style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
-                                )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    val isDynamicColorSupported = dynamicColorSupported
+                                    Text(stringResource(Res.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = if (isDynamicColorSupported) OnSurface else OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        if (isDynamicColorSupported) stringResource(Res.string.dynamic_color_desc) else stringResource(Res.string.dynamic_color_not_supported),
+                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            SettingsSwitch(
+                                checked = dynamicColor && dynamicColorSupported,
+                                onCheckedChange = { state.setDynamicColor(it) },
+                                enabled = dynamicColorSupported
+                            )
                         }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        SettingsSwitch(
-                            checked = dynamicColor && dynamicColorSupported,
-                            onCheckedChange = { state.setDynamicColor(it) },
-                            enabled = dynamicColorSupported
-                        )
                     }
 
                     if (dynamicColor && dynamicColorSupported && wallpaperColors.isNotEmpty()) {

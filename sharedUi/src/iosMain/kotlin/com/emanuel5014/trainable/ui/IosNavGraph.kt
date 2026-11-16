@@ -73,7 +73,6 @@ import com.emanuel5014.trainable.ui.navigation.CompareSessions
 import com.emanuel5014.trainable.ui.screens.settings.PersonalizationSettingsContent
 import com.emanuel5014.trainable.ui.screens.settings.NotificationSettingsContent
 import com.emanuel5014.trainable.sharedui.resources.Res
-import com.emanuel5014.trainable.sharedui.resources.wallpaper_colors_unavailable
 import com.emanuel5014.trainable.ui.screens.settings.AiProvidersModel
 import com.emanuel5014.trainable.ui.screens.settings.AiSettingsContent
 import com.emanuel5014.trainable.sharedui.resources.glass_part_overlays_desc_ios
@@ -245,7 +244,7 @@ internal fun IosNavGraph(
                 val scope = rememberCoroutineScope()
                 val state = remember { SettingsState(IosAppGraph.users, IosAppGraph.preferences, scope) }
                 PersonalizationSettingsContent(onNavigateBack = { navController.popBackStack() }, state = state,
-                    dynamicColorUnsupportedText = Res.string.wallpaper_colors_unavailable,
+                    showDynamicColor = false,
                     glassSupported = true,
                     // Every part, Overlays included (blur behind sheets and dialogs, IosOverlayGlass.kt)
                     glassParts = com.emanuel5014.trainable.data.model.GlassPart.entries.toSet(),

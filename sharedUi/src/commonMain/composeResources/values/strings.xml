@@ -627,7 +627,6 @@
         <item quantity="one">Used in %1$d workout</item>
         <item quantity="other">Used in %1$d workouts</item>
     </plurals>
-    <string name="wallpaper_colors_unavailable">Colors from the wallpaper aren't available on this device.</string>
     <string name="liquid_glass_unavailable">Liquid Glass isn't available in this version on iOS.</string>
     <string name="notifications_unavailable">Notifications aren't available in this version on iOS.</string>
     <string name="app_palette">App Palette</string>
