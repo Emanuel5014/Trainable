@@ -3,7 +3,8 @@ import WidgetKit
 
 // The home-screen and Lock Screen widgets, design "B · Anelli": the app theme's primary → tertiary gradient (the TR
 // logo's blue → teal in the default theme) on the ring and the main button, SF Rounded numbers, the TR mark in the
-// header. Same three widgets as Android: Routine, Weekly goal, Quick start (Lock Screen only: no 1×1 on iOS).
+// header. Same three widgets as Android: Routine, Weekly goal, Quick start (Lock Screen only: no 1×1 on iOS), plus a
+// Lock Screen 1×1 that only opens the app where it was left.
 
 // MARK: - Timeline
 
@@ -90,6 +91,29 @@ struct QuickStartHomeWidget: Widget {
         .configurationDisplayName(GalleryText.quickName)
         .description(GalleryText.quickDescription)
         .supportedFamilies([.accessoryCircular])
+    }
+}
+
+/// Lock Screen 1×1 that only opens the app, like tapping its icon: whatever screen was open (a workout, the rest
+/// timer, a half-edited routine) is still there. trainable://open starts or resumes nothing (IosWidgetLinks).
+struct OpenAppLockWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "TrainableOpenApp", provider: OpenAppProvider()) { _ in
+            OpenAppLockView().containerBackground(for: .widget) { Color.clear }
+        }
+        .configurationDisplayName("Trainable")
+        .description(GalleryText.openDescription)
+        .supportedFamilies([.accessoryCircular])
+    }
+}
+
+/// Nothing to show changes, so one entry for good.
+struct OpenAppProvider: TimelineProvider {
+    struct Entry: TimelineEntry { let date: Date }
+    func placeholder(in context: Context) -> Entry { Entry(date: Date()) }
+    func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) { completion(Entry(date: Date())) }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
+        completion(Timeline(entries: [Entry(date: Date())], policy: .never))
     }
 }
 
@@ -588,6 +612,23 @@ struct QuickStartWidgetView: View {
     }
 }
 
+// MARK: - Open app
+
+/// The TR mark on the system's round Lock Screen backdrop.
+struct OpenAppLockView: View {
+    var body: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+            Image("TrainableLogo").renderingMode(.template).resizable().scaledToFit()
+                .padding(13)
+                .widgetAccentable()
+        }
+        .widgetURL(URL(string: "trainable://open"))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(GalleryText.openTrainable)
+    }
+}
+
 // MARK: - Gallery texts
 
 /// Widget names in the widget gallery, in the phone's language (the same strings as the Android widgets).
@@ -606,19 +647,20 @@ enum GalleryText {
     static var quickName: String { text(4) }
     static var quickDescription: String { text(5) }
     static var openTrainable: String { text(6) }
+    static var openDescription: String { text(7) }
 
     private static let table: [String: [String]] = [
         "en": ["Workout", "Suggested workout and quick start", "Weekly Goal", "Weekly workout progress tracker",
-               "Quick start", "Start or resume your workout with one tap", "Open Trainable"],
+               "Quick start", "Start or resume your workout with one tap", "Open Trainable", "Open the app right where you left it"],
         "it": ["Allenamento", "Allenamento suggerito e avvio rapido", "Obiettivo Settimanale", "Progressi allenamenti settimanali",
-               "Avvio rapido", "Avvia o riprendi l'allenamento con un tocco", "Apri Trainable"],
+               "Avvio rapido", "Avvia o riprendi l'allenamento con un tocco", "Apri Trainable", "Apri l'app dove l'avevi lasciata"],
         "de": ["Training", "Vorgeschlagenes Training und Schnellstart", "Wochenziel", "Wöchentliche Fortschrittsverfolgung",
-               "Schnellstart", "Training mit einem Tipp starten oder fortsetzen", "Trainable öffnen"],
+               "Schnellstart", "Training mit einem Tipp starten oder fortsetzen", "Trainable öffnen", "Öffnet die App dort, wo du aufgehört hast"],
         "es": ["Entrenamiento", "Entrenamiento sugerido e inicio rápido", "Objetivo Semanal", "Seguimiento del progreso semanal",
-               "Inicio rápido", "Inicia o reanuda tu entrenamiento con un toque", "Abrir Trainable"],
+               "Inicio rápido", "Inicia o reanuda tu entrenamiento con un toque", "Abrir Trainable", "Abre la app donde la dejaste"],
         "fr": ["Entraînement", "Entraînement suggéré et démarrage rapide", "Objectif Hebdomadaire", "Suivi des objectifs hebdomadaires",
-               "Démarrage rapide", "Démarrez ou reprenez votre séance d'un geste", "Ouvrir Trainable"],
+               "Démarrage rapide", "Démarrez ou reprenez votre séance d'un geste", "Ouvrir Trainable", "Ouvre l'app là où vous l'avez laissée"],
         "pt": ["Treino", "Treino sugerido e início rápido", "Meta Semanal", "Acompanhamento da meta semanal",
-               "Início rápido", "Inicie ou retome seu treino com um toque", "Abrir Trainable"],
+               "Início rápido", "Inicie ou retome seu treino com um toque", "Abrir Trainable", "Abre o app onde você parou"],
     ]
 }

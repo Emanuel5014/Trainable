@@ -10,6 +10,7 @@ struct TrainableTimerWidgets: WidgetBundle {
         RoutineHomeWidget()
         WeeklyGoalHomeWidget()
         QuickStartHomeWidget()
+        OpenAppLockWidget()
     }
 }
 
