@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui
 
+import com.emanuel5014.trainable.data.model.ThemeSettings
+import com.emanuel5014.trainable.ui.theme.AppColorSchemes
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -59,7 +62,6 @@ import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.createSettingsDataStore
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.google_sans_flex
-import com.emanuel5014.trainable.ui.screens.settings.LocalPaletteColors
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
 import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
 import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
@@ -132,16 +134,13 @@ private fun IosOnboardingRoot(content: @Composable () -> Unit) {
         content()
         return
     }
-    val palette by preferences.themePalette.collectAsState(initial = 0)
-    val seed by preferences.dynamicColorSeed.collectAsState(initial = null)
-    val style by preferences.themeStyle.collectAsState(initial = 0)
+    val theme by preferences.themeSettings.collectAsState(initial = ThemeSettings())
     val mode by preferences.themeMode.collectAsState(initial = null)
     val dark = when (mode) { 1 -> false; 2 -> true; 0 -> isSystemInDarkTheme(); else -> true }
-    IosTheme(palette, seed, style, dark) {
+    IosTheme(theme, dark) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             if (completed == false && mode != null) {
                 CompositionLocalProvider(
-                    LocalPaletteColors provides IosPaletteColors,
                     com.emanuel5014.trainable.ui.components.LocalShowMessage provides rememberIosShowMessage()
                 ) {
                     IosOnboarding()
@@ -242,8 +241,7 @@ private fun TrainableIosApp() {
             IosAppGraph.analyticsPreferences, analyticsText, flowOf(language), scope)
     }
     val uiState by state.uiState.collectAsState()
-    val seedColor by preferences.dynamicColorSeed.collectAsState(initial = null)
-    val themeStyle by preferences.themeStyle.collectAsState(initial = 0)
+    val themeSettings by preferences.themeSettings.collectAsState(initial = ThemeSettings())
     val themeMode by preferences.themeMode.collectAsState(initial = null)
     val exerciseMediaEnabled by preferences.exerciseMediaEnabled.collectAsState(initial = false)
     val distanceUnit by preferences.distanceUnit.collectAsState(initial = "km")
@@ -261,7 +259,7 @@ private fun TrainableIosApp() {
         else -> isSystemInDarkTheme()
     }
 
-    IosTheme(paletteIndex = uiState.themePalette, seedColor = seedColor, themeStyle = themeStyle, darkTheme = isDark) {
+    IosTheme(themeSettings, darkTheme = isDark) {
         // As on Android, nothing until the navbar style is read, so the bar never swaps once drawn
         val style = navBarStyle
         if (style == null) {
@@ -274,7 +272,6 @@ private fun TrainableIosApp() {
             com.emanuel5014.trainable.ui.components.LocalExerciseMediaEnabled provides exerciseMediaEnabled,
             com.emanuel5014.trainable.ui.components.LocalDistanceUnit provides distanceUnit,
             com.emanuel5014.trainable.ui.components.LocalShowMessage provides rememberIosShowMessage(),
-            LocalPaletteColors provides IosPaletteColors,
             LocalHapticsSetting provides preferences.hapticEnabled,
             LocalAdvancedProgramming provides advancedProgramming,
             LocalNavBarStyle provides style,
@@ -299,14 +296,12 @@ private fun TrainableIosApp() {
 
 /** The selected fixed/custom palette on iOS; wallpaper colors remain an Android capability. */
 @Composable
-private fun IosTheme(paletteIndex: Int, seedColor: Int?, themeStyle: Int, darkTheme: Boolean, content: @Composable () -> Unit) {
+private fun IosTheme(theme: ThemeSettings, darkTheme: Boolean, content: @Composable () -> Unit) {
     rememberResponsiveSize()
-    val colorScheme = remember(paletteIndex, seedColor, themeStyle, darkTheme) {
-        IosPaletteColors.colorScheme(paletteIndex, seedColor, themeStyle, darkTheme)
-    }
+    val colorScheme = remember(theme, darkTheme) { AppColorSchemes.scheme(theme, darkTheme) }
     // The Live Activity card is always dark, so it takes the dark scheme's primary whatever the app's mode.
-    val liveAccent = remember(paletteIndex, seedColor, themeStyle) {
-        IosPaletteColors.colorScheme(paletteIndex, seedColor, themeStyle, true).primary.toArgb().toLong() and 0xFFFFFFFFL
+    val liveAccent = remember(theme) {
+        AppColorSchemes.scheme(theme, true).primary.toArgb().toLong() and 0xFFFFFFFFL
     }
     SideEffect { IosLiveActivityStyle.accentArgb = liveAccent }
     MaterialTheme(colorScheme = colorScheme, typography = appTypography(), shapes = Shapes, content = content)

@@ -98,10 +98,9 @@ import com.emanuel5014.trainable.ui.components.LocalPrescriptionEnvironment
 import com.emanuel5014.trainable.ui.components.journal.AndroidJournalData
 import com.emanuel5014.trainable.ui.components.journal.LocalJournalData
 import com.emanuel5014.trainable.ui.components.LocalRoutineImagePicker
+import com.emanuel5014.trainable.data.model.ThemeSettings
 import com.emanuel5014.trainable.ui.components.LocalShowMessage
 import com.emanuel5014.trainable.ui.components.AndroidRoutineImagePicker
-import com.emanuel5014.trainable.ui.screens.settings.LocalPaletteColors
-import com.emanuel5014.trainable.ui.screens.settings.AndroidPaletteColors
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.ui.theme.AndroidPlatformGlass
 
@@ -210,10 +209,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         setContent {
             val userLanguage by userPreferencesRepository.userLanguage.collectAsState(initial = "system")
-            val dynamicColor by userPreferencesRepository.dynamicColor.collectAsState(initial = true)
-            val dynamicColorSeed by userPreferencesRepository.dynamicColorSeed.collectAsState(initial = null)
-            val themePalette by userPreferencesRepository.themePalette.collectAsState(initial = 0)
-            val themeStyle by userPreferencesRepository.themeStyle.collectAsState(initial = 0)
+            val themeSettings by userPreferencesRepository.themeSettings.collectAsState(initial = ThemeSettings())
             val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = null)
             val advancedProgramming by userPreferencesRepository.advancedProgrammingEnabled.collectAsState(initial = false)
             val exerciseMediaEnabled by userPreferencesRepository.exerciseMediaEnabled.collectAsState(initial = false)
@@ -300,13 +296,7 @@ class MainActivity : FragmentActivity() {
             val glassNavAction = navBarStyle == NavBarStyle.Expressive && glassSettings.isOn(GlassPart.ActionButtons)
             val recordScreens = glassNavBar || glassNavAction
 
-            GymTrackingTheme(
-                dynamicColor = dynamicColor,
-                paletteIndex = themePalette,
-                seedColor = dynamicColorSeed,
-                themeStyle = themeStyle,
-                darkTheme = isDark
-            ) {
+            GymTrackingTheme(theme = themeSettings, darkTheme = isDark) {
               CompositionLocalProvider(
                   LocalAdvancedProgramming provides advancedProgramming,
                   LocalRpeSettings provides rpeSettings,
@@ -315,7 +305,6 @@ class MainActivity : FragmentActivity() {
                   LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating),
                   LocalGlassSettings provides glassSettings,
                   LocalPlatformGlass provides AndroidPlatformGlass,
-                  LocalPaletteColors provides AndroidPaletteColors,
                   LocalHapticsSetting provides userPreferencesRepository.hapticEnabled,
                   LocalPlanImage provides AndroidPlanImage,
                   LocalPrescriptionText provides LocalContext.current.let { remember(it) { AndroidPrescriptionText(it) } },

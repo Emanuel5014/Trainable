@@ -46,12 +46,11 @@ kotlin {
             implementation(libs.backdrop)
             implementation(libs.kyant.shapes)
             implementation(libs.kotlinx.serialization.json)
+            // The Material colour engine of both platforms (AppColorSchemes)
+            implementation(libs.materialkolor.utilities)
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
-        }
-        iosMain.dependencies {
-            implementation(libs.materialkolor.utilities)
         }
         iosTest.dependencies {
             implementation(kotlin("test"))

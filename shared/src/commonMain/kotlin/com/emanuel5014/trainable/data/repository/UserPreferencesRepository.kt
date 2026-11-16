@@ -10,6 +10,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.model.NavBarStyle
+import com.emanuel5014.trainable.data.model.ThemeSettings
+import com.emanuel5014.trainable.data.model.ThemeSource
 import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.rpe.RpeScale
@@ -17,6 +19,7 @@ import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.util.TimerAdjustment
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 /** The app's settings, stored in the "settings" preferences file that each platform opens. */
@@ -74,6 +77,35 @@ class UserPreferencesRepository(
         val DYNAMIC_COLOR_SEED = intPreferencesKey("dynamic_color_seed")
         val THEME_PALETTE = intPreferencesKey("theme_palette")
         val THEME_STYLE = intPreferencesKey("theme_style")
+        // Themes section (2026-11): unset for a theme chosen before it, see ThemeSettings
+        val THEME_SOURCE = intPreferencesKey("theme_source")
+        val THEME_PHOTO_SEED = intPreferencesKey("theme_photo_seed")
+        val THEME_PHOTO_COLORS = stringPreferencesKey("theme_photo_colors")
+        val THEME_CUSTOM_SEED = intPreferencesKey("theme_custom_seed")
+        val THEME_SECONDARY_HUE = intPreferencesKey("theme_secondary_hue")
+        val THEME_TERTIARY_HUE = intPreferencesKey("theme_tertiary_hue")
+        val THEME_NEUTRAL_TINT = intPreferencesKey("theme_neutral_tint")
+        val THEME_CONTRAST = intPreferencesKey("theme_contrast")
+        val THEME_PURE_BLACK = booleanPreferencesKey("theme_pure_black")
+        val THEME_SAVED = stringPreferencesKey("theme_saved")
+
+        /** Every theme preference read at once; the splash screens read the raw preferences with it. */
+        fun themeSettings(preferences: Preferences): ThemeSettings = ThemeSettings(
+            source = ThemeSource.fromId(preferences[THEME_SOURCE]),
+            dynamicColor = preferences[DYNAMIC_COLOR] ?: true,
+            dynamicColorSeed = preferences[DYNAMIC_COLOR_SEED],
+            palette = preferences[THEME_PALETTE] ?: 0,
+            style = preferences[THEME_STYLE] ?: 0,
+            photoSeed = preferences[THEME_PHOTO_SEED],
+            photoColors = ThemeSettings.decodeColors(preferences[THEME_PHOTO_COLORS]),
+            customSeed = preferences[THEME_CUSTOM_SEED],
+            secondaryHue = preferences[THEME_SECONDARY_HUE],
+            tertiaryHue = preferences[THEME_TERTIARY_HUE],
+            neutralTint = preferences[THEME_NEUTRAL_TINT],
+            contrast = (preferences[THEME_CONTRAST] ?: 0).coerceIn(0, 2),
+            pureBlack = preferences[THEME_PURE_BLACK] ?: false,
+            saved = ThemeSettings.decodeSaved(preferences[THEME_SAVED])
+        )
         val TIMER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("timer_notifications_enabled")
         val SWIPE_ACTIONS_ENABLED = booleanPreferencesKey("swipe_actions_enabled")
         /** Routines screen: the "your week" card folded into one line. */
@@ -338,6 +370,8 @@ class UserPreferencesRepository(
                 parts = GlassPart.entries.filter { preferences[glassPartKey(it)] ?: true }.toSet()
             )
         }
+
+    val themeSettings: Flow<ThemeSettings> = dataStore.data.map { themeSettings(it) }.distinctUntilChanged()
 
     val dynamicColor: Flow<Boolean> = dataStore.data
         .map { preferences ->
@@ -935,6 +969,36 @@ class UserPreferencesRepository(
         dataStore.edit { preferences ->
             preferences[glassPartKey(part)] = on
         }
+    }
+
+    /**
+     * Writes a theme from the Themes section, every key at once. The wallpaper switch follows the source, so a backup
+     * opened by an older version still shows the wallpaper or palette part of it.
+     */
+    suspend fun setThemeSettings(theme: ThemeSettings) {
+        dataStore.edit { p ->
+            fun <T> put(key: Preferences.Key<T>, value: T?) { if (value != null) p[key] = value else p.remove(key) }
+            put(THEME_SOURCE, theme.source?.id)
+            p[DYNAMIC_COLOR] = theme.source?.let { it == ThemeSource.System } ?: theme.dynamicColor
+            // Only ever the wallpaper colour picked under System: the photo and custom seeds have keys of their own
+            put(DYNAMIC_COLOR_SEED, theme.dynamicColorSeed)
+            p[THEME_PALETTE] = theme.palette
+            p[THEME_STYLE] = theme.style
+            put(THEME_PHOTO_SEED, theme.photoSeed)
+            put(THEME_PHOTO_COLORS, theme.photoColors.takeIf { it.isNotEmpty() }?.let(ThemeSettings::encodeColors))
+            put(THEME_CUSTOM_SEED, theme.customSeed)
+            put(THEME_SECONDARY_HUE, theme.secondaryHue)
+            put(THEME_TERTIARY_HUE, theme.tertiaryHue)
+            put(THEME_NEUTRAL_TINT, theme.neutralTint)
+            put(THEME_CONTRAST, theme.contrast.takeIf { it != 0 })
+            put(THEME_PURE_BLACK, theme.pureBlack.takeIf { it })
+            put(THEME_SAVED, theme.saved.takeIf { it.isNotEmpty() }?.let(ThemeSettings::encodeSaved))
+        }
+    }
+
+    /** Onboarding writes the old keys; this makes them the ones that count again. */
+    suspend fun clearThemeSource() {
+        dataStore.edit { it.remove(THEME_SOURCE) }
     }
 
     suspend fun setDynamicColor(enabled: Boolean) {

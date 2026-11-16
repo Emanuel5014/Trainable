@@ -2,11 +2,13 @@ package com.emanuel5014.trainable.ui
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.toArgb
+import com.emanuel5014.trainable.data.model.ThemeSettings
+import com.emanuel5014.trainable.ui.theme.AppColorSchemes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /** Independent reference values generated with Android's existing Material 1.14.0 color engine. */
-class IosPaletteColorsTest {
+class AppColorSchemesTest {
     @Test
     fun themeRolesMatchAndroidForEveryStyleAndBothModes() {
         androidGoldens.lineSequence().forEach { row ->
@@ -15,7 +17,7 @@ class IosPaletteColorsTest {
             val style = fields[1].toInt()
             val dark = fields[2].toBooleanStrict()
             val expected = fields.drop(3).map(String::toInt)
-            val actual = IosPaletteColors.colorScheme(0, seed, style, dark).argbs()
+            val actual = AppColorSchemes.fromSeed(seed, style, dark).argbs()
             assertEquals(expected, actual, "seed=$seed style=$style dark=$dark")
         }
     }
@@ -27,7 +29,7 @@ class IosPaletteColorsTest {
             listOf(false, true).forEach { dark ->
                 val row = androidGoldens.lineSequence().first { it.startsWith("${seed.toInt()},1,$dark,") }
                 assertEquals(row.split(',').drop(3).map(String::toInt),
-                    IosPaletteColors.colorScheme(index + 1, null, 0, dark).argbs())
+                    AppColorSchemes.scheme(ThemeSettings(dynamicColor = false, palette = index + 1), dark).argbs())
             }
         }
     }

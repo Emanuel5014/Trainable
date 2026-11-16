@@ -33,6 +33,17 @@ object BackupSettingsCodec {
         prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED]?.let { json.put("dynamic_color_seed", it) }
         json.put("theme_palette", prefs[UserPreferencesRepository.THEME_PALETTE] ?: 0)
         json.put("theme_style", prefs[UserPreferencesRepository.THEME_STYLE] ?: 0)
+        // Themes section: only when set, so the backups of everyone who never opened it keep the legacy layout
+        prefs[UserPreferencesRepository.THEME_SOURCE]?.let { json.put("theme_source", it) }
+        prefs[UserPreferencesRepository.THEME_PHOTO_SEED]?.let { json.put("theme_photo_seed", it) }
+        prefs[UserPreferencesRepository.THEME_PHOTO_COLORS]?.let { json.put("theme_photo_colors", it) }
+        prefs[UserPreferencesRepository.THEME_CUSTOM_SEED]?.let { json.put("theme_custom_seed", it) }
+        prefs[UserPreferencesRepository.THEME_SECONDARY_HUE]?.let { json.put("theme_secondary_hue", it) }
+        prefs[UserPreferencesRepository.THEME_TERTIARY_HUE]?.let { json.put("theme_tertiary_hue", it) }
+        prefs[UserPreferencesRepository.THEME_NEUTRAL_TINT]?.let { json.put("theme_neutral_tint", it) }
+        prefs[UserPreferencesRepository.THEME_CONTRAST]?.let { json.put("theme_contrast", it) }
+        prefs[UserPreferencesRepository.THEME_PURE_BLACK]?.let { json.put("theme_pure_black", it) }
+        prefs[UserPreferencesRepository.THEME_SAVED]?.let { json.put("theme_saved", it) }
         json.put("haptic_enabled", prefs[UserPreferencesRepository.HAPTIC_ENABLED] ?: true)
         json.put("weekly_goal", prefs[UserPreferencesRepository.WEEKLY_GOAL] ?: 3)
         json.put("floating_nav_bar", prefs[UserPreferencesRepository.FLOATING_NAV_BAR] ?: true)
@@ -125,6 +136,9 @@ object BackupSettingsCodec {
             prefs[UserPreferencesRepository.THEME_PALETTE] = jsonObject.getInt("theme_palette")
         if (jsonObject.has("theme_style"))
             prefs[UserPreferencesRepository.THEME_STYLE] = jsonObject.getInt("theme_style")
+        // A backup from before the Themes section has no source: its old keys are the theme again
+        if (jsonObject.has("dynamic_color") || jsonObject.has("theme_palette") || jsonObject.has("theme_source"))
+            restoreThemeSection(jsonObject, prefs)
         if (jsonObject.has("haptic_enabled"))
             prefs[UserPreferencesRepository.HAPTIC_ENABLED] = jsonObject.getBoolean("haptic_enabled")
         if (jsonObject.has("weekly_goal"))
@@ -267,6 +281,26 @@ object BackupSettingsCodec {
         showProgressCards = if (json.has("show_progress_cards")) json.getBoolean("show_progress_cards") else null,
         categoryVolumeTimeRange = if (json.has("category_volume_time_range")) json.getString("category_volume_time_range") else null
     )
+    private fun restoreThemeSection(jsonObject: BackupJsonObject, prefs: MutablePreferences) {
+        fun int(name: String, key: Preferences.Key<Int>) {
+            if (jsonObject.has(name) && !jsonObject.isNull(name)) prefs[key] = jsonObject.getInt(name) else prefs.remove(key)
+        }
+        fun string(name: String, key: Preferences.Key<String>) {
+            if (jsonObject.has(name) && !jsonObject.isNull(name)) prefs[key] = jsonObject.getString(name) else prefs.remove(key)
+        }
+        int("theme_source", UserPreferencesRepository.THEME_SOURCE)
+        int("theme_photo_seed", UserPreferencesRepository.THEME_PHOTO_SEED)
+        string("theme_photo_colors", UserPreferencesRepository.THEME_PHOTO_COLORS)
+        int("theme_custom_seed", UserPreferencesRepository.THEME_CUSTOM_SEED)
+        int("theme_secondary_hue", UserPreferencesRepository.THEME_SECONDARY_HUE)
+        int("theme_tertiary_hue", UserPreferencesRepository.THEME_TERTIARY_HUE)
+        int("theme_neutral_tint", UserPreferencesRepository.THEME_NEUTRAL_TINT)
+        int("theme_contrast", UserPreferencesRepository.THEME_CONTRAST)
+        string("theme_saved", UserPreferencesRepository.THEME_SAVED)
+        if (jsonObject.has("theme_pure_black") && !jsonObject.isNull("theme_pure_black"))
+            prefs[UserPreferencesRepository.THEME_PURE_BLACK] = jsonObject.getBoolean("theme_pure_black")
+        else prefs.remove(UserPreferencesRepository.THEME_PURE_BLACK)
+    }
 }
 
 /** Null means absent, while false and the empty set are present values in an archive. */

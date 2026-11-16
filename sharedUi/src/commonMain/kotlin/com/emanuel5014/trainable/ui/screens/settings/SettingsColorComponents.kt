@@ -61,6 +61,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.fromHSV
+import com.emanuel5014.trainable.ui.theme.AppColorSchemes
 import com.emanuel5014.trainable.ui.theme.toHSV
 
 @Composable
@@ -149,7 +150,6 @@ fun CustomColorPickerDialog(
     onDismiss: () -> Unit,
     onApply: (colorSeed: Int, style: Int) -> Unit
 ) {
-    val paletteColors = LocalPaletteColors.current
     val defaultHue = initialColor?.toHSV()?.get(0) ?: 220f
     var hue by remember { mutableFloatStateOf(defaultHue) }
     var selectedStyle by remember { mutableIntStateOf(initialStyle) }
@@ -202,7 +202,7 @@ fun CustomColorPickerDialog(
                         )
                         (0..4).forEach { styleIndex ->
                             PalettePreviewCircle(
-                                colors = paletteColors.seed(seedArgb, styleIndex),
+                                colors = AppColorSchemes.previews(seedArgb, styleIndex),
                                 isSelected = selectedStyle == styleIndex,
                                 onClick = { selectedStyle = styleIndex },
                                 label = styleNames[styleIndex]

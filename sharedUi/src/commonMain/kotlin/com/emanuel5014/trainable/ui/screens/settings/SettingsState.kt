@@ -5,11 +5,13 @@ import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.model.NavBarStyle
+import com.emanuel5014.trainable.data.model.ThemeSettings
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.TimerAdjustment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -120,6 +122,18 @@ class SettingsState(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = NavBarStyle.Floating
     )
+
+    /** Null until read, so nothing is written over settings not loaded yet. */
+    val themeSettings: StateFlow<ThemeSettings?> = userPrefsRepository.themeSettings.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
+    /** Writes a theme picked in the Themes section, all keys at once. */
+    fun setThemeSettings(theme: ThemeSettings) {
+        scope.launch { userPrefsRepository.setThemeSettings(theme) }
+    }
 
     val dynamicColor = userPrefsRepository.dynamicColor.stateIn(
         scope = scope,

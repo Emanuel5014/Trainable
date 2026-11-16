@@ -23,7 +23,8 @@ import com.emanuel5014.trainable.sharedui.resources.widget_label_in_progress
 import com.emanuel5014.trainable.sharedui.resources.widget_label_suggested_today
 import com.emanuel5014.trainable.sharedui.resources.widget_label_up_next
 import com.emanuel5014.trainable.sharedui.resources.widget_started_at
-import com.emanuel5014.trainable.ui.IosPaletteColors
+import com.emanuel5014.trainable.data.model.ThemeSettings
+import com.emanuel5014.trainable.ui.theme.AppColorSchemes
 import com.emanuel5014.trainable.ui.screens.dashboard.firstDayOfWeek
 import com.emanuel5014.trainable.ui.util.narrowDayName
 import com.emanuel5014.trainable.domain.weekStartMillis
@@ -82,12 +83,12 @@ internal object IosHomeWidgets {
         val finished: List<com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity>,
         val unfinished: List<com.emanuel5014.trainable.data.local.relation.SessionWithPlanName>,
         val goal: Int,
-        val theme: Triple<Int, Int?, Int>,
+        val theme: ThemeSettings,
         val today: LocalDate
     )
 
     suspend fun run(workouts: WorkoutRepository, preferences: UserPreferencesRepository) {
-        val theme = combine(preferences.themePalette, preferences.dynamicColorSeed, preferences.themeStyle) { p, s, st -> Triple(p, s, st) }
+        val theme = preferences.themeSettings
         val data = combine(
             workouts.getActivePlans(), workouts.getAllSessions(), workouts.getUnfinishedSessionsWithPlanName(),
             preferences.weeklyGoal, theme
@@ -131,10 +132,9 @@ internal object IosHomeWidgets {
         )
     }
 
-    private fun accent(theme: Triple<Int, Int?, Int>): HomeWidgetAccent {
-        val (palette, seed, style) = theme
-        val light = IosPaletteColors.colorScheme(palette, seed, style, false)
-        val dark = IosPaletteColors.colorScheme(palette, seed, style, true)
+    private fun accent(theme: ThemeSettings): HomeWidgetAccent {
+        val light = AppColorSchemes.scheme(theme, false)
+        val dark = AppColorSchemes.scheme(theme, true)
         fun argb(color: androidx.compose.ui.graphics.Color) = color.toArgb().toLong() and 0xFFFFFFFFL
         return HomeWidgetAccent(argb(light.primary), argb(light.tertiary), argb(dark.primary), argb(dark.tertiary))
     }

@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.sharedui.resources.*
 import com.emanuel5014.trainable.ui.screens.settings.CustomColorPickerDialog
-import com.emanuel5014.trainable.ui.screens.settings.LocalPaletteColors
+import com.emanuel5014.trainable.ui.theme.AppColorSchemes
 import com.emanuel5014.trainable.ui.screens.settings.PalettePreviewCircle
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -65,7 +65,6 @@ fun LookStep(model: OnboardingModel, wallpaperSupported: Boolean, hero: @Composa
     val themeMode by model.themeMode.collectAsState(initial = 0)
     val navBarStyle by model.navBarStyle.collectAsState(initial = NavBarStyle.Floating)
     val glass by model.liquidGlassEnabled.collectAsState(initial = false)
-    val paletteColors = LocalPaletteColors.current
     var showCustomColor by remember { mutableStateOf(false) }
 
     OnboardingPage(underTopRow = true) {
@@ -93,14 +92,14 @@ fun LookStep(model: OnboardingModel, wallpaperSupported: Boolean, hero: @Composa
                     if (wallpaperSupported && dynamicColor) {
                         val seed = dynamicColorSeed ?: Color(0xFF1976D2).toArgb()
                         styleNames.forEachIndexed { index, name ->
-                            ColourChoice(name, paletteColors.seed(seed, index), themeStyle == index) {
+                            ColourChoice(name, AppColorSchemes.previews(seed, index), themeStyle == index) {
                                 model.setDynamicColorSeed(null)
                                 model.setThemeStyle(index)
                             }
                         }
                     } else {
                         paletteNames.forEachIndexed { index, name ->
-                            ColourChoice(name, paletteColors.palette(index), themePalette == index) {
+                            ColourChoice(name, AppColorSchemes.palettePreview(index), themePalette == index) {
                                 model.setThemePalette(index)
                             }
                         }

@@ -96,7 +96,7 @@ private class SplashColors(val background: Color, val logo: Color)
 private suspend fun loadThemeColors(systemDark: Boolean): SplashColors {
     val prefs = IosAppGraph.preferences
     val dark = when (prefs.themeMode.first()) { 1 -> false; 2 -> true; else -> systemDark }
-    val scheme = IosPaletteColors.colorScheme(prefs.themePalette.first(), prefs.dynamicColorSeed.first(), prefs.themeStyle.first(), dark)
+    val scheme = com.emanuel5014.trainable.ui.theme.AppColorSchemes.scheme(prefs.themeSettings.first(), dark)
     return SplashColors(scheme.surface, scheme.primary)
 }
 

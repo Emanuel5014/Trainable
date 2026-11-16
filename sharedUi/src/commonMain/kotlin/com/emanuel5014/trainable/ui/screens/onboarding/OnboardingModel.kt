@@ -26,24 +26,28 @@ class OnboardingModel(
 
     fun setDynamicColor(enabled: Boolean) {
         scope.launch {
+            userPrefsRepository.clearThemeSource()
             userPrefsRepository.setDynamicColor(enabled)
         }
     }
 
     fun setDynamicColorSeed(seed: Int?) {
         scope.launch {
+            userPrefsRepository.clearThemeSource()
             userPrefsRepository.setDynamicColorSeed(seed)
         }
     }
 
     fun setThemePalette(index: Int) {
         scope.launch {
+            userPrefsRepository.clearThemeSource()
             userPrefsRepository.setThemePalette(index)
         }
     }
 
     fun setThemeStyle(index: Int) {
         scope.launch {
+            userPrefsRepository.clearThemeSource()
             userPrefsRepository.setThemeStyle(index)
         }
     }
@@ -113,6 +117,8 @@ class OnboardingModel(
             userPrefsRepository.setDynamicColorSeed(theme.dynamicColorSeed)
         }
         userPrefsRepository.setThemeStyle(theme.style)
+        // Onboarding speaks the old theme keys: make them the ones that count
+        userPrefsRepository.clearThemeSource()
         userPrefsRepository.setThemeMode(theme.mode)
         userPrefsRepository.setAiScanEnabled(aiScanEnabled)
         userPrefsRepository.setAiModelVariant(aiModelVariant)
