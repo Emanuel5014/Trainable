@@ -1723,4 +1723,25 @@
     <string name="theme_contrast_high">Hoch</string>
     <string name="theme_contrast_desc">Mehr Unterschied zwischen Text und Hintergrund: nützlich in sehr hellen Studios oder bei schwächerem Sehvermögen.</string>
     <string name="theme_photo_none">Noch kein Foto gewählt</string>
+    <string name="heart_title">Herzfrequenz</string>
+    <string name="heart_avg">Ø bpm</string>
+    <string name="heart_max">max. bpm</string>
+    <string name="heart_active_kcal">aktive kcal</string>
+    <string name="heart_total_kcal">kcal gesamt</string>
+    <string name="heart_source">von %1$s</string>
+    <string name="heart_refresh">Aktualisieren</string>
+    <string name="heart_reading">Herzfrequenz wird gelesen…</string>
+    <string name="heart_no_data">Health Connect hat keine Herzfrequenz für dieses Training. Die App deiner Uhr oder deines Bands muss die Herzfrequenz in Health Connect schreiben (Mi Fitness allein tut das nicht): synchronisiere, dann aktualisiere.</string>
+    <string name="heart_no_duration">Dieses Training hat keine Dauer, daher kann die Herzfrequenz nicht zugeordnet werden. Zeichne das Training auch auf dem Band auf oder gib die Dauer an.</string>
+    <string name="heart_no_permission">Trainable kann Health Connect nicht mehr lesen.</string>
+    <string name="heart_allow">Erlauben</string>
+    <string name="heart_unavailable">Health Connect ist auf diesem Handy nicht verfügbar.</string>
+    <string name="heart_zones">Zeit in Zonen</string>
+    <string name="heart_setting_title">Herzfrequenz aus Health Connect</string>
+    <string name="heart_setting_desc">Herzfrequenz und Kalorien deiner Uhr oder deines Bands (Garmin, Samsung, Fitbit, Zepp…) in jedem Training des Verlaufs, über Health Connect</string>
+    <string name="heart_setting_install">Installiere zuerst Health Connect aus dem Play Store</string>
+    <string name="heart_max_setting">Maximale Herzfrequenz</string>
+    <string name="heart_max_setting_desc">Für die Zonen. Eine schnelle Schätzung ist 220 minus dein Alter.</string>
+    <string name="heart_privacy_title">Gesundheitsdaten in Trainable</string>
+    <string name="heart_privacy_text">Trainable liest aus Health Connect nur Herzfrequenz, Kalorien und aufgezeichnete Trainings, und nur für die Zeit deiner Trainings. Es schreibt nie in Health Connect. Was es liest, bleibt auf diesem Handy, in der Datenbank von Trainable und in deinen eigenen Backups, und wird nie woanders hingeschickt. Du kannst das unter Einstellungen → Training ausschalten und die Berechtigungen jederzeit in Health Connect entfernen.</string>
 </resources>

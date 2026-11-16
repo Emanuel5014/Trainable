@@ -1729,4 +1729,25 @@
     <string name="theme_contrast_high">Élevé</string>
     <string name="theme_contrast_desc">Plus de différence entre textes et fonds : utile dans les salles très lumineuses ou si tu vois moins bien.</string>
     <string name="theme_photo_none">Aucune photo choisie</string>
+    <string name="heart_title">Fréquence cardiaque</string>
+    <string name="heart_avg">bpm moy.</string>
+    <string name="heart_max">bpm max</string>
+    <string name="heart_active_kcal">kcal actives</string>
+    <string name="heart_total_kcal">kcal totales</string>
+    <string name="heart_source">de %1$s</string>
+    <string name="heart_refresh">Actualiser</string>
+    <string name="heart_reading">Lecture de la fréquence cardiaque…</string>
+    <string name="heart_no_data">Health Connect n'a pas de fréquence cardiaque pour cette séance. L'app de ta montre ou de ton bracelet doit l'écrire dans Health Connect (Mi Fitness seule ne le fait pas) : synchronise, puis actualise.</string>
+    <string name="heart_no_duration">Cette séance n'a pas de durée, la fréquence cardiaque ne peut donc pas être associée. Enregistre aussi la séance sur ton bracelet ou indique sa durée.</string>
+    <string name="heart_no_permission">Trainable ne peut plus lire Health Connect.</string>
+    <string name="heart_allow">Autoriser</string>
+    <string name="heart_unavailable">Health Connect n'est pas disponible sur ce téléphone.</string>
+    <string name="heart_zones">Temps par zone</string>
+    <string name="heart_setting_title">Fréquence cardiaque de Health Connect</string>
+    <string name="heart_setting_desc">Fréquence cardiaque et calories de ta montre ou de ton bracelet (Garmin, Samsung, Fitbit, Zepp…) dans chaque séance de l'historique, via Health Connect</string>
+    <string name="heart_setting_install">Installe d'abord Health Connect depuis le Play Store</string>
+    <string name="heart_max_setting">Fréquence cardiaque maximale</string>
+    <string name="heart_max_setting_desc">Pour les zones. Une estimation rapide : 220 moins ton âge.</string>
+    <string name="heart_privacy_title">Données de santé dans Trainable</string>
+    <string name="heart_privacy_text">Trainable lit uniquement la fréquence cardiaque, les calories et les séances enregistrées dans Health Connect, et seulement pendant tes séances. Il n'écrit jamais dans Health Connect. Ce qu'il lit reste sur ce téléphone, dans la base de données de Trainable et dans tes sauvegardes, et n'est jamais envoyé ailleurs. Tu peux le désactiver dans Paramètres → Entraînement et retirer les autorisations dans Health Connect à tout moment.</string>
 </resources>

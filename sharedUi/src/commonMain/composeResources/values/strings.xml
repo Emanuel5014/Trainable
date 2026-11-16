@@ -1724,4 +1724,25 @@
     <string name="theme_contrast_high">High</string>
     <string name="theme_contrast_desc">More difference between text and backgrounds: useful in very bright gyms or if you see less well.</string>
     <string name="theme_photo_none">No photo picked yet</string>
+    <string name="heart_title">Heart rate</string>
+    <string name="heart_avg">avg bpm</string>
+    <string name="heart_max">max bpm</string>
+    <string name="heart_active_kcal">active kcal</string>
+    <string name="heart_total_kcal">total kcal</string>
+    <string name="heart_source">from %1$s</string>
+    <string name="heart_refresh">Refresh</string>
+    <string name="heart_reading">Reading heart rate…</string>
+    <string name="heart_no_data">Health Connect has no heart rate for this workout. Your watch or band app must write heart rate to Health Connect (Mi Fitness alone does not): sync it, then refresh.</string>
+    <string name="heart_no_duration">This workout has no duration, so its heart rate cannot be matched. Record the workout on your band too, or set its duration.</string>
+    <string name="heart_no_permission">Trainable can no longer read Health Connect.</string>
+    <string name="heart_allow">Allow</string>
+    <string name="heart_unavailable">Health Connect is not available on this phone.</string>
+    <string name="heart_zones">Time in zones</string>
+    <string name="heart_setting_title">Heart rate from Health Connect</string>
+    <string name="heart_setting_desc">Heart rate and calories from your watch or band (Garmin, Samsung, Fitbit, Zepp…) in each workout of the history, through Health Connect</string>
+    <string name="heart_setting_install">Install Health Connect from the Play Store first</string>
+    <string name="heart_max_setting">Maximum heart rate</string>
+    <string name="heart_max_setting_desc">For the zones. A quick guess is 220 minus your age.</string>
+    <string name="heart_privacy_title">Health data in Trainable</string>
+    <string name="heart_privacy_text">Trainable only reads heart rate, calories and recorded workouts from Health Connect, and only for the time of your workouts. It never writes to Health Connect. What it reads is kept on this phone, in Trainable's database and in your own backups, and is never sent anywhere else. You can turn this off in Settings → Workout, and remove the permissions in Health Connect at any time.</string>
 </resources>

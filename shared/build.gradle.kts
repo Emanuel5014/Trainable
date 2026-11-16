@@ -38,6 +38,8 @@ kotlin {
         androidMain.dependencies {
             // The remote AI keeps OkHttp's own URL parser on Android (AiUrl.android.kt)
             implementation(libs.okhttp)
+            // Heart rate and calories of the lifter's watch or band, read after the workout (Android only)
+            api(libs.health.connect.client)
         }
         iosMain.dependencies {
             // Android keeps the system SQLite (Room without a driver); iOS brings its own

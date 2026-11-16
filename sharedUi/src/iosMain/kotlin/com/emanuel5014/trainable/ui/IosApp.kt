@@ -97,6 +97,8 @@ internal object IosAppGraph {
     val merges by lazy { ExerciseMergeRepository(database.exerciseMergeDao(), database.exerciseDao(), analyticsPreferences) }
     val analytics by lazy { AnalyticsRepository(database.analyticsDao(), database.weightLogDao()) }
     val journal by lazy { JournalRepository(database.journalDao(), IosTransactionRunner(database)) }
+    /** No health store on iOS yet: heart data restored from an Android backup is still shown. */
+    val heartRate by lazy { com.emanuel5014.trainable.data.repository.HeartRateRepository(database.heartDataDao(), null) }
     // Remote AI (A1): the profiles with their Keychain-encrypted keys, and the HTTP client the scan and probe use
     val aiProfiles by lazy {
         com.emanuel5014.trainable.data.ai.remote.AiProfileStore(preferences, com.emanuel5014.trainable.data.ai.remote.IosAiKeyCrypto())
@@ -232,7 +234,7 @@ private fun TrainableIosApp() {
         RoutinesState(PlanRepository(db.workoutDao(), db.userDao(), db.oneRepMaxDao()), preferences, scope)
     }
     val history = remember {
-        HistoryState(IosAppGraph.workouts, IosAppGraph.exercises, preferences, IosAppGraph.journal, scope)
+        HistoryState(IosAppGraph.workouts, IosAppGraph.exercises, preferences, IosAppGraph.journal, scope, IosAppGraph.heartRate)
     }
     val analyticsText = rememberIosAnalyticsText()
     val language = com.emanuel5014.trainable.platform.IosAppLocale.language()

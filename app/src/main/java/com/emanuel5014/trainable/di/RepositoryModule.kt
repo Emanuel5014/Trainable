@@ -64,6 +64,17 @@ object RepositoryModule {
 
     @Provides
     @Singleton
+    fun provideHeartRateRepository(
+        dao: com.emanuel5014.trainable.data.local.dao.HeartDataDao,
+        @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context
+    ): com.emanuel5014.trainable.data.repository.HeartRateRepository =
+        com.emanuel5014.trainable.data.repository.HeartRateRepository(
+            dao,
+            com.emanuel5014.trainable.data.repository.HealthConnectHeartRateSource(context)
+        )
+
+    @Provides
+    @Singleton
     fun provideWorkoutRepository(
         workoutDao: WorkoutDao,
         userDao: UserDao,

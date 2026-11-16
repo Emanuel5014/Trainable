@@ -728,7 +728,16 @@ fun HistoryContent(
                     state.filterByTag(tagId)
                 },
                 onRestoreExercise = state::restoreExercise,
-                onDismiss = { openSessionId = null }
+                onDismiss = { openSessionId = null },
+                heartSection = {
+                    HistoryHeartSection(
+                        state = state,
+                        session = (details ?: openDetails).session,
+                        enabled = uiState.heartRateEnabled,
+                        maxHeartRate = uiState.maxHeartRate,
+                        modifier = Modifier.padding(bottom = 13.dp)
+                    )
+                }
             )
         }
 

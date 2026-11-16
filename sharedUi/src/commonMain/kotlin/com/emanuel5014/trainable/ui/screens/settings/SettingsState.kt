@@ -315,6 +315,30 @@ class SettingsState(
         initialValue = true
     )
 
+    val heartRateEnabled = userPrefsRepository.heartRateEnabled.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val maxHeartRate = userPrefsRepository.maxHeartRate.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = UserPreferencesRepository.DEFAULT_MAX_HEART_RATE
+    )
+
+    fun setHeartRateEnabled(enabled: Boolean) {
+        scope.launch {
+            userPrefsRepository.setHeartRateEnabled(enabled)
+        }
+    }
+
+    fun setMaxHeartRate(bpm: Int) {
+        scope.launch {
+            userPrefsRepository.setMaxHeartRate(bpm)
+        }
+    }
+
     val journalRatingEnabled = userPrefsRepository.journalRatingEnabled.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),

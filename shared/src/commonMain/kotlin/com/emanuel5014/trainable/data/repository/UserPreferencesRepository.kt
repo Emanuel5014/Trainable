@@ -28,6 +28,9 @@ class UserPreferencesRepository(
 ) {
 
     companion object {
+        const val DEFAULT_MAX_HEART_RATE = 190
+        const val MIN_MAX_HEART_RATE = 120
+        const val MAX_MAX_HEART_RATE = 230
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
         val WEEKLY_GOAL = intPreferencesKey("weekly_goal")
         val HAPTIC_ENABLED = booleanPreferencesKey("haptic_enabled")
@@ -169,6 +172,10 @@ class UserPreferencesRepository(
     val JOURNAL_PROMPT_AT_FINISH = booleanPreferencesKey("journal_prompt_at_finish")
     /** With the journal on: workouts can be rated with 1 to 5 stars. On by default. */
     val JOURNAL_RATING_ENABLED = booleanPreferencesKey("journal_rating_enabled")
+    /** Heart rate and calories of the watch or band (Health Connect) are read into each workout. Off by default. */
+    val HEART_RATE_ENABLED = booleanPreferencesKey("heart_rate_enabled")
+    /** The lifter's maximum heart rate, for the heart-rate zones. */
+    val MAX_HEART_RATE = intPreferencesKey("max_heart_rate")
     /** Plates the gym has, comma separated and heaviest first, one list per weight unit. */
     val PLATE_CALCULATOR_PLATES_KG = stringPreferencesKey("plate_calculator_plates_kg")
     val PLATE_CALCULATOR_PLATES_LB = stringPreferencesKey("plate_calculator_plates_lb")
@@ -770,6 +777,24 @@ class UserPreferencesRepository(
     suspend fun setJournalRatingEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[JOURNAL_RATING_ENABLED] = enabled
+        }
+    }
+
+    val heartRateEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[HEART_RATE_ENABLED] ?: false }
+
+    suspend fun setHeartRateEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[HEART_RATE_ENABLED] = enabled
+        }
+    }
+
+    val maxHeartRate: Flow<Int> = dataStore.data
+        .map { preferences -> preferences[MAX_HEART_RATE] ?: DEFAULT_MAX_HEART_RATE }
+
+    suspend fun setMaxHeartRate(bpm: Int) {
+        dataStore.edit { preferences ->
+            preferences[MAX_HEART_RATE] = bpm.coerceIn(MIN_MAX_HEART_RATE, MAX_MAX_HEART_RATE)
         }
     }
 

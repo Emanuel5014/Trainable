@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.screens.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
+import com.emanuel5014.trainable.data.repository.HeartRateRepository
 import com.emanuel5014.trainable.data.repository.JournalRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -21,10 +22,13 @@ class HistoryViewModel @Inject constructor(
     exerciseRepository: ExerciseRepository,
     userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager,
-    journalRepository: JournalRepository
+    journalRepository: JournalRepository,
+    heartRateRepository: HeartRateRepository
 ) : ViewModel() {
 
-    val state = HistoryState(repository, exerciseRepository, userPreferencesRepository, journalRepository, viewModelScope)
+    val state = HistoryState(
+        repository, exerciseRepository, userPreferencesRepository, journalRepository, viewModelScope, heartRateRepository
+    )
 
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()

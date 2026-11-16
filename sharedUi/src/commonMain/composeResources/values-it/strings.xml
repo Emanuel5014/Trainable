@@ -1729,4 +1729,25 @@
     <string name="theme_contrast_high">Alto</string>
     <string name="theme_contrast_desc">Più differenza tra testi e sfondi: utile in palestre molto luminose o per chi vede meno.</string>
     <string name="theme_photo_none">Nessuna foto scelta</string>
+    <string name="heart_title">Battito</string>
+    <string name="heart_avg">bpm medi</string>
+    <string name="heart_max">bpm max</string>
+    <string name="heart_active_kcal">kcal attive</string>
+    <string name="heart_total_kcal">kcal totali</string>
+    <string name="heart_source">da %1$s</string>
+    <string name="heart_refresh">Aggiorna</string>
+    <string name="heart_reading">Lettura del battito…</string>
+    <string name="heart_no_data">Health Connect non ha battiti per questo allenamento. L'app dell'orologio o della band deve scrivere il battito in Health Connect (Mi Fitness da sola non lo fa): sincronizza, poi aggiorna.</string>
+    <string name="heart_no_duration">Questo allenamento non ha una durata, quindi il battito non si può abbinare. Registra l'allenamento anche sulla band o imposta la durata.</string>
+    <string name="heart_no_permission">Trainable non può più leggere Health Connect.</string>
+    <string name="heart_allow">Consenti</string>
+    <string name="heart_unavailable">Health Connect non è disponibile su questo telefono.</string>
+    <string name="heart_zones">Tempo nelle zone</string>
+    <string name="heart_setting_title">Battito da Health Connect</string>
+    <string name="heart_setting_desc">Battito e calorie dell'orologio o della band (Garmin, Samsung, Fitbit, Zepp…) in ogni allenamento della cronologia, tramite Health Connect</string>
+    <string name="heart_setting_install">Prima installa Health Connect dal Play Store</string>
+    <string name="heart_max_setting">Frequenza cardiaca massima</string>
+    <string name="heart_max_setting_desc">Serve per le zone. Una stima veloce è 220 meno la tua età.</string>
+    <string name="heart_privacy_title">Dati sulla salute in Trainable</string>
+    <string name="heart_privacy_text">Trainable legge da Health Connect solo battito, calorie e allenamenti registrati, e solo nell'orario dei tuoi allenamenti. Non scrive mai in Health Connect. Quello che legge resta su questo telefono, nel database di Trainable e nei tuoi backup, e non viene mai inviato altrove. Puoi disattivarlo in Impostazioni → Allenamento e togliere i permessi in Health Connect in qualsiasi momento.</string>
 </resources>

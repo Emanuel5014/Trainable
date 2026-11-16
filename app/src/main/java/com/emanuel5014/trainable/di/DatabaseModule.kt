@@ -59,6 +59,10 @@ object DatabaseModule {
     fun provideJournalDao(database: GymDatabase): JournalDao = database.journalDao()
 
     @Provides
+    fun provideHeartDataDao(database: GymDatabase): com.emanuel5014.trainable.data.local.dao.HeartDataDao =
+        database.heartDataDao()
+
+    @Provides
     fun provideTransactionRunner(database: GymDatabase): TransactionRunner = RoomTransactionRunner(database)
 }
 

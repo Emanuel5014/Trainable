@@ -29,6 +29,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import com.emanuel5014.trainable.data.local.entity.SessionHeartDataEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.repository.HeartRateRepository
+import com.emanuel5014.trainable.data.repository.HeartSyncResult
+import com.emanuel5014.trainable.domain.heart.HeartMath
+import com.emanuel5014.trainable.domain.heart.isSparse
 
 
 data class HistoryUiState(
@@ -56,7 +64,11 @@ data class HistoryUiState(
     /** Every tag, to pick from in the filter sheet and to name in the active-filters bar. */
     val availableTags: List<TagWithUsage> = emptyList(),
     /** Every exercise by id (hidden ones too), for the names of the cardio rows. */
-    val exercises: Map<Int, ExerciseEntity> = emptyMap()
+    val exercises: Map<Int, ExerciseEntity> = emptyMap(),
+    /** Heart rate and calories of the watch or band are read into each workout (Health Connect). */
+    val heartRateEnabled: Boolean = false,
+    /** For the heart-rate zones. */
+    val maxHeartRate: Int = UserPreferencesRepository.DEFAULT_MAX_HEART_RATE
 )
 
 /** The history's state, the same on every platform; each one gives it its own lifetime ([scope]). */
@@ -65,7 +77,9 @@ class HistoryState(
     private val exerciseRepository: ExerciseRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val journalRepository: JournalRepository,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    /** Heart rate of each workout; null leaves it out. */
+    private val heartRateRepository: HeartRateRepository? = null
 ) {
 
     val swipeActionsEnabled = userPreferencesRepository.swipeActionsEnabled
@@ -100,6 +114,16 @@ class HistoryState(
             }
         }
         scope.launch {
+            userPreferencesRepository.heartRateEnabled.collect { enabled ->
+                _uiState.update { it.copy(heartRateEnabled = enabled) }
+            }
+        }
+        scope.launch {
+            userPreferencesRepository.maxHeartRate.collect { bpm ->
+                _uiState.update { it.copy(maxHeartRate = bpm) }
+            }
+        }
+        scope.launch {
             repository.getExercisesById().collect { exercises ->
                 _uiState.update { it.copy(exercises = exercises) }
             }
@@ -109,6 +133,35 @@ class HistoryState(
                 _uiState.update { it.copy(availableTags = tags) }
             }
         }
+    }
+
+    /** Whether workouts can read their heart rate on this platform (saved data shows either way). */
+    val canSyncHeart: Boolean get() = heartRateRepository?.canSync == true
+
+    fun heartData(sessionId: Int): Flow<SessionHeartDataEntity?> = heartRateRepository?.observe(sessionId) ?: flowOf(null)
+
+    /**
+     * Reads [session]'s heart rate from the health store and saves it. Without [force] nothing is read when data
+     * for the workout's current span is already saved.
+     */
+    suspend fun syncHeart(session: WorkoutSessionEntity, force: Boolean): HeartSyncResult {
+        val repository = heartRateRepository ?: return HeartSyncResult.UNAVAILABLE
+        if (!force) {
+            val saved = repository.saved(session.id)
+            // A row without heart rate (an earlier version kept the phone's own calories) is read again
+            // A sparse curve (a reading every few minutes) is read again too: the per-second series of the band's
+            // workout may have reached Health Connect since
+            if (saved != null && saved.avgBpm != null && !repository.isStale(saved, session) && !HeartMath.isSparse(saved)) {
+                return HeartSyncResult.SAVED
+            }
+        }
+        return runCatching { repository.sync(session, typicalDurationMs()) }.getOrDefault(HeartSyncResult.UNAVAILABLE)
+    }
+
+    /** How long the lifter's workouts with a recorded duration usually last (the median), for those without one. */
+    private fun typicalDurationMs(): Long? {
+        val durations = _uiState.value.sessions.mapNotNull { it.session.durationMs?.takeIf { ms -> ms in 10 * 60_000L..4 * 3_600_000L } }.sorted()
+        return durations.getOrNull(durations.size / 2)
     }
 
     private fun loadPlans() {

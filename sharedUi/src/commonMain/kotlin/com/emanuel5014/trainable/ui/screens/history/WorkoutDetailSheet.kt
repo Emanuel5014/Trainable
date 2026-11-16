@@ -213,7 +213,9 @@ internal fun WorkoutDetailSheet(
     onEditJournal: () -> Unit,
     onTagClick: (Int) -> Unit,
     onRestoreExercise: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** The heart-rate card, under the numbers; it adds its own bottom gap when it shows. */
+    heartSection: (@Composable () -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val session = sessionDetails.session
@@ -274,6 +276,10 @@ internal fun WorkoutDetailSheet(
                 item(key = "stats") {
                     WorkoutStatTiles(tiles, Modifier.padding(bottom = 13.dp))
                 }
+            }
+
+            if (heartSection != null) {
+                item(key = "heart") { heartSection() }
             }
 
             if (showJournal) {

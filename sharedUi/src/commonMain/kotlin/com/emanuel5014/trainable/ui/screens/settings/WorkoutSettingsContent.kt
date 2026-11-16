@@ -123,6 +123,18 @@ import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.TimerAdjustment
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.ui.components.heart.rememberHealthAccess
+import com.emanuel5014.trainable.sharedui.resources.heart_max_setting
+import com.emanuel5014.trainable.sharedui.resources.heart_max_setting_desc
+import com.emanuel5014.trainable.sharedui.resources.heart_setting_desc
+import com.emanuel5014.trainable.sharedui.resources.heart_setting_install
+import com.emanuel5014.trainable.sharedui.resources.heart_setting_title
+import androidx.compose.material.icons.rounded.MonitorHeart
+import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.emanuel5014.trainable.util.WeightUnitConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -548,6 +560,75 @@ private fun AfterWorkoutCard(state: SettingsState, onNavigateToJournalTags: () -
                         onClick = onNavigateToJournalTags
                     )
                 }
+            }
+
+            HeartRateSettings(state)
+        }
+    }
+}
+
+/**
+ * Heart rate from Health Connect (Android only: hidden where there is no store). Switching it on asks for the read
+ * permissions first; it stays off when they are refused.
+ */
+@Composable
+private fun HeartRateSettings(state: SettingsState) {
+    val access = rememberHealthAccess()
+    if (!access.available) return
+    val enabled by state.heartRateEnabled.collectAsState()
+    val maxHeartRate by state.maxHeartRate.collectAsState()
+    val scope = rememberCoroutineScope()
+
+    SettingDivider()
+    SettingSwitchRow(
+        icon = Icons.Rounded.MonitorHeart,
+        title = stringResource(Res.string.heart_setting_title),
+        description = stringResource(if (access.needsInstall) Res.string.heart_setting_install else Res.string.heart_setting_desc),
+        checked = enabled,
+        onCheckedChange = { on ->
+            if (!on) {
+                state.setHeartRateEnabled(false)
+            } else {
+                scope.launch {
+                    if (access.isGranted()) {
+                        state.setHeartRateEnabled(true)
+                    } else {
+                        access.request { granted -> if (granted) state.setHeartRateEnabled(true) }
+                    }
+                }
+            }
+        }
+    )
+    AnimatedVisibility(visible = enabled) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 40.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SettingText(
+                title = stringResource(Res.string.heart_max_setting),
+                description = stringResource(Res.string.heart_max_setting_desc),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = { state.setMaxHeartRate(maxHeartRate - 1) },
+                enabled = maxHeartRate > UserPreferencesRepository.MIN_MAX_HEART_RATE
+            ) {
+                Icon(Icons.Rounded.Remove, contentDescription = "-", tint = OnSurfaceVariant)
+            }
+            Text(
+                "$maxHeartRate",
+                style = MaterialTheme.typography.titleMedium,
+                color = OnSurface,
+                fontWeight = FontWeight.ExtraBold
+            )
+            IconButton(
+                onClick = { state.setMaxHeartRate(maxHeartRate + 1) },
+                enabled = maxHeartRate < UserPreferencesRepository.MAX_MAX_HEART_RATE
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = "+", tint = OnSurfaceVariant)
             }
         }
     }
