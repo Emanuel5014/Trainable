@@ -128,6 +128,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -169,6 +170,8 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.relation.toJournal
 import com.emanuel5014.trainable.ui.components.journal.JournalDetail
 import com.emanuel5014.trainable.ui.components.journal.JournalSheet
+import com.emanuel5014.trainable.ui.components.heart.ShareHeart
+import com.emanuel5014.trainable.ui.components.heart.ShareHeartToggle
 import com.emanuel5014.trainable.ui.components.journal.JournalSummaryLine
 import com.emanuel5014.trainable.ui.components.journal.journalHasContent
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
@@ -227,7 +230,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun rememberAndroidHistoryShareUi(): HistoryShareUi {
     val context = LocalContext.current
-    var sessionToShare by remember { mutableStateOf<Triple<SessionWithDetails, String, List<PlanExerciseWithDetails>?>?>(null) }
+    var sessionToShare by remember { mutableStateOf<AndroidShareRequest?>(null) }
+    // The request behind the image on screen: the heart-rate switch draws it again with or without the heart rate
+    var shownRequest by remember { mutableStateOf<AndroidShareRequest?>(null) }
+    val includeHeartNow = remember { mutableStateOf(true) }
     var capturedBitmapToPreview by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
     DisposableEffect(capturedBitmapToPreview) {
@@ -246,15 +252,24 @@ fun rememberAndroidHistoryShareUi(): HistoryShareUi {
     return object : HistoryShareUi {
         override val available: Boolean get() = true
 
-        override fun share(session: SessionWithDetails, planName: String, planExercises: List<PlanExerciseWithDetails>?) {
-            sessionToShare = Triple(session, planName, planExercises)
+        override fun share(session: SessionWithDetails, planName: String, planExercises: List<PlanExerciseWithDetails>?, heart: ShareHeart?) {
+            sessionToShare = AndroidShareRequest(session, planName, planExercises, heart, includeHeartNow.value)
         }
 
         @Composable
-        override fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean, exercises: Map<Int, ExerciseEntity>) {
+        override fun Overlay(
+            languageCode: String,
+            weightUnit: String,
+            showPrescription: Boolean,
+            exercises: Map<Int, ExerciseEntity>,
+            includeHeart: Boolean,
+            onIncludeHeartChange: (Boolean) -> Unit
+        ) {
+        SideEffect { includeHeartNow.value = includeHeart }
         // The card is drawn in a view of its own: it gets the distance unit handed over explicitly
         val distanceUnit = com.emanuel5014.trainable.ui.components.LocalDistanceUnit.current
-        if (sessionToShare != null) {
+        val pendingRequest = sessionToShare
+        if (pendingRequest != null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -287,13 +302,14 @@ fun rememberAndroidHistoryShareUi(): HistoryShareUi {
                                             com.emanuel5014.trainable.ui.components.LocalDistanceUnit provides distanceUnit
                                         ) {
                                             WorkoutShareCard(
-                                                sessionDetails = sessionToShare!!.first,
-                                                planName = sessionToShare!!.second,
+                                                sessionDetails = pendingRequest.session,
+                                                planName = pendingRequest.planName,
                                                 languageCode = languageCode,
                                                 weightUnit = weightUnit,
-                                                planExercises = sessionToShare!!.third,
+                                                planExercises = pendingRequest.planExercises,
                                                 showPrescription = showPrescription,
-                                                exercisesById = exercises
+                                                exercisesById = exercises,
+                                                heart = pendingRequest.heart?.takeIf { pendingRequest.includeHeart }
                                             )
                                         }
                                     }
@@ -303,6 +319,7 @@ fun rememberAndroidHistoryShareUi(): HistoryShareUi {
                                 view.post {
                                     val bitmap = captureViewToBitmap(view)
                                     capturedBitmapToPreview = bitmap
+                                    shownRequest = pendingRequest
                                     sessionToShare = null
                                 }
                             }
@@ -410,6 +427,19 @@ fun rememberAndroidHistoryShareUi(): HistoryShareUi {
                             }
                         }
 
+                        val heartRequest = shownRequest?.takeIf { it.heart != null }
+                        if (heartRequest != null) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            ShareHeartToggle(
+                                checked = heartRequest.includeHeart,
+                                onCheckedChange = { include ->
+                                    onIncludeHeartChange(include)
+                                    // Drawn again behind the preview, which keeps the old image until the new one is ready
+                                    if (sessionToShare == null) sessionToShare = heartRequest.copy(includeHeart = include)
+                                }
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(when {
                             ResponsiveSize.screenWidthDp < 360 -> 14.dp
                             ResponsiveSize.screenWidthDp < 400 -> 18.dp
@@ -464,3 +494,12 @@ fun rememberAndroidHistoryShareUi(): HistoryShareUi {
         }
     }
 }
+
+/** A workout to draw as an image, with or without its heart rate. */
+private data class AndroidShareRequest(
+    val session: SessionWithDetails,
+    val planName: String,
+    val planExercises: List<PlanExerciseWithDetails>?,
+    val heart: ShareHeart?,
+    val includeHeart: Boolean
+)

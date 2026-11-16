@@ -23,7 +23,8 @@ fun WorkoutShareCard(
     planExercises: List<PlanExerciseWithDetails>? = null,
     showPrescription: Boolean = false,
     modifier: Modifier = Modifier,
-    exercisesById: Map<Int, ExerciseEntity> = emptyMap()
+    exercisesById: Map<Int, ExerciseEntity> = emptyMap(),
+    heart: com.emanuel5014.trainable.ui.components.heart.ShareHeart? = null
 ) {
     val context = LocalContext.current
     WorkoutShareCardContent(
@@ -31,7 +32,8 @@ fun WorkoutShareCard(
         logo = painterResource(R.drawable.ic_app_logo),
         appName = stringResource(R.string.app_name),
         setDetailsText = { set, prescription -> setLogDetailsText(context, set, withPrescription = prescription) },
-        exercisesById = exercisesById
+        exercisesById = exercisesById,
+        heart = heart
     )
 }
 

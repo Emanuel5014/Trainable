@@ -14,6 +14,8 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.emanuel5014.trainable.ui.components.heart.ShareHeart
+import com.emanuel5014.trainable.ui.components.heart.ShareHeartToggle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -64,15 +66,18 @@ import kotlin.coroutines.resume
 private data class HistoryImageRequest(
     val session: SessionWithDetails,
     val planName: String,
-    val exercises: List<PlanExerciseWithDetails>?
+    val exercises: List<PlanExerciseWithDetails>?,
+    val heart: ShareHeart?,
+    val includeHeart: Boolean
 )
 
-private data class HistoryImage(val bitmap: ImageBitmap, val png: ByteArray)
+private data class HistoryImage(val bitmap: ImageBitmap, val png: ByteArray, val request: HistoryImageRequest)
 
 /** iOS owns capture/preview/native sharing; the exported card itself is the same Compose content as Android. */
 @Composable
 internal fun rememberIosHistoryShareUi(): HistoryShareUi {
     var request by remember { mutableStateOf<HistoryImageRequest?>(null) }
+    val includeHeartNow = remember { mutableStateOf(true) }
     var captured by remember { mutableStateOf<HistoryImage?>(null) }
     var saving by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -90,12 +95,22 @@ internal fun rememberIosHistoryShareUi(): HistoryShareUi {
     return remember(scope, presenter) {
         object : HistoryShareUi {
             override val available = true
-            override fun share(session: SessionWithDetails, planName: String, planExercises: List<PlanExerciseWithDetails>?) {
-                if (request == null && captured == null) request = HistoryImageRequest(session, planName, planExercises)
+            override fun share(session: SessionWithDetails, planName: String, planExercises: List<PlanExerciseWithDetails>?, heart: ShareHeart?) {
+                if (request == null && captured == null) {
+                    request = HistoryImageRequest(session, planName, planExercises, heart, includeHeartNow.value)
+                }
             }
 
             @Composable
-            override fun Overlay(languageCode: String, weightUnit: String, showPrescription: Boolean, exercises: Map<Int, ExerciseEntity>) {
+            override fun Overlay(
+                languageCode: String,
+                weightUnit: String,
+                showPrescription: Boolean,
+                exercises: Map<Int, ExerciseEntity>,
+                includeHeart: Boolean,
+                onIncludeHeartChange: (Boolean) -> Unit
+            ) {
+                SideEffect { includeHeartNow.value = includeHeart }
                 val active = request != null || captured != null
                 DisposableEffect(active) {
                     val visible = BottomBarManager.isVisibleOverride
@@ -142,6 +157,16 @@ internal fun rememberIosHistoryShareUi(): HistoryShareUi {
                                 }
                                 Box(Modifier.weight(1f, fill = false).heightIn(max = 460.dp).fillMaxWidth().verticalScroll(rememberScrollState())) {
                                     Image(result.bitmap, null, Modifier.fillMaxWidth().aspectRatio(result.bitmap.width.toFloat() / result.bitmap.height), contentScale = ContentScale.FillWidth)
+                                }
+                                if (result.request.heart != null) {
+                                    ShareHeartToggle(
+                                        checked = result.request.includeHeart,
+                                        onCheckedChange = { include ->
+                                            onIncludeHeartChange(include)
+                                            // Drawn again under the preview, which keeps the old image until the new one is ready
+                                            if (request == null && !saving) request = result.request.copy(includeHeart = include)
+                                        }
+                                    )
                                 }
                                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     OutlinedButton(onClick = {
@@ -203,7 +228,8 @@ private fun RenderHistoryImage(
                     ((if (includePrescription) text.setPrescriptionBadges(set) else emptyList()) + text.setPerformanceBadges(set))
                         .takeIf { it.isNotEmpty() }?.joinToString(" · ")
                 },
-                exercisesById = exercises)
+                exercisesById = exercises,
+                heart = request.heart?.takeIf { request.includeHeart })
         }) { children, _ ->
             val width = with(density) { 402.dp.roundToPx() }
             val card = children.single().measure(Constraints(minWidth = width, maxWidth = width))
@@ -219,7 +245,7 @@ private fun RenderHistoryImage(
             withFrameNanos { }; withFrameNanos { }
             val bitmap = layer.toImageBitmap()
             val png = withContext(Dispatchers.Default) { encodeHistoryPng(bitmap) }
-            onReady(HistoryImage(bitmap, png))
+            onReady(HistoryImage(bitmap, png, request))
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { onFailed() }
     }

@@ -36,6 +36,8 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.repository.HeartRateRepository
 import com.emanuel5014.trainable.data.repository.HeartSyncResult
 import com.emanuel5014.trainable.domain.heart.HeartMath
+import com.emanuel5014.trainable.ui.components.heart.ShareHeart
+import com.emanuel5014.trainable.ui.components.heart.toShareHeart
 import com.emanuel5014.trainable.domain.heart.isSparse
 
 
@@ -68,7 +70,9 @@ data class HistoryUiState(
     /** Heart rate and calories of the watch or band are read into each workout (Health Connect). */
     val heartRateEnabled: Boolean = false,
     /** For the heart-rate zones. */
-    val maxHeartRate: Int = UserPreferencesRepository.DEFAULT_MAX_HEART_RATE
+    val maxHeartRate: Int = UserPreferencesRepository.DEFAULT_MAX_HEART_RATE,
+    /** The share card shows the workout's heart rate (the switch in the share preview). */
+    val shareIncludeHeart: Boolean = true
 )
 
 /** The history's state, the same on every platform; each one gives it its own lifetime ([scope]). */
@@ -124,6 +128,11 @@ class HistoryState(
             }
         }
         scope.launch {
+            userPreferencesRepository.shareIncludeHeart.collect { include ->
+                _uiState.update { it.copy(shareIncludeHeart = include) }
+            }
+        }
+        scope.launch {
             repository.getExercisesById().collect { exercises ->
                 _uiState.update { it.copy(exercises = exercises) }
             }
@@ -156,6 +165,20 @@ class HistoryState(
             }
         }
         return runCatching { repository.sync(session, typicalDurationMs()) }.getOrDefault(HeartSyncResult.UNAVAILABLE)
+    }
+
+    /**
+     * The heart rate the share card of [sessionId] may show: what the history card shows (Android follows the
+     * heart-rate switch; a platform without a store shows restored data), null without heart rate.
+     */
+    suspend fun shareHeart(sessionId: Int): ShareHeart? {
+        val state = _uiState.value
+        if (!state.heartRateEnabled && canSyncHeart) return null
+        return heartData(sessionId).first()?.toShareHeart(state.maxHeartRate)
+    }
+
+    fun setShareIncludeHeart(include: Boolean) {
+        scope.launch { userPreferencesRepository.setShareIncludeHeart(include) }
     }
 
     /** How long the lifter's workouts with a recorded duration usually last (the median), for those without one. */

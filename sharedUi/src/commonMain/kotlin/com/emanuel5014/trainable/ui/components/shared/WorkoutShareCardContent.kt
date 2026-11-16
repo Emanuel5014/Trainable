@@ -79,7 +79,9 @@ fun WorkoutShareCardContent(
     appName: String,
     setDetailsText: (com.emanuel5014.trainable.data.local.entity.SetLogEntity, Boolean) -> String?,
     /** Every exercise by id: a cardio row is named after the exercise it is linked to. */
-    exercisesById: Map<Int, com.emanuel5014.trainable.data.local.entity.ExerciseEntity> = emptyMap()
+    exercisesById: Map<Int, com.emanuel5014.trainable.data.local.entity.ExerciseEntity> = emptyMap(),
+    /** The workout's heart rate from the watch or band, under the statistics; null leaves it out. */
+    heart: com.emanuel5014.trainable.ui.components.heart.ShareHeart? = null
 ) {
     val primaryColor = Primary
 
@@ -318,6 +320,11 @@ fun WorkoutShareCardContent(
                 valueColor = textPrimary,
                 labelColor = statLabelColor
             )
+        }
+
+        heart?.let {
+            Spacer(modifier = Modifier.height(12.dp))
+            com.emanuel5014.trainable.ui.components.heart.ShareHeartSection(it, textPrimary, textSecondary)
         }
 
         // Muscle Groups Section

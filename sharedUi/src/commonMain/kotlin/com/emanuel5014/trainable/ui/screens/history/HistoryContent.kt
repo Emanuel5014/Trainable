@@ -686,7 +686,11 @@ fun HistoryContent(
         }
 
         // Preparing and previewing the image of a shared workout, where the platform can share one
-        share.Overlay(languageCode, uiState.weightUnit, advancedProgramming, uiState.exercises)
+        share.Overlay(
+            languageCode, uiState.weightUnit, advancedProgramming, uiState.exercises,
+            includeHeart = uiState.shareIncludeHeart,
+            onIncludeHeartChange = state::setShareIncludeHeart
+        )
 
         // The opened workout. It closes when its workout leaves the shown list (deleted or filtered out), when
         // selection starts or when the page is left. Composed before the dialogs and the journal sheet so they
@@ -716,7 +720,7 @@ fun HistoryContent(
                         openSessionId = null
                         scope.launch {
                             val planExercises = state.loadPlanExercises(details.session.planId)
-                            share.share(details, openPlanName, planExercises)
+                            share.share(details, openPlanName, planExercises, state.shareHeart(details.session.id))
                         }
                     }
                 },

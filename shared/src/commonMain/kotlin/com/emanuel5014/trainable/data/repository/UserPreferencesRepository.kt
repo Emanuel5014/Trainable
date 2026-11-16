@@ -176,6 +176,8 @@ class UserPreferencesRepository(
     val HEART_RATE_ENABLED = booleanPreferencesKey("heart_rate_enabled")
     /** The lifter's maximum heart rate, for the heart-rate zones. */
     val MAX_HEART_RATE = intPreferencesKey("max_heart_rate")
+    /** The share card of a workout shows its heart rate (when it has one). On by default. */
+    val SHARE_INCLUDE_HEART = booleanPreferencesKey("share_include_heart")
     /** Plates the gym has, comma separated and heaviest first, one list per weight unit. */
     val PLATE_CALCULATOR_PLATES_KG = stringPreferencesKey("plate_calculator_plates_kg")
     val PLATE_CALCULATOR_PLATES_LB = stringPreferencesKey("plate_calculator_plates_lb")
@@ -795,6 +797,15 @@ class UserPreferencesRepository(
     suspend fun setMaxHeartRate(bpm: Int) {
         dataStore.edit { preferences ->
             preferences[MAX_HEART_RATE] = bpm.coerceIn(MIN_MAX_HEART_RATE, MAX_MAX_HEART_RATE)
+        }
+    }
+
+    val shareIncludeHeart: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[SHARE_INCLUDE_HEART] ?: true }
+
+    suspend fun setShareIncludeHeart(include: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SHARE_INCLUDE_HEART] = include
         }
     }
 
