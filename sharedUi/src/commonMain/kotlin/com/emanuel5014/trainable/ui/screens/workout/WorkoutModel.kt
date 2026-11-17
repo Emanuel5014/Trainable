@@ -523,7 +523,8 @@ class WorkoutModel(
         // Load saved warmup timer from session
         val savedWarmupEndTime = sessionWithSets.session.warmupTimerEndTime
         val savedWarmupTotalSeconds = sessionWithSets.session.totalWarmupSeconds
-        val savedWarmupRemainingSeconds = savedWarmupEndTime?.let {
+        // One countdown at a time: a workout saved with both running (before that rule) resumes its rest only
+        val savedWarmupRemainingSeconds = savedWarmupEndTime?.takeIf { savedRemainingSeconds <= 0 }?.let {
             ((it - nowMillis()) / 1000).toInt().coerceAtLeast(0)
         } ?: 0
 
@@ -942,6 +943,9 @@ class WorkoutModel(
         restoreMiniSet()
         if (savedWarmupRemainingSeconds > 0 && savedWarmupEndTime != null) {
             resumeWarmupTimer(savedWarmupEndTime)
+        } else if (savedWarmupEndTime != null && savedRemainingSeconds > 0) {
+            workoutTimers.cancelWarmupTimer()
+            clearWarmupTimerInSession()
         }
         if (savedCardioRunning || savedCardioPaused) {
             val cardioExState = exerciseStates.getOrNull(finalActiveIndex)
@@ -2441,12 +2445,11 @@ class WorkoutModel(
     ) {
         if (seconds <= 0) return
         stopRestTimer()
+        // One countdown at a time: the rest takes the place of a warmup, running or with its "finished" notice
+        if (_state.value.warmupTimerEndTime != null) skipWarmupTimer() else workoutTimers.cancelWarmupTimer()
         val endTime = nowMillis() + (seconds * 1000L)
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
         if (_state.value.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) {
-            // The rest timer takes the place of a "warmup finished" notification still on screen; a warmup that is
-            // still counting down keeps its own
-            if (_state.value.warmupTimerEndTime == null) workoutTimers.cancelWarmupTimer()
             _state.value.sessionId?.let { sessionId ->
                 announcedNextSetKey = nextSetKey
                 workoutTimers.startOrUpdateTimerNotification(
@@ -2946,9 +2949,14 @@ class WorkoutModel(
 
     // ---- Warmup / General Timer ----
 
+    /**
+     * One countdown at a time: a rest still running ends here, as if skipped (the dialog said so), and a "rest
+     * finished" card still on screen gives its place to the warmup.
+     */
     fun startWarmupTimer(seconds: Int) {
         if (seconds <= 0) return
         modelScope.launch { userPreferencesRepository.setLastWarmupSeconds(seconds) }
+        if (_state.value.restTimerEndTime != null) skipRestTimer() else workoutTimers.cancelTimer()
         stopWarmupTimer()
         val endTime = nowMillis() + (seconds * 1000L)
         _state.update { it.copy(warmupTimerRemaining = seconds, warmupTimerEndTime = endTime, warmupTimerTotalSeconds = seconds) }

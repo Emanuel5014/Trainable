@@ -1145,6 +1145,7 @@
     <string name="total_reps_progress">%1$d/%2$d rep</string>
     <string name="warmup_label">Riscaldamento</string>
     <string name="warmup_timer_description">Imposta un timer per riscaldamento, stretching o altro</string>
+    <string name="warmup_stops_rest">Il recupero in corso verrà interrotto.</string>
     <string name="camera">Fotocamera</string>
     <string name="gallery">Galleria</string>
     <string name="physical_check_add_check_cd">Aggiungi Check</string>

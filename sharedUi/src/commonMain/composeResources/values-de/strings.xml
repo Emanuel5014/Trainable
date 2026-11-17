@@ -1142,6 +1142,7 @@
     <string name="total_reps_progress">%1$d/%2$d Wdh.</string>
     <string name="warmup_label">Aufwärmen</string>
     <string name="warmup_timer_description">Timer für Aufwärmen, Dehnen oder Sonstiges einstellen</string>
+    <string name="warmup_stops_rest">Die laufende Pause wird beendet.</string>
     <string name="camera">Kamera</string>
     <string name="gallery">Galerie</string>
     <string name="physical_check_add_check_cd">Check hinzufügen</string>

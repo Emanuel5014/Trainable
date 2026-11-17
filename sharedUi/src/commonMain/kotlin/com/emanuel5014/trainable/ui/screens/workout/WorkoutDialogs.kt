@@ -49,6 +49,7 @@ import com.emanuel5014.trainable.sharedui.resources.save_new_one_rep_max
 import com.emanuel5014.trainable.sharedui.resources.start
 import com.emanuel5014.trainable.sharedui.resources.warmup_timer
 import com.emanuel5014.trainable.sharedui.resources.warmup_timer_description
+import com.emanuel5014.trainable.sharedui.resources.warmup_stops_rest
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
@@ -238,6 +239,16 @@ fun WorkoutDialogs(
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant
                     )
+                    // One countdown at a time: starting this one ends the rest
+                    if (state.restTimerEndTime != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(Res.string.warmup_stops_rest),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     val haptic = LocalHapticFeedback.current
                     RestSlider(

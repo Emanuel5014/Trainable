@@ -1145,6 +1145,7 @@
     <string name="total_reps_progress">%1$d/%2$d reps</string>
     <string name="warmup_label">Calentamiento</string>
     <string name="warmup_timer_description">Configure un temporizador para calentamiento, estiramientos u otros</string>
+    <string name="warmup_stops_rest">El descanso en curso se detendrá.</string>
     <string name="camera">Cámara</string>
     <string name="gallery">Galería</string>
     <string name="physical_check_add_check_cd">Añadir Check</string>

@@ -1142,6 +1142,7 @@
     <string name="total_reps_progress">%1$d/%2$d reps</string>
     <string name="warmup_label">Warmup</string>
     <string name="warmup_timer_description">Set a timer for warmup, stretching, or anything else</string>
+    <string name="warmup_stops_rest">The rest timer that is running will stop.</string>
     <string name="camera">Camera</string>
     <string name="gallery">Gallery</string>
     <string name="physical_check_add_check_cd">Add Check</string>
