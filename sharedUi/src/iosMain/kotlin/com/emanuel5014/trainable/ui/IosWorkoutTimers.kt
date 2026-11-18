@@ -18,7 +18,8 @@ internal class IosWorkoutTimers(
     private val words: () -> IosNotificationWords? = { IosNotifications.words },
     private val now: () -> Long = ::nowMillis,
     private val live: () -> IosWorkoutLiveActivities? = { IosWorkoutLiveActivityBridge.service },
-    private val context: () -> IosLiveTimerContext = { IosLiveTimerContext() }
+    private val context: () -> IosLiveTimerContext = { IosLiveTimerContext() },
+    private val vibration: () -> IosRestVibration? = { IosRestVibrationBridge.service }
 ) : WorkoutTimers {
     override val timerEvents = MutableSharedFlow<TimerAction>(extraBufferCapacity = 1)
     override val warmupTimerEvents = MutableSharedFlow<WarmupTimerAction>(extraBufferCapacity = 1)
@@ -37,13 +38,14 @@ internal class IosWorkoutTimers(
     override fun hasNotificationPermission() = scheduler.canAuthorize || live()?.isAvailable() == true
     // ActivityKit renders date-based countdowns; it does not need the Android per-second update path.
     override fun isLiveNotificationSupported() = false
-    override fun cancelCustomVibration() = Unit // iOS controls notification sound/haptics.
+    override fun cancelCustomVibration() { vibration()?.stopVibration() }
     // The shared model calls these immediately before show*Finished. Keep the pre-scheduled alert: cancelling it
     // can race its delivery, and posting another on resume would duplicate an alert already delivered in background.
     override fun cancelFinishAlarm() = Unit
     override fun cancelWarmupFinishAlarm() = Unit
     override fun cancelTimer() {
         scheduler.cancel(listOf(REST_NOTICE)); restScheduled = false
+        vibration()?.cancelRestEnd()
         IosLiveTimerSnapshots.forget(REST_NOTICE, restLiveInstance)
         live()?.cancel(REST_NOTICE); restLiveInstance = null
     }
@@ -78,6 +80,9 @@ internal class IosWorkoutTimers(
         scheduler.schedule(listOf(IosNotice(REST_NOTICE, text.restTitle,
             text.restBody + if (detail.isEmpty()) "" else " — $detail", endsAt)), prompt = true)
         restScheduled = true
+        val vibrationSeconds = IosRestVibrationBridge.seconds
+        if (remainingSeconds > 0 && vibrationSeconds > 0) vibration()?.scheduleRestEnd(endsAt, vibrationSeconds)
+        else vibration()?.cancelRestEnd()
         if (remainingSeconds > 0) {
             val instance = restLiveInstance ?: Uuid.random().toString().also { restLiveInstance = it }
             // The buttons for the end of the rest travel with the countdown: a locked phone sleeps through that moment
@@ -246,5 +251,7 @@ internal object IosWorkoutSessionEnd {
         val ids = kinds.flatMap { kind -> if (kind == EMOM_NOTICE) (0..59).map { "$EMOM_NOTICE.$it" } else listOf(kind) }
         if (ids.isNotEmpty()) scheduler.cancel(ids)
         live?.cancelSession(sessionId)
+        // After a relaunch nothing remembers which workout the rest belonged to: end it unless another one rests now
+        if (REST_NOTICE in kinds || IosLiveTimerSnapshots.get(REST_NOTICE) == null) IosRestVibrationBridge.service?.endKeepAlive()
     }
 }

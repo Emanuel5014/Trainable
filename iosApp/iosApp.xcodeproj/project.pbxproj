@@ -22,6 +22,7 @@
 		D10000000000000000000001 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000001 /* AppIcon.icon */; };
 		D10000000000000000000002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000002 /* Assets.xcassets */; };
 		E10000000000000000000001 /* HomeWidgetPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000001; };
+		F10000000000000000000001 /* RestVibrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000001; };
 		E10000000000000000000002 /* HomeWidgetStore.swift in app */ = {isa = PBXBuildFile; fileRef = E20000000000000000000002; };
 		E10000000000000000000003 /* HomeWidgetStore.swift in extension */ = {isa = PBXBuildFile; fileRef = E20000000000000000000002; };
 		E10000000000000000000004 /* HomeWidgets.swift in extension */ = {isa = PBXBuildFile; fileRef = E20000000000000000000003; };
@@ -41,6 +42,7 @@
 		D20000000000000000000001 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		D20000000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E20000000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetPublisher.swift; sourceTree = "<group>"; };
+		F20000000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestVibrationService.swift; sourceTree = "<group>"; };
 		E20000000000000000000002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetStore.swift; sourceTree = "<group>"; };
 		E20000000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgets.swift; sourceTree = "<group>"; };
 		E20000000000000000000004 = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Trainable.entitlements; sourceTree = "<group>"; };
@@ -76,6 +78,7 @@
 				A20000000000000000000002 /* ContentView.swift */,
 				B20000000000000000000001 /* WorkoutLiveActivityService.swift */,
 				E20000000000000000000001 /* HomeWidgetPublisher.swift */,
+				F20000000000000000000001 /* RestVibrationService.swift */,
 				E20000000000000000000004 /* Trainable.entitlements */,
 				A20000000000000000000004 /* LocalLlmService.swift */,
 				D20000000000000000000001 /* AppIcon.icon */,
@@ -216,6 +219,7 @@
 				B10000000000000000000002 /* Timer attributes */,
 				B10000000000000000000006 /* TimerControlIntent in app */,
 				E10000000000000000000001 /* HomeWidgetPublisher.swift in Sources */,
+				F10000000000000000000001 /* RestVibrationService.swift in Sources */,
 				E10000000000000000000002 /* HomeWidgetStore.swift in app */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

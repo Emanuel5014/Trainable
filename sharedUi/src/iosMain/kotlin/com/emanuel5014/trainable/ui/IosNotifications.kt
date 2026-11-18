@@ -184,6 +184,7 @@ internal object IosNotifications {
         scheduler.cancel(listOf(REST_NOTICE, WARMUP_NOTICE) + emomIds)
         IosLiveTimerSnapshots.clear()
         IosWorkoutLiveActivityBridge.service?.cancelAll()
+        IosRestVibrationBridge.service?.endKeepAlive()
     }
     fun permissionFromSettings(enabled: Boolean, save: (Boolean) -> Unit) {
         if (!enabled) { save(false); return }
@@ -256,6 +257,12 @@ internal fun IosNotificationEffects(preferences: UserPreferencesRepository) {
         }
     }
     LaunchedEffect(Unit) {
+        preferences.timerFinishedLockscreenVibrationDuration.collect { seconds ->
+            IosRestVibrationBridge.seconds = seconds
+            if (seconds == 0) IosRestVibrationBridge.service?.endKeepAlive()
+        }
+    }
+    LaunchedEffect(Unit) {
         // EMOM sessions reopen paused; never leave a previous process's round cues running.
         IosNotifications.cancelEmom()
         preferences.timerNotificationsEnabled.collect { if (!it) IosNotifications.cancelTimers() }
@@ -276,5 +283,5 @@ internal fun IosNotificationSettings(state: SettingsState, onNavigateBack: () ->
             }
         }, onMembershipDaysBeforeChange = { days ->
             scope.launch { IosAppGraph.preferences.setGymMembershipExpiryNotificationDaysBefore(days) }
-        }, customVibrationAvailable = false)
+        }, customVibrationAvailable = IosRestVibrationBridge.service?.isSupported() == true)
 }
