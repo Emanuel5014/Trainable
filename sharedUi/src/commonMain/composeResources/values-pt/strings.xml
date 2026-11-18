@@ -605,6 +605,8 @@
     <string name="workout_settings_desc">Temporizador, paragens automáticas e opções de exercícios</string>
     <string name="workout_timer">Temporizador de treino</string>
     <string name="workout_timer_desc">Rastrear duração total do treino</string>
+    <string name="show_workout_elapsed">Mostrar duração do treino</string>
+    <string name="show_workout_elapsed_desc">O tempo decorrido do treino (horas, minutos, segundos) abaixo do nome. O painel sempre o mostra.</string>
     <string name="add_one_rep_max">Adicionar 1RM</string>
     <string name="back">Voltar</string>
     <string name="brightness">Brilho</string>

@@ -99,6 +99,7 @@ object BackupSettingsCodec {
         prefs[UserPreferencesRepository.DASHBOARD_WORKOUT_MODE]?.let { json.put("dashboard_workout_mode", it) }
         json.put("starting_weight_enabled", prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] ?: false)
         json.put("reps_from_last_workout", prefs[UserPreferencesRepository.REPS_FROM_LAST_WORKOUT] ?: false)
+        json.put("show_workout_elapsed", prefs[UserPreferencesRepository.SHOW_WORKOUT_ELAPSED] ?: false)
         json.put("set_performance_enabled", prefs[UserPreferencesRepository.SET_PERFORMANCE_ENABLED] ?: false)
         json.put("plate_calculator_enabled", prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] ?: false)
         prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG]?.let { json.put("plate_calculator_plates_kg", it) }
@@ -253,6 +254,8 @@ object BackupSettingsCodec {
             prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] = jsonObject.getBoolean("starting_weight_enabled")
         if (jsonObject.has("reps_from_last_workout"))
             prefs[UserPreferencesRepository.REPS_FROM_LAST_WORKOUT] = jsonObject.getBoolean("reps_from_last_workout")
+        if (jsonObject.has("show_workout_elapsed"))
+            prefs[UserPreferencesRepository.SHOW_WORKOUT_ELAPSED] = jsonObject.getBoolean("show_workout_elapsed")
         if (jsonObject.has("set_performance_enabled"))
             prefs[UserPreferencesRepository.SET_PERFORMANCE_ENABLED] = jsonObject.getBoolean("set_performance_enabled")
         if (jsonObject.has("plate_calculator_enabled"))

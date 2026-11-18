@@ -161,6 +161,8 @@ class UserPreferencesRepository(
      * in the last workout of the routine (when there is one). Off by default: the routine is the prescription.
      */
     val REPS_FROM_LAST_WORKOUT = booleanPreferencesKey("reps_from_last_workout")
+    /** The workout screen shows how long the workout has run (h:mm:ss) under its name. Off by default; the dashboard always does. */
+    val SHOW_WORKOUT_ELAPSED = booleanPreferencesKey("show_workout_elapsed")
     /** The top of the routine screen (photos, note, muscle groups, big day pills) is open. Compact by default. */
     val ROUTINE_HEADER_EXPANDED = booleanPreferencesKey("routine_header_expanded")
     /**
@@ -757,6 +759,15 @@ class UserPreferencesRepository(
     suspend fun setRepsFromLastWorkout(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[REPS_FROM_LAST_WORKOUT] = enabled
+        }
+    }
+
+    val showWorkoutElapsed: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[SHOW_WORKOUT_ELAPSED] ?: false }
+
+    suspend fun setShowWorkoutElapsed(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SHOW_WORKOUT_ELAPSED] = enabled
         }
     }
 

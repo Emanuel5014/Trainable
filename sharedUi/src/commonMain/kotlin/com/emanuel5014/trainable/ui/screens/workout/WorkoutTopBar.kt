@@ -25,6 +25,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
+import com.emanuel5014.trainable.ui.components.rememberWorkoutElapsed
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.layout.Box
@@ -117,12 +119,17 @@ fun WorkoutTopBar(
                     )
                 }
                 }
-                Text(
-                    text = stringResource(Res.string.session_in_progress_title), 
-                    style = MaterialTheme.typography.labelSmall, 
-                    color = OnSurfaceVariant,
-                    fontWeight = FontWeight.ExtraBold
-                )
+                val startedAt = state.sessionStartTime
+                if (state.showWorkoutElapsed && startedAt != null) {
+                    SessionElapsedLabel(startedAt)
+                } else {
+                    Text(
+                        text = stringResource(Res.string.session_in_progress_title),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
         },
         navigationIcon = {
@@ -207,4 +214,22 @@ fun WorkoutTopBar(
         completedCount = state.completedExercises
     )
     }
+}
+
+/**
+ * "SESSION IN PROGRESS · 0:42:07": the clock of the whole workout (Workout settings), alone in its composable so only
+ * this line redraws every second.
+ */
+@Composable
+private fun SessionElapsedLabel(startedAt: Long) {
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    val resumed by lifecycle.currentStateFlow.collectAsState()
+    val elapsed = rememberWorkoutElapsed(startedAt, isActive = resumed.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED))
+    Text(
+        text = stringResource(Res.string.session_in_progress_title) + " · " + elapsed,
+        style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+        color = OnSurfaceVariant,
+        fontWeight = FontWeight.ExtraBold,
+        maxLines = 1
+    )
 }

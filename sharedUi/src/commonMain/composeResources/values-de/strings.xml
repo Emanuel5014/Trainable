@@ -602,6 +602,8 @@
     <string name="workout_settings_desc">Timer, Auto-Stopp und Übungsoptionen</string>
     <string name="workout_timer">Trainingstimer</string>
     <string name="workout_timer_desc">Gesamte Trainingsdauer aufzeichnen</string>
+    <string name="show_workout_elapsed">Trainingsdauer anzeigen</string>
+    <string name="show_workout_elapsed_desc">Die laufende Zeit des Trainings (Stunden, Minuten, Sekunden) unter seinem Namen. Das Dashboard zeigt sie immer.</string>
     <string name="add_one_rep_max">1RM hinzufügen</string>
     <string name="back">Zurück</string>
     <string name="brightness">Helligkeit</string>

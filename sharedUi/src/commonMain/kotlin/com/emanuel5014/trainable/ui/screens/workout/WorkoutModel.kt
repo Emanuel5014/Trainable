@@ -423,6 +423,12 @@ class WorkoutModel(
         }
 
         modelScope.launch {
+            userPreferencesRepository.showWorkoutElapsed.collect { enabled ->
+                _state.update { it.copy(showWorkoutElapsed = enabled) }
+            }
+        }
+
+        modelScope.launch {
             userPreferencesRepository.inlineExerciseModificationsEnabled.collect { enabled ->
                 _state.update { it.copy(inlineExerciseModificationsEnabled = enabled) }
             }

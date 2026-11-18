@@ -63,6 +63,8 @@ import com.emanuel5014.trainable.sharedui.resources.workout_section_session
 import com.emanuel5014.trainable.sharedui.resources.workout_section_timers
 import com.emanuel5014.trainable.sharedui.resources.workout_settings
 import com.emanuel5014.trainable.sharedui.resources.workout_timer
+import com.emanuel5014.trainable.sharedui.resources.show_workout_elapsed
+import com.emanuel5014.trainable.sharedui.resources.show_workout_elapsed_desc
 import com.emanuel5014.trainable.sharedui.resources.workout_timer_desc
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -93,6 +95,7 @@ import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SpaceDashboard
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.EventSeat
@@ -212,6 +215,7 @@ fun WorkoutSettingsContent(
 private fun DuringWorkoutCard(state: SettingsState) {
     val weightUnit by state.weightUnit.collectAsState()
     val workoutTimerEnabled by state.workoutTimerEnabled.collectAsState()
+    val showWorkoutElapsed by state.showWorkoutElapsed.collectAsState()
     val inlineExerciseModificationsEnabled by state.inlineExerciseModificationsEnabled.collectAsState()
     val setPerformanceEnabled by state.setPerformanceEnabled.collectAsState()
     val plateCalculatorEnabled by state.plateCalculatorEnabled.collectAsState()
@@ -240,6 +244,17 @@ private fun DuringWorkoutCard(state: SettingsState) {
                 description = stringResource(Res.string.workout_timer_desc),
                 checked = workoutTimerEnabled,
                 onCheckedChange = { state.setWorkoutTimerEnabled(it) }
+            )
+
+            SettingDivider()
+
+            // The running clock of the workout under its name (the dashboard always shows it)
+            SettingSwitchRow(
+                icon = Icons.Rounded.Schedule,
+                title = stringResource(Res.string.show_workout_elapsed),
+                description = stringResource(Res.string.show_workout_elapsed_desc),
+                checked = showWorkoutElapsed,
+                onCheckedChange = { state.setShowWorkoutElapsed(it) }
             )
 
             SettingDivider()

@@ -124,6 +124,8 @@ data class LiveWorkoutUi(
     val sessionId: Int,
     val title: String,
     val elapsedMinutes: Int,
+    /** When the workout started (epoch ms), for the h:mm:ss clock of the status line. */
+    val startedAt: Long = 0L,
     val phase: Phase,
     /** Seconds left of the rest or warm-up; seconds run of a set or cardio timer. */
     val seconds: Int = 0,
@@ -182,6 +184,7 @@ data class LiveWorkoutUi(
                 sessionId = session.id,
                 title = item.displayName,
                 elapsedMinutes = elapsed,
+                startedAt = session.timestamp,
                 phase = phase,
                 seconds = seconds,
                 totalSeconds = total,

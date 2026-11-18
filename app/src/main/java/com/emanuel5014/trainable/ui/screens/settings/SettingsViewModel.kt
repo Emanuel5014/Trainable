@@ -253,6 +253,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setRepsFromLastWorkout(enabled: Boolean) = state.setRepsFromLastWorkout(enabled)
 
+    val showWorkoutElapsed = state.showWorkoutElapsed
+
+    fun setShowWorkoutElapsed(enabled: Boolean) = state.setShowWorkoutElapsed(enabled)
+
     val setPerformanceEnabled = state.setPerformanceEnabled
 
     fun setSetPerformanceEnabled(enabled: Boolean) = state.setSetPerformanceEnabled(enabled)

@@ -303,6 +303,12 @@ class SettingsState(
         initialValue = false
     )
 
+    val showWorkoutElapsed = userPrefsRepository.showWorkoutElapsed.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val setPerformanceEnabled = userPrefsRepository.setPerformanceEnabled.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -486,6 +492,12 @@ class SettingsState(
     fun setRepsFromLastWorkout(enabled: Boolean) {
         scope.launch {
             userPrefsRepository.setRepsFromLastWorkout(enabled)
+        }
+    }
+
+    fun setShowWorkoutElapsed(enabled: Boolean) {
+        scope.launch {
+            userPrefsRepository.setShowWorkoutElapsed(enabled)
         }
     }
 

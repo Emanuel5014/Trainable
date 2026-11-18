@@ -605,6 +605,8 @@
     <string name="workout_settings_desc">Timer, stop automatici e opzioni esercizi</string>
     <string name="workout_timer">Timer Allenamento</string>
     <string name="workout_timer_desc">Traccia la durata totale dell'allenamento</string>
+    <string name="show_workout_elapsed">Mostra durata allenamento</string>
+    <string name="show_workout_elapsed_desc">Il tempo trascorso dell'allenamento (ore, minuti, secondi) sotto il suo nome. La dashboard lo mostra sempre.</string>
     <string name="add_one_rep_max">Aggiungi massimale</string>
     <string name="back">Indietro</string>
     <string name="brightness">Luminosità</string>

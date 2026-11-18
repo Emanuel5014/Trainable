@@ -602,6 +602,8 @@
     <string name="workout_settings_desc">Timer, auto-stop and exercise options</string>
     <string name="workout_timer">Workout Timer</string>
     <string name="workout_timer_desc">Track total workout duration</string>
+    <string name="show_workout_elapsed">Show workout duration</string>
+    <string name="show_workout_elapsed_desc">The running time of the workout (hours, minutes, seconds) under its name. The dashboard always shows it.</string>
     <string name="add_one_rep_max">Add 1RM</string>
     <string name="back">Back</string>
     <string name="brightness">Brightness</string>

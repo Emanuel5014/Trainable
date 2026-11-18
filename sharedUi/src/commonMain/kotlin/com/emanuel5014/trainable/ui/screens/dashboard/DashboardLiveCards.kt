@@ -104,6 +104,7 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.delay
+import com.emanuel5014.trainable.ui.components.rememberWorkoutElapsed
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
@@ -260,15 +261,19 @@ private fun LiveRing(
     }
 }
 
-/** The status line on top of the card and the panel: a dot, "IN PROGRESS · 32 min". */
+/**
+ * The status line on top of the card and the panel: a dot, "IN PROGRESS · 0:32:07". The clock of the workout always
+ * shows here and moves on the second while the dashboard is on screen; only this line redraws.
+ */
 @Composable
-private fun LiveStatus(ui: LiveWorkoutUi) {
+private fun LiveStatus(ui: LiveWorkoutUi, isActive: Boolean) {
+    val elapsed = rememberWorkoutElapsed(ui.startedAt, isActive)
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(8.dp).clip(CircleShape).background(ResumeInk))
         Spacer(Modifier.width(6.dp))
         Text(
-            stringResource(Res.string.dashboard_live_in_progress, elapsedText(ui.elapsedMinutes)).uppercase(),
-            style = MaterialTheme.typography.labelMedium,
+            stringResource(Res.string.dashboard_live_in_progress, elapsed).uppercase(),
+            style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.ExtraBold,
             color = ResumeInk,
             maxLines = 1,
@@ -438,7 +443,7 @@ internal fun LiveWorkoutCard(ui: LiveWorkoutUi, isActive: Boolean, onClick: () -
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                LiveStatus(ui)
+                LiveStatus(ui, isActive)
                 Text(
                     ui.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold,
                     color = ResumeInk, maxLines = 1, overflow = TextOverflow.Ellipsis
@@ -593,7 +598,7 @@ internal fun LiveWorkoutPanel(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                LiveStatus(ui)
+                LiveStatus(ui, isActive)
                 Text(ui.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = ResumeInk, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Spacer(Modifier.width(8.dp))

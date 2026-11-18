@@ -90,6 +90,8 @@ data class WorkoutState(
     val nextExecutionOrder: Int = 0,
     val categories: List<String> = emptyList(),
     val workoutTimerEnabled: Boolean = false,
+    /** The clock of the whole workout (h:mm:ss) under its name in the top bar (Workout settings). */
+    val showWorkoutElapsed: Boolean = false,
     val inlineExerciseModificationsEnabled: Boolean = false,
     val hapticEnabled: Boolean = true,
     val cardioTimerSeconds: Int = 0,

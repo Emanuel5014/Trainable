@@ -605,6 +605,8 @@
     <string name="workout_settings_desc">Minuteur, arrêts auto et options d'exercices</string>
     <string name="workout_timer">Minuteur d'entraînement</string>
     <string name="workout_timer_desc">Suivre la durée totale de l'entraînement</string>
+    <string name="show_workout_elapsed">Afficher la durée de l'entraînement</string>
+    <string name="show_workout_elapsed_desc">Le temps écoulé de l'entraînement (heures, minutes, secondes) sous son nom. Le tableau de bord l'affiche toujours.</string>
     <string name="add_one_rep_max">Ajouter un 1RM</string>
     <string name="back">Retour</string>
     <string name="brightness">Luminosité</string>
