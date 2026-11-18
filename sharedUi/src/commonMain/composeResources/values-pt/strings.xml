@@ -570,6 +570,10 @@
     <string name="settings_title">CONFIGURAÇÕES</string>
     <string name="starting_weight">Peso inicial</string>
     <string name="starting_weight_desc">Dê a cada exercício de uma rotina um peso para começar. Enquanto a rotina não tiver um treino para copiar, as séries começam aí, ou no último peso que você usou nesse exercício.</string>
+    <string name="starting_reps">Repetições iniciais</string>
+    <string name="starting_reps_desc">De onde partem as repetições de cada série ao abrir um treino a partir de uma rotina: o que a rotina indica ou o que fez da última vez nessa rotina. Os intervalos e os exercícios por tempo partem sempre da última vez.</string>
+    <string name="starting_reps_routine">Rotina</string>
+    <string name="starting_reps_last_workout">Último treino</string>
     <string name="swipe_actions">Ações de Deslize</string>
     <string name="swipe_actions_desc">Ativar deslize para editar/arquivar/excluir itens e navegar entre exercícios</string>
     <string name="tactile_feedback">Feedback Tátil</string>

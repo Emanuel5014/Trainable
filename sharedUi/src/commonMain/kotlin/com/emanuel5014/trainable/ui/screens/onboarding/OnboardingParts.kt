@@ -130,6 +130,25 @@ fun SwitchRow(
     }
 }
 
+/** A row that is a choice rather than a switch: title, optional description and the [options] always shown. */
+@Composable
+fun ChoiceRow(
+    position: JoinedPosition,
+    title: String,
+    description: String?,
+    options: @Composable ColumnScope.() -> Unit
+) {
+    JoinedRowSurface(position) {
+        Column(modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp), verticalArrangement = Arrangement.Center) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            if (description != null) {
+                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp), content = options)
+    }
+}
+
 /** A connected button group for short choices; the chosen button rounds fully. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

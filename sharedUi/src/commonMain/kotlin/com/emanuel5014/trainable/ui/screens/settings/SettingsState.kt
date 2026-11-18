@@ -297,6 +297,12 @@ class SettingsState(
         initialValue = false
     )
 
+    val repsFromLastWorkout = userPrefsRepository.repsFromLastWorkout.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val setPerformanceEnabled = userPrefsRepository.setPerformanceEnabled.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -474,6 +480,12 @@ class SettingsState(
     fun setStartingWeightEnabled(enabled: Boolean) {
         scope.launch {
             userPrefsRepository.setStartingWeightEnabled(enabled)
+        }
+    }
+
+    fun setRepsFromLastWorkout(enabled: Boolean) {
+        scope.launch {
+            userPrefsRepository.setRepsFromLastWorkout(enabled)
         }
     }
 

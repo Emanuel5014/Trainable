@@ -570,6 +570,10 @@
     <string name="settings_title">IMPOSTAZIONI</string>
     <string name="starting_weight">Peso di partenza</string>
     <string name="starting_weight_desc">Dai a ogni esercizio di una scheda un peso da cui partire. Finché la scheda non ha un allenamento da cui copiare, le serie partono da lì, o dall'ultimo peso che hai usato per quell'esercizio.</string>
+    <string name="starting_reps">Ripetizioni di partenza</string>
+    <string name="starting_reps_desc">Da dove partono le ripetizioni di ogni serie quando apri un allenamento da una scheda: quelle scritte nella scheda o quelle che hai fatto l'ultima volta in quella scheda. I range e gli esercizi a tempo partono sempre dall'ultima volta.</string>
+    <string name="starting_reps_routine">Scheda</string>
+    <string name="starting_reps_last_workout">Ultimo allenamento</string>
     <string name="swipe_actions">Azioni Rapide Swipe</string>
     <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi e navigare tra gli esercizi</string>
     <string name="tactile_feedback">Feedback Aptico</string>

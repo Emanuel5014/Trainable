@@ -567,6 +567,10 @@
     <string name="settings_title">SETTINGS</string>
     <string name="starting_weight">Starting weight</string>
     <string name="starting_weight_desc">Give each exercise of a routine a weight to start from. Until the routine has a workout to copy from, its sets start there, or at the last weight you used for that exercise.</string>
+    <string name="starting_reps">Starting reps</string>
+    <string name="starting_reps_desc">Where the reps of each set start when you open a workout from a routine: what the routine says, or what you did last time in that routine. Rep ranges and timed exercises always start from last time.</string>
+    <string name="starting_reps_routine">Routine</string>
+    <string name="starting_reps_last_workout">Last workout</string>
     <string name="swipe_actions">Swipe Actions</string>
     <string name="swipe_actions_desc">Enable swipe to edit/archive/delete items and navigate between exercises</string>
     <string name="tactile_feedback">Tactile Feedback</string>

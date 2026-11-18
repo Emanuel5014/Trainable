@@ -6,6 +6,10 @@ import com.emanuel5014.trainable.ui.util.plusBottom
 import com.emanuel5014.trainable.sharedui.resources.Res
 import org.jetbrains.compose.resources.stringResource
 import com.emanuel5014.trainable.sharedui.resources.advanced_programming
+import com.emanuel5014.trainable.sharedui.resources.starting_reps
+import com.emanuel5014.trainable.sharedui.resources.starting_reps_desc
+import com.emanuel5014.trainable.sharedui.resources.starting_reps_routine
+import com.emanuel5014.trainable.sharedui.resources.starting_reps_last_workout
 import com.emanuel5014.trainable.sharedui.resources.advanced_programming_desc
 import com.emanuel5014.trainable.sharedui.resources.auto_stop_cardio_at_target
 import com.emanuel5014.trainable.sharedui.resources.auto_stop_cardio_at_target_desc
@@ -464,6 +468,7 @@ private fun RoutinesAndExercisesCard(
 ) {
     val weightUnit by state.weightUnit.collectAsState()
     val startingWeightEnabled by state.startingWeightEnabled.collectAsState()
+    val repsFromLastWorkout by state.repsFromLastWorkout.collectAsState()
     val advancedProgramming by state.advancedProgrammingEnabled.collectAsState()
     val loadRoundingIncrement by state.loadRoundingIncrement.collectAsState()
 
@@ -477,6 +482,20 @@ private fun RoutinesAndExercisesCard(
                 checked = startingWeightEnabled,
                 onCheckedChange = { state.setStartingWeightEnabled(it) }
             )
+
+            SettingDivider()
+
+            // The reps a routine exercise opens with: the routine's or those of the last workout
+            SettingChoice(
+                title = stringResource(Res.string.starting_reps),
+                description = stringResource(Res.string.starting_reps_desc)
+            ) {
+                ConnectedToggleRow(
+                    options = listOf(stringResource(Res.string.starting_reps_routine), stringResource(Res.string.starting_reps_last_workout)),
+                    selectedIndex = if (repsFromLastWorkout) 1 else 0,
+                    onSelect = { state.setRepsFromLastWorkout(it == 1) }
+                )
+            }
 
             SettingDivider()
 

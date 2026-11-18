@@ -60,10 +60,11 @@ object LegacyReps {
     }
 
     /**
-     * The reps each set of a routine exercise starts at when the workout opens. The routine's reps ("15" or
-     * "12-10-8-6") are the prescription and win over [lastWorkout]. Only where the reps are what progresses from one
-     * workout to the next ([repsProgress]: a rep range, read by the double progression, or a time & reps interval) does
-     * the workout start from last time's, and the routine stands in while there is no last time.
+     * The reps each set of a routine exercise starts at when the workout opens. By default the routine's reps ("15" or
+     * "12-10-8-6") are the prescription and win over [lastWorkout]. The workout starts from last time's ([repsProgress])
+     * when the "Starting reps" setting says so, or where the reps are what progresses from one workout to the next (a
+     * rep range, read by the double progression, or a time & reps interval); the routine stands in while there is no
+     * last time.
      */
     fun startingReps(repsTarget: String, targetSets: Int, lastWorkout: List<Int>, repsProgress: Boolean = false): List<Int> =
         if (repsProgress && lastWorkout.isNotEmpty()) lastWorkout else parse(repsTarget, targetSets)

@@ -156,6 +156,11 @@ class UserPreferencesRepository(
      * workout to copy from in the routine starts at the last weight used for it elsewhere. Off by default.
      */
     val STARTING_WEIGHT_ENABLED = booleanPreferencesKey("starting_weight_enabled")
+    /**
+     * Where the reps of a routine exercise start when a workout opens: false = the routine's reps, true = the reps done
+     * in the last workout of the routine (when there is one). Off by default: the routine is the prescription.
+     */
+    val REPS_FROM_LAST_WORKOUT = booleanPreferencesKey("reps_from_last_workout")
     /** The top of the routine screen (photos, note, muscle groups, big day pills) is open. Compact by default. */
     val ROUTINE_HEADER_EXPANDED = booleanPreferencesKey("routine_header_expanded")
     /**
@@ -743,6 +748,15 @@ class UserPreferencesRepository(
     suspend fun setStartingWeightEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[STARTING_WEIGHT_ENABLED] = enabled
+        }
+    }
+
+    val repsFromLastWorkout: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[REPS_FROM_LAST_WORKOUT] ?: false }
+
+    suspend fun setRepsFromLastWorkout(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[REPS_FROM_LAST_WORKOUT] = enabled
         }
     }
 

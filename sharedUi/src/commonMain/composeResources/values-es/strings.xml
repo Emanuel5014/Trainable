@@ -570,6 +570,10 @@
     <string name="settings_title">AJUSTES</string>
     <string name="starting_weight">Peso inicial</string>
     <string name="starting_weight_desc">Dale a cada ejercicio de una rutina un peso del que partir. Mientras la rutina no tenga un entrenamiento del que copiar, las series empiezan ahí, o en el último peso que usaste para ese ejercicio.</string>
+    <string name="starting_reps">Repeticiones iniciales</string>
+    <string name="starting_reps_desc">De dónde parten las repeticiones de cada serie al abrir un entrenamiento desde una rutina: lo que indica la rutina o lo que hiciste la última vez en esa rutina. Los rangos y los ejercicios por tiempo siempre parten de la última vez.</string>
+    <string name="starting_reps_routine">Rutina</string>
+    <string name="starting_reps_last_workout">Último entrenamiento</string>
     <string name="swipe_actions">Acciones Swipe</string>
     <string name="swipe_actions_desc">Activa deslizar para editar/archivar/eliminar elementos y navegar entre ejercicios</string>
     <string name="tactile_feedback">Respuesta Háptica</string>

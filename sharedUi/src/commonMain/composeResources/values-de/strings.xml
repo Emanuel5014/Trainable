@@ -567,6 +567,10 @@
     <string name="settings_title">EINSTELLUNGEN</string>
     <string name="starting_weight">Startgewicht</string>
     <string name="starting_weight_desc">Gib jeder Übung einer Routine ein Gewicht zum Starten. Solange die Routine noch kein Training zum Übernehmen hat, beginnen die Sätze dort oder beim zuletzt genutzten Gewicht dieser Übung.</string>
+    <string name="starting_reps">Start-Wiederholungen</string>
+    <string name="starting_reps_desc">Womit die Wiederholungen jedes Satzes beginnen, wenn du ein Training aus einer Routine öffnest: was in der Routine steht oder was du beim letzten Mal in dieser Routine gemacht hast. Wiederholungsbereiche und Zeitübungen starten immer vom letzten Mal.</string>
+    <string name="starting_reps_routine">Routine</string>
+    <string name="starting_reps_last_workout">Letztes Training</string>
     <string name="swipe_actions">Wischaktionen</string>
     <string name="swipe_actions_desc">Wischen zum Bearbeiten/Archivieren/Löschen aktivieren und zwischen Übungen navigieren</string>
     <string name="tactile_feedback">Haptisches Feedback</string>

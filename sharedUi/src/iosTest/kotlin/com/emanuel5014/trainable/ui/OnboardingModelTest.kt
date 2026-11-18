@@ -112,6 +112,7 @@ class OnboardingModelTest {
         val model = OnboardingModel(UserRepository(user, user), prefs, this)
         model.completeOnboarding(setup("Ada", "", "3", "lb") {
             rpeEnabled.value = true; rpeScale.value = RpeScale.ADVANCED; startingWeight.value = true
+            repsFromLastWorkout.value = true
             setPerformance.value = true; inlineModifications.value = true; loadRounding.floatValue = 10f
             restTimerEnabled.value = false; warmupTimerEnabled.value = true; workoutTimerEnabled.value = true
             timerAddEnabled.value = false; timerAddSeconds.intValue = 60; timerSubtractEnabled.value = false
@@ -125,6 +126,7 @@ class OnboardingModelTest {
         })
         assertTrue(prefs.rpeEnabled.first()); assertEquals(RpeScale.ADVANCED, prefs.rpeScale.first())
         assertTrue(prefs.startingWeightEnabled.first()); assertTrue(prefs.setPerformanceEnabled.first())
+        assertTrue(prefs.repsFromLastWorkout.first())
         assertTrue(prefs.inlineExerciseModificationsEnabled.first()); assertEquals(10f, prefs.loadRoundingIncrement.first())
         assertFalse(prefs.restTimerEnabled.first()); assertTrue(prefs.warmupTimerEnabled.first())
         assertTrue(prefs.workoutTimerEnabled.first()); assertFalse(prefs.timerAddEnabled.first())

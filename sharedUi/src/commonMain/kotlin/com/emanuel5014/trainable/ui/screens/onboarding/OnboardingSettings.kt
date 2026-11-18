@@ -67,7 +67,8 @@ data class OnboardingSettings(
     val nextcloudAutoBackupIncludeImages: Boolean,
     val nextcloudWifiOnly: Boolean,
     val theme: ThemeChoice,
-    val dashboardWorkoutMode: Boolean = false
+    val dashboardWorkoutMode: Boolean = false,
+    val repsFromLastWorkout: Boolean = false
 )
 
 fun OnboardingChoices.toSettings(theme: ThemeChoice, aiModelVariant: String) = OnboardingSettings(
@@ -79,6 +80,7 @@ fun OnboardingChoices.toSettings(theme: ThemeChoice, aiModelVariant: String) = O
     rpeEnabled = rpeEnabled.value,
     rpeScale = rpeScale.value,
     startingWeight = startingWeight.value,
+    repsFromLastWorkout = repsFromLastWorkout.value,
     setPerformance = setPerformance.value,
     advancedProgramming = advancedProgramming.value,
     inlineModifications = inlineModifications.value,

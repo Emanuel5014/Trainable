@@ -553,6 +553,8 @@ class WorkoutModel(
         val planExercises = planWithDetails.exercises.sortedBy { it.planExercise.ordine }
         val resumePlan = planWithDetails.plan
         val resumeAdvanced = userPreferencesRepository.advancedProgrammingEnabled.first()
+        val resumeRepsFromLast = userPreferencesRepository.repsFromLastWorkout.first()
+        repsFromLastWorkout = resumeRepsFromLast
         val resumeWeek = sessionWithSets.session.programWeek
             ?: resumePlan.currentWeek.coerceIn(1, resumePlan.weeksCount.coerceAtLeast(1))
         val resumeUnit = userPreferencesRepository.weightUnit.first()
@@ -684,13 +686,14 @@ class WorkoutModel(
             val progression = if (repsRange != null) {
                 progressionFor(targetSets, repsRange, getPreviousSetsForExercise(planId, exercise.id, ALL_SETS), resumeUnit, resumeIncrement)
             } else null
-            // The routine's reps win over last time's. An added or swapped-in exercise has no routine reps of its own,
-            // and a range or a timed kind progresses by the reps: those start from the last workout.
+            // The routine's reps win over last time's, unless the setting says last time's. An added or swapped-in
+            // exercise has no routine reps of its own, and a range or a timed kind progresses by the reps: those always
+            // start from the last workout.
             val repsList = LegacyReps.startingReps(
                 planDetail?.repsTarget ?: "8",
                 targetSets,
                 previousSets.map { it.repsEffettive },
-                repsProgress = planDetail == null || isSwapped || setKind != SetLogKind.STRENGTH || repsRange != null
+                repsProgress = resumeRepsFromLast || planDetail == null || isSwapped || setKind != SetLogKind.STRENGTH || repsRange != null
             )
 
             // While a workout runs, a weight typed on one set is copied to the following unlogged sets
@@ -980,6 +983,8 @@ class WorkoutModel(
 
         val plan = planWithDetails.plan
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
+        val repsFromLast = userPreferencesRepository.repsFromLastWorkout.first()
+        repsFromLastWorkout = repsFromLast
         val week = if (advanced) plan.currentWeek.coerceIn(1, plan.weeksCount.coerceAtLeast(1)) else 1
         val programWeek = if (advanced && plan.weeksCount > 1) week else null
         if (programWeek != null) workoutRepository.setSessionProgramWeek(sessionId, programWeek)
@@ -1020,7 +1025,7 @@ class WorkoutModel(
                 detail.planExercise.repsTarget,
                 targetSets,
                 previousSets.map { it.repsEffettive },
-                repsProgress = setKind != SetLogKind.STRENGTH || repsRange != null
+                repsProgress = repsFromLast || setKind != SetLogKind.STRENGTH || repsRange != null
             )
             // The first workouts of a routine have nothing to copy: start from the starting weight (if turned on)
             val defaultWeight = if (isTimeAndReps) 0f else previousSets.firstOrNull()?.pesoSollevato ?: previousSets.lastOrNull()?.pesoSollevato
@@ -2149,7 +2154,7 @@ class WorkoutModel(
                         if (nextSet != null) {
                             val translatedName = ExerciseTranslations.translate(exState.exercise.nome, _languageCode.value)
                             val plannedReps = if (exState.isAdvanced) nextSet.prescription?.targetReps ?: nextSet.reps
-                                else getPlannedRepsForSet(exState, nextSet.setNumber) ?: nextSet.reps
+                                else announcedRepsFor(exState, nextSet)
                             val repsLabel = repsLabelFor(nextSet)
                             val timedText = timedSetText(exState, nextSet)
                             startRestTimer(
@@ -2164,7 +2169,7 @@ class WorkoutModel(
                             val firstSet = nextExState?.sets?.firstOrNull()
                             if (firstSet != null) {
                                 val translatedName = ExerciseTranslations.translate(nextExState.exercise.nome, _languageCode.value)
-                                val plannedReps = getPlannedRepsForSet(nextExState, firstSet.setNumber) ?: firstSet.reps
+                                val plannedReps = announcedRepsFor(nextExState, firstSet)
                                 val repsLabel = repsLabelFor(firstSet)
                                 val timedText = timedSetText(nextExState, firstSet)
                                 startRestTimer(
@@ -2466,6 +2471,17 @@ class WorkoutModel(
         startTimerJob()
     }
 
+    /** "Starting reps: last workout": the sets opened at last time's reps, so that is what the rest announces. */
+    private var repsFromLastWorkout = false
+
+    /**
+     * The reps the rest notification, the dashboard and "Set done" announce for [set]: the plan's, or the set's own
+     * when the sets started from the last workout (the plan's would contradict the screen and hide "Set done").
+     */
+    private fun announcedRepsFor(exState: WorkoutExerciseState, set: WorkoutSetState): Int =
+        if (repsFromLastWorkout && !exState.isAdvanced) set.reps
+        else getPlannedRepsForSet(exState, set.setNumber) ?: set.reps
+
     private fun getPlannedRepsForSet(exState: WorkoutExerciseState?, setNumber: Int): Int? {
         if (exState?.isAdvanced == true) {
             val set = exState.sets.firstOrNull { it.setNumber == setNumber }
@@ -2596,7 +2612,7 @@ class WorkoutModel(
             return NextSetInfo(exerciseName = name, setNumber = set.setNumber, weight = 0f, reps = 0, weightUnit = unit, text = cardioTargetText(exState))
         }
         val nextSet = exState.sets.firstOrNull { !it.isCompleted } ?: return null
-        val plannedReps = getPlannedRepsForSet(exState, nextSet.setNumber) ?: nextSet.reps
+        val plannedReps = announcedRepsFor(exState, nextSet)
         val repsLabel = repsLabelFor(nextSet)
         val timedText = timedSetText(exState, nextSet)
         return NextSetInfo(

@@ -100,6 +100,17 @@ private fun groupRows(group: TweakGroup, c: OnboardingChoices): List<@Composable
             )
         },
         rowOf(c.startingWeight, Res.string.starting_weight, Res.string.starting_weight_desc),
+        { position ->
+            val routine = stringResource(Res.string.starting_reps_routine)
+            val lastWorkout = stringResource(Res.string.starting_reps_last_workout)
+            ChoiceRow(
+                position = position,
+                title = stringResource(Res.string.starting_reps),
+                description = stringResource(Res.string.starting_reps_desc)
+            ) {
+                OptionGroup(listOf(false, true), c.repsFromLastWorkout.value, { if (it) lastWorkout else routine }, { c.repsFromLastWorkout.value = it })
+            }
+        },
         rowOf(c.setPerformance, Res.string.set_performance_setting, Res.string.set_performance_setting_desc),
         rowOf(c.advancedProgramming, Res.string.advanced_programming, Res.string.advanced_programming_desc) {
             OptionLabel(stringResource(Res.string.load_rounding))

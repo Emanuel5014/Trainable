@@ -128,6 +128,7 @@ class OnboardingModel(
         userPrefsRepository.setRpeEnabled(rpeEnabled)
         userPrefsRepository.setRpeScale(rpeScale)
         userPrefsRepository.setStartingWeightEnabled(startingWeight)
+        userPrefsRepository.setRepsFromLastWorkout(repsFromLastWorkout)
         userPrefsRepository.setSetPerformanceEnabled(setPerformance)
         userPrefsRepository.setInlineExerciseModificationsEnabled(inlineModifications)
         userPrefsRepository.setLoadRoundingIncrement(weightUnit, loadRounding)

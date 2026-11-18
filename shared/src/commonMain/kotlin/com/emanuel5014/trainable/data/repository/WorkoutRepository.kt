@@ -665,6 +665,7 @@ class WorkoutRepository(
         val lastSessionSets = lastSession?.let { workoutDao.getSessionWithSets(it.id).first()?.sets }
         
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
+        val repsFromLast = userPreferencesRepository.repsFromLastWorkout.first()
         val week = if (advanced) planDetails.plan.currentWeek.coerceIn(1, planDetails.plan.weeksCount.coerceAtLeast(1)) else 1
         val sessionId = workoutDao.insertSession(
             WorkoutSessionEntity(
@@ -727,8 +728,9 @@ class WorkoutRepository(
             } else emptyList()
             // Timed exercises keep their kind: the hold or interval of the routine (a hold copies last time's)
             val kind = SetLogKind.ofExerciseType(planEx.exerciseType)
-            // The routine's reps win over last time's, unless the reps are what progresses (see LegacyReps.startingReps)
-            val repsProgress = kind != SetLogKind.STRENGTH || planEx.repsRange != null
+            // The routine's reps win over last time's, unless the setting says last time's or the reps are what
+            // progresses (see LegacyReps.startingReps)
+            val repsProgress = repsFromLast || kind != SetLogKind.STRENGTH || planEx.repsRange != null
             val planSeconds = planEx.durataTargetSecondi ?: 45
             for (i in 1..numSets) {
                 val prevSet = prevSets?.getOrNull(i - 1)

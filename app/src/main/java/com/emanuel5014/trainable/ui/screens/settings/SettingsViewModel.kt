@@ -249,6 +249,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setStartingWeightEnabled(enabled: Boolean) = state.setStartingWeightEnabled(enabled)
 
+    val repsFromLastWorkout = state.repsFromLastWorkout
+
+    fun setRepsFromLastWorkout(enabled: Boolean) = state.setRepsFromLastWorkout(enabled)
+
     val setPerformanceEnabled = state.setPerformanceEnabled
 
     fun setSetPerformanceEnabled(enabled: Boolean) = state.setSetPerformanceEnabled(enabled)
