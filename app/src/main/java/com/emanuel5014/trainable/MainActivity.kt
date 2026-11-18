@@ -319,6 +319,14 @@ class MainActivity : FragmentActivity() {
               ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
+                // Once the setup is on screen it stays until it calls onFinished. A restore from the setup closes the
+                // database and marks the setup done before restarting the app: following the flag there would open
+                // the Dashboard on the closed database ("Database is closed") before the restart.
+                LaunchedEffect(hasCompletedOnboarding) {
+                    if (hasCompletedOnboarding == false && onboardingCompletedOverride.value == null) {
+                        onboardingCompletedOverride.value = false
+                    }
+                }
                 val navController = rememberNavController()
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
