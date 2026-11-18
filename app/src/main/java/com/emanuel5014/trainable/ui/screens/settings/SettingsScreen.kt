@@ -85,10 +85,10 @@ import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
 import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -109,7 +109,7 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
-import com.emanuel5014.trainable.ui.components.UpdateDialog
+import com.emanuel5014.trainable.util.AppVersion
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -143,9 +143,6 @@ fun SettingsScreen(
     onNavigateToImportHistory: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val currentUser by viewModel.currentUser.collectAsState()
-    val weeklyGoal by viewModel.weeklyGoal.collectAsState()
-    val hapticEnabled by viewModel.hapticEnabled.collectAsState()
     val autoBackupEnabled by viewModel.autoBackupEnabled.collectAsState()
     val autoBackupFrequency by viewModel.autoBackupFrequency.collectAsState()
     val autoBackupFolderUri by viewModel.autoBackupFolderUri.collectAsState()
@@ -168,46 +165,48 @@ fun SettingsScreen(
     val isLoadingNextcloudBackups by viewModel.isLoadingNextcloudBackups.collectAsState()
 
     val backupStatus by viewModel.backupStatus.collectAsState()
-    val navBarStyle by viewModel.navBarStyle.collectAsState()
-    val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
-    val weightUnit by viewModel.weightUnit.collectAsState()
     val webServerState by viewModel.webServerState.collectAsState()
 
-    val latestRelease by viewModel.latestRelease.collectAsState()
-    val isDownloading by viewModel.isDownloading.collectAsState()
-    val downloadProgress by viewModel.downloadProgress.collectAsState()
+    val betaUpdates by viewModel.betaUpdates.collectAsState()
 
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var showResetDialog by remember { mutableStateOf(false) }
-    var easterEggClicks by remember { mutableIntStateOf(0) }
-    var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
     var includeImagesChoice by remember { mutableStateOf(false) }
 
-    var showNextcloudSetupDialog by remember { mutableStateOf(false) }
-    var showNextcloudBackupSetupDialog by remember { mutableStateOf(false) }
-    var showNextcloudRestoreDialog by remember { mutableStateOf(false) }
-    var showNextcloudDisconnectDialog by remember { mutableStateOf(false) }
-    var selectedBackupForRestore by remember { mutableStateOf<NextcloudBackupFile?>(null) }
-    var showNextcloudIncludeImagesDialog by remember { mutableStateOf(false) }
+    val backupState = BackupSettingsUiState(
+        autoBackupEnabled = autoBackupEnabled,
+        autoBackupFrequency = autoBackupFrequency,
+        autoBackupFolderUri = autoBackupFolderUri,
+        autoBackupFolderLabel = autoBackupFolderUri?.let(viewModel::getFolderDisplayPath),
+        autoBackupMaxCount = autoBackupMaxCount,
+        autoBackupIncludeImages = autoBackupIncludeImages,
+        nextcloudBackupEnabled = nextcloudBackupEnabled,
+        nextcloudAutoBackupEnabled = nextcloudAutoBackupEnabled,
+        nextcloudServerUrl = nextcloudServerUrl,
+        nextcloudUsername = nextcloudUsername,
+        nextcloudHost = nextcloudServerUrl?.let { url -> try { Uri.parse(url).host ?: url } catch (e: Exception) { url } },
+        nextcloudRemoteFolder = nextcloudRemoteFolder,
+        nextcloudWifiOnly = nextcloudWifiOnly,
+        nextcloudAutoBackupFrequency = nextcloudAutoBackupFrequency,
+        nextcloudAutoBackupMaxCount = nextcloudAutoBackupMaxCount,
+        nextcloudAutoBackupIncludeImages = nextcloudAutoBackupIncludeImages,
+        nextcloudTestState = nextcloudTestState,
+        isTestingConnection = isTestingConnection,
+        isNextcloudBackingUp = isNextcloudBackingUp,
+        isNextcloudRestoring = isNextcloudRestoring,
+        nextcloudBackups = nextcloudBackups,
+        isLoadingNextcloudBackups = isLoadingNextcloudBackups
+    )
+    val backupActions = remember(viewModel) { viewModel.backupSettingsActions() }
 
     LaunchedEffect(backupStatus) {
         backupStatus?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearStatus()
         }
-    }
-
-    if (latestRelease != null) {
-        UpdateDialog(
-            release = latestRelease!!,
-            onDismiss = { viewModel.clearUpdate() },
-            onConfirm = { viewModel.downloadAndInstall(latestRelease!!) },
-            isDownloading = isDownloading,
-            downloadProgress = downloadProgress
-        )
     }
 
     val exportLauncher = rememberLauncherForActivityResult(
@@ -253,110 +252,6 @@ fun SettingsScreen(
         uri?.let { viewModel.setAutoBackupFolder(it) }
     }
 
-    if (showBackupSetupDialog) {
-        var tempFrequency by remember { mutableIntStateOf(autoBackupFrequency) }
-        var tempMaxCount by remember { mutableIntStateOf(autoBackupMaxCount) }
-        var tempIncludeImages by remember { mutableStateOf(autoBackupIncludeImages) }
-
-        AlertDialog(
-            onDismissRequest = { showBackupSetupDialog = false },
-            containerColor = SurfaceContainerHigh,
-            title = {
-                Text(stringResource(R.string.auto_backup_setup), fontWeight = FontWeight.ExtraBold, color = OnSurface)
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                    Text(stringResource(R.string.configure_backup), color = OnSurfaceVariant)
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.frequency), fontWeight = FontWeight.ExtraBold, color = OnSurface)
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                            IconButton(onClick = { if (tempFrequency > 1) tempFrequency-- }) {
-                                Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
-                            }
-                            Text(stringResource(R.string.day_s, tempFrequency), style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Black)
-                            IconButton(onClick = { if (tempFrequency < 7) tempFrequency++ }) {
-                                Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
-                            }
-                        }
-                    }
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.keep_last), fontWeight = FontWeight.ExtraBold, color = OnSurface)
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                            IconButton(onClick = { if (tempMaxCount > 1) tempMaxCount-- }) {
-                                Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
-                            }
-                            Text(stringResource(R.string.backup_s, tempMaxCount), style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Black)
-                            IconButton(onClick = { if (tempMaxCount < 10) tempMaxCount++ }) {
-                                Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
-                            }
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(stringResource(R.string.include_images), color = OnSurface)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        SettingsSwitch(
-                            checked = tempIncludeImages,
-                            onCheckedChange = { tempIncludeImages = it }
-                        )
-                    }
-
-                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.storage_location), fontWeight = FontWeight.ExtraBold, color = OnSurface)
-                        GymButton(
-                            onClick = { folderPickerLauncher.launch(null) },
-                            containerColor = if (autoBackupFolderUri == null) Primary.copy(alpha = 0.1f) else SurfaceContainerHighest,
-                            contentColor = if (autoBackupFolderUri == null) Primary else OnSurface
-                        ) {
-                            Icon(Icons.Rounded.Folder, contentDescription = null, modifier = Modifier.size(20.dp))
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                if (autoBackupFolderUri != null)
-                                    viewModel.getFolderDisplayPath(autoBackupFolderUri)
-                                else
-                                    stringResource(R.string.choose_folder)
-                            )
-                        }
-                        if (autoBackupFolderUri == null) {
-                            Text(
-                                stringResource(R.string.folder_required_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Error
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = autoBackupFolderUri != null,
-                    onClick = {
-                        viewModel.setAutoBackupFrequency(tempFrequency)
-                        viewModel.setAutoBackupMaxCount(tempMaxCount)
-                        viewModel.setAutoBackupIncludeImages(tempIncludeImages)
-                        viewModel.setAutoBackupEnabled(true)
-                        showBackupSetupDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.save).uppercase(), color = if (autoBackupFolderUri != null) Primary else OnSurfaceVariant)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showBackupSetupDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                }
-            }
-        )
-    }
-
     if (showIncludeImagesDialog) {
         AlertDialog(
             onDismissRequest = { showIncludeImagesDialog = false },
@@ -391,831 +286,6 @@ fun SettingsScreen(
                         includeImagesChoice = false
                         showIncludeImagesDialog = false
                         exportLauncher.launch("Trainable_Backup.zip")
-                    }
-                ) {
-                    Text(stringResource(R.string.no), color = OnSurfaceVariant)
-                }
-            }
-        )
-    }
-
-    if (showNextcloudSetupDialog) {
-        var tempServerUrl by remember { mutableStateOf(nextcloudServerUrl ?: "") }
-        var tempUsername by remember { mutableStateOf(nextcloudUsername ?: "") }
-        var tempPassword by remember { mutableStateOf("") }
-        var tempRemoteFolder by remember { mutableStateOf(nextcloudRemoteFolder) }
-        var showPassword by remember { mutableStateOf(false) }
-
-        AlertDialog(
-            modifier = Modifier.imePadding(),
-            onDismissRequest = {
-                showNextcloudSetupDialog = false
-                viewModel.clearNextcloudTestState()
-            },
-            containerColor = SurfaceContainerHigh,
-            title = {
-                Text(
-                    stringResource(R.string.nextcloud_setup_title),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnSurface
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Text(
-                        stringResource(R.string.nextcloud_backup_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = OnSurfaceVariant
-                    )
-
-                    OutlinedTextField(
-                        value = tempServerUrl,
-                        onValueChange = { tempServerUrl = it },
-                        label = { Text(stringResource(R.string.nextcloud_server_url)) },
-                        placeholder = { Text(stringResource(R.string.nextcloud_server_url_hint)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = OnSurfaceVariant
-                        )
-                    )
-
-                    OutlinedTextField(
-                        value = tempUsername,
-                        onValueChange = { tempUsername = it },
-                        label = { Text(stringResource(R.string.nextcloud_username)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = OnSurfaceVariant
-                        )
-                    )
-
-                    OutlinedTextField(
-                        value = tempPassword,
-                        onValueChange = { tempPassword = it },
-                        label = { Text(stringResource(R.string.nextcloud_password_token)) },
-                        placeholder = { Text(stringResource(R.string.nextcloud_password_hint)) },
-                        singleLine = true,
-                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(onClick = { showPassword = !showPassword }) {
-                                Icon(
-                                    if (showPassword) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                                    contentDescription = null,
-                                    tint = OnSurfaceVariant
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = OnSurfaceVariant
-                        )
-                    )
-
-                    OutlinedTextField(
-                        value = tempRemoteFolder,
-                        onValueChange = { tempRemoteFolder = it },
-                        label = { Text(stringResource(R.string.nextcloud_remote_folder)) },
-                        placeholder = { Text(stringResource(R.string.nextcloud_remote_folder_hint)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = OnSurfaceVariant
-                        )
-                    )
-
-                    GymCard(containerColor = SurfaceContainerHighest) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                Icons.Rounded.Info,
-                                contentDescription = null,
-                                tint = Primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                stringResource(R.string.nextcloud_app_password_notice),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = OnSurfaceVariant
-                            )
-                        }
-                    }
-
-                    GymButton(
-                        onClick = {
-                            viewModel.testNextcloudConnection(tempServerUrl, tempUsername, tempPassword)
-                        },
-                        enabled = !isTestingConnection && tempServerUrl.isNotBlank() && tempUsername.isNotBlank() && tempPassword.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth(),
-                        containerColor = SurfaceContainerHighest,
-                        contentColor = Primary
-                    ) {
-                        if (isTestingConnection) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = Primary
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.nextcloud_testing_connection))
-                        } else {
-                            Icon(Icons.Rounded.Sync, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.nextcloud_test_connection), fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    when (val result = nextcloudTestState) {
-                        is NextcloudConnectionResult.Success -> {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Primary)
-                                Text(
-                                    stringResource(R.string.nextcloud_connection_successful),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Primary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                        is NextcloudConnectionResult.Error -> {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(Icons.Rounded.ErrorOutline, contentDescription = null, tint = Error)
-                                Text(
-                                    stringResource(R.string.nextcloud_connection_failed, result.message),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Error
-                                )
-                            }
-                        }
-                        null -> {}
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = tempServerUrl.isNotBlank() && tempUsername.isNotBlank() && tempPassword.isNotBlank(),
-                    onClick = {
-                        viewModel.saveNextcloudConfig(
-                            serverUrl = tempServerUrl,
-                            username = tempUsername,
-                            passwordOrToken = tempPassword,
-                            remoteFolder = tempRemoteFolder
-                        )
-                        viewModel.clearNextcloudTestState()
-                        showNextcloudSetupDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.save).uppercase(), color = Primary)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearNextcloudTestState()
-                        showNextcloudSetupDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                }
-            }
-        )
-    }
-
-    if (showNextcloudBackupSetupDialog) {
-        var tempFrequency by remember { mutableIntStateOf(nextcloudAutoBackupFrequency) }
-        var tempMaxCount by remember { mutableIntStateOf(nextcloudAutoBackupMaxCount) }
-        var tempIncludeImages by remember { mutableStateOf(nextcloudAutoBackupIncludeImages) }
-        var tempWifiOnly by remember { mutableStateOf(nextcloudWifiOnly) }
-
-        AlertDialog(
-            onDismissRequest = { showNextcloudBackupSetupDialog = false },
-            containerColor = SurfaceContainerHigh,
-            title = {
-                Text(
-                    stringResource(R.string.nextcloud_auto_backup_setup),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnSurface
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
-                    Text(
-                        stringResource(R.string.nextcloud_auto_backup_desc),
-                        color = OnSurfaceVariant
-                    )
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            stringResource(R.string.frequency),
-                            fontWeight = FontWeight.ExtraBold,
-                            color = OnSurface
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            IconButton(onClick = { if (tempFrequency > 1) tempFrequency-- }) {
-                                Icon(
-                                    Icons.Rounded.RemoveCircleOutline,
-                                    contentDescription = "Decrease",
-                                    tint = OnSurfaceVariant
-                                )
-                            }
-                            Text(
-                                stringResource(R.string.day_s, tempFrequency),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Primary,
-                                fontWeight = FontWeight.Black
-                            )
-                            IconButton(onClick = { if (tempFrequency < 7) tempFrequency++ }) {
-                                Icon(
-                                    Icons.Rounded.AddCircleOutline,
-                                    contentDescription = "Increase",
-                                    tint = OnSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            stringResource(R.string.keep_last),
-                            fontWeight = FontWeight.ExtraBold,
-                            color = OnSurface
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            IconButton(onClick = { if (tempMaxCount > 1) tempMaxCount-- }) {
-                                Icon(
-                                    Icons.Rounded.RemoveCircleOutline,
-                                    contentDescription = "Decrease",
-                                    tint = OnSurfaceVariant
-                                )
-                            }
-                            Text(
-                                stringResource(R.string.backup_s, tempMaxCount),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Primary,
-                                fontWeight = FontWeight.Black
-                            )
-                            IconButton(onClick = { if (tempMaxCount < 10) tempMaxCount++ }) {
-                                Icon(
-                                    Icons.Rounded.AddCircleOutline,
-                                    contentDescription = "Increase",
-                                    tint = OnSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(stringResource(R.string.include_images), color = OnSurface)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        SettingsSwitch(
-                            checked = tempIncludeImages,
-                            onCheckedChange = { tempIncludeImages = it }
-                        )
-                    }
-
-                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.nextcloud_wifi_only), color = OnSurface, fontWeight = FontWeight.SemiBold)
-                            Text(
-                                stringResource(R.string.nextcloud_wifi_only_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = OnSurfaceVariant
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        SettingsSwitch(
-                            checked = tempWifiOnly,
-                            onCheckedChange = { tempWifiOnly = it }
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.setNextcloudAutoBackupSettings(
-                            frequency = tempFrequency,
-                            maxCount = tempMaxCount,
-                            includeImages = tempIncludeImages,
-                            wifiOnly = tempWifiOnly
-                        )
-                        showNextcloudBackupSetupDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.save).uppercase(), color = Primary, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showNextcloudBackupSetupDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                }
-            }
-        )
-    }
-
-    if (showNextcloudRestoreDialog) {
-        Dialog(
-            onDismissRequest = { showNextcloudRestoreDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 600.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = SurfaceContainerHigh
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                    ) {
-                        // Header
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(42.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Primary.copy(alpha = 0.15f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.CloudDownload,
-                                        contentDescription = null,
-                                        tint = Primary,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                Column {
-                                    Text(
-                                        text = stringResource(R.string.nextcloud_backups_list_title),
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = OnSurface
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.nextcloud_restore_picker_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = OnSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            IconButton(
-                                onClick = { viewModel.loadNextcloudBackups() },
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(SurfaceContainerHighest)
-                            ) {
-                                Icon(
-                                    Icons.Rounded.Refresh,
-                                    contentDescription = "Refresh",
-                                    tint = Primary
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider(color = OutlineVariant.copy(alpha = 0.25f))
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // Body
-                        if (isLoadingNextcloudBackups) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(220.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    CircularProgressIndicator(color = Primary)
-                                    Text(
-                                        text = stringResource(R.string.nextcloud_loading_backups),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = OnSurfaceVariant
-                                    )
-                                }
-                            }
-                        } else if (nextcloudBackups.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 40.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.CloudOff,
-                                        contentDescription = null,
-                                        tint = OnSurfaceVariant.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(48.dp)
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.nextcloud_no_backups_found),
-                                        color = OnSurface,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            }
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f, fill = false),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                items(nextcloudBackups) { backup ->
-                                    val isAuto = backup.name.startsWith("Trainable_AutoBackup_")
-                                    val formattedDate = remember(backup.name, backup.lastModified) {
-                                        formatNextcloudBackupDate(backup)
-                                    }
-
-                                    Card(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .clickable {
-                                                selectedBackupForRestore = backup
-                                            },
-                                        shape = RoundedCornerShape(16.dp),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = SurfaceContainerHighest
-                                        ),
-                                        border = BorderStroke(1.dp, OutlineVariant.copy(alpha = 0.25f))
-                                    ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(14.dp),
-                                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                                    modifier = Modifier.weight(1f)
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(36.dp)
-                                                            .clip(RoundedCornerShape(10.dp))
-                                                            .background(Primary.copy(alpha = 0.12f)),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Icon(
-                                                            if (isAuto) Icons.Rounded.CloudSync else Icons.Rounded.CloudUpload,
-                                                            contentDescription = null,
-                                                            tint = Primary,
-                                                            modifier = Modifier.size(20.dp)
-                                                        )
-                                                    }
-
-                                                    Text(
-                                                        text = formattedDate,
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = OnSurface,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
-                                                }
-
-                                                Spacer(modifier = Modifier.width(8.dp))
-
-                                                Box(
-                                                    modifier = Modifier
-                                                        .clip(RoundedCornerShape(8.dp))
-                                                        .background(if (isAuto) Primary.copy(alpha = 0.15f) else OnSurfaceVariant.copy(alpha = 0.15f))
-                                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                                ) {
-                                                    Text(
-                                                        text = if (isAuto) stringResource(R.string.backup_type_auto) else stringResource(R.string.backup_type_manual),
-                                                        style = MaterialTheme.typography.labelMedium,
-                                                        color = if (isAuto) Primary else OnSurface,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                }
-                                            }
-
-                                            HorizontalDivider(color = OutlineVariant.copy(alpha = 0.15f))
-
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                                ) {
-                                                    Icon(
-                                                        Icons.Rounded.Storage,
-                                                        contentDescription = null,
-                                                        tint = OnSurfaceVariant,
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                    Text(
-                                                        text = Formatter.formatFileSize(context, backup.sizeBytes),
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color = OnSurfaceVariant,
-                                                        fontWeight = FontWeight.Medium
-                                                    )
-                                                }
-
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                    modifier = Modifier
-                                                        .clip(RoundedCornerShape(8.dp))
-                                                        .background(Primary.copy(alpha = 0.12f))
-                                                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                                                ) {
-                                                    Text(
-                                                        text = stringResource(R.string.restore_action),
-                                                        style = MaterialTheme.typography.labelMedium,
-                                                        color = Primary,
-                                                        fontWeight = FontWeight.ExtraBold
-                                                    )
-                                                    Icon(
-                                                        Icons.Rounded.ChevronRight,
-                                                        contentDescription = null,
-                                                        tint = Primary,
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            TextButton(
-                                onClick = { showNextcloudRestoreDialog = false },
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text(
-                                    stringResource(R.string.cancel).uppercase(),
-                                    color = OnSurfaceVariant,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (selectedBackupForRestore != null) {
-        val backup = selectedBackupForRestore!!
-        val isAuto = backup.name.startsWith("Trainable_AutoBackup_")
-        val formattedDate = formatNextcloudBackupDate(backup)
-
-        AlertDialog(
-            onDismissRequest = { selectedBackupForRestore = null },
-            containerColor = SurfaceContainerHigh,
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Primary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Rounded.CloudDownload,
-                        contentDescription = null,
-                        tint = Primary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            },
-            title = {
-                Text(
-                    stringResource(R.string.nextcloud_restore_confirm_title),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnSurface,
-                    style = MaterialTheme.typography.titleLarge
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Text(
-                        stringResource(R.string.nextcloud_restore_confirm_desc),
-                        color = OnSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = SurfaceContainerHighest
-                        ),
-                        border = BorderStroke(1.dp, OutlineVariant.copy(alpha = 0.25f))
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = formattedDate,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = OnSurface
-                            )
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = Formatter.formatFileSize(context, backup.sizeBytes),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant
-                                )
-                                Text(
-                                    text = "•",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant
-                                )
-                                Text(
-                                    text = if (isAuto) stringResource(R.string.backup_type_auto) else stringResource(R.string.backup_type_manual),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Primary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                GymButton(
-                    onClick = {
-                        val file = selectedBackupForRestore!!
-                        selectedBackupForRestore = null
-                        showNextcloudRestoreDialog = false
-                        viewModel.restoreFromNextcloud(file) {
-                            Toast.makeText(context, context.getString(R.string.database_imported), Toast.LENGTH_LONG).show()
-                            val intent = Intent(context, MainActivity::class.java)
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                            context.startActivity(intent)
-                            exitProcess(0)
-                        }
-                    },
-                    containerColor = Primary,
-                    contentColor = OnPrimary
-                ) {
-                    Text(stringResource(R.string.restore_action).uppercase(), fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { selectedBackupForRestore = null }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                }
-            }
-        )
-    }
-
-    if (showNextcloudDisconnectDialog) {
-        AlertDialog(
-            onDismissRequest = { showNextcloudDisconnectDialog = false },
-            containerColor = SurfaceContainerHigh,
-            title = {
-                Text(
-                    stringResource(R.string.nextcloud_disconnect),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnSurface
-                )
-            },
-            text = {
-                Text(
-                    stringResource(R.string.nextcloud_disconnect_confirm),
-                    color = OnSurfaceVariant
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.disconnectNextcloud()
-                        showNextcloudDisconnectDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.nextcloud_disconnect).uppercase(), color = Error, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showNextcloudDisconnectDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                }
-            }
-        )
-    }
-
-    if (showNextcloudIncludeImagesDialog) {
-        AlertDialog(
-            onDismissRequest = { showNextcloudIncludeImagesDialog = false },
-            containerColor = SurfaceContainerHigh,
-            title = {
-                Text(
-                    stringResource(R.string.include_images),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnSurface
-                )
-            },
-            text = {
-                Text(
-                    stringResource(R.string.include_images_description),
-                    color = OnSurfaceVariant
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showNextcloudIncludeImagesDialog = false
-                        viewModel.backupToNextcloud(includeImages = true)
-                    }
-                ) {
-                    Text(stringResource(R.string.yes), color = Primary)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showNextcloudIncludeImagesDialog = false
-                        viewModel.backupToNextcloud(includeImages = false)
                     }
                 ) {
                     Text(stringResource(R.string.no), color = OnSurfaceVariant)
@@ -1266,339 +336,34 @@ fun SettingsScreen(
         )
     }
 
-    Scaffold(
-        containerColor = Surface,
+    SettingsContent(
+        state = viewModel.state,
+        onNavigateBack = onNavigateBack,
+        onNavigateToWorkoutSettings = onNavigateToWorkoutSettings,
+        onNavigateToExercises = onNavigateToExercises,
+        onNavigateToAiSettings = onNavigateToAiSettings,
+        onNavigateToPersonalizationSettings = onNavigateToPersonalizationSettings,
+        onNavigateToNotificationSettings = onNavigateToNotificationSettings,
+        scrollState = scrollState,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.settings_title),
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
-                navigationIcon = {
-                    Box(modifier = Modifier.padding(start = 8.dp)) {
-                        GymIconButton(
-                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                            onClick = onNavigateBack,
-                            containerColor = Color.Transparent,
-                            contentColor = OnSurface,
-                            description = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface,
-                    navigationIconContentColor = OnSurface
-                )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(scrollState)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(32.dp)
-        ) {
-            SettingsSection(title = stringResource(R.string.profile)) {
-                var showEditUsernameDialog by remember { mutableStateOf(false) }
-
-                if (showEditUsernameDialog) {
-                    var newUsername by remember { mutableStateOf(currentUser?.username ?: "") }
-                    AlertDialog(
-                        modifier = Modifier.imePadding(),
-                        onDismissRequest = { showEditUsernameDialog = false },
-                        containerColor = SurfaceContainerHigh,
-                        title = { Text(stringResource(R.string.edit_username), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
-                        text = {
-                            OutlinedTextField(
-                                value = newUsername,
-                                onValueChange = { newUsername = it },
-                                label = { Text(stringResource(R.string.username)) },
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Primary,
-                                    unfocusedBorderColor = OnSurfaceVariant
-                                )
-                            )
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    if (newUsername.isNotBlank()) {
-                                        viewModel.updateUsername(newUsername)
-                                        showEditUsernameDialog = false
-                                    }
-                                }
-                            ) {
-                                Text(stringResource(R.string.save).uppercase(), color = Primary)
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showEditUsernameDialog = false }) {
-                                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                            }
-                        }
-                    )
-                }
-
-                GymCard(
-                    containerColor = SurfaceContainerHigh,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(Surface),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Rounded.Person, contentDescription = null, tint = Primary, modifier = Modifier.size(32.dp))
-                        }
-                        Spacer(modifier = Modifier.width(20.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = currentUser?.username ?: "Athlete",
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = OnSurface,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                            Text(
-                                text = stringResource(R.string.member_since, currentUser?.dataIscrizione?.let { com.emanuel5014.trainable.ui.util.DateFormatter.format(it) } ?: stringResource(R.string.today)),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = OnSurfaceVariant
-                            )
-                        }
-                        IconButton(onClick = { showEditUsernameDialog = true }) {
-                            Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit), tint = OnSurfaceVariant)
-                        }
-                    }
-                }
-            }
-
-            SettingsSection(title = stringResource(R.string.preferences)) {
-                GymCard(containerColor = SurfaceContainerHigh) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.Scale, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.weight_unit), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.weight_unit_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(SurfaceContainerHighest)
-                                    .padding(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "kg",
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (weightUnit == "kg") Primary else Color.Transparent)
-                                        .clickable { viewModel.setWeightUnit("kg") }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = if (weightUnit == "kg") OnPrimary else OnSurfaceVariant,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                                Text(
-                                    text = "lb",
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (weightUnit == "lb") Primary else Color.Transparent)
-                                        .clickable { viewModel.setWeightUnit("lb") }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = if (weightUnit == "lb") OnPrimary else OnSurfaceVariant,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            }
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.Flag, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.weekly_goal), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.target_workouts), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = { if (weeklyGoal > 1) viewModel.setWeeklyGoal(weeklyGoal - 1) }) {
-                                    Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
-                                }
-                                Text(
-                                    text = weeklyGoal.toString(),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = Primary,
-                                    fontWeight = FontWeight.Black,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                )
-                                IconButton(onClick = { if (weeklyGoal < 7) viewModel.setWeeklyGoal(weeklyGoal + 1) }) {
-                                    Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
-                                }
-                            }
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.Vibration, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.tactile_feedback), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.tactile_feedback_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = hapticEnabled,
-                                onCheckedChange = { viewModel.setHapticEnabled(it) }
-                            )
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
+        languageUi = {
                         var showLanguageDialog by remember { mutableStateOf(false) }
                         val currentLanguage by viewModel.userLanguage.collectAsState()
                         val context = LocalContext.current
 
                         if (showLanguageDialog) {
-                            AlertDialog(
-                                onDismissRequest = { showLanguageDialog = false },
-                                containerColor = SurfaceContainerHigh,
-                                title = { Text(stringResource(R.string.language), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
-                                text = {
-                                    Column {
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_system_default),
-                                            isSelected = currentLanguage == "system",
-                                            onClick = {
-                                                viewModel.setLanguage("system") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_english),
-                                            isSelected = currentLanguage == "en",
-                                            onClick = {
-                                                viewModel.setLanguage("en") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_italian),
-                                            isSelected = currentLanguage == "it",
-                                            onClick = {
-                                                viewModel.setLanguage("it") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_spanish),
-                                            isSelected = currentLanguage == "es",
-                                            onClick = {
-                                                viewModel.setLanguage("es") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_french),
-                                            isSelected = currentLanguage == "fr",
-                                            onClick = {
-                                                viewModel.setLanguage("fr") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_german),
-                                            isSelected = currentLanguage == "de",
-                                            onClick = {
-                                                viewModel.setLanguage("de") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.language_portuguese),
-                                            isSelected = currentLanguage == "pt",
-                                            onClick = {
-                                                viewModel.setLanguage("pt") {
-                                                    showLanguageDialog = false
-                                                    val intent = Intent(context, MainActivity::class.java)
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                    context.startActivity(intent)
-                                                    exitProcess(0)
-                                                }
-                                            }
-                                        )
+                            LanguageDialog(
+                                currentLanguage = currentLanguage,
+                                onPick = { code ->
+                                    viewModel.setLanguage(code) {
+                                        showLanguageDialog = false
+                                        val intent = Intent(context, MainActivity::class.java)
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                        context.startActivity(intent)
+                                        exitProcess(0)
                                     }
                                 },
-                                confirmButton = {
-                                    TextButton(onClick = { showLanguageDialog = false }) {
-                                        Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                                    }
-                                }
+                                onDismiss = { showLanguageDialog = false }
                             )
                         }
 
@@ -1632,476 +397,25 @@ fun SettingsScreen(
                         }
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
-                        var showNavBarStyleDialog by remember { mutableStateOf(false) }
-
-                        if (showNavBarStyleDialog) {
-                            AlertDialog(
-                                onDismissRequest = { showNavBarStyleDialog = false },
-                                containerColor = SurfaceContainerHigh,
-                                title = { Text(stringResource(R.string.nav_bar_style), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
-                                text = {
-                                    Column {
-                                        SettingsChoiceOption(
-                                            title = stringResource(R.string.nav_bar_style_expressive),
-                                            description = stringResource(R.string.nav_bar_style_expressive_desc),
-                                            isSelected = navBarStyle == NavBarStyle.Expressive,
-                                            onClick = {
-                                                viewModel.setNavBarStyle(NavBarStyle.Expressive)
-                                                showNavBarStyleDialog = false
-                                            }
-                                        )
-                                        SettingsChoiceOption(
-                                            title = stringResource(R.string.nav_bar_style_floating),
-                                            description = stringResource(R.string.nav_bar_style_floating_desc),
-                                            isSelected = navBarStyle == NavBarStyle.Floating,
-                                            onClick = {
-                                                viewModel.setNavBarStyle(NavBarStyle.Floating)
-                                                showNavBarStyleDialog = false
-                                            }
-                                        )
-                                        SettingsChoiceOption(
-                                            title = stringResource(R.string.nav_bar_style_classic),
-                                            description = stringResource(R.string.nav_bar_style_classic_desc),
-                                            isSelected = navBarStyle == NavBarStyle.Classic,
-                                            onClick = {
-                                                viewModel.setNavBarStyle(NavBarStyle.Classic)
-                                                showNavBarStyleDialog = false
-                                            }
-                                        )
-                                    }
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = { showNavBarStyleDialog = false }) {
-                                        Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                                    }
-                                }
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showNavBarStyleDialog = true },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.Dashboard, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.nav_bar_style), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(
-                                        when (navBarStyle) {
-                                            NavBarStyle.Classic -> stringResource(R.string.nav_bar_style_classic)
-                                            NavBarStyle.Floating -> stringResource(R.string.nav_bar_style_floating)
-                                            NavBarStyle.Expressive -> stringResource(R.string.nav_bar_style_expressive)
-                                        },
-                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
-                                    )
-                                }
-                            }
-                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.RestartAlt,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.swipe_actions), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.swipe_actions_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = swipeActionsEnabled,
-                                onCheckedChange = { viewModel.setSwipeActionsEnabled(it) }
-                            )
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToWorkoutSettings() },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Timer,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.workout_settings), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.workout_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToExercises() },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Collections,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.exercises_title), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.exercises_manage_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToAiSettings() },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.DocumentScanner,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.ai_section_title), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.ai_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToPersonalizationSettings() },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Palette,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.personalization_title), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.personalization_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToNotificationSettings() },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Notifications,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.notifications_title), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.notifications_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                        }
-                    }
-                }
-            }
-
+        },
+        platformSections = {
             SettingsSection(title = stringResource(R.string.data_backup)) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    GymCard(containerColor = SurfaceContainerHigh) {
-                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                    Icon(Icons.Rounded.Backup, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column {
-                                        Text(stringResource(R.string.auto_backup), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                        Text(
-                                            if (autoBackupEnabled) stringResource(R.string.backup_enabled, autoBackupFrequency) else stringResource(R.string.backup_disabled),
-                                            style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
-                                        )
-                                    }
-                                }
-                                SettingsSwitch(
-                                    checked = autoBackupEnabled,
-                                    onCheckedChange = {
-                                        if (it) {
-                                            showBackupSetupDialog = true
-                                        } else {
-                                            viewModel.setAutoBackupEnabled(false)
-                                        }
-                                    }
-                                )
-                            }
-
-                            if (autoBackupEnabled) {
-                                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                        Icon(Icons.Rounded.Folder, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                        Spacer(modifier = Modifier.width(16.dp))
-                                        Column {
-                                            Text(stringResource(R.string.storage_location), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                            Text(
-                                                viewModel.getFolderDisplayPath(autoBackupFolderUri),
-                                                style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                    TextButton(onClick = { showBackupSetupDialog = true }) {
-                                        Text(stringResource(R.string.edit_backup).uppercase(), color = Primary)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    GymCard(containerColor = SurfaceContainerHigh) {
-                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_nextcloud),
-                                        contentDescription = null,
-                                        tint = Primary,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column {
-                                        Text(
-                                            stringResource(R.string.nextcloud_title),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = OnSurface,
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                        Text(
-                                            if (nextcloudBackupEnabled && nextcloudServerUrl != null && nextcloudUsername != null) {
-                                                val host = try { Uri.parse(nextcloudServerUrl).host ?: nextcloudServerUrl } catch (e: Exception) { nextcloudServerUrl }
-                                                stringResource(R.string.nextcloud_configured_as, nextcloudUsername!!, host!!)
-                                            } else {
-                                                stringResource(R.string.nextcloud_not_configured)
-                                            },
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = OnSurfaceVariant
-                                        )
-                                    }
-                                }
-
-                                SettingsSwitch(
-                                    checked = nextcloudBackupEnabled,
-                                    onCheckedChange = {
-                                        if (it) {
-                                            if (nextcloudServerUrl != null && nextcloudUsername != null) {
-                                                viewModel.setNextcloudBackupEnabled(true)
-                                            } else {
-                                                showNextcloudSetupDialog = true
-                                            }
-                                        } else {
-                                            viewModel.setNextcloudBackupEnabled(false)
-                                        }
-                                    }
-                                )
-                            }
-
-                            if (nextcloudBackupEnabled) {
-                                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            stringResource(R.string.nextcloud_auto_backup),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = OnSurface,
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                        Text(
-                                            if (nextcloudAutoBackupEnabled)
-                                                stringResource(
-                                                    R.string.nextcloud_auto_backup_summary,
-                                                    nextcloudAutoBackupFrequency,
-                                                    nextcloudAutoBackupMaxCount,
-                                                    if (nextcloudAutoBackupIncludeImages) stringResource(R.string.with_images) else stringResource(R.string.without_images)
-                                                )
-                                            else
-                                                stringResource(R.string.backup_disabled),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = OnSurfaceVariant
-                                        )
-                                    }
-                                    SettingsSwitch(
-                                        checked = nextcloudAutoBackupEnabled,
-                                        onCheckedChange = {
-                                            if (it) {
-                                                showNextcloudBackupSetupDialog = true
-                                            } else {
-                                                viewModel.setNextcloudAutoBackupEnabled(false)
-                                            }
-                                        }
-                                    )
-                                }
-
-                                if (nextcloudAutoBackupEnabled) {
-                                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                            Icon(
-                                                if (nextcloudWifiOnly) Icons.Rounded.Wifi else Icons.Rounded.CloudSync,
-                                                contentDescription = null,
-                                                tint = Primary,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(16.dp))
-                                            Column {
-                                                Text(
-                                                    stringResource(R.string.nextcloud_auto_backup),
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = OnSurface,
-                                                    fontWeight = FontWeight.ExtraBold
-                                                )
-                                                Text(
-                                                    if (nextcloudWifiOnly) stringResource(R.string.nextcloud_wifi_only) else stringResource(R.string.nextcloud_remote_folder) + ": $nextcloudRemoteFolder",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = OnSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                        TextButton(onClick = { showNextcloudBackupSetupDialog = true }) {
-                                            Text(stringResource(R.string.edit_backup).uppercase(), color = Primary)
-                                        }
-                                    }
-                                }
-
-                                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    GymButton(
-                                        onClick = { showNextcloudIncludeImagesDialog = true },
-                                        enabled = !isNextcloudBackingUp,
-                                        modifier = Modifier.weight(1f),
-                                        containerColor = SurfaceContainerHighest,
-                                        contentColor = OnSurface
-                                    ) {
-                                        if (isNextcloudBackingUp) {
-                                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Primary)
-                                        } else {
-                                            Icon(Icons.Rounded.CloudUpload, contentDescription = null, tint = Primary)
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(stringResource(R.string.nextcloud_backup_now), style = MaterialTheme.typography.labelMedium)
-                                        }
-                                    }
-
-                                    GymButton(
-                                        onClick = {
-                                            viewModel.loadNextcloudBackups()
-                                            showNextcloudRestoreDialog = true
-                                        },
-                                        enabled = !isNextcloudRestoring,
-                                        modifier = Modifier.weight(1f),
-                                        containerColor = SurfaceContainerHighest,
-                                        contentColor = OnSurface
-                                    ) {
-                                        if (isNextcloudRestoring) {
-                                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Primary)
-                                        } else {
-                                            Icon(Icons.Rounded.CloudDownload, contentDescription = null, tint = Primary)
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(stringResource(R.string.nextcloud_restore), style = MaterialTheme.typography.labelMedium)
-                                        }
-                                    }
-                                }
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    TextButton(onClick = { showNextcloudSetupDialog = true }) {
-                                        Text(stringResource(R.string.edit_backup).uppercase(), color = Primary)
-                                    }
-                                    TextButton(onClick = { showNextcloudDisconnectDialog = true }) {
-                                        Text(stringResource(R.string.nextcloud_disconnect).uppercase(), color = Error)
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    BackupSettingsCards(
+                        state = backupState,
+                        actions = backupActions,
+                        onPickFolder = { folderPickerLauncher.launch(null) },
+                        onRestored = {
+                            Toast.makeText(context, context.getString(R.string.database_imported), Toast.LENGTH_LONG).show()
+                            val intent = Intent(context, MainActivity::class.java)
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                            context.startActivity(intent)
+                            exitProcess(0)
+                        },
+                        dateText = ::formatNextcloudBackupDate,
+                        sizeText = { Formatter.formatFileSize(context, it) },
+                        nextcloudIcon = painterResource(R.drawable.ic_nextcloud)
+                    )
 
 
                     Row(
@@ -2221,146 +535,50 @@ fun SettingsScreen(
                 }
             }
 
-            SettingsSection(title = stringResource(R.string.about)) {
-                GymCard(containerColor = SurfaceContainerHigh) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "Trainable v${BuildConfig.VERSION_NAME}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = OnSurface,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                                Text(
-                                    text = "Made with ❤️ by Emanuel5014",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant,
-                                    modifier = Modifier.clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null
-                                    ) {
-                                        easterEggClicks++
-                                        if (easterEggClicks >= 3) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=5jc_R9_im9w"))
-                                            context.startActivity(intent)
-                                            easterEggClicks = 0
-                                        }
-                                    }
-                                )
-                            }
-                            GymButton(
-                                onClick = { viewModel.checkForUpdates() },
-                                containerColor = Primary.copy(alpha = 0.1f),
-                                contentColor = Primary,
-                                height = 48,
-                                contentPadding = PaddingValues(horizontal = 24.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.check_for_updates),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
-                        }
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            color = Surface.copy(alpha = 0.5f)
+        },
+        aboutSection = {
+            AboutSettingsSection(
+                versionName = BuildConfig.VERSION_NAME,
+                onOpenSource = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Emanuel5014/Trainable"))
+                    context.startActivity(intent)
+                },
+                onSupport = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/emanuel5014"))
+                    context.startActivity(intent)
+                },
+                onNavigateToDonors = onNavigateToDonors,
+                onAuthorEasterEgg = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=5jc_R9_im9w"))
+                    context.startActivity(intent)
+                },
+                githubIcon = painterResource(R.drawable.ic_github),
+                kofiIcon = painterResource(R.drawable.ic_kofi),
+                updateAction = {
+                    GymButton(
+                        onClick = { viewModel.checkForUpdates() },
+                        containerColor = Primary.copy(alpha = 0.1f),
+                        contentColor = Primary,
+                        height = 48,
+                        contentPadding = PaddingValues(horizontal = 24.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.check_for_updates),
+                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.labelLarge
                         )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            GymButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Emanuel5014/Trainable"))
-                                    context.startActivity(intent)
-                                },
-                                modifier = Modifier.weight(1f),
-                                containerColor = Surface.copy(alpha = 0.5f),
-                                contentColor = OnSurface
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_github),
-                                    contentDescription = null,
-                                    tint = OnSurface,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.star_on_github), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
-                            }
-
-                            GymButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/emanuel5014"))
-                                    context.startActivity(intent)
-                                },
-                                modifier = Modifier.weight(1f),
-                                containerColor = Surface.copy(alpha = 0.5f),
-                                contentColor = OnSurface
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_kofi),
-                                    contentDescription = null,
-                                    tint = Color.Unspecified,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.buy_me_a_coffee), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
-                            }
-                        }
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            color = Surface.copy(alpha = 0.5f)
-                        )
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { onNavigateToDonors() }
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.VolunteerActivism,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(
-                                        stringResource(R.string.donors_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = OnSurface,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                    Text(
-                                        stringResource(R.string.donors_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = OnSurfaceVariant
-                                    )
-                                }
-                            }
-                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                        }
                     }
+                    BetaUpdatesRow(
+                        betaOn = betaUpdates,
+                        installedIsBeta = AppVersion.isPreRelease(BuildConfig.VERSION_NAME),
+                        onChange = viewModel::setBetaUpdates
+                    )
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
         }
-    }
+    )
 }
 
 private fun formatNextcloudBackupDate(backup: NextcloudBackupFile): String {
@@ -2381,8 +599,30 @@ private fun formatNextcloudBackupDate(backup: NextcloudBackupFile): String {
     }
     return try {
         val outFormat = SimpleDateFormat("d MMM yyyy • HH:mm", Locale.getDefault())
-        outFormat.format(backup.lastModified)
+        outFormat.format(java.util.Date(backup.lastModifiedMillis))
     } catch (e: Exception) {
         backup.name
     }
+}
+
+/** The shared backup cards call the view model functions of the same names. */
+private fun SettingsViewModel.backupSettingsActions() = object : BackupSettingsActions {
+    override fun setAutoBackupEnabled(enabled: Boolean) = this@backupSettingsActions.setAutoBackupEnabled(enabled)
+    override fun setAutoBackupFrequency(frequency: Int) = this@backupSettingsActions.setAutoBackupFrequency(frequency)
+    override fun setAutoBackupMaxCount(count: Int) { this@backupSettingsActions.setAutoBackupMaxCount(count) }
+    override fun setAutoBackupIncludeImages(include: Boolean) { this@backupSettingsActions.setAutoBackupIncludeImages(include) }
+    override fun setNextcloudBackupEnabled(enabled: Boolean) = this@backupSettingsActions.setNextcloudBackupEnabled(enabled)
+    override fun setNextcloudAutoBackupEnabled(enabled: Boolean) = this@backupSettingsActions.setNextcloudAutoBackupEnabled(enabled)
+    override fun setNextcloudAutoBackupSettings(frequency: Int, maxCount: Int, includeImages: Boolean, wifiOnly: Boolean) =
+        this@backupSettingsActions.setNextcloudAutoBackupSettings(frequency, maxCount, includeImages, wifiOnly)
+    override fun clearNextcloudTestState() = this@backupSettingsActions.clearNextcloudTestState()
+    override fun testNextcloudConnection(serverUrl: String, username: String, passwordOrToken: String) =
+        this@backupSettingsActions.testNextcloudConnection(serverUrl, username, passwordOrToken)
+    override fun saveNextcloudConfig(serverUrl: String, username: String, passwordOrToken: String, remoteFolder: String) =
+        this@backupSettingsActions.saveNextcloudConfig(serverUrl, username, passwordOrToken, remoteFolder)
+    override fun disconnectNextcloud() = this@backupSettingsActions.disconnectNextcloud()
+    override fun backupToNextcloud(includeImages: Boolean) = this@backupSettingsActions.backupToNextcloud(includeImages)
+    override fun loadNextcloudBackups() = this@backupSettingsActions.loadNextcloudBackups()
+    override fun restoreFromNextcloud(backupFile: NextcloudBackupFile, onSuccess: () -> Unit) =
+        this@backupSettingsActions.restoreFromNextcloud(backupFile, onSuccess)
 }

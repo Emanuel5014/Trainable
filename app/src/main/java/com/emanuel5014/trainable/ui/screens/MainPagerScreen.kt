@@ -69,7 +69,10 @@ fun MainPagerScreen(
                 onNavigateToQuickWorkout = { name ->
                     navController.navigate(WorkoutExecution(quickStart = true, workoutName = name))
                 },
-                onNavigateToPhysicalChecks = { navController.navigate(PhysicalCheck) }
+                onNavigateToPhysicalChecks = { navController.navigate(PhysicalCheck) },
+                onLogSet = { planId, sessionId, token ->
+                    navController.navigate(WorkoutExecution(planId = planId, sessionId = sessionId, logSet = token))
+                }
             )
             1 -> RoutineListScreen(
                 isVisible = pagerState.currentPage == 1,

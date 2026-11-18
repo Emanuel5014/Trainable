@@ -19,11 +19,6 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
-data class LlmScanResult(
-    val output: String,
-    val thinking: String
-)
-
 @Singleton
 class LocalLlmEngine @Inject constructor(
     @ApplicationContext private val context: Context

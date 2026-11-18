@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.util.notification
 
+import com.emanuel5014.trainable.ui.screens.dashboard.LiveWorkoutSnapshot
+import com.emanuel5014.trainable.ui.screens.dashboard.SavedTimerChange
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -31,28 +33,13 @@ import android.media.AudioAttributes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-
-/** One button of the EMOM notification; [label] is already in the app language. */
-data class EmomNotificationAction(val action: TimerNotificationReceiver.EmomAction, val label: String)
-
-/** What the ongoing EMOM notification shows, all text already in the app language. */
-data class EmomNotificationInfo(
-    val title: String,
-    val text: String,
-    /** Extra line for the expanded notification where the system has no richer layout. */
-    val detail: String?,
-    /** Epoch millis at which the countdown reaches zero; null while the run is paused. */
-    val countdownEndsAt: Long?,
-    /** Seconds of the whole run already elapsed, for the live progress bar. */
-    val runElapsedSeconds: Int,
-    val rounds: Int,
-    val actions: List<EmomNotificationAction>
-)
+import com.emanuel5014.trainable.data.repository.WorkoutRepository
 
 @Singleton
 class TimerNotificationHelper @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val userPrefsRepository: UserPreferencesRepository
+    private val userPrefsRepository: UserPreferencesRepository,
+    workoutRepository: WorkoutRepository
 ) {
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -81,7 +68,27 @@ class TimerNotificationHelper @Inject constructor(
     @Volatile private var addEnabled = true
     @Volatile private var subtractEnabled = true
 
+    /**
+     * The session the rest, warm-up and EMOM notifications belong to, told by the open workout. Kept here, outside
+     * the workout screen, because the notifications outlive it: deleting that session from the dashboard or the
+     * history must end them too.
+     */
+    @Volatile var workoutSessionId: Int? = null
+
+    /** The set "Set done" would log, as the last rest notification announced it. */
+    @Volatile private var lastNextSetKey: NextSetKey? = null
+
     init {
+        scope.launch {
+            workoutRepository.deletedSessions.collect { id ->
+                if (id == workoutSessionId) {
+                    cancelTimer()
+                    cancelWarmupTimer()
+                    cancelEmom()
+                    workoutSessionId = null
+                }
+            }
+        }
         scope.launch { userPrefsRepository.timerAddSeconds.collect { addSeconds = it } }
         scope.launch { userPrefsRepository.timerSubtractSeconds.collect { subtractSeconds = it } }
         scope.launch { userPrefsRepository.timerShowTimeButtons.collect { showTimeButtons = it } }
@@ -133,9 +140,6 @@ class TimerNotificationHelper @Inject constructor(
         getVibrator()?.cancel()
     }
 
-    /** Haptic signals of an EMOM run: a tick before each round, GO when it starts, and the finish. */
-    enum class EmomCue { TICK, GO, DONE }
-
     fun vibrateEmomCue(cue: EmomCue) {
         val v = getVibrator()?.takeIf { it.hasVibrator() } ?: return
         val effect = when (cue) {
@@ -153,13 +157,13 @@ class TimerNotificationHelper @Inject constructor(
 
     // ---- EMOM ----
 
-    private fun emomPendingIntent(action: TimerNotificationReceiver.EmomAction): PendingIntent {
+    private fun emomPendingIntent(action: EmomAction): PendingIntent {
         val (name, requestCode) = when (action) {
-            TimerNotificationReceiver.EmomAction.DONE -> TimerNotificationReceiver.ACTION_EMOM_DONE to 21
-            TimerNotificationReceiver.EmomAction.PAUSE -> TimerNotificationReceiver.ACTION_EMOM_PAUSE to 22
-            TimerNotificationReceiver.EmomAction.RESUME -> TimerNotificationReceiver.ACTION_EMOM_RESUME to 23
-            TimerNotificationReceiver.EmomAction.STOP -> TimerNotificationReceiver.ACTION_EMOM_STOP to 24
-            TimerNotificationReceiver.EmomAction.BOUNDARY -> TimerNotificationReceiver.ACTION_EMOM_BOUNDARY to 25
+            EmomAction.DONE -> TimerNotificationReceiver.ACTION_EMOM_DONE to 21
+            EmomAction.PAUSE -> TimerNotificationReceiver.ACTION_EMOM_PAUSE to 22
+            EmomAction.RESUME -> TimerNotificationReceiver.ACTION_EMOM_RESUME to 23
+            EmomAction.STOP -> TimerNotificationReceiver.ACTION_EMOM_STOP to 24
+            EmomAction.BOUNDARY -> TimerNotificationReceiver.ACTION_EMOM_BOUNDARY to 25
         }
         val intent = Intent(context, TimerNotificationReceiver::class.java).apply { this.action = name }
         return PendingIntent.getBroadcast(
@@ -197,7 +201,7 @@ class TimerNotificationHelper @Inject constructor(
         if (info.countdownEndsAt != null) {
             builder.setUsesChronometer(true)
                 .setChronometerCountDown(true)
-                .setWhen(info.countdownEndsAt)
+                .setWhen(info.countdownEndsAt!!)
         } else {
             builder.setUsesChronometer(false).setShowWhen(false)
         }
@@ -239,7 +243,7 @@ class TimerNotificationHelper @Inject constructor(
 
     /** Wakes the workout when the next round starts, even with the screen off. */
     fun scheduleEmomBoundaryAlarm(triggerAtMillis: Long) {
-        val pendingIntent = emomPendingIntent(TimerNotificationReceiver.EmomAction.BOUNDARY)
+        val pendingIntent = emomPendingIntent(EmomAction.BOUNDARY)
         try {
             AlarmManagerCompat.setExactAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
         } catch (_: SecurityException) {
@@ -248,7 +252,7 @@ class TimerNotificationHelper @Inject constructor(
     }
 
     fun cancelEmomBoundaryAlarm() {
-        alarmManager.cancel(emomPendingIntent(TimerNotificationReceiver.EmomAction.BOUNDARY))
+        alarmManager.cancel(emomPendingIntent(EmomAction.BOUNDARY))
     }
 
     fun cancelEmom() {
@@ -365,6 +369,33 @@ class TimerNotificationHelper @Inject constructor(
      * Uses Android's internal Chronometer to update the countdown in the System UI
      * without requiring a notify() call every second.
      */
+    /** "Next: Squat - Set 2: 60 kg × 8", or null when there is no next set to announce. */
+    private fun nextSetLabelOf(
+        exerciseName: String?, nextSetNumber: Int?, nextSetWeight: Float?, nextSetReps: Int?, previousReps: Int?,
+        weightUnit: String?, nextSetRepsLabel: String?, nextSetDetail: String?, nextSetText: String?
+    ): String? {
+    return if (exerciseName != null && nextSetNumber != null && nextSetText != null) {
+        context.getString(R.string.notification_next_set_text, exerciseName, nextSetNumber, nextSetText)
+    } else if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && (nextSetReps != null || nextSetRepsLabel != null) && weightUnit != null) {
+        val formattedWeight = WeightUnitConverter.formatWithUnit(
+            WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
+            weightUnit
+        )
+        val base = if (nextSetRepsLabel != null || nextSetDetail != null) {
+            // Advanced prescription: string reps ("MAX") plus e.g. "75% · Pause 2″"
+            context.getString(
+                R.string.notification_next_set_detail,
+                exerciseName, nextSetNumber, formattedWeight, nextSetRepsLabel ?: nextSetReps.toString()
+            ) + (nextSetDetail?.let { " · $it" } ?: "")
+        } else {
+            context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
+        }
+        if (previousReps != null && previousReps != nextSetReps && nextSetRepsLabel == null) {
+            "$base ${context.getString(R.string.notification_last_reps, previousReps)}"
+        } else base
+    } else null
+    }
+
     fun startOrUpdateTimerNotification(
         remainingSeconds: Int,
         sessionId: Int,
@@ -379,9 +410,12 @@ class TimerNotificationHelper @Inject constructor(
         nextSetRepsLabel: String? = null,
         nextSetDetail: String? = null,
         /** Replaces weight × reps for a timed set ("45s · 20 reps"). */
-        nextSetText: String? = null
+        nextSetText: String? = null,
+        /** The set "Set done" may log once the rest ends; null hides that button. */
+        nextSetKey: NextSetKey? = null
     ) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
+        lastNextSetKey = nextSetKey
         
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -409,26 +443,8 @@ class TimerNotificationHelper @Inject constructor(
         }
         val subtractPendingIntent = PendingIntent.getBroadcast(context, 5, subtractIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetText != null) {
-            context.getString(R.string.notification_next_set_text, exerciseName, nextSetNumber, nextSetText)
-        } else if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && (nextSetReps != null || nextSetRepsLabel != null) && weightUnit != null) {
-            val formattedWeight = WeightUnitConverter.formatWithUnit(
-                WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
-                weightUnit
-            )
-            val base = if (nextSetRepsLabel != null || nextSetDetail != null) {
-                // Advanced prescription: string reps ("MAX") plus e.g. "75% · Pause 2″"
-                context.getString(
-                    R.string.notification_next_set_detail,
-                    exerciseName, nextSetNumber, formattedWeight, nextSetRepsLabel ?: nextSetReps.toString()
-                ) + (nextSetDetail?.let { " · $it" } ?: "")
-            } else {
-                context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
-            }
-            if (previousReps != null && previousReps != nextSetReps && nextSetRepsLabel == null) {
-                "$base ${context.getString(R.string.notification_last_reps, previousReps)}"
-            } else base
-        } else null
+        val nextSetLabel = nextSetLabelOf(exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps,
+            weightUnit, nextSetRepsLabel, nextSetDetail, nextSetText)
         lastNextSetLabel = nextSetLabel
 
         val total = if (totalSeconds != null && totalSeconds > 0) totalSeconds else remainingSeconds
@@ -487,7 +503,13 @@ class TimerNotificationHelper @Inject constructor(
         }
     }
 
-    fun showRestFinished() {
+    /** The rest is over; [next] (from the open workout) is the set the card now announces. */
+    fun showRestFinished(next: RestNextSet? = null) {
+        if (next != null) {
+            lastNextSetLabel = nextSetLabelOf(next.exerciseName, next.setNumber, next.weight, next.reps, next.previousReps,
+                next.weightUnit, next.repsLabel, next.detail, next.text)
+            lastNextSetKey = next.key
+        }
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -532,6 +554,10 @@ class TimerNotificationHelper @Inject constructor(
             .setOngoing(false)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .apply {
+                if (showTimeButtons && addEnabled) addAction(0, "+${addSeconds}s", restActionIntent(TimerNotificationReceiver.ACTION_REST_MORE, 6))
+                if (lastNextSetKey != null) addAction(0, context.getString(R.string.next_set_done), restActionIntent(TimerNotificationReceiver.ACTION_REST_NEXT_SET, 7))
+            }
             .addAction(0, context.getString(R.string.dismiss), dismissPendingIntent)
 
         if (useCustomVibration) {
@@ -544,6 +570,62 @@ class TimerNotificationHelper @Inject constructor(
         }
 
         notificationManager.notify(notificationId, notificationBuilder.build())
+    }
+
+    private fun restActionIntent(action: String, requestCode: Int): PendingIntent {
+        val intent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            this.action = action
+            workoutSessionId?.let { putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, it) }
+        }
+        return PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+
+    /** A "Set done" / "+s" press reached no open workout: say so, with no button that would do nothing again. */
+    fun showOpenAppToContinue() {
+        cancelCustomVibration()
+        val intent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val text = context.getString(R.string.open_app_to_continue)
+        val notification = NotificationCompat.Builder(context, finishedChannelId)
+            .setSmallIcon(R.drawable.ic_app_logo)
+            .setContentTitle(context.getString(R.string.rest_timer))
+            .setContentText(text)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setSilent(true)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+        notificationManager.notify(notificationId, notification)
+    }
+
+    /**
+     * Redraws or removes the rest / warm-up notification after a button pressed outside the workout ([SavedTimers]),
+     * announcing what the workout last said (its dashboard copy), so the card looks as if the workout had done it.
+     */
+    suspend fun followSavedTimer(change: SavedTimerChange) {
+        val end = change.end
+        if (end == null) {
+            if (change.warmup) cancelWarmupTimer() else cancelTimer()
+            return
+        }
+        if (!userPrefsRepository.timerNotificationsEnabled.first() || !hasNotificationPermission()) return
+        val remaining = ((end - System.currentTimeMillis()) / 1000L).toInt().coerceAtLeast(0)
+        if (change.warmup) {
+            startOrUpdateWarmupTimerNotification(remaining, change.total)
+            return
+        }
+        val next = LiveWorkoutSnapshot.decode(userPrefsRepository.liveWorkoutSnapshot.first())
+            ?.takeIf { it.sessionId == change.sessionId }?.next
+        startOrUpdateTimerNotification(
+            remaining, change.sessionId,
+            next?.exerciseName, next?.setNumber, next?.weight, next?.reps, next?.previousReps, next?.weightUnit,
+            totalSeconds = change.total,
+            nextSetRepsLabel = next?.repsLabel,
+            nextSetDetail = next?.detail,
+            nextSetText = next?.text,
+            nextSetKey = next?.keyToken?.let { NextSetKey.parse(it) }
+        )
     }
 
     fun cancelTimer() {

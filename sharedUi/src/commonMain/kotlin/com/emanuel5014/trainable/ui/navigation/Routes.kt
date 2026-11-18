@@ -1,0 +1,86 @@
+package com.emanuel5014.trainable.ui.navigation
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+object MainTabs
+
+@Serializable
+object Dashboard
+
+@Serializable
+object Routines
+
+@Serializable
+object Analytics
+
+@Serializable
+object Settings
+
+@Serializable
+object Onboarding
+
+@Serializable
+object History
+
+@Serializable
+data class WorkoutExecution(
+    val planId: Int? = null,
+    val sessionId: Int? = null,
+    val quickStart: Boolean = false,
+    val workoutName: String? = null,
+    /** [com.emanuel5014.trainable.util.notification.NextSetKey.token] of a set to tick once the workout is open ("Serie fatta" on the dashboard). */
+    val logSet: String? = null
+)
+
+@Serializable
+data class RoutineDetail(val planId: Int)
+
+@Serializable
+data class WorkoutDetail(val sessionId: Int)
+
+@Serializable
+data class EditWorkoutSession(val sessionId: Int)
+
+@Serializable
+data class CompareSessions(val sessionId1: Int, val sessionId2: Int)
+
+@Serializable
+object PhysicalCheck
+
+@Serializable
+object PhysicalCheckSettings
+
+@Serializable
+object WorkoutSettings
+
+@Serializable
+object AiSettings
+
+@Serializable
+object PersonalizationSettings
+
+@Serializable
+object NotificationSettings
+
+@Serializable
+object Exercises
+
+@Serializable
+object JournalTags
+
+@Serializable
+object ImportHistory
+
+@Serializable
+data class PhysicalCheckCompare(val id1: Int, val id2: Int)
+
+@Serializable
+data class Report(val planIdsString: String)
+
+@Serializable
+object Donors
+
+@Serializable
+object OneRepMaxes
+

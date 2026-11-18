@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.util
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import com.emanuel5014.trainable.data.repository.PhysicalCheckCrypto
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import java.security.SecureRandom
@@ -16,7 +17,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class PhysicalCheckCryptoManager @Inject constructor() {
+class PhysicalCheckCryptoManager @Inject constructor() : PhysicalCheckCrypto {
 
     private val KEYSTORE_PROVIDER = "AndroidKeyStore"
     private val KEY_ALIAS = "physical_check_password_key"
@@ -48,7 +49,7 @@ class PhysicalCheckCryptoManager @Inject constructor() {
      * Cifra la password inserita dall'utente usando Android Keystore.
      * Ritorna una coppia (ciphertext, iv).
      */
-    fun encryptPasswordWithKeystore(password: String): Pair<ByteArray, ByteArray> {
+    override fun wrapPassword(password: String): Pair<ByteArray, ByteArray> {
         val secretKey = getOrCreateKeystoreKey()
         val cipher = Cipher.getInstance(AES_GCM_NOPADDING)
         cipher.init(Cipher.ENCRYPT_MODE, secretKey)
@@ -59,7 +60,8 @@ class PhysicalCheckCryptoManager @Inject constructor() {
     /**
      * Decifra la password salvata usando Keystore. Ritorna null se fallisce (es. nuovo dispositivo).
      */
-    fun decryptPasswordWithKeystore(encryptedPassword: ByteArray, iv: ByteArray): String? {
+    override fun unwrapPassword(wrapped: ByteArray, iv: ByteArray): String? {
+        val encryptedPassword = wrapped
         return try {
             val secretKey = getOrCreateKeystoreKey()
             val cipher = Cipher.getInstance(AES_GCM_NOPADDING)
@@ -76,17 +78,19 @@ class PhysicalCheckCryptoManager @Inject constructor() {
     /**
      * Deriva una chiave AES da password e salt usando PBKDF2.
      */
-    fun deriveKey(password: String, salt: ByteArray): SecretKey {
+    override fun deriveKey(password: String, salt: ByteArray): ByteArray {
         val spec = PBEKeySpec(password.toCharArray(), salt, ITERATIONS, DERIVED_KEY_LENGTH)
         val factory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
         val keyBytes = factory.generateSecret(spec).encoded
-        return SecretKeySpec(keyBytes, "AES")
+        return keyBytes
     }
+
+    private fun aesKey(key: ByteArray): SecretKey = SecretKeySpec(key, "AES")
 
     /**
      * Genera un salt casuale per la derivazione della chiave.
      */
-    fun generateSalt(): ByteArray {
+    override fun generateSalt(): ByteArray {
         val salt = ByteArray(16)
         SecureRandom().nextBytes(salt)
         return salt
@@ -95,7 +99,8 @@ class PhysicalCheckCryptoManager @Inject constructor() {
     /**
      * Cifra i dati binari usando la chiave AES derivata.
      */
-    fun encryptData(data: ByteArray, secretKey: SecretKey): ByteArray {
+    override fun encryptData(data: ByteArray, key: ByteArray): ByteArray {
+        val secretKey = aesKey(key)
         val cipher = Cipher.getInstance(AES_GCM_NOPADDING)
         val iv = ByteArray(GCM_IV_LENGTH)
         SecureRandom().nextBytes(iv)
@@ -112,7 +117,8 @@ class PhysicalCheckCryptoManager @Inject constructor() {
     /**
      * Decifra i dati binari usando la chiave AES derivata.
      */
-    fun decryptData(encryptedData: ByteArray, secretKey: SecretKey): ByteArray {
+    override fun decryptData(encryptedData: ByteArray, key: ByteArray): ByteArray {
+        val secretKey = aesKey(key)
         val cipher = Cipher.getInstance(AES_GCM_NOPADDING)
         val iv = ByteArray(GCM_IV_LENGTH)
         System.arraycopy(encryptedData, 0, iv, 0, iv.size)
@@ -121,5 +127,20 @@ class PhysicalCheckCryptoManager @Inject constructor() {
         val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
         cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
         return cipher.doFinal(ciphertext)
+    }
+
+    /** The validation block, as the repository made it: the provider picks the IV (12 bytes for GCM). */
+    override fun encryptWithIv(data: ByteArray, key: ByteArray): Pair<ByteArray, ByteArray> {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, aesKey(key))
+        val bytes = cipher.doFinal(data)
+        return Pair(bytes, cipher.iv)
+    }
+
+    override fun decryptWithIv(encrypted: ByteArray, iv: ByteArray, key: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        val spec = GCMParameterSpec(128, iv)
+        cipher.init(Cipher.DECRYPT_MODE, aesKey(key), spec)
+        return cipher.doFinal(encrypted)
     }
 }

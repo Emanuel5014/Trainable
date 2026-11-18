@@ -23,13 +23,6 @@ suspend fun loadSplashColors(context: Context): SplashColors {
         else -> (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
     }
-    val scheme = getAppColorScheme(
-        context = context,
-        dynamicColor = prefs[UserPreferencesRepository.DYNAMIC_COLOR] ?: true,
-        paletteIndex = prefs[UserPreferencesRepository.THEME_PALETTE] ?: 0,
-        seedColor = prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED],
-        themeStyle = prefs[UserPreferencesRepository.THEME_STYLE] ?: 0,
-        isDark = isDark
-    )
+    val scheme = getAppColorScheme(context, UserPreferencesRepository.themeSettings(prefs), isDark)
     return SplashColors(background = scheme.surface, logo = scheme.primary)
 }

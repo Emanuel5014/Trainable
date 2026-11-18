@@ -7,11 +7,12 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import com.emanuel5014.trainable.data.backup.PasswordVault
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class NextcloudCryptoManager @Inject constructor() {
+class NextcloudCryptoManager @Inject constructor() : PasswordVault {
 
     private val KEYSTORE_PROVIDER = "AndroidKeyStore"
     private val KEY_ALIAS = "nextcloud_password_key"
@@ -63,4 +64,7 @@ class NextcloudCryptoManager @Inject constructor() {
             null
         }
     }
+
+    override fun encrypt(plain: String): Pair<ByteArray, ByteArray> = encryptPassword(plain)
+    override fun decrypt(ciphertext: ByteArray, iv: ByteArray): String? = decryptPassword(ciphertext, iv)
 }

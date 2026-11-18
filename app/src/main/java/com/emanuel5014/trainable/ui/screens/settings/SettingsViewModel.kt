@@ -15,9 +15,8 @@ import com.emanuel5014.trainable.data.ai.LocalLlmEngine
 import com.emanuel5014.trainable.data.ai.ModelDownloadManager
 import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.ai.ModelImportError
-import com.emanuel5014.trainable.data.local.GymDatabase
+import com.emanuel5014.trainable.data.local.GymDatabaseInstance
 import com.emanuel5014.trainable.data.model.NavBarStyle
-import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -28,6 +27,12 @@ import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.TimerAdjustment
 import com.emanuel5014.trainable.util.UpdateManager
+import com.emanuel5014.trainable.util.UpdateChannel
+import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.util.UpdateCheck
+import com.emanuel5014.trainable.util.UpdateError
+import com.emanuel5014.trainable.BuildConfig
+import kotlinx.coroutines.flow.map
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.backup.BackupManager
 import com.emanuel5014.trainable.util.notification.GymMembershipWorker
@@ -46,8 +51,8 @@ import kotlinx.coroutines.launch
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConfig
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
-import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudWebDavClient
-import com.emanuel5014.trainable.util.NextcloudCryptoManager
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudWebDav
+import com.emanuel5014.trainable.data.backup.NextcloudBackupService
 import com.emanuel5014.trainable.util.backup.NextcloudBackupManager
 import javax.inject.Inject
 
@@ -59,8 +64,8 @@ class SettingsViewModel @Inject constructor(
     private val localeManager: AppLocaleManager,
     private val backupManager: BackupManager,
     private val nextcloudBackupManager: NextcloudBackupManager,
-    private val nextcloudWebDavClient: NextcloudWebDavClient,
-    private val nextcloudCryptoManager: NextcloudCryptoManager,
+    private val nextcloudWebDav: NextcloudWebDav,
+    private val nextcloudBackupService: NextcloudBackupService,
     private val updateManager: UpdateManager,
     private val webServerManager: WebServerManager,
     private val deviceCapabilityChecker: DeviceCapabilityChecker,
@@ -70,35 +75,17 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    val currentUser = userRepository.currentUser.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = null
-    )
+    val state = SettingsState(userRepository, userPrefsRepository, viewModelScope)
 
-    val weeklyGoal = userPrefsRepository.weeklyGoal.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 3
-    )
+    val currentUser = state.currentUser
 
-    val hapticEnabled = userPrefsRepository.hapticEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    val weeklyGoal = state.weeklyGoal
 
-    val autoBackupEnabled = userPrefsRepository.autoBackupEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val hapticEnabled = state.hapticEnabled
 
-    val autoBackupFrequency = userPrefsRepository.autoBackupFrequency.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 1
-    )
+    val autoBackupEnabled = state.autoBackupEnabled
+
+    val autoBackupFrequency = state.autoBackupFrequency
 
     val autoBackupFolderUri = userPrefsRepository.autoBackupFolderUri.stateIn(
         scope = viewModelScope,
@@ -106,71 +93,27 @@ class SettingsViewModel @Inject constructor(
         initialValue = null
     )
 
-    val autoBackupMaxCount = userPrefsRepository.autoBackupMaxCount.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 5
-    )
+    val autoBackupMaxCount = state.autoBackupMaxCount
 
-    val autoBackupIncludeImages = userPrefsRepository.autoBackupIncludeImages.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val autoBackupIncludeImages = state.autoBackupIncludeImages
 
-    val nextcloudBackupEnabled = userPrefsRepository.nextcloudBackupEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val nextcloudBackupEnabled = state.nextcloudBackupEnabled
 
-    val nextcloudAutoBackupEnabled = userPrefsRepository.nextcloudAutoBackupEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val nextcloudAutoBackupEnabled = state.nextcloudAutoBackupEnabled
 
-    val nextcloudServerUrl = userPrefsRepository.nextcloudServerUrl.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = null
-    )
+    val nextcloudServerUrl = state.nextcloudServerUrl
 
-    val nextcloudUsername = userPrefsRepository.nextcloudUsername.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = null
-    )
+    val nextcloudUsername = state.nextcloudUsername
 
-    val nextcloudRemoteFolder = userPrefsRepository.nextcloudRemoteFolder.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = "Trainable/Backups"
-    )
+    val nextcloudRemoteFolder = state.nextcloudRemoteFolder
 
-    val nextcloudWifiOnly = userPrefsRepository.nextcloudWifiOnly.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val nextcloudWifiOnly = state.nextcloudWifiOnly
 
-    val nextcloudAutoBackupFrequency = userPrefsRepository.nextcloudAutoBackupFrequency.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 1
-    )
+    val nextcloudAutoBackupFrequency = state.nextcloudAutoBackupFrequency
 
-    val nextcloudAutoBackupMaxCount = userPrefsRepository.nextcloudAutoBackupMaxCount.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 5
-    )
+    val nextcloudAutoBackupMaxCount = state.nextcloudAutoBackupMaxCount
 
-    val nextcloudAutoBackupIncludeImages = userPrefsRepository.nextcloudAutoBackupIncludeImages.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val nextcloudAutoBackupIncludeImages = state.nextcloudAutoBackupIncludeImages
 
     private val _nextcloudTestState = MutableStateFlow<NextcloudConnectionResult?>(null)
     val nextcloudTestState: StateFlow<NextcloudConnectionResult?> = _nextcloudTestState.asStateFlow()
@@ -202,23 +145,11 @@ class SettingsViewModel @Inject constructor(
         initialValue = null
     )
 
-    val navBarStyle = userPrefsRepository.navBarStyle.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = NavBarStyle.Floating
-    )
+    val navBarStyle = state.navBarStyle
 
-    val dynamicColor = userPrefsRepository.dynamicColor.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    val dynamicColor = state.dynamicColor
 
-    val dynamicColorSeed = userPrefsRepository.dynamicColorSeed.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = null
-    )
+    val dynamicColorSeed = state.dynamicColorSeed
 
     private val _wallpaperColors = MutableStateFlow<List<Int>>(emptyList())
     val wallpaperColors = _wallpaperColors.asStateFlow()
@@ -228,340 +159,127 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun extractWallpaperColors() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            try {
-                val wallpaperManager = WallpaperManager.getInstance(context)
-                val colors = wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
-                val list = mutableListOf<Int>()
-                
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    colors?.primaryColor?.toArgb()?.let { list.add(it) }
-                    colors?.secondaryColor?.toArgb()?.let { list.add(it) }
-                    colors?.tertiaryColor?.toArgb()?.let { list.add(it) }
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                    // toArgb() is available from API 26+ for Color, but WallpaperColors.getPrimaryColor returns Color
-                    @Suppress("NewApi")
-                    colors?.primaryColor?.toArgb()?.let { list.add(it) }
-                }
-                _wallpaperColors.value = list.distinct()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+        _wallpaperColors.value = com.emanuel5014.trainable.ui.theme.wallpaperSeedColors(context)
     }
 
-    val themePalette = userPrefsRepository.themePalette.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0
-    )
+    val themePalette = state.themePalette
 
-    val themeStyle = userPrefsRepository.themeStyle.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0
-    )
+    val themeStyle = state.themeStyle
 
-    val weightUnit = userPrefsRepository.weightUnit.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = "kg"
-    )
+    val weightUnit = state.weightUnit
 
-    val timerNotificationsEnabled = userPrefsRepository.timerNotificationsEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    val distanceUnit = state.distanceUnit
 
-    val timerFinishedLockscreenVibrationDuration = userPrefsRepository.timerFinishedLockscreenVibrationDuration.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0
-    )
+    val timerNotificationsEnabled = state.timerNotificationsEnabled
 
-    val gymMembershipExpiryNotificationsEnabled = userPrefsRepository.gymMembershipExpiryNotificationsEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    val timerFinishedLockscreenVibrationDuration = state.timerFinishedLockscreenVibrationDuration
 
-    val gymMembershipExpiryNotificationDaysBefore = userPrefsRepository.gymMembershipExpiryNotificationDaysBefore.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 3
-    )
+    val gymMembershipExpiryNotificationsEnabled = state.gymMembershipExpiryNotificationsEnabled
 
-    val themeMode = userPrefsRepository.themeMode.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0
-    )
+    val gymMembershipExpiryNotificationDaysBefore = state.gymMembershipExpiryNotificationDaysBefore
 
-    val swipeActionsEnabled = userPrefsRepository.swipeActionsEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    val themeMode = state.themeMode
 
-    val warmupTimerEnabled = userPrefsRepository.warmupTimerEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val swipeActionsEnabled = state.swipeActionsEnabled
 
-    val workoutTimerEnabled = userPrefsRepository.workoutTimerEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val warmupTimerEnabled = state.warmupTimerEnabled
 
-    val inlineExerciseModificationsEnabled = userPrefsRepository.inlineExerciseModificationsEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val workoutTimerEnabled = state.workoutTimerEnabled
 
-    val autoStopCardioAtTarget = userPrefsRepository.autoStopCardioAtTarget.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    val inlineExerciseModificationsEnabled = state.inlineExerciseModificationsEnabled
 
-    val advancedProgrammingEnabled = userPrefsRepository.advancedProgrammingEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val autoStopCardioAtTarget = state.autoStopCardioAtTarget
 
-    fun setAdvancedProgrammingEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setAdvancedProgrammingEnabled(enabled)
-        }
-    }
+    val advancedProgrammingEnabled = state.advancedProgrammingEnabled
 
-    val timerAddSeconds = userPrefsRepository.timerAddSeconds.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = TimerAdjustment.DEFAULT_ADD_SECONDS
-    )
+    fun setAdvancedProgrammingEnabled(enabled: Boolean) = state.setAdvancedProgrammingEnabled(enabled)
 
-    fun setTimerAddSeconds(seconds: Int) {
-        viewModelScope.launch {
-            userPrefsRepository.setTimerAddSeconds(seconds)
-        }
-    }
+    val timerAddSeconds = state.timerAddSeconds
 
-    val timerSubtractSeconds = userPrefsRepository.timerSubtractSeconds.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = TimerAdjustment.DEFAULT_SUBTRACT_SECONDS
-    )
+    fun setTimerAddSeconds(seconds: Int) = state.setTimerAddSeconds(seconds)
 
-    fun setTimerSubtractSeconds(seconds: Int) {
-        viewModelScope.launch {
-            userPrefsRepository.setTimerSubtractSeconds(seconds)
-        }
-    }
+    val timerSubtractSeconds = state.timerSubtractSeconds
 
-    val restTimerEnabled = userPrefsRepository.restTimerEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    fun setTimerSubtractSeconds(seconds: Int) = state.setTimerSubtractSeconds(seconds)
 
-    fun setRestTimerEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setRestTimerEnabled(enabled)
-        }
-    }
+    val restTimerEnabled = state.restTimerEnabled
 
-    val timerAddEnabled = userPrefsRepository.timerAddEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    fun setRestTimerEnabled(enabled: Boolean) = state.setRestTimerEnabled(enabled)
 
-    fun setTimerAddEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setTimerAddEnabled(enabled)
-        }
-    }
+    val timerAddEnabled = state.timerAddEnabled
 
-    val timerSubtractEnabled = userPrefsRepository.timerSubtractEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    fun setTimerAddEnabled(enabled: Boolean) = state.setTimerAddEnabled(enabled)
 
-    fun setTimerSubtractEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setTimerSubtractEnabled(enabled)
-        }
-    }
+    val timerSubtractEnabled = state.timerSubtractEnabled
 
-    val timerShowTimeButtons = userPrefsRepository.timerShowTimeButtons.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    fun setTimerSubtractEnabled(enabled: Boolean) = state.setTimerSubtractEnabled(enabled)
 
-    fun setTimerShowTimeButtons(show: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setTimerShowTimeButtons(show)
-        }
-    }
+    val timerShowTimeButtons = state.timerShowTimeButtons
 
-    val timerShowSkipButton = userPrefsRepository.timerShowSkipButton.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    fun setTimerShowTimeButtons(show: Boolean) = state.setTimerShowTimeButtons(show)
 
-    fun setTimerShowSkipButton(show: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setTimerShowSkipButton(show)
-        }
-    }
+    val timerShowSkipButton = state.timerShowSkipButton
 
-    val startingWeightEnabled = userPrefsRepository.startingWeightEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    fun setTimerShowSkipButton(show: Boolean) = state.setTimerShowSkipButton(show)
 
-    fun setStartingWeightEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setStartingWeightEnabled(enabled)
-        }
-    }
+    val timerShowNextSetButton = state.timerShowNextSetButton
 
-    val setPerformanceEnabled = userPrefsRepository.setPerformanceEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    fun setTimerShowNextSetButton(show: Boolean) = state.setTimerShowNextSetButton(show)
 
-    fun setSetPerformanceEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setSetPerformanceEnabled(enabled)
-        }
-    }
+    val startingWeightEnabled = state.startingWeightEnabled
 
-    val journalEnabled = userPrefsRepository.journalEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    fun setStartingWeightEnabled(enabled: Boolean) = state.setStartingWeightEnabled(enabled)
 
-    fun setJournalEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setJournalEnabled(enabled)
-        }
-    }
+    val repsFromLastWorkout = state.repsFromLastWorkout
 
-    val journalPromptAtFinish = userPrefsRepository.journalPromptAtFinish.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    fun setRepsFromLastWorkout(enabled: Boolean) = state.setRepsFromLastWorkout(enabled)
 
-    fun setJournalPromptAtFinish(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setJournalPromptAtFinish(enabled)
-        }
-    }
+    val showWorkoutElapsed = state.showWorkoutElapsed
 
-    val journalRatingEnabled = userPrefsRepository.journalRatingEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    fun setShowWorkoutElapsed(enabled: Boolean) = state.setShowWorkoutElapsed(enabled)
 
-    fun setJournalRatingEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setJournalRatingEnabled(enabled)
-        }
-    }
+    val setPerformanceEnabled = state.setPerformanceEnabled
 
-    val plateCalculatorEnabled = userPrefsRepository.plateCalculatorEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    fun setSetPerformanceEnabled(enabled: Boolean) = state.setSetPerformanceEnabled(enabled)
 
-    fun setPlateCalculatorEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setPlateCalculatorEnabled(enabled)
-        }
-    }
+    val journalEnabled = state.journalEnabled
+
+    fun setJournalEnabled(enabled: Boolean) = state.setJournalEnabled(enabled)
+
+    val journalPromptAtFinish = state.journalPromptAtFinish
+
+    fun setJournalPromptAtFinish(enabled: Boolean) = state.setJournalPromptAtFinish(enabled)
+
+    val journalRatingEnabled = state.journalRatingEnabled
+
+    fun setJournalRatingEnabled(enabled: Boolean) = state.setJournalRatingEnabled(enabled)
+
+    val plateCalculatorEnabled = state.plateCalculatorEnabled
+
+    fun setPlateCalculatorEnabled(enabled: Boolean) = state.setPlateCalculatorEnabled(enabled)
 
     /** Plates the gym has, in the current weight unit. */
-    val plateCalculatorPlates = userPrefsRepository.plateCalculatorPlates.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = PlateCalculator.DEFAULT_PLATES_KG
-    )
+    val plateCalculatorPlates = state.plateCalculatorPlates
 
-    fun setPlateCalculatorPlates(plates: List<Float>) {
-        viewModelScope.launch {
-            userPrefsRepository.setPlateCalculatorPlates(weightUnit.value, plates)
-        }
-    }
+    fun setPlateCalculatorPlates(plates: List<Float>) = state.setPlateCalculatorPlates(plates)
 
-    val loadRoundingIncrement = userPrefsRepository.loadRoundingIncrement.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = com.emanuel5014.trainable.domain.prescription.LoadCalculator.DEFAULT_INCREMENT_KG
-    )
+    val loadRoundingIncrement = state.loadRoundingIncrement
 
-    fun setLoadRoundingIncrement(increment: Float) {
-        viewModelScope.launch {
-            userPrefsRepository.setLoadRoundingIncrement(weightUnit.value, increment)
-        }
-    }
+    fun setLoadRoundingIncrement(increment: Float) = state.setLoadRoundingIncrement(increment)
 
-    val rpeEnabled = userPrefsRepository.rpeEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val rpeEnabled = state.rpeEnabled
 
-    val rpeScale = userPrefsRepository.rpeScale.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = RpeScale.BASIC
-    )
+    val rpeScale = state.rpeScale
 
-    fun setRpeEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setRpeEnabled(enabled)
-        }
-    }
+    fun setRpeEnabled(enabled: Boolean) = state.setRpeEnabled(enabled)
 
-    fun setRpeScale(scale: RpeScale) {
-        viewModelScope.launch {
-            userPrefsRepository.setRpeScale(scale)
-        }
-    }
+    fun setRpeScale(scale: RpeScale) = state.setRpeScale(scale)
 
-    val autoStopTimeWeightAtTarget = userPrefsRepository.autoStopTimeWeightAtTarget.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    val autoStopTimeWeightAtTarget = state.autoStopTimeWeightAtTarget
 
-    val keepScreenOnCardioTimer = userPrefsRepository.keepScreenOnCardioTimer.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    val keepScreenOnCardioTimer = state.keepScreenOnCardioTimer
 
-    val keepScreenOnSetTimer = userPrefsRepository.keepScreenOnSetTimer.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
-    )
+    val keepScreenOnSetTimer = state.keepScreenOnSetTimer
 
     val webServerState = webServerManager.state.stateIn(
         scope = viewModelScope,
@@ -575,58 +293,45 @@ class SettingsViewModel @Inject constructor(
     private val _resetComplete = MutableStateFlow(false)
     val resetComplete: StateFlow<Boolean> = _resetComplete
 
-    private val _latestRelease = MutableStateFlow<GitHubRelease?>(null)
-    val latestRelease = _latestRelease.asStateFlow()
+    /** Beta updates on or off; until the user chooses, a beta install counts as on (see [UpdateChannel.isBeta]). */
+    val betaUpdates = userPrefsRepository.updateChannelBeta
+        .map { UpdateChannel.isBeta(it, BuildConfig.VERSION_NAME) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UpdateChannel.isBeta(null, BuildConfig.VERSION_NAME))
 
-    private val _isDownloading = MutableStateFlow(false)
-    val isDownloading = _isDownloading.asStateFlow()
+    /** Saves the channel, then looks for an update on it right away. */
+    fun setBetaUpdates(beta: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setUpdateChannelBeta(beta)
+            checkForUpdates()
+        }
+    }
 
-    private val _downloadProgress = MutableStateFlow(0f)
-    val downloadProgress = _downloadProgress.asStateFlow()
-
+    /**
+     * The "Check for updates" button: an update opens the app-wide update dialog (see [UpdateManager]); otherwise a
+     * message says the app is up to date or why the check failed.
+     */
     fun checkForUpdates() {
         viewModelScope.launch {
-            _backupStatus.value = "Checking for updates..."
-            val release = updateManager.checkForUpdates()
-            if (release != null) {
-                _latestRelease.value = release
-                _backupStatus.value = "New update available: ${release.tagName}"
-            } else {
-                _backupStatus.value = "No updates found"
+            _backupStatus.value = context.getString(R.string.update_checking)
+            _backupStatus.value = when (val result = updateManager.check()) {
+                is UpdateCheck.Available -> null
+                UpdateCheck.UpToDate, UpdateCheck.Disabled -> context.getString(R.string.update_up_to_date)
+                is UpdateCheck.Failed -> context.getString(R.string.update_check_failed, updateErrorMessage(result.error))
             }
         }
     }
 
-    fun downloadAndInstall(release: GitHubRelease) {
-        viewModelScope.launch {
-            _isDownloading.value = true
-            updateManager.downloadAndInstall(release) { progress ->
-                _downloadProgress.value = progress
-            }.onSuccess {
-                _isDownloading.value = false
-                _latestRelease.value = null
-            }.onFailure {
-                _isDownloading.value = false
-                _backupStatus.value = "Download failed: ${it.message}"
-            }
+    private fun updateErrorMessage(error: UpdateError): String = context.getString(
+        when (error) {
+            UpdateError.RATE_LIMITED -> R.string.update_error_rate_limited
+            UpdateError.NETWORK -> R.string.update_error_network
+            else -> R.string.update_error_server
         }
-    }
+    )
 
-    fun clearUpdate() {
-        _latestRelease.value = null
-    }
+    fun setWeeklyGoal(goal: Int) = state.setWeeklyGoal(goal)
 
-    fun setWeeklyGoal(goal: Int) {
-        viewModelScope.launch {
-            userPrefsRepository.setWeeklyGoal(goal)
-        }
-    }
-
-    fun setHapticEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setHapticEnabled(enabled)
-        }
-    }
+    fun setHapticEnabled(enabled: Boolean) = state.setHapticEnabled(enabled)
 
     private fun rescheduleAutoBackup() {
         viewModelScope.launch {
@@ -717,7 +422,7 @@ class SettingsViewModel @Inject constructor(
                 username = username.trim(),
                 passwordOrToken = passwordOrToken.trim()
             )
-            val result = nextcloudWebDavClient.testConnection(config)
+            val result = nextcloudWebDav.testConnection(config)
             _nextcloudTestState.value = result
             _isTestingConnection.value = false
         }
@@ -730,14 +435,7 @@ class SettingsViewModel @Inject constructor(
         remoteFolder: String
     ) {
         viewModelScope.launch {
-            val (encrypted, iv) = nextcloudCryptoManager.encryptPassword(passwordOrToken.trim())
-            userPrefsRepository.setNextcloudConfig(
-                serverUrl = serverUrl.trim(),
-                username = username.trim(),
-                encryptedPasswordHex = toHex(encrypted),
-                passwordIvHex = toHex(iv),
-                remoteFolder = remoteFolder.trim().ifEmpty { "Trainable/Backups" }
-            )
+            nextcloudBackupService.saveConfig(NextcloudConfig(serverUrl, username, passwordOrToken, remoteFolder))
             _backupStatus.value = "Nextcloud configured successfully"
             rescheduleAutoBackup()
         }
@@ -795,10 +493,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun toHex(byteArray: ByteArray): String {
-        return byteArray.joinToString("") { "%02x".format(it) }
-    }
-
     fun setAutoBackupFolder(uri: Uri) {
         viewModelScope.launch {
             if (uri != Uri.EMPTY) {
@@ -818,18 +512,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setAutoBackupMaxCount(count: Int) {
-        viewModelScope.launch {
-            userPrefsRepository.setAutoBackupMaxCount(count)
-        }
-    }
+    fun setAutoBackupMaxCount(count: Int) = state.setAutoBackupMaxCount(count)
 
 
-    fun setAutoBackupIncludeImages(include: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setAutoBackupIncludeImages(include)
-        }
-    }
+    fun setAutoBackupIncludeImages(include: Boolean) = state.setAutoBackupIncludeImages(include)
 
     fun runBackupNow() {
         viewModelScope.launch {
@@ -864,7 +550,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _backupStatus.value = "Resetting app..."
             try {
-                GymDatabase.resetDatabase(context)
+                GymDatabaseInstance.resetDatabase(context)
                 userPrefsRepository.clearAllPreferences()
                 // Clear analytics widgets preferences
                 context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE).edit().clear().commit()
@@ -908,86 +594,31 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setNavBarStyle(style: NavBarStyle) {
-        viewModelScope.launch {
-            userPrefsRepository.setNavBarStyle(style)
-        }
-    }
+    fun setNavBarStyle(style: NavBarStyle) = state.setNavBarStyle(style)
 
-    val glassSettings = userPrefsRepository.glassSettings.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = GlassSettings()
-    )
+    val glassSettings = state.glassSettings
 
-    fun setLiquidGlassEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setLiquidGlassEnabled(enabled)
-        }
-    }
+    fun setLiquidGlassEnabled(enabled: Boolean) = state.setLiquidGlassEnabled(enabled)
 
-    fun setGlassStretch(on: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setGlassStretch(on)
-        }
-    }
+    fun setGlassStretch(on: Boolean) = state.setGlassStretch(on)
 
-    fun setGlassBlur(blur: Float) {
-        viewModelScope.launch {
-            userPrefsRepository.setGlassBlur(blur)
-        }
-    }
+    fun setGlassBlur(blur: Float) = state.setGlassBlur(blur)
 
-    fun setGlassIntensity(intensity: Float) {
-        viewModelScope.launch {
-            userPrefsRepository.setGlassIntensity(intensity)
-        }
-    }
+    fun setGlassIntensity(intensity: Float) = state.setGlassIntensity(intensity)
 
-    fun setGlassPart(part: GlassPart, on: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setGlassPart(part, on)
-        }
-    }
+    fun setGlassPart(part: GlassPart, on: Boolean) = state.setGlassPart(part, on)
 
-    fun setDynamicColor(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setDynamicColor(enabled)
-            if (!enabled) {
-                userPrefsRepository.setDynamicColorSeed(null)
-            }
-        }
-    }
+    fun setDynamicColor(enabled: Boolean) = state.setDynamicColor(enabled)
 
-    fun setDynamicColorSeed(seed: Int?) {
-        viewModelScope.launch {
-            userPrefsRepository.setDynamicColorSeed(seed)
-        }
-    }
+    fun setDynamicColorSeed(seed: Int?) = state.setDynamicColorSeed(seed)
 
-    fun setThemePalette(index: Int) {
-        viewModelScope.launch {
-            userPrefsRepository.setThemePalette(index)
-        }
-    }
+    fun setThemePalette(index: Int) = state.setThemePalette(index)
 
-    fun setThemeStyle(index: Int) {
-        viewModelScope.launch {
-            userPrefsRepository.setThemeStyle(index)
-        }
-    }
+    fun setThemeStyle(index: Int) = state.setThemeStyle(index)
 
-    fun setTimerNotificationsEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setTimerNotificationsEnabled(enabled)
-        }
-    }
+    fun setTimerNotificationsEnabled(enabled: Boolean) = state.setTimerNotificationsEnabled(enabled)
 
-    fun setTimerFinishedLockscreenVibrationDuration(durationSeconds: Int) {
-        viewModelScope.launch {
-            userPrefsRepository.setTimerFinishedLockscreenVibrationDuration(durationSeconds)
-        }
-    }
+    fun setTimerFinishedLockscreenVibrationDuration(durationSeconds: Int) = state.setTimerFinishedLockscreenVibrationDuration(durationSeconds)
 
     fun setGymMembershipExpiryNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -1005,65 +636,26 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setSwipeActionsEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setSwipeActionsEnabled(enabled)
-        }
-    }
+    fun setSwipeActionsEnabled(enabled: Boolean) = state.setSwipeActionsEnabled(enabled)
 
-    fun setWarmupTimerEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setWarmupTimerEnabled(enabled)
-        }
-    }
+    fun setWarmupTimerEnabled(enabled: Boolean) = state.setWarmupTimerEnabled(enabled)
 
-    fun setWorkoutTimerEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setWorkoutTimerEnabled(enabled)
-        }
-    }
+    fun setWorkoutTimerEnabled(enabled: Boolean) = state.setWorkoutTimerEnabled(enabled)
 
-    fun setInlineExerciseModificationsEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setInlineExerciseModificationsEnabled(enabled)
-        }
-    }
+    fun setInlineExerciseModificationsEnabled(enabled: Boolean) = state.setInlineExerciseModificationsEnabled(enabled)
 
-    fun setAutoStopCardioAtTarget(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setAutoStopCardioAtTarget(enabled)
-        }
-    }
+    fun setAutoStopCardioAtTarget(enabled: Boolean) = state.setAutoStopCardioAtTarget(enabled)
 
-    fun setAutoStopTimeWeightAtTarget(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setAutoStopTimeWeightAtTarget(enabled)
-        }
-    }
+    fun setAutoStopTimeWeightAtTarget(enabled: Boolean) = state.setAutoStopTimeWeightAtTarget(enabled)
 
-    fun setKeepScreenOnCardioTimer(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setKeepScreenOnCardioTimer(enabled)
-        }
-    }
+    fun setKeepScreenOnCardioTimer(enabled: Boolean) = state.setKeepScreenOnCardioTimer(enabled)
 
-    fun setKeepScreenOnSetTimer(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setKeepScreenOnSetTimer(enabled)
-        }
-    }
+    fun setKeepScreenOnSetTimer(enabled: Boolean) = state.setKeepScreenOnSetTimer(enabled)
 
-    fun setThemeMode(mode: Int) {
-        viewModelScope.launch {
-            userPrefsRepository.setThemeMode(mode)
-        }
-    }
+    fun setThemeMode(mode: Int) = state.setThemeMode(mode)
 
-    fun setWeightUnit(unit: String) {
-        viewModelScope.launch {
-            userPrefsRepository.setWeightUnit(unit)
-        }
-    }
+    fun setWeightUnit(unit: String) = state.setWeightUnit(unit)
+    fun setDistanceUnit(unit: String) = state.setDistanceUnit(unit)
 
     fun getFolderDisplayPath(uriString: String?): String {
         if (uriString == null) return ""
@@ -1075,13 +667,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updateUsername(newUsername: String) {
-        viewModelScope.launch {
-            currentUser.value?.let { user ->
-                userRepository.updateUser(user.copy(username = newUsername))
-            }
-        }
-    }
+    fun updateUsername(newUsername: String) = state.updateUsername(newUsername)
 
     private var lastWebServerToggleMs = 0L
 
@@ -1136,23 +722,11 @@ class SettingsViewModel @Inject constructor(
         initialValue = AiModelStatus.NotDownloaded
     )
 
-    fun setAiScanEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setAiScanEnabled(enabled)
-        }
-    }
+    fun setAiScanEnabled(enabled: Boolean) = state.setAiScanEnabled(enabled)
 
-    fun setAiResourceAnalyticsEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setAiResourceAnalyticsEnabled(enabled)
-        }
-    }
+    fun setAiResourceAnalyticsEnabled(enabled: Boolean) = state.setAiResourceAnalyticsEnabled(enabled)
 
-    fun setAiModelVariant(variantId: String) {
-        viewModelScope.launch {
-            userPrefsRepository.setAiModelVariant(variantId)
-        }
-    }
+    fun setAiModelVariant(variantId: String) = state.setAiModelVariant(variantId)
 
     fun downloadAiModel() {
         val variant = AiModelVariant.fromId(aiModelVariant.value)

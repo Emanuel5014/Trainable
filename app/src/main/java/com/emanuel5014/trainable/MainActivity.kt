@@ -30,13 +30,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -48,7 +48,6 @@ import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.theme.LocalAppGlassBackdrop
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.ui.theme.overlayGlassBlur
-import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -58,7 +57,7 @@ import com.emanuel5014.trainable.ui.components.BottomNavBar
 import com.emanuel5014.trainable.ui.components.BottomNavBarExpressive
 import com.emanuel5014.trainable.ui.components.BottomNavBarFlo
 import com.emanuel5014.trainable.ui.components.ImportConfirmationDialog
-import com.emanuel5014.trainable.ui.components.UpdateDialog
+import com.emanuel5014.trainable.ui.components.UpdateSheet
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.domain.rpe.RpeSettings
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
@@ -74,6 +73,7 @@ import com.emanuel5014.trainable.ui.theme.SplashColors
 import com.emanuel5014.trainable.ui.theme.loadSplashColors
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.UpdateManager
+import com.emanuel5014.trainable.util.UpdateNotifications
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import com.emanuel5014.trainable.ui.components.BottomNavBarGlass
@@ -86,6 +86,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import javax.inject.Inject
+import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
+import com.emanuel5014.trainable.ui.components.AndroidPlanImage
+import com.emanuel5014.trainable.ui.components.LocalPlanImage
+import com.emanuel5014.trainable.ui.components.AndroidPrescriptionText
+import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
+import com.emanuel5014.trainable.ui.components.AndroidExercisePlatformUi
+import com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi
+import com.emanuel5014.trainable.ui.components.AndroidPrescriptionEnvironment
+import com.emanuel5014.trainable.ui.components.LocalPrescriptionEnvironment
+import com.emanuel5014.trainable.ui.components.journal.AndroidJournalData
+import com.emanuel5014.trainable.ui.components.journal.LocalJournalData
+import com.emanuel5014.trainable.ui.components.LocalRoutineImagePicker
+import com.emanuel5014.trainable.data.model.ThemeSettings
+import com.emanuel5014.trainable.ui.components.LocalShowMessage
+import com.emanuel5014.trainable.ui.components.AndroidRoutineImagePicker
+import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
+import com.emanuel5014.trainable.ui.theme.AndroidPlatformGlass
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
@@ -180,6 +197,7 @@ class MainActivity : FragmentActivity() {
         }
         super.onCreate(savedInstanceState)
         workoutIntentState = intent
+        if (intent?.action == UpdateNotifications.ACTION_SHOW_UPDATE) updateManager.openDialog()
 
         // For Android < 13, apply the stored language before setContent
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -191,13 +209,11 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         setContent {
             val userLanguage by userPreferencesRepository.userLanguage.collectAsState(initial = "system")
-            val dynamicColor by userPreferencesRepository.dynamicColor.collectAsState(initial = true)
-            val dynamicColorSeed by userPreferencesRepository.dynamicColorSeed.collectAsState(initial = null)
-            val themePalette by userPreferencesRepository.themePalette.collectAsState(initial = 0)
-            val themeStyle by userPreferencesRepository.themeStyle.collectAsState(initial = 0)
+            val themeSettings by userPreferencesRepository.themeSettings.collectAsState(initial = ThemeSettings())
             val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = null)
             val advancedProgramming by userPreferencesRepository.advancedProgrammingEnabled.collectAsState(initial = false)
             val exerciseMediaEnabled by userPreferencesRepository.exerciseMediaEnabled.collectAsState(initial = false)
+            val distanceUnit by userPreferencesRepository.distanceUnit.collectAsState(initial = "km")
             val rpeEnabled by userPreferencesRepository.rpeEnabled.collectAsState(initial = false)
             val rpeScale by userPreferencesRepository.rpeScale.collectAsState(initial = RpeScale.BASIC)
             val rpeSettings = remember(rpeEnabled, rpeScale) { RpeSettings(rpeEnabled, rpeScale) }
@@ -221,21 +237,16 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            var showUpdateDialog by remember { mutableStateOf(false) }
-
-            var latestRelease by remember { mutableStateOf<GitHubRelease?>(null) }
-            var isDownloading by remember { mutableStateOf(false) }
-            var downloadProgress by remember { mutableFloatStateOf(0f) }
+            // One update dialog for the whole app: the check at start and the one from Settings both open it
+            val updateUi by updateManager.state.collectAsState()
+            val updateNotes by updateManager.notes.collectAsState()
             val scope = rememberCoroutineScope()
 
             var plansToImport by remember { mutableStateOf<List<WorkoutPlanExportDto>?>(null) }
             var jsonDataToImport by remember { mutableStateOf<String?>(null) }
 
             LaunchedEffect(Unit) {
-                latestRelease = updateManager.checkForUpdates()
-                if (latestRelease != null) {
-                    showUpdateDialog = true
-                }
+                updateManager.checkOnLaunch()
             }
 
             // Handle Import Intent (also triggered again via onNewIntent)
@@ -285,22 +296,37 @@ class MainActivity : FragmentActivity() {
             val glassNavAction = navBarStyle == NavBarStyle.Expressive && glassSettings.isOn(GlassPart.ActionButtons)
             val recordScreens = glassNavBar || glassNavAction
 
-            GymTrackingTheme(
-                dynamicColor = dynamicColor,
-                paletteIndex = themePalette,
-                seedColor = dynamicColorSeed,
-                themeStyle = themeStyle,
-                darkTheme = isDark
-            ) {
+            GymTrackingTheme(theme = themeSettings, darkTheme = isDark) {
               CompositionLocalProvider(
                   LocalAdvancedProgramming provides advancedProgramming,
                   LocalRpeSettings provides rpeSettings,
                   LocalExerciseMediaEnabled provides exerciseMediaEnabled,
+                  com.emanuel5014.trainable.ui.components.LocalDistanceUnit provides distanceUnit,
                   LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating),
-                  LocalGlassSettings provides glassSettings
+                  LocalGlassSettings provides glassSettings,
+                  LocalPlatformGlass provides AndroidPlatformGlass,
+                  LocalHapticsSetting provides userPreferencesRepository.hapticEnabled,
+                  LocalPlanImage provides AndroidPlanImage,
+                  LocalPrescriptionText provides LocalContext.current.let { remember(it) { AndroidPrescriptionText(it) } },
+                  LocalExercisePlatformUi provides AndroidExercisePlatformUi,
+                  com.emanuel5014.trainable.ui.components.LocalExerciseAddMemory provides com.emanuel5014.trainable.ui.components.AndroidExerciseAddMemory,
+                  LocalPrescriptionEnvironment provides AndroidPrescriptionEnvironment,
+                  LocalJournalData provides AndroidJournalData,
+                  LocalRoutineImagePicker provides AndroidRoutineImagePicker,
+                  LocalShowMessage provides LocalContext.current.let { context ->
+                      remember(context) { { text: String -> Toast.makeText(context, text, Toast.LENGTH_SHORT).show() } }
+                  }
               ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
+                // Once the setup is on screen it stays until it calls onFinished. A restore from the setup closes the
+                // database and marks the setup done before restarting the app: following the flag there would open
+                // the Dashboard on the closed database ("Database is closed") before the restart.
+                LaunchedEffect(hasCompletedOnboarding) {
+                    if (hasCompletedOnboarding == false && onboardingCompletedOverride.value == null) {
+                        onboardingCompletedOverride.value = false
+                    }
+                }
                 val navController = rememberNavController()
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -417,26 +443,18 @@ class MainActivity : FragmentActivity() {
                         )
                     }
 
-                    if (showUpdateDialog && latestRelease != null) {
-                        UpdateDialog(
-                            release = latestRelease!!,
-                            onDismiss = { showUpdateDialog = false },
-                            onConfirm = {
-                                isDownloading = true
-                                scope.launch {
-                                    updateManager.downloadAndInstall(latestRelease!!) { progress ->
-                                        downloadProgress = progress
-                                    }.onSuccess {
-                                        showUpdateDialog = false
-                                        isDownloading = false
-                                    }.onFailure {
-                                        isDownloading = false
-                                        // TODO: Show error
-                                    }
-                                }
+                    if (updateUi.dialogOpen) {
+                        UpdateSheet(
+                            phase = updateUi.phase,
+                            notes = updateNotes?.takeIf { it.first == updateUi.release?.tagName }?.second,
+                            onDownload = updateManager::startDownload,
+                            onInstall = updateManager::installNow,
+                            onCancelDownload = updateManager::cancelDownload,
+                            onSkip = updateManager::skipVersion,
+                            onOpenUrl = { url ->
+                                runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }
                             },
-                            isDownloading = isDownloading,
-                            downloadProgress = downloadProgress
+                            onDismiss = updateManager::dismissDialog
                         )
                     }
 
@@ -488,6 +506,7 @@ class MainActivity : FragmentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         workoutIntentState = intent
+        if (intent.action == UpdateNotifications.ACTION_SHOW_UPDATE) updateManager.openDialog()
     }
 
     override fun onResume() {
@@ -495,7 +514,6 @@ class MainActivity : FragmentActivity() {
         if (::timerNotificationHelper.isInitialized) {
             timerNotificationHelper.cancelCustomVibration()
         }
-        com.emanuel5014.trainable.widget.TrainableWidget.update(this)
-        com.emanuel5014.trainable.widget.WeeklyGoalWidget.update(this)
+        com.emanuel5014.trainable.widget.WidgetUpdater.updateAll(this)
     }
 }

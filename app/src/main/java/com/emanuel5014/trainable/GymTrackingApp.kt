@@ -9,10 +9,16 @@ import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.notification.GymMembershipWorker
+import com.emanuel5014.trainable.widget.WidgetMidnightWorker
+import com.emanuel5014.trainable.widget.WidgetUpdater
+import com.emanuel5014.trainable.widget.ui.widgetThemeFlow
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,6 +42,15 @@ class GymTrackingApp : Application(), Configuration.Provider {
         applicationScope.launch {
             localeManager.applyStoredLanguage()
             GymMembershipWorker.schedule(this@GymTrackingApp)
+            WidgetMidnightWorker.schedule(this@GymTrackingApp)
+
+            // The widgets follow the app's theme and weekly goal: redraw them when either changes
+            launch {
+                combine(widgetThemeFlow(userPrefsRepository), userPrefsRepository.weeklyGoal) { theme, goal -> theme to goal }
+                    .distinctUntilChanged()
+                    .drop(1)
+                    .collect { WidgetUpdater.updateAll(this@GymTrackingApp) }
+            }
             
             // Optimize existing images to save space
             launch(Dispatchers.IO) {

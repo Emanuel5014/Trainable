@@ -1,41 +1,30 @@
 package com.emanuel5014.trainable.widget
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.content.res.Configuration
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Path
-import android.os.Build
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalSize
 import androidx.glance.action.clickable
-import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.provideContent
-import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
-import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
@@ -44,327 +33,174 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
-import androidx.glance.material3.ColorProviders
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
-import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.data.repository.WorkoutRepository
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
+import com.emanuel5014.trainable.domain.weekStartMillis
+import com.emanuel5014.trainable.ui.screens.dashboard.firstDayOfWeek
+import com.emanuel5014.trainable.widget.model.GoalLayout
+import com.emanuel5014.trainable.widget.model.GoalSizes
+import com.emanuel5014.trainable.widget.model.WeekProgress
+import com.emanuel5014.trainable.widget.model.goalLayoutFor
+import com.emanuel5014.trainable.widget.model.weekProgress
+import com.emanuel5014.trainable.widget.ui.DayRow
+import com.emanuel5014.trainable.widget.ui.ShapeBadge
+import com.emanuel5014.trainable.widget.ui.WidgetIcon
+import com.emanuel5014.trainable.widget.ui.WidgetSurface
+import com.emanuel5014.trainable.widget.ui.wavyRingBitmap
+import com.emanuel5014.trainable.widget.ui.widgetThemeFlow
 import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
-import java.util.Calendar
-import kotlin.math.ceil
+import kotlin.time.Clock
+import kotlinx.coroutines.flow.first
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-interface WeeklyGoalEntryPoint {
-    fun workoutRepository(): WorkoutRepository
-    fun userPreferencesRepository(): UserPreferencesRepository
-}
-
+/** The weekly goal: a wavy ring of workouts done and, when there is room, the week's days. */
 class WeeklyGoalWidget : GlanceAppWidget() {
 
+    override val sizeMode: SizeMode = SizeMode.Responsive(GoalSizes)
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val entryPoint = EntryPointAccessors.fromApplication(context, WeeklyGoalEntryPoint::class.java)
+        val entryPoint = EntryPointAccessors.fromApplication(context, WidgetEntryPoint::class.java)
         val workoutRepository = entryPoint.workoutRepository()
         val prefs = entryPoint.userPreferencesRepository()
+        val themeFlow = widgetThemeFlow(prefs)
+        val initialTheme = themeFlow.first()
+        val initialGoal = prefs.weeklyGoal.first()
 
         provideContent {
-            val weeklyGoal by prefs.weeklyGoal.collectAsState(initial = 3)
-            val allSessions by workoutRepository.getAllSessions().collectAsState(initial = emptyList())
-            val weekStartMillis = Calendar.getInstance().apply {
-                set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-            }.timeInMillis
-            val numWorkoutsThisWeek = allSessions.filter { it.timestamp >= weekStartMillis }.size
-            val cardioCount by workoutRepository.getCardioSessionCountSince(weekStartMillis)
+            val theme by themeFlow.collectAsState(initial = initialTheme)
+            val goal by prefs.weeklyGoal.collectAsState(initial = initialGoal)
+            val sessions by workoutRepository.getAllSessions().collectAsState(initial = emptyList())
+
+            // Same week as the dashboard: the locale's first day, midnight in the system zone
+            val zone = TimeZone.currentSystemDefault()
+            val today = Clock.System.todayIn(zone)
+            val firstDay = firstDayOfWeek()
+            val weekStart = weekStartMillis(today, firstDay, zone)
+            val cardio by remember(weekStart) { workoutRepository.getCardioSessionCountSince(weekStart) }
                 .collectAsState(initial = 0)
 
-            val progress = if (weeklyGoal > 0)
-                (numWorkoutsThisWeek.toFloat() / weeklyGoal.toFloat()).coerceIn(0f, 1f)
-            else 0f
-            val goalMet = progress >= 1f
-
-            val colors = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                ColorProviders(
-                    light = dynamicLightColorScheme(context),
-                    dark = dynamicDarkColorScheme(context)
-                )
-            } else {
-                ColorProviders(
-                    light = lightColorScheme(),
-                    dark = darkColorScheme()
-                )
-            }
-
-            val isDark = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
-            val colorScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            } else {
-                if (isDark) darkColorScheme() else lightColorScheme()
-            }
-
-            val wavyColorArgb = colorScheme.primary.copy(alpha = 0.15f).toArgb()
-            val primaryColorCheckArgb = colorScheme.primary.toArgb()
-            val density = context.resources.displayMetrics.density
-
-            val wavyBitmap = remember(progress, isDark) {
-                createWavyBitmap(
-                    width = (360 * density).toInt(),
-                    height = (60 * density).toInt(),
-                    colorArgb = wavyColorArgb,
-                    percent = progress,
-                    periodPx = 20f * density,
-                    amplitudePx = 4f * density
-                )
-            }
-
-            val checkBitmap = remember(goalMet, isDark) {
-                if (goalMet) createCheckCircleBitmap(
-                    size = (28 * density).toInt(),
-                    circleColorArgb = primaryColorCheckArgb
-                ) else null
-            }
+            val week = weekProgress(sessions.map { it.timestamp }, goal, cardio, today, firstDay, zone)
+            val colors = remember(theme) { theme.colorProviders(context) }
 
             GlanceTheme(colors = colors) {
-                WeeklyGoalContent(
-                    context = context,
-                    wavyBitmap = wavyBitmap,
-                    checkBitmap = checkBitmap,
-                    workoutsThisWeek = numWorkoutsThisWeek,
-                    weeklyGoal = weeklyGoal,
-                    cardioWorkoutsThisWeek = cardioCount,
-                    goalMet = goalMet
-                )
+                WeeklyGoalContent(context, week, goalLayoutFor(LocalSize.current))
             }
         }
     }
+}
 
-    companion object {
-        fun update(context: Context) {
-            try {
-                val appWidgetManager = AppWidgetManager.getInstance(context)
-                val componentName = ComponentName(context, WeeklyGoalWidgetReceiver::class.java)
-                val ids = appWidgetManager.getAppWidgetIds(componentName)
-                if (ids.isNotEmpty()) {
-                    val updateIntent = Intent(context, WeeklyGoalWidgetReceiver::class.java).apply {
-                        action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+private val RingStroke = 9.dp
+private val RingAmplitude = 2.8.dp
+private val RingMax = 160.dp
+
+@Composable
+private fun WeeklyGoalContent(context: Context, week: WeekProgress, layout: GoalLayout) {
+    val colors = GlanceTheme.colors
+    val size = LocalSize.current
+    val title = if (week.met) context.getString(R.string.widget_goal_met)
+    else context.resources.getQuantityString(R.plurals.widget_goal_remaining, week.remaining, week.remaining)
+
+    WidgetSurface(
+        color = colors.widgetBackground,
+        modifier = GlanceModifier.clickable(actionStartActivity(openAppIntent(context))),
+        contentAlignment = Alignment.Center
+    ) {
+        when (layout) {
+            GoalLayout.SMALL -> Ring(context, week, min(size.width, size.height) - 16.dp) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    DoneOfGoal(week, bigSp = 26, smallSp = 15)
+                    if (week.met) {
+                        GoalMetBadge(20.dp)
+                    } else {
+                        WidgetText(context.getString(R.string.widget_goal_unit), colors.onSurfaceVariant, 11, FontWeight.Normal)
                     }
-                    context.sendBroadcast(updateIntent)
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
+            }
+            GoalLayout.WIDE -> Row(
+                modifier = GlanceModifier.fillMaxSize().padding(start = 10.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Ring(context, week, size.height - 24.dp) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        DoneOfGoal(week, bigSp = 24, smallSp = 14)
+                        if (week.met) GoalMetBadge(18.dp)
+                    }
+                }
+                Spacer(GlanceModifier.width(14.dp))
+                Column(modifier = GlanceModifier.defaultWeight()) {
+                    WidgetText(context.getString(R.string.widget_goal_title), colors.primary, 11, FontWeight.Medium)
+                    WidgetText(title, colors.onSurface, 15, FontWeight.Medium)
+                    if (week.cardio > 0) {
+                        WidgetText(context.getString(R.string.widget_goal_cardio, week.cardio), colors.onSurfaceVariant, 11, FontWeight.Normal)
+                    }
+                    Spacer(GlanceModifier.height(6.dp))
+                    DayRow(week.days, modifier = GlanceModifier.fillMaxWidth(), dotSize = 20.dp)
+                }
+            }
+            GoalLayout.STRIP -> Column(
+                modifier = GlanceModifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    DoneOfGoal(week, bigSp = 18, smallSp = 13)
+                    Spacer(GlanceModifier.width(8.dp))
+                    WidgetText(title, colors.onSurface, 13, FontWeight.Medium)
+                }
+                DayRow(week.days, modifier = GlanceModifier.fillMaxWidth(), dotSize = 16.dp)
             }
         }
+    }
+}
+
+/** "3/4": the done count big, the goal smaller and muted. */
+@Composable
+private fun DoneOfGoal(week: WeekProgress, bigSp: Int, smallSp: Int) {
+    val colors = GlanceTheme.colors
+    Row(verticalAlignment = Alignment.Bottom) {
+        Text(week.done.toString(), style = TextStyle(color = colors.onSurface, fontSize = bigSp.sp, fontWeight = FontWeight.Medium))
+        Text("/${week.goal}", style = TextStyle(color = colors.onSurfaceVariant, fontSize = smallSp.sp, fontWeight = FontWeight.Medium))
     }
 }
 
 @Composable
-private fun WeeklyGoalContent(
-    context: Context,
-    wavyBitmap: Bitmap,
-    checkBitmap: Bitmap?,
-    workoutsThisWeek: Int,
-    weeklyGoal: Int,
-    cardioWorkoutsThisWeek: Int,
-    goalMet: Boolean
-) {
-    val remaining = weeklyGoal - workoutsThisWeek
-    val progressColor = GlanceTheme.colors.primary
-
-    Box(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(GlanceTheme.colors.background)
-            .cornerRadius(24.dp)
-            .clickable(
-                actionStartActivity(
-                    Intent(context, MainActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    }
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            provider = ImageProvider(wavyBitmap),
-            contentDescription = null,
-            modifier = GlanceModifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
-
-        Column(
-            modifier = GlanceModifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp)
-        ) {
-            Text(
-                text = context.getString(R.string.weekly_goal),
-                style = TextStyle(
-                    color = GlanceTheme.colors.onSurfaceVariant,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-            Spacer(modifier = GlanceModifier.height(2.dp))
-
-            Row(
-                modifier = GlanceModifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "$workoutsThisWeek",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.onSurface,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                Text(
-                    text = " / $weeklyGoal",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.onSurface,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                Spacer(modifier = GlanceModifier.defaultWeight())
-                if (goalMet && checkBitmap != null) {
-                    Image(
-                        provider = ImageProvider(checkBitmap),
-                        contentDescription = context.getString(R.string.goal_met),
-                        modifier = GlanceModifier.size(28.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = GlanceModifier.height(2.dp))
-
-            Row(
-                modifier = GlanceModifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val remainingText = when {
-                    goalMet -> context.getString(R.string.goal_met)
-                    remaining == 1 -> context.getString(R.string.workout_remaining, remaining)
-                    else -> context.getString(R.string.workouts_remaining, remaining)
-                }
-                Text(
-                    text = remainingText,
-                    style = TextStyle(
-                        color = progressColor,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                if (cardioWorkoutsThisWeek > 0) {
-                    Spacer(modifier = GlanceModifier.width(4.dp))
-                    Text(
-                        text = "\u2022 $cardioWorkoutsThisWeek CARDIO",
-                        style = TextStyle(
-                            color = GlanceTheme.colors.onSurfaceVariant,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-                    )
-                }
-            }
-        }
+private fun GoalMetBadge(size: Dp) {
+    val colors = GlanceTheme.colors
+    ShapeBadge(R.drawable.widget_shape_sunny, colors.primary, size) {
+        WidgetIcon(R.drawable.widget_ic_check, colors.onPrimary, size * 0.62f)
     }
 }
 
-private fun createWavyBitmap(
-    width: Int,
-    height: Int,
-    colorArgb: Int,
-    percent: Float,
-    periodPx: Float,
-    amplitudePx: Float
-): Bitmap {
-    if (width <= 0 || height <= 0) return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-
-    val clampedPercent = percent.coerceIn(0f, 1f)
-    if (clampedPercent <= 0f) return bitmap
-
-    val edgeX = width * clampedPercent
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        this.color = colorArgb
-        style = Paint.Style.FILL
+/**
+ * The wavy ring: two white bitmaps (track and arc) tinted with theme colours, so they follow light and dark like the
+ * rest of the widget. [content] sits in the middle.
+ */
+@Composable
+private fun Ring(context: Context, week: WeekProgress, side: Dp, content: @Composable () -> Unit) {
+    val colors = GlanceTheme.colors
+    val ringSide = side.coerceIn(48.dp, RingMax)
+    val density = context.resources.displayMetrics.density
+    val sizePx = (ringSide.value * density).toInt()
+    val stroke = RingStroke.value * density
+    val amplitude = RingAmplitude.value * density
+    val (track, arc) = remember(sizePx, week.progress) {
+        ringLayers(sizePx, week.progress, stroke, amplitude)
     }
-
-    if (clampedPercent >= 1f || edgeX >= width) {
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
-        return bitmap
-    }
-
-    val halfPeriod = periodPx / 2
-    val path = Path().apply {
-        moveTo(0f, 0f)
-        lineTo(edgeX, 0f)
-
-        val wavesNeeded = ceil(height.toFloat() / halfPeriod + 2f).toInt()
-        for (i in 0 until wavesNeeded) {
-            val baseY = i * halfPeriod
-            if (baseY > height + halfPeriod) break
-            if (baseY < -halfPeriod) continue
-
-            val direction = if (i % 2 == 0) 1 else -1
-            val waveX = edgeX + amplitudePx * direction
-            val startY = baseY.coerceAtLeast(0f)
-            val endY = (baseY + halfPeriod).coerceAtMost(height.toFloat())
-
-            if (startY < height && endY > startY) {
-                val midY = (startY + endY) / 2f
-                quadTo(waveX, midY, edgeX, endY)
-            }
+    Box(modifier = GlanceModifier.size(ringSide), contentAlignment = Alignment.Center) {
+        Image(ImageProvider(track), contentDescription = null, modifier = GlanceModifier.size(ringSide), colorFilter = ColorFilter.tint(colors.primaryContainer))
+        if (arc != null) {
+            Image(ImageProvider(arc), contentDescription = null, modifier = GlanceModifier.size(ringSide), colorFilter = ColorFilter.tint(colors.primary))
         }
-
-        lineTo(0f, height.toFloat())
-        close()
+        content()
     }
-
-    canvas.drawPath(path, paint)
-    return bitmap
 }
 
-private fun createCheckCircleBitmap(size: Int, circleColorArgb: Int): Bitmap {
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val padding = size * 0.08f
+private const val White = 0xFFFFFFFF.toInt()
 
-    val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = circleColorArgb
-        style = Paint.Style.FILL
-    }
-    canvas.drawCircle(size / 2f, size / 2f, size / 2f - padding, circlePaint)
-
-    val checkPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.TRANSPARENT
-        style = Paint.Style.STROKE
-        strokeWidth = size * 0.12f
-        strokeCap = Paint.Cap.ROUND
-        strokeJoin = Paint.Join.ROUND
-        xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.CLEAR)
-    }
-
-    val checkPath = Path().apply {
-        val s = size.toFloat()
-        moveTo(s * 0.32f, s * 0.52f)
-        lineTo(s * 0.46f, s * 0.66f)
-        lineTo(s * 0.72f, s * 0.32f)
-    }
-    canvas.drawPath(checkPath, checkPaint)
-
-    return bitmap
+private fun ringLayers(sizePx: Int, progress: Float, stroke: Float, amplitude: Float): Pair<Bitmap, Bitmap?> {
+    val track = wavyRingBitmap(sizePx, 0f, trackArgb = White, arcArgb = White, strokePx = stroke, amplitudePx = amplitude)
+    val arc = if (progress > 0f) wavyRingBitmap(sizePx, progress, trackArgb = 0, arcArgb = White, strokePx = stroke, amplitudePx = amplitude) else null
+    return track to arc
 }

@@ -22,5 +22,10 @@ internal object RetiredPresetsMarker {
         prefs(context).edit().remove(KEY).apply()
     }
 
+    fun store(context: Context): RetiredPresetsStore = object : RetiredPresetsStore {
+        override fun applied(): Int = applied(context)
+        override fun markApplied(version: Int) = markApplied(context, version)
+    }
+
     private fun prefs(context: Context) = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 }
