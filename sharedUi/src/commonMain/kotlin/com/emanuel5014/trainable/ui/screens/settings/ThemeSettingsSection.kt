@@ -69,6 +69,8 @@ import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.TextAutoSize
 import com.emanuel5014.trainable.data.model.ColorSource
 import com.emanuel5014.trainable.data.model.SavedTheme
 import com.emanuel5014.trainable.data.model.ThemeSettings
@@ -167,7 +169,7 @@ private val STYLE_NAMES = listOf(
     Res.string.style_monochrome
 )
 
-private val PALETTE_NAMES = listOf(
+internal val PALETTE_NAMES = listOf(
     Res.string.palette_default, Res.string.palette_blue, Res.string.palette_green, Res.string.palette_red,
     Res.string.palette_purple, Res.string.palette_orange, Res.string.palette_pink, Res.string.palette_teal,
     Res.string.palette_monochrome
@@ -194,10 +196,7 @@ fun ThemeSettingsSection(
     // A theme from before this section is shown (and first written) in its terms
     val theme = remember(stored, systemAvailable, wallpaperColors) { stored.migrated(systemAvailable, wallpaperColors) }
     val source = theme.source ?: ThemeSource.Preset
-    val resolved = theme.colorSource(systemAvailable)
-    val currentPrimary = MaterialTheme.colorScheme.primary.toArgb()
-    // Where a custom colour starts: the colour on screen, or the brand blue when the screen is grey
-    val customStart = if (Color(currentPrimary).toHSV()[1] < 0.15f) MonolithicPrimary.toArgb() else currentPrimary
+    val customStart = customColorStart()
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SectionLabel(Res.string.theme_section_mode)
@@ -226,66 +225,19 @@ fun ThemeSettingsSection(
         SectionLabel(Res.string.theme_section_color)
         GymCard(containerColor = SurfaceContainerHigh) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                val sources = buildList {
-                    if (systemAvailable) add(ThemeSource.System)
-                    add(ThemeSource.Photo); add(ThemeSource.Preset); add(ThemeSource.Custom)
-                }
+                val sources = themeSources(systemAvailable)
                 PillSegments(
                     labels = sources.map { it.label() },
                     selected = sources.indexOf(source),
-                    onSelect = { index ->
-                        val picked = sources[index]
-                        // A custom colour starts from the colour on screen, so nothing jumps
-                        onThemeChange(theme.copy(source = picked, customSeed = theme.customSeed ?: customStart))
-                    }
+                    onSelect = { index -> onThemeChange(theme.withSource(sources[index], customStart)) }
                 )
-                when (source) {
-                    ThemeSource.System -> SystemColors(theme, wallpaperColors, onThemeChange)
-                    ThemeSource.Photo -> PhotoColors(theme, onThemeChange)
-                    ThemeSource.Preset -> PresetColors(theme, onThemeChange)
-                    ThemeSource.Custom -> CustomColor(theme, customStart, onThemeChange)
-                }
+                ThemeSourceContent(theme, wallpaperColors, customStart, onThemeChange)
             }
         }
 
         SectionLabel(Res.string.theme_section_style)
         GymCard(containerColor = SurfaceContainerHigh) {
-            val styleSeed = when (resolved) {
-                is ColorSource.Seed -> resolved.seed
-                is ColorSource.SystemDynamic -> theme.dynamicColorSeed ?: wallpaperColors.firstOrNull() ?: currentPrimary
-                else -> null
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    STYLE_NAMES.forEachIndexed { index, name ->
-                        val label = stringResource(name)
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.width(72.dp).alpha(if (styleSeed == null) 0.4f else 1f)
-                        ) {
-                            PalettePreviewCircle(
-                                colors = AppColorSchemes.previews(styleSeed ?: currentPrimary, index),
-                                isSelected = styleSeed != null && theme.style == index,
-                                onClick = { if (styleSeed != null) onThemeChange(theme.copy(style = index)) },
-                                label = label
-                            )
-                            Text(
-                                label, style = MaterialTheme.typography.labelSmall, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.Center,
-                                color = if (styleSeed != null && theme.style == index) Primary else OnSurfaceVariant
-                            )
-                        }
-                    }
-                }
-                Text(
-                    stringResource(if (styleSeed == null) Res.string.theme_style_fixed else Res.string.theme_style_hint),
-                    style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
-                )
-            }
+            ThemeStyleGrid(theme, systemAvailable, wallpaperColors, onThemeChange)
         }
 
         SectionLabel(Res.string.theme_section_contrast)
@@ -302,7 +254,92 @@ fun ThemeSettingsSection(
     }
 }
 
-private fun ThemeSource.label(): StringResource = when (this) {
+/** The sources this platform offers: the wallpaper only where the system shares it (Android 12+). */
+internal fun themeSources(systemAvailable: Boolean): List<ThemeSource> = buildList {
+    if (systemAvailable) add(ThemeSource.System)
+    add(ThemeSource.Photo); add(ThemeSource.Preset); add(ThemeSource.Custom)
+}
+
+/** Switch source; a custom colour starts from [customStart] the first time, so nothing jumps. */
+internal fun ThemeSettings.withSource(picked: ThemeSource, customStart: Int): ThemeSettings =
+    copy(source = picked, customSeed = customSeed ?: customStart)
+
+/** Where a custom colour starts: the colour on screen, or the brand blue when the screen is grey. */
+@Composable
+internal fun customColorStart(): Int {
+    val currentPrimary = MaterialTheme.colorScheme.primary.toArgb()
+    return if (Color(currentPrimary).toHSV()[1] < 0.15f) MonolithicPrimary.toArgb() else currentPrimary
+}
+
+/**
+ * What a source offers: wallpaper colours, the photo button and its colours, the presets, or the custom colour.
+ * [advanced] adds accents, background tint and saved themes to the custom colour (the setup leaves them out).
+ */
+@Composable
+internal fun ThemeSourceContent(
+    theme: ThemeSettings,
+    wallpaperColors: List<Int>,
+    customStart: Int,
+    onThemeChange: (ThemeSettings) -> Unit,
+    advanced: Boolean = true
+) {
+    when (theme.source ?: ThemeSource.Preset) {
+        ThemeSource.System -> SystemColors(theme, wallpaperColors, onThemeChange)
+        ThemeSource.Photo -> PhotoColors(theme, onThemeChange)
+        ThemeSource.Preset -> PresetColors(theme, onThemeChange)
+        ThemeSource.Custom -> CustomColor(theme, customStart, onThemeChange, advanced)
+    }
+}
+
+/** The nine styles on the colour in use, greyed out for the fixed palettes, with a line about them. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun ThemeStyleGrid(
+    theme: ThemeSettings,
+    systemAvailable: Boolean,
+    wallpaperColors: List<Int>,
+    onThemeChange: (ThemeSettings) -> Unit
+) {
+    val currentPrimary = MaterialTheme.colorScheme.primary.toArgb()
+    val styleSeed = when (val resolved = theme.colorSource(systemAvailable)) {
+        is ColorSource.Seed -> resolved.seed
+        is ColorSource.SystemDynamic -> theme.dynamicColorSeed ?: wallpaperColors.firstOrNull() ?: currentPrimary
+        else -> null
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            STYLE_NAMES.forEachIndexed { index, name ->
+                val label = stringResource(name)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(72.dp).alpha(if (styleSeed == null) 0.4f else 1f)
+                ) {
+                    PalettePreviewCircle(
+                        colors = AppColorSchemes.previews(styleSeed ?: currentPrimary, index),
+                        isSelected = styleSeed != null && theme.style == index,
+                        onClick = { if (styleSeed != null) onThemeChange(theme.copy(style = index)) },
+                        label = label
+                    )
+                    Text(
+                        label, style = MaterialTheme.typography.labelSmall, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        color = if (styleSeed != null && theme.style == index) Primary else OnSurfaceVariant
+                    )
+                }
+            }
+        }
+        Text(
+            stringResource(if (styleSeed == null) Res.string.theme_style_fixed else Res.string.theme_style_hint),
+            style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+        )
+    }
+}
+
+internal fun ThemeSource.label(): StringResource = when (this) {
     ThemeSource.System -> Res.string.theme_source_system
     ThemeSource.Photo -> Res.string.theme_source_photo
     ThemeSource.Preset -> Res.string.theme_source_preset
@@ -340,12 +377,13 @@ private fun PillSegments(labels: List<StringResource>, selected: Int, onSelect: 
                     .padding(horizontal = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
+                val style = if (labels.size > 3) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge
+                // Long words ("Personalizado") shrink a little instead of being cut
                 Text(
-                    stringResource(label),
-                    style = if (labels.size > 3) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (on) OnPrimary else OnSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center
+                    stringResource(label), style = style, fontWeight = FontWeight.ExtraBold,
+                    color = if (on) OnPrimary else OnSurfaceVariant, maxLines = 1, softWrap = false,
+                    textAlign = TextAlign.Center,
+                    autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp)
                 )
             }
         }
@@ -461,7 +499,7 @@ private fun PresetColors(theme: ThemeSettings, onThemeChange: (ThemeSettings) ->
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CustomColor(theme: ThemeSettings, currentPrimary: Int, onThemeChange: (ThemeSettings) -> Unit) {
+private fun CustomColor(theme: ThemeSettings, currentPrimary: Int, onThemeChange: (ThemeSettings) -> Unit, advanced: Boolean) {
     val current by rememberUpdatedState(theme)
     val seed = theme.customSeed ?: currentPrimary
     // The sliders move a local colour; the theme is written when a finger lifts, not at every frame
@@ -500,27 +538,30 @@ private fun CustomColor(theme: ThemeSettings, currentPrimary: Int, onThemeChange
             onChange = { brightness = it }, onFinished = ::commit
         )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(SurfaceContainerHighest)
-                .clickable { advancedOpen = !advancedOpen }
-                .heightIn(min = 52.dp)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(Res.string.theme_advanced), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = OnSurface)
-                Text(stringResource(Res.string.theme_advanced_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+        // The setup keeps to the colour itself; accents, tint and saved themes live in Settings
+        if (advanced) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(SurfaceContainerHighest)
+                    .clickable { advancedOpen = !advancedOpen }
+                    .heightIn(min = 52.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(Res.string.theme_advanced), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = OnSurface)
+                    Text(stringResource(Res.string.theme_advanced_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                }
+                Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.rotate(if (advancedOpen) 180f else 0f))
             }
-            Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.rotate(if (advancedOpen) 180f else 0f))
-        }
-        AnimatedVisibility(advancedOpen) {
-            AdvancedColors(theme, onThemeChange)
-        }
+            AnimatedVisibility(advancedOpen) {
+                AdvancedColors(theme, onThemeChange)
+            }
 
-        SavedThemes(theme, seed, onThemeChange)
+            SavedThemes(theme, seed, onThemeChange)
+        }
     }
 }
 

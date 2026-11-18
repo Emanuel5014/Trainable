@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.onboarding
 
+import com.emanuel5014.trainable.data.model.ThemeSource
+import com.emanuel5014.trainable.ui.screens.settings.PALETTE_NAMES
+import com.emanuel5014.trainable.ui.screens.settings.label
+import kotlinx.coroutines.flow.first
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -60,7 +64,9 @@ fun OnboardingContent(
     nextcloudConnected: Boolean,
     dataLocal: @Composable () -> Unit,
     dataNextcloud: @Composable () -> Unit,
+    /** The phone shares its wallpaper colours (Android 12+); [wallpaperColors] are those colours. */
     wallpaperSupported: Boolean = true,
+    wallpaperColors: List<Int> = emptyList(),
     customVibrationSupported: Boolean = true,
     logo: @Composable (Modifier, Color) -> Unit = { modifier, tint ->
         Icon(painterResource(Res.drawable.ic_app_logo), null, modifier, tint = tint)
@@ -75,10 +81,7 @@ fun OnboardingContent(
     val showMessage = LocalShowMessage.current
     var completing by remember { mutableStateOf(false) }
 
-    val dynamicColor by model.dynamicColor.collectAsState(initial = true)
-    val dynamicColorSeed by model.dynamicColorSeed.collectAsState(initial = null)
-    val themePalette by model.themePalette.collectAsState(initial = 0)
-    val themeStyle by model.themeStyle.collectAsState(initial = 0)
+    val themeSettings by model.themeSettings.collectAsState(initial = null)
     val themeMode by model.themeMode.collectAsState(initial = 0)
 
     val currentStep = steps.getOrElse(pagerState.currentPage) { OnboardingStep.Welcome }
@@ -112,7 +115,7 @@ fun OnboardingContent(
             try {
                 prepareCompletion(choices)
                 model.completeOnboarding(
-                    choices.toSettings(ThemeChoice(dynamicColor, dynamicColorSeed, themePalette, themeStyle, themeMode), selectedAiModelVariant)
+                    choices.toSettings(ThemeChoice(model.themeSettings.first(), themeMode), selectedAiModelVariant)
                 )
                 onFinished()
             } catch (error: CancellationException) {
@@ -130,6 +133,13 @@ fun OnboardingContent(
         2 -> stringResource(Res.string.theme_mode_dark)
         else -> stringResource(Res.string.theme_mode_system)
     }
+
+    // "Da foto", "Preset · Blu"…: the source, and for a preset its name, in the new section's terms
+    val colorsView = themeSettings?.migrated(wallpaperSupported, wallpaperColors)
+    val colorsSource = colorsView?.source ?: ThemeSource.Preset
+    val colorsLabel = if (colorsSource == ThemeSource.Preset) {
+        stringResource(colorsSource.label()) + " · " + stringResource(PALETTE_NAMES[(colorsView?.palette ?: 0).coerceIn(0, PALETTE_NAMES.lastIndex)])
+    } else stringResource(colorsSource.label())
 
     Box(modifier = Modifier.fillMaxSize().background(Surface)) {
         Box(
@@ -169,11 +179,12 @@ fun OnboardingContent(
                             OnboardingStep.You -> ProfileStep(choices, hero)
                             OnboardingStep.Style -> StyleStep(choices, hero)
                             OnboardingStep.Tweaks -> TweaksStep(choices, hero)
-                            OnboardingStep.Look -> LookStep(model, wallpaperSupported, hero)
+                            OnboardingStep.Colors -> ColorsStep(model, wallpaperSupported, wallpaperColors, hero)
+                            OnboardingStep.Look -> LookStep(model, hero)
                             OnboardingStep.Alerts -> AlertsStep(choices, customVibrationSupported, hero)
                             OnboardingStep.Ai -> AiStep(choices, ai, hero)
                             OnboardingStep.Data -> DataStep(choices.autoBackupEnabled.value, nextcloudConnected, dataLocal, dataNextcloud, hero)
-                            OnboardingStep.Ready -> ReadyStep(choices, themeLabel, goTo, hero)
+                            OnboardingStep.Ready -> ReadyStep(choices, colorsLabel, themeLabel, goTo, hero)
                         }
                     }
                 }

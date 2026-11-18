@@ -1,17 +1,12 @@
 package com.emanuel5014.trainable.ui.screens.onboarding
 
+import com.emanuel5014.trainable.data.model.ThemeSettings
 import com.emanuel5014.trainable.domain.WeeklyGoal
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 
-/** The theme the user ended on; colour, style and mode are written live, so this comes from the preferences. */
-data class ThemeChoice(
-    val dynamicColor: Boolean,
-    val dynamicColorSeed: Int?,
-    val palette: Int,
-    val style: Int,
-    val mode: Int
-)
+/** The theme the user ended on; it is written live, so this comes from the preferences. */
+data class ThemeChoice(val settings: ThemeSettings, val mode: Int)
 
 /** Everything the setup writes at the end, taken once from [OnboardingChoices] when the user finishes. */
 data class OnboardingSettings(

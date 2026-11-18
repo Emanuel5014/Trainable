@@ -1704,7 +1704,7 @@
     <string name="theme_source_custom">Sur mesure</string>
     <string name="theme_system_desc">Couleurs tirées du fond d'écran du téléphone.</string>
     <string name="theme_system_auto">Automatique</string>
-    <string name="theme_photo_desc">Choisis une photo dans ta galerie, par exemple ton fond d'écran ou une capture de l'écran d'accueil. La photo n'est pas enregistrée.</string>
+    <string name="theme_photo_desc">Choisissez une photo dans votre galerie, par exemple votre fond d'écran ou une capture de l'écran d'accueil. La photo n'est pas enregistrée.</string>
     <string name="theme_photo_pick">Choisir une photo</string>
     <string name="theme_photo_colors">Couleurs trouvées</string>
     <string name="theme_hex">Code couleur</string>
@@ -1734,7 +1734,7 @@
     <string name="theme_contrast_standard">Standard</string>
     <string name="theme_contrast_medium">Moyen</string>
     <string name="theme_contrast_high">Élevé</string>
-    <string name="theme_contrast_desc">Plus de différence entre textes et fonds : utile dans les salles très lumineuses ou si tu vois moins bien.</string>
+    <string name="theme_contrast_desc">Plus de différence entre textes et fonds : utile dans les salles très lumineuses ou si vous voyez moins bien.</string>
     <string name="theme_photo_none">Aucune photo choisie</string>
     <string name="heart_title">Fréquence cardiaque</string>
     <string name="heart_avg">bpm moy.</string>
@@ -1757,4 +1757,7 @@
     <string name="heart_max_setting_desc">Pour les zones. Une estimation rapide : 220 moins ton âge.</string>
     <string name="heart_privacy_title">Données de santé dans Trainable</string>
     <string name="heart_privacy_text">Trainable lit uniquement la fréquence cardiaque, les calories et les séances enregistrées dans Health Connect, et seulement pendant tes séances. Il n'écrit jamais dans Health Connect. Ce qu'il lit reste sur ce téléphone, dans la base de données de Trainable et dans tes sauvegardes, et n'est jamais envoyé ailleurs. Tu peux le désactiver dans Paramètres → Entraînement et retirer les autorisations dans Health Connect à tout moment.</string>
+    <string name="onboarding_colors_title">Vos couleurs</string>
+    <string name="onboarding_colors_more">Les couleurs d'accent, la teinte des fonds et les thèmes enregistrés sont dans Paramètres › Personnalisation.</string>
+    <string name="onboarding_ready_colors">Couleurs</string>
 </resources>

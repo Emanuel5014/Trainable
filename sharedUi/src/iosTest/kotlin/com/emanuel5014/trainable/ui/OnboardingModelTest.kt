@@ -13,6 +13,8 @@ import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingChoices
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingModel
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingSettings
 import com.emanuel5014.trainable.ui.screens.onboarding.ThemeChoice
+import com.emanuel5014.trainable.data.model.ThemeSettings
+import com.emanuel5014.trainable.data.model.ThemeSource
 import com.emanuel5014.trainable.ui.screens.onboarding.changeUnit
 import com.emanuel5014.trainable.ui.screens.onboarding.pickMembershipDate
 import com.emanuel5014.trainable.ui.screens.onboarding.toSettings
@@ -42,7 +44,7 @@ private class SetupUser : UserDao, WeightLogDao {
 
 private fun setup(
     name: String, weight: String, goal: String, unit: String,
-    theme: ThemeChoice = ThemeChoice(true, null, 0, 0, 0),
+    theme: ThemeChoice = ThemeChoice(ThemeSettings(), 0),
     edit: OnboardingChoices.() -> Unit = {}
 ): OnboardingSettings = OnboardingChoices().apply {
     username.value = name; weightInput.value = weight; weeklyGoalInput.value = goal; changeUnit(unit); edit()
@@ -58,7 +60,7 @@ class OnboardingModelTest {
             assertEquals(5, prefs.weeklyGoal.first())
             scheduled = true
         })
-        model.completeOnboarding(setup("Ada", "62.5", "5", "kg", ThemeChoice(true, null, 3, 2, 2)) {
+        model.completeOnboarding(setup("Ada", "62.5", "5", "kg", ThemeChoice(ThemeSettings(source = ThemeSource.Preset, dynamicColor = false, palette = 3, style = 2, contrast = 1, pureBlack = true), 2)) {
             hapticEnabled.value = false; timerNotificationsEnabled.value = false; advancedProgramming.value = true
         })
         assertTrue(scheduled)
@@ -68,8 +70,12 @@ class OnboardingModelTest {
         assertFalse(prefs.hapticEnabled.first())
         assertFalse(prefs.timerNotificationsEnabled.first())
         assertTrue(prefs.advancedProgrammingEnabled.first())
-        assertEquals(3, prefs.themePalette.first())
-        assertEquals(2, prefs.themeStyle.first())
+        val theme = prefs.themeSettings.first()
+        assertEquals(ThemeSource.Preset, theme.source)
+        assertEquals(3, theme.palette)
+        assertEquals(2, theme.style)
+        assertEquals(1, theme.contrast)
+        assertTrue(theme.pureBlack)
         assertEquals(2, prefs.themeMode.first())
     }
 

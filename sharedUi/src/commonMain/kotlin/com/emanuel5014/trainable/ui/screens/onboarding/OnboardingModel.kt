@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import com.emanuel5014.trainable.data.model.NavBarStyle
+import com.emanuel5014.trainable.data.model.ThemeSettings
 import kotlin.time.Clock
 
 /** Profile/settings writes shared by both platforms. Android owns its backup scheduler. */
@@ -18,38 +19,12 @@ class OnboardingModel(
     private val nowMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() },
     private val onCompleted: suspend () -> Unit = {}
 ) {
-    val dynamicColor = userPrefsRepository.dynamicColor
-    val dynamicColorSeed = userPrefsRepository.dynamicColorSeed
-    val themePalette = userPrefsRepository.themePalette
-    val themeStyle = userPrefsRepository.themeStyle
+    /** The theme as the Themes section keeps it; the setup writes it live, like Settings › Personalization. */
+    val themeSettings = userPrefsRepository.themeSettings
     val themeMode = userPrefsRepository.themeMode
 
-    fun setDynamicColor(enabled: Boolean) {
-        scope.launch {
-            userPrefsRepository.clearThemeSource()
-            userPrefsRepository.setDynamicColor(enabled)
-        }
-    }
-
-    fun setDynamicColorSeed(seed: Int?) {
-        scope.launch {
-            userPrefsRepository.clearThemeSource()
-            userPrefsRepository.setDynamicColorSeed(seed)
-        }
-    }
-
-    fun setThemePalette(index: Int) {
-        scope.launch {
-            userPrefsRepository.clearThemeSource()
-            userPrefsRepository.setThemePalette(index)
-        }
-    }
-
-    fun setThemeStyle(index: Int) {
-        scope.launch {
-            userPrefsRepository.clearThemeSource()
-            userPrefsRepository.setThemeStyle(index)
-        }
+    fun setThemeSettings(theme: ThemeSettings) {
+        scope.launch { userPrefsRepository.setThemeSettings(theme) }
     }
 
     fun setThemeMode(mode: Int) {
@@ -111,14 +86,7 @@ class OnboardingModel(
         }
         userPrefsRepository.setAutoBackupMaxCount(autoBackupMaxCount)
         userPrefsRepository.setAutoBackupIncludeImages(autoBackupIncludeImages)
-        userPrefsRepository.setDynamicColor(theme.dynamicColor)
-        userPrefsRepository.setThemePalette(theme.palette)
-        if (theme.dynamicColorSeed != null) {
-            userPrefsRepository.setDynamicColorSeed(theme.dynamicColorSeed)
-        }
-        userPrefsRepository.setThemeStyle(theme.style)
-        // Onboarding speaks the old theme keys: make them the ones that count
-        userPrefsRepository.clearThemeSource()
+        userPrefsRepository.setThemeSettings(theme.settings)
         userPrefsRepository.setThemeMode(theme.mode)
         userPrefsRepository.setAiScanEnabled(aiScanEnabled)
         userPrefsRepository.setAiModelVariant(aiModelVariant)

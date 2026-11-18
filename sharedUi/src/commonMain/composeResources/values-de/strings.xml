@@ -1751,4 +1751,7 @@
     <string name="heart_max_setting_desc">Für die Zonen. Eine schnelle Schätzung ist 220 minus dein Alter.</string>
     <string name="heart_privacy_title">Gesundheitsdaten in Trainable</string>
     <string name="heart_privacy_text">Trainable liest aus Health Connect nur Herzfrequenz, Kalorien und aufgezeichnete Trainings, und nur für die Zeit deiner Trainings. Es schreibt nie in Health Connect. Was es liest, bleibt auf diesem Handy, in der Datenbank von Trainable und in deinen eigenen Backups, und wird nie woanders hingeschickt. Du kannst das unter Einstellungen → Training ausschalten und die Berechtigungen jederzeit in Health Connect entfernen.</string>
+    <string name="onboarding_colors_title">Deine Farben</string>
+    <string name="onboarding_colors_more">Akzentfarben, Hintergrundtönung und gespeicherte Themen findest du unter Einstellungen › Personalisierung.</string>
+    <string name="onboarding_ready_colors">Farben</string>
 </resources>

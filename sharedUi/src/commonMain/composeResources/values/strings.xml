@@ -1752,4 +1752,7 @@
     <string name="heart_max_setting_desc">For the zones. A quick guess is 220 minus your age.</string>
     <string name="heart_privacy_title">Health data in Trainable</string>
     <string name="heart_privacy_text">Trainable only reads heart rate, calories and recorded workouts from Health Connect, and only for the time of your workouts. It never writes to Health Connect. What it reads is kept on this phone, in Trainable's database and in your own backups, and is never sent anywhere else. You can turn this off in Settings → Workout, and remove the permissions in Health Connect at any time.</string>
+    <string name="onboarding_colors_title">Your colors</string>
+    <string name="onboarding_colors_more">Accent colors, background tint and saved themes are in Settings › Personalization.</string>
+    <string name="onboarding_ready_colors">Colors</string>
 </resources>

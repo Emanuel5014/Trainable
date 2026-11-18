@@ -1696,15 +1696,15 @@
     <!-- Themes section (2026-11) -->
     <string name="theme_section_mode">Modo</string>
     <string name="theme_pure_black">Preto puro</string>
-    <string name="theme_pure_black_desc">Fundo preto para ecrãs OLED. Só com o tema escuro.</string>
+    <string name="theme_pure_black_desc">Fundo preto para telas OLED. Só com o tema escuro.</string>
     <string name="theme_section_color">Cor</string>
     <string name="theme_source_system">Sistema</string>
     <string name="theme_source_photo">Foto</string>
     <string name="theme_source_preset">Predefinido</string>
-    <string name="theme_source_custom">À medida</string>
-    <string name="theme_system_desc">Cores tiradas do fundo do telemóvel.</string>
+    <string name="theme_source_custom">Personalizado</string>
+    <string name="theme_system_desc">Cores tiradas do papel de parede do celular.</string>
     <string name="theme_system_auto">Automático</string>
-    <string name="theme_photo_desc">Escolhe uma foto da galeria, por exemplo o teu fundo ou uma captura do ecrã inicial. A foto não é guardada.</string>
+    <string name="theme_photo_desc">Escolha uma foto da galeria, por exemplo seu papel de parede ou uma captura da tela inicial. A foto não é salva.</string>
     <string name="theme_photo_pick">Escolher uma foto</string>
     <string name="theme_photo_colors">Cores encontradas</string>
     <string name="theme_hex">Código de cor</string>
@@ -1712,15 +1712,15 @@
     <string name="theme_advanced_desc">Cores de destaque e tom dos fundos</string>
     <string name="theme_accents">Secundária e terciária</string>
     <string name="theme_accents_auto">Automáticas</string>
-    <string name="theme_accents_manual">Escolhe tu</string>
+    <string name="theme_accents_manual">Escolher</string>
     <string name="theme_secondary">Secundária</string>
     <string name="theme_tertiary">Terciária</string>
     <string name="theme_tint">Tom dos fundos</string>
     <string name="theme_tint_auto">Automático</string>
     <string name="theme_tint_neutral">Neutro</string>
     <string name="theme_tint_colorful">Colorido</string>
-    <string name="theme_saved">Temas guardados</string>
-    <string name="theme_save">Guardar este tema</string>
+    <string name="theme_saved">Temas salvos</string>
+    <string name="theme_save">Salvar este tema</string>
     <string name="theme_saved_name">Tema %1$d</string>
     <string name="theme_saved_remove">Remover %1$s</string>
     <string name="theme_section_style">Estilo</string>
@@ -1734,7 +1734,7 @@
     <string name="theme_contrast_standard">Padrão</string>
     <string name="theme_contrast_medium">Médio</string>
     <string name="theme_contrast_high">Alto</string>
-    <string name="theme_contrast_desc">Mais diferença entre textos e fundos: útil em ginásios muito iluminados ou para quem vê pior.</string>
+    <string name="theme_contrast_desc">Mais diferença entre textos e fundos: útil em academias muito iluminadas ou para quem enxerga menos.</string>
     <string name="theme_photo_none">Nenhuma foto escolhida</string>
     <string name="heart_title">Frequência cardíaca</string>
     <string name="heart_avg">bpm médios</string>
@@ -1757,4 +1757,7 @@
     <string name="heart_max_setting_desc">Para as zonas. Uma estimativa rápida é 220 menos a tua idade.</string>
     <string name="heart_privacy_title">Dados de saúde no Trainable</string>
     <string name="heart_privacy_text">O Trainable só lê do Health Connect a frequência cardíaca, as calorias e os treinos registados, e apenas durante os teus treinos. Nunca escreve no Health Connect. O que lê fica neste telemóvel, na base de dados do Trainable e nas tuas cópias de segurança, e nunca é enviado para outro lado. Podes desativar isto em Configurações → Treino e retirar as permissões no Health Connect a qualquer momento.</string>
+    <string name="onboarding_colors_title">Suas cores</string>
+    <string name="onboarding_colors_more">As cores de destaque, o tom dos fundos e os temas salvos estão em Configurações › Personalização.</string>
+    <string name="onboarding_ready_colors">Cores</string>
 </resources>

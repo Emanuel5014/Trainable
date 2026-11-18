@@ -21,6 +21,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ReadyStep(
     choices: OnboardingChoices,
+    colorsLabel: String,
     themeLabel: String,
     onJumpTo: (OnboardingStep) -> Unit,
     hero: @Composable () -> Unit
@@ -40,6 +41,7 @@ fun ReadyStep(
             listOf(
                 summary(Res.string.onboarding_ready_style, { stringResource(style.nameRes()) }) { onJumpTo(OnboardingStep.Style) },
                 summary(Res.string.onboarding_ready_features, { choices.activeFeatureCount().toString() }) { onJumpTo(OnboardingStep.Tweaks) },
+                summary(Res.string.onboarding_ready_colors, { colorsLabel }) { onJumpTo(OnboardingStep.Colors) },
                 summary(Res.string.onboarding_ready_theme, { themeLabel }) { onJumpTo(OnboardingStep.Look) },
                 summary(Res.string.onboarding_ready_backup, {
                     if (localOn) stringResource(Res.string.backup_enabled, localDays) else stringResource(Res.string.onboarding_ready_backup_off)

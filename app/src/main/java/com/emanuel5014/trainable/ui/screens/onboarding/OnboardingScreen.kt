@@ -147,8 +147,11 @@ fun OnboardingScreen(
     // The check allows 5.0 GB because a "6 GB" phone reports about 5.5; the user reads the box size
     val ai = OnboardingAi(providers = providersViewModel.model, local = local, localRequiredRamGb = 6)
 
+    val wallpaperColors = remember { com.emanuel5014.trainable.ui.theme.wallpaperSeedColors(context) }
     OnboardingContent(
         model = viewModel.model,
+        wallpaperSupported = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S,
+        wallpaperColors = wallpaperColors,
         onFinished = onFinished,
         choices = choices,
         ai = ai,

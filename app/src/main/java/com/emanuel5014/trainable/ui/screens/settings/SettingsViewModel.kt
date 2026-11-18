@@ -159,26 +159,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun extractWallpaperColors() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            try {
-                val wallpaperManager = WallpaperManager.getInstance(context)
-                val colors = wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
-                val list = mutableListOf<Int>()
-                
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    colors?.primaryColor?.toArgb()?.let { list.add(it) }
-                    colors?.secondaryColor?.toArgb()?.let { list.add(it) }
-                    colors?.tertiaryColor?.toArgb()?.let { list.add(it) }
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                    // toArgb() is available from API 26+ for Color, but WallpaperColors.getPrimaryColor returns Color
-                    @Suppress("NewApi")
-                    colors?.primaryColor?.toArgb()?.let { list.add(it) }
-                }
-                _wallpaperColors.value = list.distinct()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+        _wallpaperColors.value = com.emanuel5014.trainable.ui.theme.wallpaperSeedColors(context)
     }
 
     val themePalette = state.themePalette

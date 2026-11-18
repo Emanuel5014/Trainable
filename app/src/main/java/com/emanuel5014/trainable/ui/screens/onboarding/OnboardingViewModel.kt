@@ -68,10 +68,6 @@ class OnboardingViewModel @Inject constructor(
     private val _backupStatus = MutableStateFlow<String?>(null)
     val backupStatus: StateFlow<String?> = _backupStatus.asStateFlow()
 
-    val dynamicColor = userPrefsRepository.dynamicColor
-    val dynamicColorSeed = userPrefsRepository.dynamicColorSeed
-    val themePalette = userPrefsRepository.themePalette
-    val themeStyle = userPrefsRepository.themeStyle
     val themeMode = userPrefsRepository.themeMode
 
     val aiScanEnabled = userPrefsRepository.aiScanEnabled
@@ -99,14 +95,6 @@ class OnboardingViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = AiModelStatus.NotDownloaded
     )
-
-    fun setDynamicColor(enabled: Boolean) = model.setDynamicColor(enabled)
-
-    fun setDynamicColorSeed(seed: Int?) = model.setDynamicColorSeed(seed)
-
-    fun setThemePalette(index: Int) = model.setThemePalette(index)
-
-    fun setThemeStyle(index: Int) = model.setThemeStyle(index)
 
     fun setThemeMode(mode: Int) = model.setThemeMode(mode)
 
