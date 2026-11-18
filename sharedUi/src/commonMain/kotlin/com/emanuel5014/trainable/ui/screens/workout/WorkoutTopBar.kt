@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -134,7 +134,7 @@ fun WorkoutTopBar(
         },
         navigationIcon = {
             GymIconButton(
-                icon = Icons.Rounded.Close,
+                icon = Icons.AutoMirrored.Rounded.ArrowBack,
                 onClick = onClose,
                 containerColor = Color.Transparent,
                 description = stringResource(Res.string.close_workout)
@@ -200,7 +200,8 @@ fun WorkoutTopBar(
                 )
             }
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            // The bar keeps 4 dp at its edge: with these 16 the buttons end 20 dp from the screen, like the exercise tools
+            Spacer(modifier = Modifier.width(16.dp))
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Surface,
