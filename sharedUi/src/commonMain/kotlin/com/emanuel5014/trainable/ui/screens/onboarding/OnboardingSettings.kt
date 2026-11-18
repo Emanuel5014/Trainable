@@ -63,7 +63,7 @@ data class OnboardingSettings(
     val nextcloudWifiOnly: Boolean,
     val theme: ThemeChoice,
     val dashboardWorkoutMode: Boolean = false,
-    val repsFromLastWorkout: Boolean = false
+    val repsFromLastWorkout: Boolean = true
 )
 
 fun OnboardingChoices.toSettings(theme: ThemeChoice, aiModelVariant: String) = OnboardingSettings(

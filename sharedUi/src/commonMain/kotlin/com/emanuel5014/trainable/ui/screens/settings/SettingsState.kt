@@ -300,7 +300,7 @@ class SettingsState(
     val repsFromLastWorkout = userPrefsRepository.repsFromLastWorkout.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
+        initialValue = true
     )
 
     val showWorkoutElapsed = userPrefsRepository.showWorkoutElapsed.stateIn(

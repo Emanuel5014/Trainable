@@ -158,7 +158,7 @@ class UserPreferencesRepository(
     val STARTING_WEIGHT_ENABLED = booleanPreferencesKey("starting_weight_enabled")
     /**
      * Where the reps of a routine exercise start when a workout opens: false = the routine's reps, true = the reps done
-     * in the last workout of the routine (when there is one). Off by default: the routine is the prescription.
+     * in the last workout of the routine (when there is one). On by default: what was really done last time wins.
      */
     val REPS_FROM_LAST_WORKOUT = booleanPreferencesKey("reps_from_last_workout")
     /** The workout screen shows how long the workout has run (h:mm:ss) under its name. Off by default; the dashboard always does. */
@@ -754,7 +754,7 @@ class UserPreferencesRepository(
     }
 
     val repsFromLastWorkout: Flow<Boolean> = dataStore.data
-        .map { preferences -> preferences[REPS_FROM_LAST_WORKOUT] ?: false }
+        .map { preferences -> preferences[REPS_FROM_LAST_WORKOUT] ?: true }
 
     suspend fun setRepsFromLastWorkout(enabled: Boolean) {
         dataStore.edit { preferences ->

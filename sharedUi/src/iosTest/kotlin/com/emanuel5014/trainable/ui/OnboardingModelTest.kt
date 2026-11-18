@@ -113,12 +113,18 @@ class OnboardingModelTest {
         assertEquals(7, prefs.nextcloudAutoBackupFrequency.first())
     }
 
+    @Test fun anUntouchedSetupStartsTheRepsFromTheLastWorkout() = runBlocking {
+        val store = SetupPreferences(); val prefs = UserPreferencesRepository(store); val user = SetupUser()
+        OnboardingModel(UserRepository(user, user), prefs, this).completeOnboarding(setup("Ada", "", "3", "kg") {})
+        assertTrue(prefs.repsFromLastWorkout.first())
+    }
+
     @Test fun everyTweakIsWrittenToItsOwnPreference() = runBlocking {
         val store = SetupPreferences(); val prefs = UserPreferencesRepository(store); val user = SetupUser()
         val model = OnboardingModel(UserRepository(user, user), prefs, this)
         model.completeOnboarding(setup("Ada", "", "3", "lb") {
             rpeEnabled.value = true; rpeScale.value = RpeScale.ADVANCED; startingWeight.value = true
-            repsFromLastWorkout.value = true
+            repsFromLastWorkout.value = false
             setPerformance.value = true; inlineModifications.value = true; loadRounding.floatValue = 10f
             restTimerEnabled.value = false; warmupTimerEnabled.value = true; workoutTimerEnabled.value = true
             timerAddEnabled.value = false; timerAddSeconds.intValue = 60; timerSubtractEnabled.value = false
@@ -132,7 +138,7 @@ class OnboardingModelTest {
         })
         assertTrue(prefs.rpeEnabled.first()); assertEquals(RpeScale.ADVANCED, prefs.rpeScale.first())
         assertTrue(prefs.startingWeightEnabled.first()); assertTrue(prefs.setPerformanceEnabled.first())
-        assertTrue(prefs.repsFromLastWorkout.first())
+        assertFalse(prefs.repsFromLastWorkout.first())
         assertTrue(prefs.inlineExerciseModificationsEnabled.first()); assertEquals(10f, prefs.loadRoundingIncrement.first())
         assertFalse(prefs.restTimerEnabled.first()); assertTrue(prefs.warmupTimerEnabled.first())
         assertTrue(prefs.workoutTimerEnabled.first()); assertFalse(prefs.timerAddEnabled.first())

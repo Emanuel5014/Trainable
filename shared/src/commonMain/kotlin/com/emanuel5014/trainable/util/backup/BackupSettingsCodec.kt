@@ -98,7 +98,7 @@ object BackupSettingsCodec {
         prefs[UserPreferencesRepository.TIMER_SHOW_NEXT_SET_BUTTON]?.let { json.put("timer_show_next_set_button", it) }
         prefs[UserPreferencesRepository.DASHBOARD_WORKOUT_MODE]?.let { json.put("dashboard_workout_mode", it) }
         json.put("starting_weight_enabled", prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] ?: false)
-        json.put("reps_from_last_workout", prefs[UserPreferencesRepository.REPS_FROM_LAST_WORKOUT] ?: false)
+        json.put("reps_from_last_workout", prefs[UserPreferencesRepository.REPS_FROM_LAST_WORKOUT] ?: true)
         json.put("show_workout_elapsed", prefs[UserPreferencesRepository.SHOW_WORKOUT_ELAPSED] ?: false)
         json.put("set_performance_enabled", prefs[UserPreferencesRepository.SET_PERFORMANCE_ENABLED] ?: false)
         json.put("plate_calculator_enabled", prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] ?: false)

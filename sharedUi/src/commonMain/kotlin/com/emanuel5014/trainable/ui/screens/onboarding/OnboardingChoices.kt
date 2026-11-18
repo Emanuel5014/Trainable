@@ -23,7 +23,7 @@ class OnboardingChoices {
     val rpeScale = mutableStateOf(RpeScale.BASIC)
     val startingWeight = mutableStateOf(false)
     /** Starting reps: false = the routine's, true = the last workout's (a choice, not a feature: no style sets it). */
-    val repsFromLastWorkout = mutableStateOf(false)
+    val repsFromLastWorkout = mutableStateOf(true)
     val setPerformance = mutableStateOf(false)
     val advancedProgramming = mutableStateOf(false)
     val inlineModifications = mutableStateOf(false)

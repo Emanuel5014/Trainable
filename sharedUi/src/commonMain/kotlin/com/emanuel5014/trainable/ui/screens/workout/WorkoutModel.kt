@@ -2478,7 +2478,7 @@ class WorkoutModel(
     }
 
     /** "Starting reps: last workout": the sets opened at last time's reps, so that is what the rest announces. */
-    private var repsFromLastWorkout = false
+    private var repsFromLastWorkout = true
 
     /**
      * The reps the rest notification, the dashboard and "Set done" announce for [set]: the plan's, or the set's own
