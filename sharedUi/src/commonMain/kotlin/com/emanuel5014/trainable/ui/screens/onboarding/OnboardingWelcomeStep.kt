@@ -1,6 +1,12 @@
 package com.emanuel5014.trainable.ui.screens.onboarding
 
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -55,7 +61,7 @@ data class OnboardingRestore(
     val openNextcloudBackups: () -> Unit
 )
 
-/** First step: logo, one line, language, "Inizia" and "Ho già un backup". No back button or progress. */
+/** First step: language at the top, the big morphing logo with name and line, "Inizia" and "Ho già un backup" at the bottom. No back button or progress. */
 @Composable
 fun WelcomeStep(
     logo: @Composable (Modifier, Color) -> Unit,
@@ -68,50 +74,78 @@ fun WelcomeStep(
 ) {
     var showRestore by remember { mutableStateOf(false) }
 
-    OnboardingPage(centered = true, horizontalAlignment = Alignment.CenterHorizontally) {
-        OnboardingHeroShape(stepIndex = 0, active = false, done = false, modifier = Modifier.size(112.dp)) {
-            logo(Modifier.size(56.dp), MaterialTheme.colorScheme.onPrimaryContainer)
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                stringResource(Res.string.onboarding_welcome_title),
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black,
-                fontSize = OnboardingMetrics.welcomeTitleSize,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                stringResource(Res.string.onboarding_welcome_line),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
-        AssistChip(
-            onClick = onPickLanguage,
-            label = { Text(languageLabel) },
-            leadingIcon = { Icon(Icons.Rounded.Language, null, Modifier.size(18.dp)) }
-        )
+    // Three bands instead of one centred stack: language at the top, the logo and name in the middle of the free
+    // space, the two buttons on the bottom edge. Scrolls only when a large font or a short screen needs it.
+    BoxWithConstraints(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+        val viewport = maxHeight
+        val heroSize = welcomeHeroSize(maxWidth, viewport)
         Column(
-            modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .widthIn(max = OnboardingMetrics.maxContentWidth)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = viewport)
+                .padding(horizontal = OnboardingMetrics.horizontalPadding)
+                .padding(top = 8.dp, bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            GymButton(onClick = onStart, pressMorph = true, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(Res.string.onboarding_start), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                AssistChip(
+                    onClick = onPickLanguage,
+                    label = { Text(languageLabel) },
+                    leadingIcon = { Icon(Icons.Rounded.Language, null, Modifier.size(18.dp)) }
+                )
             }
-            OutlinedButton(
-                onClick = { showRestore = true },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+            Column(
+                modifier = Modifier.padding(vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Rounded.Restore, null, Modifier.size(20.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(stringResource(Res.string.onboarding_have_backup), fontWeight = FontWeight.Bold)
+                MorphingLogoShape(Modifier.size(heroSize)) {
+                    logo(Modifier.size(heroSize * 0.4f), MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+                Spacer(Modifier.height(heroSize * 0.16f))
+                Text(
+                    stringResource(Res.string.onboarding_welcome_title),
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Black,
+                    fontSize = OnboardingMetrics.welcomeTitleSize,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(Res.string.onboarding_welcome_line),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                GymButton(onClick = onStart, pressMorph = true, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(Res.string.onboarding_start), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                }
+                OutlinedButton(
+                    onClick = { showRestore = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                ) {
+                    Icon(Icons.Rounded.Restore, null, Modifier.size(20.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text(stringResource(Res.string.onboarding_have_backup), fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
 
     if (showRestore) RestoreSheet(restore, onConnectedForRestore, onDismiss = { showRestore = false })
 }
+
+/**
+ * The logo shape fills about 60% of the width on a phone, but never more than a third of the height (short phones,
+ * landscape), and stays between 160 and 280 dp.
+ */
+private fun welcomeHeroSize(width: Dp, height: Dp): Dp =
+    minOf(width * 0.6f, height * 0.33f).coerceIn(160.dp, 280.dp)
 
 /** "Da un file" or "Da Nextcloud"; the second swaps the sheet to the connection form, then to the backup list. */
 @OptIn(ExperimentalMaterial3Api::class)
