@@ -28,13 +28,10 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,6 +70,7 @@ import com.emanuel5014.trainable.sharedui.resources.suggested_plan
 import com.emanuel5014.trainable.sharedui.resources.today_workout
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
+import com.emanuel5014.trainable.ui.components.QuickSwipeBox
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -375,8 +373,10 @@ internal fun DashboardActionRow(
     }
 }
 
-/** Swipe left to ask for deleting an unfinished workout (the dialog does the deleting); the card springs back. */
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Swipe left to ask for deleting an unfinished workout (the dialog does the deleting); the card springs back. A fast
+ * flick changes tab instead, and the delete needs a real drag that fires when the finger is lifted.
+ */
 @Composable
 internal fun SessionSwipeToDelete(
     enabled: Boolean,
@@ -384,25 +384,20 @@ internal fun SessionSwipeToDelete(
     content: @Composable () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    val dismissState = rememberSwipeToDismissBoxState()
 
-    LaunchedEffect(dismissState.targetValue) {
-        if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            onDeleteRequest()
-            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-        }
-    }
-
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = false,
-        enableDismissFromEndToStart = enabled,
-        backgroundContent = {
-            val progress = dismissState.progress
+    QuickSwipeBox(
+        enableStartToEnd = false,
+        enableEndToStart = enabled,
+        onSwiped = { direction ->
+            if (direction == SwipeToDismissBoxValue.EndToStart) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onDeleteRequest()
+            }
+        },
+        backgroundContent = { direction, progress ->
             val color by animateColorAsState(
                 when {
-                    progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                    progress > 0f && direction == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
                     else -> Color.Transparent
                 }, label = "swipe_bg"
             )
@@ -413,7 +408,7 @@ internal fun SessionSwipeToDelete(
                     .background(color)
                     .padding(horizontal = 28.dp)
             ) {
-                if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                if (progress > 0f && direction == SwipeToDismissBoxValue.EndToStart) {
                     Icon(
                         Icons.Rounded.DeleteSweep,
                         contentDescription = "Delete",

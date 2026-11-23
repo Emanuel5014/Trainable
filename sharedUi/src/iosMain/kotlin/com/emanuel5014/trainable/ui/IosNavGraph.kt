@@ -368,6 +368,10 @@ private fun IosMainTabs(
     val hapticEnabled by IosAppGraph.preferences.hapticEnabled.collectAsState(initial = true)
     val physicalCheckBiometric by IosAppGraph.preferences.physicalCheckBiometricEnabled.collectAsState(initial = false)
     val biometricPrompt = rememberIosBiometricPrompt()
+    // Rows with quick swipe actions hand fast flicks back to this pager
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.emanuel5014.trainable.ui.components.LocalMainPagerState provides pagerState
+    ) {
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
@@ -419,6 +423,7 @@ private fun IosMainTabs(
                 }
             )
         }
+    }
     }
 }
 

@@ -48,6 +48,7 @@ import com.emanuel5014.trainable.sharedui.resources.weight_label_unit
 import com.emanuel5014.trainable.sharedui.resources.workout_logs
 import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
 import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
+import com.emanuel5014.trainable.ui.components.QuickSwipeBox
 import com.emanuel5014.trainable.ui.glass.GlassSource
 import com.emanuel5014.trainable.ui.util.PlatformBackHandler
 import androidx.compose.ui.semantics.Role
@@ -140,7 +141,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleFloatingActionButton
@@ -150,7 +150,6 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -578,33 +577,19 @@ fun HistoryContent(
                                 val rowShape = routineRowCorners(index, month.sessions.size).toShape()
                                 val summary = remember(sessionDetails) { historyRowSummary(sessionDetails) }
 
-                                val dismissState = rememberSwipeToDismissBoxState()
-
-                                LaunchedEffect(dismissState.targetValue) {
-                                    if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
-                                        if (swipeActionsEnabled && !uiState.isSelectionMode) {
-                                            when (dismissState.targetValue) {
-                                                SwipeToDismissBoxValue.EndToStart -> {
-                                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    sessionToDelete = session
-                                                }
-                                                SwipeToDismissBoxValue.StartToEnd -> {
-                                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    sessionToEdit = sessionDetails
-                                                }
-                                                else -> {}
-                                            }
+                                // A fast flick changes tab; the actions need a real drag and fire when the finger is lifted
+                                QuickSwipeBox(
+                                    enableStartToEnd = swipeActionsEnabled && !uiState.isSelectionMode,
+                                    enableEndToStart = swipeActionsEnabled && !uiState.isSelectionMode,
+                                    onSwiped = { direction ->
+                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        when (direction) {
+                                            SwipeToDismissBoxValue.EndToStart -> sessionToDelete = session
+                                            SwipeToDismissBoxValue.StartToEnd -> sessionToEdit = sessionDetails
+                                            SwipeToDismissBoxValue.Settled -> {}
                                         }
-                                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-                                    }
-                                }
-
-                                SwipeToDismissBox(
-                                    state = dismissState,
-                                    enableDismissFromStartToEnd = swipeActionsEnabled && !uiState.isSelectionMode,
-                                    enableDismissFromEndToStart = swipeActionsEnabled && !uiState.isSelectionMode,
-                                    backgroundContent = {
-                                        val direction = dismissState.dismissDirection
+                                    },
+                                    backgroundContent = { direction, _ ->
 
                                         val color by animateColorAsState(
                                             when (direction) {

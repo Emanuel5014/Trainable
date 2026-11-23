@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -16,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.BottomBarManager
+import com.emanuel5014.trainable.ui.components.LocalMainPagerState
 import com.emanuel5014.trainable.ui.components.localizedNavItems
 import com.emanuel5014.trainable.ui.navigation.RoutineDetail
 import com.emanuel5014.trainable.ui.navigation.Settings
@@ -53,6 +55,8 @@ fun MainPagerScreen(
         }
     }
     
+    // Rows with quick swipe actions hand fast flicks back to this pager
+    CompositionLocalProvider(LocalMainPagerState provides pagerState) {
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
@@ -91,5 +95,6 @@ fun MainPagerScreen(
                 onNavigateToOneRepMaxes = { navController.navigate(com.emanuel5014.trainable.ui.navigation.OneRepMaxes) }
             )
         }
+    }
     }
 }

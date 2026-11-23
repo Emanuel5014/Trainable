@@ -91,14 +91,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -189,6 +187,7 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.EmptyState
+import com.emanuel5014.trainable.ui.components.QuickSwipeBox
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
@@ -1397,39 +1396,25 @@ private fun RoutineListItem(
     val plan = planWithDetails.plan
     val haptic = LocalHapticFeedback.current
     val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
-    val dismissState = rememberSwipeToDismissBoxState()
     val rowShape = routineRowCorners(position, count, hasHead).toShape()
 
-    LaunchedEffect(dismissState.targetValue) {
-        if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
-            if (!isSelectionMode && swipeActionsEnabled) {
-                when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.EndToStart -> {
-                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onDelete(plan)
-                    }
-                    SwipeToDismissBoxValue.StartToEnd -> {
-                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onArchiveToggle(plan)
-                    }
-                    else -> {}
-                }
+    // A fast flick changes tab; the actions need a real drag and fire when the finger is lifted
+    QuickSwipeBox(
+        enableStartToEnd = !isSelectionMode && swipeActionsEnabled,
+        enableEndToStart = !isSelectionMode && swipeActionsEnabled,
+        onSwiped = { direction ->
+            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            when (direction) {
+                SwipeToDismissBoxValue.EndToStart -> onDelete(plan)
+                SwipeToDismissBoxValue.StartToEnd -> onArchiveToggle(plan)
+                SwipeToDismissBoxValue.Settled -> {}
             }
-            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-        }
-    }
-
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = !isSelectionMode && swipeActionsEnabled,
-        enableDismissFromEndToStart = !isSelectionMode && swipeActionsEnabled,
-        backgroundContent = {
-            val progress = dismissState.progress
-
+        },
+        backgroundContent = { direction, progress ->
             val color by animateColorAsState(
                 when {
-                    progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
-                    progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
+                    progress > 0f && direction == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                    progress > 0f && direction == SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
                     else -> Color.Transparent
                 }, label = "bg_color"
             )
@@ -1441,7 +1426,7 @@ private fun RoutineListItem(
                     .background(color)
                     .padding(horizontal = 28.dp)
             ) {
-                if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
+                if (progress > 0f && direction == SwipeToDismissBoxValue.StartToEnd) {
                     Icon(
                         if (isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
                         contentDescription = "Archive",
@@ -1449,7 +1434,7 @@ private fun RoutineListItem(
                         modifier = Modifier.align(Alignment.CenterStart).size(28.dp)
                     )
                 }
-                if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                if (progress > 0f && direction == SwipeToDismissBoxValue.EndToStart) {
                     Icon(
                         Icons.Rounded.DeleteSweep,
                         contentDescription = "Delete",
