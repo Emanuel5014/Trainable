@@ -283,34 +283,30 @@ class BackupManager @Inject constructor(
                                 }
                             }
                             entry.name.startsWith(BackupFormat.PHYSICAL_CHECKS) -> {
-                                val imageName = entry.name.removePrefix(BackupFormat.PHYSICAL_CHECKS)
-                                if (imageName.isNotEmpty()) {
-                                    val physicalChecksDir = File(context.filesDir, "physical_checks")
-                                    if (!physicalChecksDir.exists()) physicalChecksDir.mkdirs()
-                                    val outFile = File(physicalChecksDir, imageName)
+                                val physicalChecksDir = File(context.filesDir, "physical_checks")
+                                if (!physicalChecksDir.exists()) physicalChecksDir.mkdirs()
+                                // Only plain names: an entry with folders or ".." is skipped, never written elsewhere
+                                BackupEntryPaths.childOf(physicalChecksDir, entry.name.removePrefix(BackupFormat.PHYSICAL_CHECKS))?.let { outFile ->
                                     FileOutputStream(outFile).use { fos ->
                                         zis.copyTo(fos)
                                     }
                                 }
                             }
                             entry.name.startsWith("${ExerciseMediaStorage.DIR_NAME}/") -> {
-                                val mediaName = File(entry.name).name
-                                if (mediaName.isNotEmpty()) {
-                                    FileOutputStream(File(ExerciseMediaStorage.dir(context), mediaName)).use { fos ->
-                                        zis.copyTo(fos)
-                                    }
-                                }
-                            }
-                            entry.name.startsWith(BackupFormat.IMAGES) -> {
-                                val imageName = entry.name.removePrefix(BackupFormat.IMAGES)
-                                if (imageName.isNotEmpty()) {
-                                    val outFile = File(routineImagesDir, imageName)
+                                BackupEntryPaths.childOf(ExerciseMediaStorage.dir(context), entry.name.removePrefix("${ExerciseMediaStorage.DIR_NAME}/"))?.let { outFile ->
                                     FileOutputStream(outFile).use { fos ->
                                         zis.copyTo(fos)
                                     }
                                 }
                             }
-                            entry.name.startsWith(dbName) -> {
+                            entry.name.startsWith(BackupFormat.IMAGES) -> {
+                                BackupEntryPaths.childOf(routineImagesDir, entry.name.removePrefix(BackupFormat.IMAGES))?.let { outFile ->
+                                    FileOutputStream(outFile).use { fos ->
+                                        zis.copyTo(fos)
+                                    }
+                                }
+                            }
+                            entry.name in BackupEntryPaths.databaseFiles -> {
                                 val outFile = File(dbDir, entry.name)
                                 FileOutputStream(outFile).use { fos ->
                                     zis.copyTo(fos)
@@ -319,6 +315,15 @@ class BackupManager @Inject constructor(
                         }
                         zis.closeEntry()
                         entry = zis.nextEntry
+                    }
+                }
+                // The password saved by this device's key belongs to the vault that was here, not to the imported
+                // one: forget it, so a different password is asked once instead of opening with the wrong key (iOS
+                // does the same on restore)
+                runBlocking {
+                    context.dataStore.edit { prefs ->
+                        prefs.remove(UserPreferencesRepository.PHYSICAL_CHECK_WRAPPED_KEY_KEYSTORE)
+                        prefs.remove(UserPreferencesRepository.PHYSICAL_CHECK_WRAPPED_KEY_IV)
                     }
                 }
                 true

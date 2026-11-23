@@ -78,9 +78,22 @@ private val StageShape = RoundedCornerShape(28.dp)
  * Two checks side by side in time: the photos on a dark stage (a slider over each other, or next to each other),
  * then what changed (weight and days) and, when a check has several photos, the strips to pick which ones.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhysicalCheckCompareContent(
+    checkId1: Int,
+    checkId2: Int,
+    onNavigateBack: () -> Unit,
+    viewModel: PhysicalCheckModel
+) {
+    // The photos are behind the same locks as the list (they come back on top after the app was in the background)
+    PhysicalCheckGate(viewModel, onNavigateBack) {
+        CompareBody(checkId1, checkId2, onNavigateBack, viewModel)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CompareBody(
     checkId1: Int,
     checkId2: Int,
     onNavigateBack: () -> Unit,

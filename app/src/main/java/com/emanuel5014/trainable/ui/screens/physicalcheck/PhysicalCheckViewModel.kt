@@ -19,19 +19,24 @@ class PhysicalCheckViewModel @Inject constructor(
 
     val model = PhysicalCheckModel(repository, preferencesRepository, viewModelScope)
 
-    init {
-        observeAppLifecycle()
+    private val appLifecycle = object : DefaultLifecycleObserver {
+        override fun onStop(owner: LifecycleOwner) {
+            model.onAppStop()
+        }
+
+        override fun onStart(owner: LifecycleOwner) {
+            model.onAppStart()
+        }
     }
 
-    private fun observeAppLifecycle() {
-        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStop(owner: LifecycleOwner) {
-                model.onAppStop()
-            }
+    init {
+        ProcessLifecycleOwner.get().lifecycle.addObserver(appLifecycle)
+    }
 
-            override fun onStart(owner: LifecycleOwner) {
-                model.onAppStart()
-            }
-        })
+    override fun onCleared() {
+        // Removed, or every model ever opened stayed alive and kept reacting to the app's lifecycle
+        ProcessLifecycleOwner.get().lifecycle.removeObserver(appLifecycle)
+        model.close()
+        super.onCleared()
     }
 }

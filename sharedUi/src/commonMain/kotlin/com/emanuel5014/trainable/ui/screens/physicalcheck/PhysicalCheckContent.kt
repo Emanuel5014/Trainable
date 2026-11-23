@@ -34,13 +34,9 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Compare
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Fingerprint
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -59,7 +55,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -85,38 +80,20 @@ import com.emanuel5014.trainable.sharedui.resources.close
 import com.emanuel5014.trainable.sharedui.resources.delete
 import com.emanuel5014.trainable.sharedui.resources.edit
 import com.emanuel5014.trainable.sharedui.resources.physical_check_add_check_cd
-import com.emanuel5014.trainable.sharedui.resources.physical_check_auth_button
 import com.emanuel5014.trainable.sharedui.resources.physical_check_compare_cd
 import com.emanuel5014.trainable.sharedui.resources.physical_check_compare_count
 import com.emanuel5014.trainable.sharedui.resources.physical_check_delete_message
 import com.emanuel5014.trainable.sharedui.resources.physical_check_delete_photo_message
 import com.emanuel5014.trainable.sharedui.resources.physical_check_delete_photo_title
 import com.emanuel5014.trainable.sharedui.resources.physical_check_delete_title
-import com.emanuel5014.trainable.sharedui.resources.physical_check_encrypted_vault
-import com.emanuel5014.trainable.sharedui.resources.physical_check_encryption_disabled
-import com.emanuel5014.trainable.sharedui.resources.physical_check_enter_password_desc
-import com.emanuel5014.trainable.sharedui.resources.physical_check_fingerprint_cd
-import com.emanuel5014.trainable.sharedui.resources.physical_check_fingerprint_desc
-import com.emanuel5014.trainable.sharedui.resources.physical_check_forgot_password
-import com.emanuel5014.trainable.sharedui.resources.physical_check_lock_cd
 import com.emanuel5014.trainable.sharedui.resources.physical_check_max_2
 import com.emanuel5014.trainable.sharedui.resources.physical_check_new_button
 import com.emanuel5014.trainable.sharedui.resources.physical_check_no_checks
 import com.emanuel5014.trainable.sharedui.resources.physical_check_no_checks_desc
-import com.emanuel5014.trainable.sharedui.resources.physical_check_password_error
-import com.emanuel5014.trainable.sharedui.resources.physical_check_password_label
 import com.emanuel5014.trainable.sharedui.resources.physical_check_pick_two
-import com.emanuel5014.trainable.sharedui.resources.physical_check_protected_access
-import com.emanuel5014.trainable.sharedui.resources.physical_check_reset_confirm
-import com.emanuel5014.trainable.sharedui.resources.physical_check_reset_message
-import com.emanuel5014.trainable.sharedui.resources.physical_check_reset_title
 import com.emanuel5014.trainable.sharedui.resources.physical_check_settings_cd
 import com.emanuel5014.trainable.sharedui.resources.physical_check_title
-import com.emanuel5014.trainable.sharedui.resources.physical_check_unlock
 import com.emanuel5014.trainable.ui.components.EmptyState
-import com.emanuel5014.trainable.ui.components.GymButton
-import com.emanuel5014.trainable.ui.components.GymButtonText
-import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
 import com.emanuel5014.trainable.ui.components.LocalShowMessage
 import com.emanuel5014.trainable.ui.components.QuickSwipeBox
@@ -154,25 +131,16 @@ fun PhysicalCheckContent(
     viewModel: PhysicalCheckModel
 ) {
     val checks by viewModel.checks.collectAsState()
-    val isUnlocked by viewModel.isUnlocked.collectAsState()
-    val encryptionEnabled by viewModel.encryptionEnabled.collectAsState(initial = false)
-    val biometricEnabled by viewModel.biometricEnabled.collectAsState(initial = false)
-    val sessionActive by viewModel.sessionActive.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState(initial = true)
 
     var showAddSheet by remember { mutableStateOf(false) }
-    var passwordInput by remember { mutableStateOf("") }
-    var passwordError by remember { mutableStateOf(false) }
-    var showResetConfirmDialog by remember { mutableStateOf(false) }
 
     var selectedForCompare by remember { mutableStateOf(setOf<Int>()) }
     var isSelectionMode by remember { mutableStateOf(false) }
     var checkToDelete by remember { mutableStateOf<PhysicalCheckEntity?>(null) }
     var checkToEdit by remember { mutableStateOf<PhysicalCheckEntity?>(null) }
     var openCheckId by remember { mutableStateOf<Int?>(null) }
-
-    var biometricRetry by remember { mutableIntStateOf(0) }
 
     val haptic = LocalHapticFeedback.current
     val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
@@ -181,10 +149,8 @@ fun PhysicalCheckContent(
     var fullscreenState by remember { mutableStateOf<FullscreenState?>(null) }
 
     val platform = LocalPhysicalCheckPlatform.current
-    val biometricPrompt = platform.rememberBiometricPrompt()
     val showMessage = LocalShowMessage.current
     val maxTwoText = stringResource(Res.string.physical_check_max_2)
-    val encryptionDisabledText = stringResource(Res.string.physical_check_encryption_disabled)
     val languageCode = androidx.compose.ui.text.intl.Locale.current.language
 
     fun leaveSelection() {
@@ -192,404 +158,285 @@ fun PhysicalCheckContent(
         selectedForCompare = emptySet()
     }
 
-    LaunchedEffect(biometricEnabled, sessionActive, biometricRetry) {
-        if (biometricEnabled && !sessionActive) {
-            if (biometricPrompt != null) {
-                biometricPrompt(
-                    {
-                        viewModel.setSessionActive(true)
-                        viewModel.touch()
-                    },
-                    { biometricRetry++ }
-                )
-            } else {
-                viewModel.setSessionActive(true)
-            }
-        }
-    }
+    // The fingerprint/PIN and the password come first; the screen and all its sheets and dialogs only behind them
+    PhysicalCheckGate(viewModel, onNavigateBack) {
+        val actionGlass = rememberActionGlassSource()
+        val listState = rememberLazyListState()
+        val changes = remember(checks) { weightChangesKg(checks) }
+        val months = remember(checks, changes) { physicalCheckMonths(checks, changes, TimeZone.currentSystemDefault()) }
+        val currentYear = remember(months) { Clock.System.todayIn(TimeZone.currentSystemDefault()).year }
+        val addFabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
 
-    val isAutoUnlocking by viewModel.isAutoUnlocking.collectAsState()
+        PlatformBackHandler(isSelectionMode) { leaveSelection() }
+        LaunchedEffect(isSelectionMode) { if (isSelectionMode) openCheckId = null }
 
-    val showBiometricGate = biometricEnabled && !sessionActive
-    val showPreparing = isAutoUnlocking && encryptionEnabled && !showBiometricGate
-    val showPasswordGate = encryptionEnabled && !isUnlocked && !isAutoUnlocking
-
-    when {
-        showBiometricGate -> {
-            PhysicalCheckLockScreen(
-                icon = Icons.Rounded.Fingerprint,
-                iconDescription = stringResource(Res.string.physical_check_fingerprint_cd),
-                title = stringResource(Res.string.physical_check_protected_access),
-                description = stringResource(Res.string.physical_check_fingerprint_desc),
-                onNavigateBack = onNavigateBack
-            ) {
-                GymButton(onClick = { biometricRetry++ }, modifier = Modifier.fillMaxWidth()) {
-                    GymButtonText(stringResource(Res.string.physical_check_auth_button), fontWeight = FontWeight.ExtraBold)
-                }
-            }
-        }
-        showPreparing -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Surface),
-                contentAlignment = Alignment.Center
-            ) {
-                GymLoadingIndicator()
-            }
-        }
-        showPasswordGate -> {
-            val unlock = {
-                viewModel.unlock(
-                    password = passwordInput,
-                    onSuccess = {
-                        passwordInput = ""
-                        viewModel.touch()
-                    },
-                    onError = { passwordError = true }
-                )
-            }
-            PhysicalCheckLockScreen(
-                icon = Icons.Rounded.Lock,
-                iconDescription = stringResource(Res.string.physical_check_lock_cd),
-                title = stringResource(Res.string.physical_check_encrypted_vault),
-                description = stringResource(Res.string.physical_check_enter_password_desc),
-                onNavigateBack = onNavigateBack
-            ) {
-                PhysicalCheckPasswordField(
-                    value = passwordInput,
-                    onValueChange = {
-                        passwordInput = it
-                        passwordError = false
-                    },
-                    label = stringResource(Res.string.physical_check_password_label),
-                    isError = passwordError
-                )
-                if (passwordError) {
-                    Text(
-                        text = stringResource(Res.string.physical_check_password_error),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp)
-                    )
-                }
-                GymButton(onClick = unlock, modifier = Modifier.fillMaxWidth()) {
-                    GymButtonText(stringResource(Res.string.physical_check_unlock), fontWeight = FontWeight.ExtraBold)
-                }
-                TextButton(onClick = { showResetConfirmDialog = true }) {
-                    Text(
-                        text = stringResource(Res.string.physical_check_forgot_password),
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-        else -> {
-            val actionGlass = rememberActionGlassSource()
-            val listState = rememberLazyListState()
-            val changes = remember(checks) { weightChangesKg(checks) }
-            val months = remember(checks, changes) { physicalCheckMonths(checks, changes, TimeZone.currentSystemDefault()) }
-            val currentYear = remember(months) { Clock.System.todayIn(TimeZone.currentSystemDefault()).year }
-            val addFabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
-
-            PlatformBackHandler(isSelectionMode) { leaveSelection() }
-            LaunchedEffect(isSelectionMode) { if (isSelectionMode) openCheckId = null }
-
-            Scaffold(
-                containerColor = Surface,
-                topBar = {
-                    TopAppBar(
-                        title = {
-                            Text(
-                                text = stringResource(if (isSelectionMode) Res.string.physical_check_pick_two else Res.string.physical_check_title),
-                                fontWeight = FontWeight.Black,
-                                style = MaterialTheme.typography.titleLarge,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        },
-                        navigationIcon = {
-                            if (isSelectionMode) {
-                                IconButton(onClick = { leaveSelection() }) {
-                                    Icon(Icons.Rounded.Close, contentDescription = stringResource(Res.string.close), tint = OnSurface)
-                                }
-                            } else {
-                                IconButton(onClick = onNavigateBack) {
-                                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back), tint = OnSurface)
-                                }
-                            }
-                        },
-                        actions = {
-                            if (!isSelectionMode) {
-                                if (checks.size >= 2) {
-                                    IconButton(onClick = { isSelectionMode = true }) {
-                                        Icon(Icons.Rounded.Compare, contentDescription = stringResource(Res.string.physical_check_compare_cd), tint = OnSurface)
-                                    }
-                                }
-                                IconButton(onClick = {
-                                    viewModel.touch()
-                                    onNavigateToSettings()
-                                }) {
-                                    Icon(Icons.Rounded.Security, contentDescription = stringResource(Res.string.physical_check_settings_cd), tint = OnSurface)
-                                }
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Surface,
-                            scrolledContainerColor = Surface,
-                            titleContentColor = OnSurface
+        Scaffold(
+            containerColor = Surface,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = stringResource(if (isSelectionMode) Res.string.physical_check_pick_two else Res.string.physical_check_title),
+                            fontWeight = FontWeight.Black,
+                            style = MaterialTheme.typography.titleLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
-                    )
-                },
-                floatingActionButton = {
-                    if (isSelectionMode) {
-                        if (selectedForCompare.size == 2) {
-                            ExtendedFloatingActionButton(
-                                onClick = {
-                                    val list = checks.filter { it.id in selectedForCompare }.map { it.id }
-                                    leaveSelection()
-                                    onNavigateToCompare(list[0], list[1])
-                                },
-                                containerColor = actionGlassContainer(actionGlass, Primary),
-                                contentColor = OnPrimary,
-                                shape = Shapes.large,
-                                elevation = actionGlassElevation(actionGlass),
-                                modifier = Modifier.actionGlass(actionGlass, Primary)
-                            ) {
-                                Icon(Icons.Rounded.Compare, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(Res.string.physical_check_compare_count), fontWeight = FontWeight.ExtraBold)
+                    },
+                    navigationIcon = {
+                        if (isSelectionMode) {
+                            IconButton(onClick = { leaveSelection() }) {
+                                Icon(Icons.Rounded.Close, contentDescription = stringResource(Res.string.close), tint = OnSurface)
+                            }
+                        } else {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back), tint = OnSurface)
                             }
                         }
-                    } else {
+                    },
+                    actions = {
+                        if (!isSelectionMode) {
+                            if (checks.size >= 2) {
+                                IconButton(onClick = { isSelectionMode = true }) {
+                                    Icon(Icons.Rounded.Compare, contentDescription = stringResource(Res.string.physical_check_compare_cd), tint = OnSurface)
+                                }
+                            }
+                            IconButton(onClick = {
+                                viewModel.touch()
+                                onNavigateToSettings()
+                            }) {
+                                Icon(Icons.Rounded.Security, contentDescription = stringResource(Res.string.physical_check_settings_cd), tint = OnSurface)
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Surface,
+                        scrolledContainerColor = Surface,
+                        titleContentColor = OnSurface
+                    )
+                )
+            },
+            floatingActionButton = {
+                if (isSelectionMode) {
+                    if (selectedForCompare.size == 2) {
                         ExtendedFloatingActionButton(
                             onClick = {
-                                viewModel.touch()
-                                showAddSheet = true
+                                val list = checks.filter { it.id in selectedForCompare }.map { it.id }
+                                leaveSelection()
+                                onNavigateToCompare(list[0], list[1])
                             },
-                            expanded = addFabExpanded || checks.isEmpty(),
-                            icon = { Icon(Icons.Rounded.AddAPhoto, contentDescription = stringResource(Res.string.physical_check_add_check_cd)) },
-                            text = { Text(stringResource(Res.string.physical_check_new_button), fontWeight = FontWeight.ExtraBold) },
                             containerColor = actionGlassContainer(actionGlass, Primary),
                             contentColor = OnPrimary,
                             shape = Shapes.large,
                             elevation = actionGlassElevation(actionGlass),
                             modifier = Modifier.actionGlass(actionGlass, Primary)
-                        )
+                        ) {
+                            Icon(Icons.Rounded.Compare, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(Res.string.physical_check_compare_count), fontWeight = FontWeight.ExtraBold)
+                        }
                     }
-                }
-            ) { paddingValues ->
-                if (checks.isEmpty()) {
-                    EmptyState(
-                        icon = Icons.Rounded.PhotoLibrary,
-                        title = stringResource(Res.string.physical_check_no_checks),
-                        description = stringResource(Res.string.physical_check_no_checks_desc),
-                        modifier = Modifier.padding(paddingValues)
-                    )
                 } else {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .actionGlassSource(actionGlass)
-                            .padding(paddingValues),
-                        contentPadding = PaddingValues(
-                            start = ResponsiveSize.horizontalPadding,
-                            end = ResponsiveSize.horizontalPadding,
-                            top = 4.dp,
-                            // Room for the button, so the last row can scroll above it
-                            bottom = 104.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        months.forEachIndexed { monthIndex, month ->
-                            item(key = "m-${month.year}-${month.month}", contentType = "month") {
-                                Column {
-                                    if (monthIndex > 0) Spacer(modifier = Modifier.height(10.dp))
-                                    PhysicalCheckMonthHeader(month, weightUnit, currentYear, languageCode)
-                                }
+                    ExtendedFloatingActionButton(
+                        onClick = {
+                            viewModel.touch()
+                            showAddSheet = true
+                        },
+                        expanded = addFabExpanded || checks.isEmpty(),
+                        icon = { Icon(Icons.Rounded.AddAPhoto, contentDescription = stringResource(Res.string.physical_check_add_check_cd)) },
+                        text = { Text(stringResource(Res.string.physical_check_new_button), fontWeight = FontWeight.ExtraBold) },
+                        containerColor = actionGlassContainer(actionGlass, Primary),
+                        contentColor = OnPrimary,
+                        shape = Shapes.large,
+                        elevation = actionGlassElevation(actionGlass),
+                        modifier = Modifier.actionGlass(actionGlass, Primary)
+                    )
+                }
+            }
+        ) { paddingValues ->
+            if (checks.isEmpty()) {
+                EmptyState(
+                    icon = Icons.Rounded.PhotoLibrary,
+                    title = stringResource(Res.string.physical_check_no_checks),
+                    description = stringResource(Res.string.physical_check_no_checks_desc),
+                    modifier = Modifier.padding(paddingValues)
+                )
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .actionGlassSource(actionGlass)
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(
+                        start = ResponsiveSize.horizontalPadding,
+                        end = ResponsiveSize.horizontalPadding,
+                        top = 4.dp,
+                        // Room for the button, so the last row can scroll above it
+                        bottom = 104.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    months.forEachIndexed { monthIndex, month ->
+                        item(key = "m-${month.year}-${month.month}", contentType = "month") {
+                            Column {
+                                if (monthIndex > 0) Spacer(modifier = Modifier.height(10.dp))
+                                PhysicalCheckMonthHeader(month, weightUnit, currentYear, languageCode)
                             }
-                            itemsIndexed(month.checks, key = { _, c -> c.id }, contentType = { _, _ -> "row" }) { index, check ->
-                                val corners = routineRowCorners(index, month.checks.size)
-                                val swipeOn = swipeActionsEnabled && !isSelectionMode
-                                QuickSwipeBox(
-                                    startToEnd = if (swipeOn) quickSwipePrimary(Icons.Rounded.Edit, stringResource(Res.string.edit)) else null,
-                                    endToStart = if (swipeOn) quickSwipeDanger(Icons.Rounded.DeleteSweep, stringResource(Res.string.delete)) else null,
-                                    onSwiped = { direction ->
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        when (direction) {
-                                            SwipeToDismissBoxValue.EndToStart -> checkToDelete = check
-                                            SwipeToDismissBoxValue.StartToEnd -> checkToEdit = check
-                                            SwipeToDismissBoxValue.Settled -> {}
+                        }
+                        itemsIndexed(month.checks, key = { _, c -> c.id }, contentType = { _, _ -> "row" }) { index, check ->
+                            val corners = routineRowCorners(index, month.checks.size)
+                            val swipeOn = swipeActionsEnabled && !isSelectionMode
+                            QuickSwipeBox(
+                                startToEnd = if (swipeOn) quickSwipePrimary(Icons.Rounded.Edit, stringResource(Res.string.edit)) else null,
+                                endToStart = if (swipeOn) quickSwipeDanger(Icons.Rounded.DeleteSweep, stringResource(Res.string.delete)) else null,
+                                onSwiped = { direction ->
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    when (direction) {
+                                        SwipeToDismissBoxValue.EndToStart -> checkToDelete = check
+                                        SwipeToDismissBoxValue.StartToEnd -> checkToEdit = check
+                                        SwipeToDismissBoxValue.Settled -> {}
+                                    }
+                                },
+                                shape = corners.toShape()
+                            ) {
+                                PhysicalCheckRow(
+                                    check = check,
+                                    weightChangeKg = changes[check.id],
+                                    corners = corners,
+                                    weightUnit = weightUnit,
+                                    languageCode = languageCode,
+                                    model = viewModel,
+                                    isSelectionMode = isSelectionMode,
+                                    isSelected = check.id in selectedForCompare,
+                                    onClick = {
+                                        viewModel.touch()
+                                        if (isSelectionMode) {
+                                            selectedForCompare = when {
+                                                check.id in selectedForCompare -> selectedForCompare - check.id
+                                                selectedForCompare.size < 2 -> selectedForCompare + check.id
+                                                else -> {
+                                                    showMessage(maxTwoText)
+                                                    selectedForCompare
+                                                }
+                                            }
+                                        } else {
+                                            openCheckId = check.id
                                         }
                                     },
-                                    shape = corners.toShape()
-                                ) {
-                                    PhysicalCheckRow(
-                                        check = check,
-                                        weightChangeKg = changes[check.id],
-                                        corners = corners,
-                                        weightUnit = weightUnit,
-                                        languageCode = languageCode,
-                                        model = viewModel,
-                                        isSelectionMode = isSelectionMode,
-                                        isSelected = check.id in selectedForCompare,
-                                        onClick = {
-                                            viewModel.touch()
-                                            if (isSelectionMode) {
-                                                selectedForCompare = when {
-                                                    check.id in selectedForCompare -> selectedForCompare - check.id
-                                                    selectedForCompare.size < 2 -> selectedForCompare + check.id
-                                                    else -> {
-                                                        showMessage(maxTwoText)
-                                                        selectedForCompare
-                                                    }
-                                                }
-                                            } else {
-                                                openCheckId = check.id
-                                            }
-                                        },
-                                        onLongClick = {
-                                            if (!isSelectionMode && checks.size >= 2) {
-                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                isSelectionMode = true
-                                                selectedForCompare = setOf(check.id)
-                                            }
+                                    onLongClick = {
+                                        if (!isSelectionMode && checks.size >= 2) {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            isSelectionMode = true
+                                            selectedForCompare = setOf(check.id)
                                         }
-                                    )
-                                }
+                                    }
+                                )
                             }
                         }
                     }
                 }
             }
-
-            // The opened check; it closes by itself when the check is deleted
-            val openCheck = openCheckId?.let { id -> checks.firstOrNull { it.id == id } }
-            LaunchedEffect(openCheckId, openCheck != null) {
-                if (openCheckId != null && openCheck == null) openCheckId = null
-            }
-            if (openCheck != null) {
-                PhysicalCheckDetailSheet(
-                    check = openCheck,
-                    weightChangeKg = changes[openCheck.id],
-                    weightUnit = weightUnit,
-                    model = viewModel,
-                    showEditDelete = !swipeActionsEnabled,
-                    canCompare = checks.size >= 2,
-                    onEdit = { checkToEdit = openCheck },
-                    onDelete = { checkToDelete = openCheck },
-                    onCompare = {
-                        openCheckId = null
-                        isSelectionMode = true
-                        selectedForCompare = setOf(openCheck.id)
-                    },
-                    onAddPhotos = { checkToEdit = openCheck },
-                    onOpenPhoto = { filenames, index ->
-                        viewModel.touch()
-                        fullscreenState = FullscreenState(openCheck.id, filenames, index)
-                    },
-                    onDismiss = { openCheckId = null }
-                )
-            }
         }
-    }
 
-    if (showResetConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetConfirmDialog = false },
-            title = { Text(stringResource(Res.string.physical_check_reset_title), fontWeight = FontWeight.Bold) },
-            text = { Text(stringResource(Res.string.physical_check_reset_message)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showResetConfirmDialog = false
-                        viewModel.resetAllData {
-                            showMessage(encryptionDisabledText)
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text(stringResource(Res.string.physical_check_reset_confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showResetConfirmDialog = false }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
-    }
+        // The opened check; it closes by itself when the check is deleted
+        val openCheck = openCheckId?.let { id -> checks.firstOrNull { it.id == id } }
+        LaunchedEffect(openCheckId, openCheck != null) {
+            if (openCheckId != null && openCheck == null) openCheckId = null
+        }
+        if (openCheck != null) {
+            PhysicalCheckDetailSheet(
+                check = openCheck,
+                weightChangeKg = changes[openCheck.id],
+                weightUnit = weightUnit,
+                model = viewModel,
+                showEditDelete = !swipeActionsEnabled,
+                canCompare = checks.size >= 2,
+                onEdit = { checkToEdit = openCheck },
+                onDelete = { checkToDelete = openCheck },
+                onCompare = {
+                    openCheckId = null
+                    isSelectionMode = true
+                    selectedForCompare = setOf(openCheck.id)
+                },
+                onAddPhotos = { checkToEdit = openCheck },
+                onOpenPhoto = { filenames, index ->
+                    viewModel.touch()
+                    fullscreenState = FullscreenState(openCheck.id, filenames, index)
+                },
+                onDismiss = { openCheckId = null }
+            )
+        }
 
-    if (showAddSheet) {
-        PhysicalCheckEditorSheet(
-            existing = null,
-            model = viewModel,
-            onDismiss = { showAddSheet = false },
-            onSave = { timestamp, peso, note, photos ->
-                viewModel.addCheck(timestamp, peso, note, photos) {
-                    showAddSheet = false
-                }
-            }
-        )
-    }
-
-    checkToDelete?.let { check ->
-        AlertDialog(
-            onDismissRequest = { checkToDelete = null },
-            title = { Text(stringResource(Res.string.physical_check_delete_title)) },
-            text = { Text(stringResource(Res.string.physical_check_delete_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteCheck(check)
-                    checkToDelete = null
-                }) {
-                    Text(stringResource(Res.string.delete), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { checkToDelete = null }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
-    }
-
-    checkToEdit?.let { check ->
-        PhysicalCheckEditorSheet(
-            existing = check,
-            model = viewModel,
-            onDismiss = { checkToEdit = null },
-            onSave = { timestamp, peso, note, _ ->
-                viewModel.updateCheck(check.id, timestamp, peso, note) {
-                    checkToEdit = null
-                }
-            }
-        )
-    }
-
-    fullscreenState?.let { state ->
-        Dialog(
-            onDismissRequest = { fullscreenState = null },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            PhysicalCheckFullscreenViewer(
-                filenames = state.filenames,
-                initialIndex = state.initialIndex,
-                viewModel = viewModel,
-                onDismiss = { fullscreenState = null },
-                onDeletePhoto = { index ->
-                    val filename = state.filenames[index]
-                    viewModel.deletePhotoFromCheck(state.checkId, filename)
-                    val remaining = state.filenames.toMutableList().apply { removeAt(index) }
-                    if (remaining.isEmpty()) {
-                        fullscreenState = null
-                    } else {
-                        fullscreenState = state.copy(filenames = remaining, initialIndex = index.coerceAtMost(remaining.size - 1))
+        if (showAddSheet) {
+            PhysicalCheckEditorSheet(
+                existing = null,
+                model = viewModel,
+                onDismiss = { showAddSheet = false },
+                onSave = { timestamp, peso, note, photos ->
+                    viewModel.addCheck(timestamp, peso, note, photos) {
+                        showAddSheet = false
                     }
                 }
             )
+        }
+
+        checkToDelete?.let { check ->
+            AlertDialog(
+                onDismissRequest = { checkToDelete = null },
+                title = { Text(stringResource(Res.string.physical_check_delete_title)) },
+                text = { Text(stringResource(Res.string.physical_check_delete_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.deleteCheck(check)
+                        checkToDelete = null
+                    }) {
+                        Text(stringResource(Res.string.delete), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { checkToDelete = null }) {
+                        Text(stringResource(Res.string.cancel))
+                    }
+                }
+            )
+        }
+
+        checkToEdit?.let { check ->
+            PhysicalCheckEditorSheet(
+                existing = check,
+                model = viewModel,
+                onDismiss = { checkToEdit = null },
+                onSave = { timestamp, peso, note, _ ->
+                    viewModel.updateCheck(check.id, timestamp, peso, note) {
+                        checkToEdit = null
+                    }
+                }
+            )
+        }
+
+        fullscreenState?.let { state ->
+            Dialog(
+                onDismissRequest = { fullscreenState = null },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                PhysicalCheckFullscreenViewer(
+                    filenames = state.filenames,
+                    initialIndex = state.initialIndex,
+                    viewModel = viewModel,
+                    onDismiss = { fullscreenState = null },
+                    onDeletePhoto = { index ->
+                        val filename = state.filenames[index]
+                        viewModel.deletePhotoFromCheck(state.checkId, filename)
+                        val remaining = state.filenames.toMutableList().apply { removeAt(index) }
+                        if (remaining.isEmpty()) {
+                            fullscreenState = null
+                        } else {
+                            fullscreenState = state.copy(filenames = remaining, initialIndex = index.coerceAtMost(remaining.size - 1))
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -616,7 +463,9 @@ fun PhysicalCheckFullscreenViewer(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
             userScrollEnabled = !isZoomed,
-            beyondViewportPageCount = 1
+            beyondViewportPageCount = 1,
+            // No stretch past the first and last photo, as in the sheet
+            overscrollEffect = null
         ) { page ->
             Box(
                 modifier = Modifier.fillMaxSize(),

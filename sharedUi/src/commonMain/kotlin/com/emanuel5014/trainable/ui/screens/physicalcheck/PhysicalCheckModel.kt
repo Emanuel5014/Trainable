@@ -11,13 +11,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.concurrent.Volatile
-import kotlin.time.Clock
 
 /**
  * The state of the physical checks (list, compare and settings screens): the checks, the lock (password and
  * biometric session) and the photo operations. The owner reports the app going to the background and back with
- * [onAppStop] / [onAppStart], and cancels [scope] when the screen goes away.
+ * [onAppStop] / [onAppStart], calls [close] and cancels [scope] when the screen goes away.
  */
 class PhysicalCheckModel(
     private val repository: PhysicalCheckRepository,
@@ -37,24 +35,27 @@ class PhysicalCheckModel(
     private val _isUnlocked = MutableStateFlow(false)
     val isUnlocked: StateFlow<Boolean> = _isUnlocked
 
-    private val _sessionActive = MutableStateFlow(true)
-    val sessionActive: StateFlow<Boolean> = _sessionActive
+    private val session = repository.session
+
+    /** Whether the fingerprint/PIN was given in this visit of the section (shared by its screens). */
+    val sessionActive: StateFlow<Boolean> = session.active
 
     private val _isAutoUnlocking = MutableStateFlow(true)
     val isAutoUnlocking: StateFlow<Boolean> = _isAutoUnlocking
 
-    private val _lastActivityTime = MutableStateFlow(now())
-
     companion object {
-        private const val SESSION_TIMEOUT_MS = 5 * 60 * 1000L
         private const val INACTIVITY_CHECK_INTERVAL_MS = 60_000L
-
-        private fun now() = Clock.System.now().toEpochMilliseconds()
     }
 
     init {
+        session.screenOpened()
         autoUnlock()
         startInactivityMonitor()
+    }
+
+    /** The screen owning this model closed for good; the last one of the section locks the session. */
+    fun close() {
+        session.screenClosed()
     }
 
     private fun autoUnlock() {
@@ -78,28 +79,23 @@ class PhysicalCheckModel(
     }
 
     fun setSessionActive(active: Boolean) {
-        _sessionActive.value = active
-        if (active) _lastActivityTime.value = now()
+        if (active) session.unlocked() else session.lock()
     }
 
     fun touch() {
-        _lastActivityTime.value = now()
+        session.touch()
     }
 
-    @Volatile
-    private var photoCaptureInProgress = false
-
     fun setPhotoCaptureStarted() {
-        photoCaptureInProgress = true
+        session.setPhotoCapture(true)
     }
 
     fun setPhotoCaptureCompleted() {
-        photoCaptureInProgress = false
+        session.setPhotoCapture(false)
     }
 
     fun lockSession() {
-        if (photoCaptureInProgress) return
-        _sessionActive.value = false
+        session.lock()
     }
 
     fun unlock(password: String, onSuccess: () -> Unit, onError: () -> Unit) {
@@ -107,7 +103,7 @@ class PhysicalCheckModel(
             val success = repository.unlock(password)
             if (success) {
                 _isUnlocked.value = true
-                _lastActivityTime.value = now()
+                session.touch()
                 onSuccess()
             } else {
                 onError()
@@ -120,7 +116,7 @@ class PhysicalCheckModel(
             val success = repository.enableEncryption(password)
             if (success) {
                 _isUnlocked.value = true
-                _lastActivityTime.value = now()
+                session.touch()
                 onSuccess()
             } else {
                 onError()
@@ -201,10 +197,7 @@ class PhysicalCheckModel(
         scope.launch {
             while (true) {
                 delay(INACTIVITY_CHECK_INTERVAL_MS)
-                val elapsed = now() - _lastActivityTime.value
-                if (elapsed >= SESSION_TIMEOUT_MS && _sessionActive.value) {
-                    lockSession()
-                }
+                session.lockIfIdle()
             }
         }
     }

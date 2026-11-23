@@ -219,7 +219,9 @@ private fun PhotoPager(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(end = 56.dp),
         pageSpacing = 8.dp,
-        beyondViewportPageCount = 1
+        beyondViewportPageCount = 1,
+        // No stretch at the first and last photo: with few pages every drag hit an edge and sprang back
+        overscrollEffect = null
     ) { page ->
         val tile = Modifier.fillMaxWidth().aspectRatio(0.75f)
         if (page < photos.size) {

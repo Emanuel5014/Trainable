@@ -25,6 +25,9 @@ class PhysicalCheckRepository(
     // Chiave in memoria per la sessione corrente dell'app
     private var activeSecretKey: ByteArray? = null
 
+    /** The fingerprint/PIN session of the whole section, shared by its screens (list, compare, settings). */
+    val session = PhysicalCheckSession()
+
     fun getAllPhysicalChecks(): Flow<List<PhysicalCheckEntity>> = physicalCheckDao.getAllPhysicalChecks()
 
     suspend fun getPhysicalCheckById(id: Int): PhysicalCheckEntity? = physicalCheckDao.getPhysicalCheckById(id)
@@ -49,13 +52,31 @@ class PhysicalCheckRepository(
 
             val password = cryptoManager.unwrapPassword(encryptedPass, iv)
             if (password != null) {
-                activeSecretKey = cryptoManager.deriveKey(password, salt)
-                return@withContext true
+                val key = cryptoManager.deriveKey(password, salt)
+                // The saved password may belong to another vault (an imported backup with another password):
+                // only a key that opens this vault's validation block unlocks, else the password is asked
+                if (opensValidationBlock(key)) {
+                    activeSecretKey = key
+                    return@withContext true
+                }
+                preferencesRepository.setPhysicalCheckWrappedKeyKeystore(null)
+                preferencesRepository.setPhysicalCheckWrappedKeyIv(null)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
         false
+    }
+
+    /** Whether [key] opens this vault's validation block (the password is right for these photos). */
+    private suspend fun opensValidationBlock(key: ByteArray): Boolean {
+        val validationHex = preferencesRepository.physicalCheckValidationBlock.first() ?: return false
+        val validationIvHex = preferencesRepository.physicalCheckValidationIv.first() ?: return false
+        return try {
+            cryptoManager.decryptWithIv(decodeHex(validationHex), decodeHex(validationIvHex), key).decodeToString() == validationString
+        } catch (e: Exception) {
+            false
+        }
     }
 
     /**

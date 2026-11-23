@@ -83,9 +83,20 @@ import com.emanuel5014.trainable.ui.util.scrollEndInset
 import org.jetbrains.compose.resources.stringResource
 
 /** The lock and the encryption of the physical checks, in one card like the other settings screens. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhysicalCheckSettingsContent(
+    onNavigateBack: () -> Unit,
+    viewModel: PhysicalCheckModel
+) {
+    // Turning the locks off needs the locks passed first
+    PhysicalCheckGate(viewModel, onNavigateBack) {
+        SettingsBody(onNavigateBack, viewModel)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsBody(
     onNavigateBack: () -> Unit,
     viewModel: PhysicalCheckModel
 ) {

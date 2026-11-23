@@ -366,8 +366,6 @@ private fun IosMainTabs(
     analytics: AnalyticsState
 ) {
     val hapticEnabled by IosAppGraph.preferences.hapticEnabled.collectAsState(initial = true)
-    val physicalCheckBiometric by IosAppGraph.preferences.physicalCheckBiometricEnabled.collectAsState(initial = false)
-    val biometricPrompt = rememberIosBiometricPrompt()
     // Rows with quick swipe actions hand fast flicks back to this pager
     androidx.compose.runtime.CompositionLocalProvider(
         com.emanuel5014.trainable.ui.components.LocalMainPagerState provides pagerState
@@ -393,11 +391,8 @@ private fun IosMainTabs(
                 onLogSet = { planId, sessionId, token ->
                     navController.navigate(WorkoutExecution(planId = planId, sessionId = sessionId, logSet = token))
                 },
-                onNavigateToPhysicalChecks = {
-                    // As on Android: the biometric/passcode check comes before the section opens
-                    if (physicalCheckBiometric) biometricPrompt({ navController.navigate(PhysicalCheck) }, {})
-                    else navController.navigate(PhysicalCheck)
-                }
+                // The section asks for Face ID / Touch ID itself (PhysicalCheckGate), once
+                onNavigateToPhysicalChecks = { navController.navigate(PhysicalCheck) }
             )
             1 -> RoutineListContent(
                 state = routines,

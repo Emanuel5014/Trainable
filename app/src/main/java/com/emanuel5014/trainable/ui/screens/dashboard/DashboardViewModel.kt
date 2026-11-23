@@ -54,7 +54,6 @@ class DashboardViewModel @Inject constructor(
 
     val uiState: StateFlow<DashboardUiState> = state.uiState
 
-    val physicalCheckBiometricEnabled = userPrefsRepository.physicalCheckBiometricEnabled
 
     fun refreshToday() = state.refreshToday()
 

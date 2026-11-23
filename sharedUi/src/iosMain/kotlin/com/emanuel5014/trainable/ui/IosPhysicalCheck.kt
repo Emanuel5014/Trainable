@@ -52,6 +52,7 @@ private class IosPhysicalCheckOwner : ViewModel() {
 
     override fun onCleared() {
         observers.forEach { center.removeObserver(it) }
+        model.close()
         super.onCleared()
     }
 }

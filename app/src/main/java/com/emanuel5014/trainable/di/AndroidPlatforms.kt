@@ -62,12 +62,16 @@ class AndroidPhysicalCheckFiles(private val context: Context) : com.emanuel5014.
     private val filesDirectory: java.io.File
         get() = java.io.File(context.filesDir, "physical_checks").apply { if (!exists()) mkdirs() }
 
+    // The names come from the database, which a backup can bring: only plain names inside the folder (iOS checks too)
+    private fun file(name: String): java.io.File? =
+        com.emanuel5014.trainable.util.backup.BackupEntryPaths.childOf(filesDirectory, name)
+
     override fun list(): List<String> = filesDirectory.listFiles()?.filter { it.isFile }?.map { it.name } ?: emptyList()
-    override fun exists(name: String): Boolean = java.io.File(filesDirectory, name).exists()
-    override fun read(name: String): ByteArray = java.io.File(filesDirectory, name).readBytes()
-    override fun write(name: String, bytes: ByteArray) = java.io.File(filesDirectory, name).writeBytes(bytes)
+    override fun exists(name: String): Boolean = file(name)?.exists() == true
+    override fun read(name: String): ByteArray = (file(name) ?: error("Bad name")).readBytes()
+    override fun write(name: String, bytes: ByteArray) = (file(name) ?: error("Bad name")).writeBytes(bytes)
     override fun delete(name: String) {
-        java.io.File(filesDirectory, name).delete()
+        file(name)?.delete()
     }
     override fun compressImage(bytes: ByteArray): ByteArray = ImageStorageUtils.compressImageBytes(bytes)
 }
