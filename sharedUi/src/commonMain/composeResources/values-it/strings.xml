@@ -1816,4 +1816,25 @@
     <string name="routine_group_dissolve_message">Le schede restano, senza gruppo. Il nome e il colore del gruppo vanno persi.</string>
     <string name="workout_title_quick">Allenamento Veloce</string>
     <string name="workout_title_cardio">Allenamento Cardio</string>
+    <string name="physical_check_new_button">Nuovo check</string>
+    <string name="physical_check_weight">Peso</string>
+    <string name="physical_check_since_last">Dal precedente</string>
+    <string name="physical_check_photos">Foto</string>
+    <string name="physical_check_compare_with">Confronta con un altro</string>
+    <string name="physical_check_pick_two">Scegli 2 check</string>
+    <string name="physical_check_slider_mode">Cursore</string>
+    <string name="physical_check_side_by_side">Affiancate</string>
+    <string name="physical_check_same_day">Stesso giorno</string>
+    <plurals name="physical_check_count">
+        <item quantity="one">%1$d check</item>
+        <item quantity="other">%1$d check</item>
+    </plurals>
+    <plurals name="physical_check_photo_count">
+        <item quantity="one">%1$d foto</item>
+        <item quantity="other">%1$d foto</item>
+    </plurals>
+    <plurals name="physical_check_in_days">
+        <item quantity="one">in %1$d giorno</item>
+        <item quantity="other">in %1$d giorni</item>
+    </plurals>
 </resources>

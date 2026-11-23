@@ -26,6 +26,11 @@ actual fun monthName(month: Int): String {
     return (formatter.standaloneMonthSymbols[month - 1] as String).replaceFirstChar { it.titlecase() }
 }
 
+actual fun shortMonthName(month: Int): String {
+    val formatter = NSDateFormatter().apply { locale = IosAppLocale.formattingLocale() }
+    return formatter.shortMonthSymbols[month - 1] as String
+}
+
 actual fun fullDate(timestampMillis: Long): String {
     val formatter = NSDateFormatter().apply {
         locale = IosAppLocale.formattingLocale()

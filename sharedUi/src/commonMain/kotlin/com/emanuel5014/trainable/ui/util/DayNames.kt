@@ -11,6 +11,9 @@ expect fun shortDayName(day: DayOfWeek): String
 /** The standalone month name ([month] is 1..12), first letter uppercased ("Novembre"). */
 expect fun monthName(month: Int): String
 
+/** The short month name ([month] is 1..12) as it is written next to a day number ("nov", "Nov."). */
+expect fun shortMonthName(month: Int): String
+
 /**
  * The full date of [timestampMillis] in the device time zone, as the language writes it, first letter uppercased
  * ("Lunedì 2 novembre 2026", "Montag, 2. November 2026").

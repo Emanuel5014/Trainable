@@ -1803,4 +1803,25 @@
     <string name="routine_group_dissolve_message">The routines stay, in no group. The group's name and color are lost.</string>
     <string name="workout_title_quick">Quick Workout</string>
     <string name="workout_title_cardio">Cardio Workout</string>
+    <string name="physical_check_new_button">New check</string>
+    <string name="physical_check_weight">Weight</string>
+    <string name="physical_check_since_last">Since last</string>
+    <string name="physical_check_photos">Photos</string>
+    <string name="physical_check_compare_with">Compare with another</string>
+    <string name="physical_check_pick_two">Pick 2 checks</string>
+    <string name="physical_check_slider_mode">Slider</string>
+    <string name="physical_check_side_by_side">Side by side</string>
+    <string name="physical_check_same_day">Same day</string>
+    <plurals name="physical_check_count">
+        <item quantity="one">%1$d check</item>
+        <item quantity="other">%1$d checks</item>
+    </plurals>
+    <plurals name="physical_check_photo_count">
+        <item quantity="one">%1$d photo</item>
+        <item quantity="other">%1$d photos</item>
+    </plurals>
+    <plurals name="physical_check_in_days">
+        <item quantity="one">in %1$d day</item>
+        <item quantity="other">in %1$d days</item>
+    </plurals>
 </resources>

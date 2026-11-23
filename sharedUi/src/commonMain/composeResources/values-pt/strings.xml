@@ -1816,4 +1816,25 @@
     <string name="routine_group_dissolve_message">As rotinas ficam, sem grupo. O nome e a cor do grupo são perdidos.</string>
     <string name="workout_title_quick">Treino Rápido</string>
     <string name="workout_title_cardio">Treino de Cardio</string>
+    <string name="physical_check_new_button">Nova checagem</string>
+    <string name="physical_check_weight">Peso</string>
+    <string name="physical_check_since_last">Desde a anterior</string>
+    <string name="physical_check_photos">Fotos</string>
+    <string name="physical_check_compare_with">Comparar com outra</string>
+    <string name="physical_check_pick_two">Escolha 2 checagens</string>
+    <string name="physical_check_slider_mode">Deslizante</string>
+    <string name="physical_check_side_by_side">Lado a lado</string>
+    <string name="physical_check_same_day">Mesmo dia</string>
+    <plurals name="physical_check_count">
+        <item quantity="one">%1$d checagem</item>
+        <item quantity="other">%1$d checagens</item>
+    </plurals>
+    <plurals name="physical_check_photo_count">
+        <item quantity="one">%1$d foto</item>
+        <item quantity="other">%1$d fotos</item>
+    </plurals>
+    <plurals name="physical_check_in_days">
+        <item quantity="one">em %1$d dia</item>
+        <item quantity="other">em %1$d dias</item>
+    </plurals>
 </resources>
