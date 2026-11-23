@@ -136,6 +136,17 @@ class PhysicalCheckModel(
         }
     }
 
+    fun changePassword(oldPassword: String, newPassword: String, onSuccess: () -> Unit, onError: () -> Unit) {
+        scope.launch {
+            if (repository.changePassword(oldPassword, newPassword)) {
+                session.touch()
+                onSuccess()
+            } else {
+                onError()
+            }
+        }
+    }
+
     fun resetAllData(onComplete: () -> Unit) {
         scope.launch {
             repository.resetAllAndDisableEncryption()
@@ -152,28 +163,27 @@ class PhysicalCheckModel(
 
     fun addCheck(timestamp: Long, peso: Float?, note: String?, photosBytes: List<ByteArray>, onComplete: () -> Unit) {
         scope.launch {
-            val filenames = photosBytes.map { bytes ->
-                repository.savePhoto(bytes)
-            }
-            repository.insertPhysicalCheck(timestamp, peso, note, filenames)
-            onComplete()
+            // Fails only if the vault closed meanwhile: nothing is saved in clear, the sheet stays open
+            runCatching { repository.addCheck(timestamp, peso, note, photosBytes) }
+                .onSuccess { onComplete() }
+                .onFailure { it.printStackTrace() }
         }
     }
 
     fun updateCheck(checkId: Int, timestamp: Long, peso: Float?, note: String?, onComplete: () -> Unit) {
         scope.launch {
             val existing = repository.getPhysicalCheckById(checkId) ?: return@launch
-            repository.updatePhysicalCheck(
-                existing.copy(timestamp = timestamp, peso = peso, note = note)
-            )
-            onComplete()
+            runCatching {
+                repository.updatePhysicalCheck(existing.copy(timestamp = timestamp, peso = peso, note = note))
+            }.onSuccess { onComplete() }.onFailure { it.printStackTrace() }
         }
     }
 
     fun addPhotosToCheck(checkId: Int, photosBytes: List<ByteArray>, onComplete: (List<String>) -> Unit = {}) {
         scope.launch {
-            val newFilenames = repository.addPhotosToCheck(checkId, photosBytes)
-            onComplete(newFilenames)
+            runCatching { repository.addPhotosToCheck(checkId, photosBytes) }
+                .onSuccess { onComplete(it) }
+                .onFailure { it.printStackTrace() }
         }
     }
 

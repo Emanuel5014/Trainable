@@ -9,6 +9,8 @@ object BiometricHelper {
 
     fun checkAndShowBiometricPrompt(
         activity: FragmentActivity,
+        title: String,
+        subtitle: String,
         onSuccess: () -> Unit,
         onError: (String) -> Unit = {}
     ) {
@@ -41,8 +43,8 @@ object BiometricHelper {
             )
 
             val promptInfo = BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Accesso Protetto")
-                .setSubtitle("Autenticati per accedere ai Check Fisici")
+                .setTitle(title)
+                .setSubtitle(subtitle)
                 .setAllowedAuthenticators(authenticators)
                 .build()
 

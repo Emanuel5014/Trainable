@@ -1182,7 +1182,7 @@
     <string name="physical_check_enable_encryption_desc">Defina uma senha. Você precisará dela para acessar os dados se restaurar o backup em outro dispositivo.</string>
     <string name="physical_check_encrypted_vault">Cofre Criptografado</string>
     <string name="physical_check_encryption">Criptografia de Dados e Fotos</string>
-    <string name="physical_check_encryption_desc">Criptografe todas as fotos localmente usando uma senha portátil. Segura em backups.</string>
+    <string name="physical_check_encryption_desc">Criptografa fotos, peso e notas com uma senha que também protege seus backups. As datas continuam visíveis.</string>
     <string name="physical_check_encryption_disabled">Criptografia desativada</string>
     <string name="physical_check_encryption_enabled">Criptografia ativada com sucesso</string>
     <string name="physical_check_encryption_error">Erro ao ativar a criptografia</string>
@@ -1200,7 +1200,7 @@
     <string name="physical_check_notes_label">Notas / Sensações</string>
     <string name="physical_check_password_error">Senha incorreta. Tente novamente.</string>
     <string name="physical_check_password_label">Senha</string>
-    <string name="physical_check_password_min_length">A senha deve ter pelo menos 4 caracteres</string>
+    <string name="physical_check_password_min_length">A senha deve ter pelo menos 8 caracteres</string>
     <string name="physical_check_passwords_dont_match">As senhas não coincidem</string>
     <string name="physical_check_photos_count">Fotos (%1$d)</string>
     <string name="physical_check_photos_selected">Fotos selecionadas: %1$d</string>
@@ -1837,4 +1837,8 @@
         <item quantity="one">em %1$d dia</item>
         <item quantity="other">em %1$d dias</item>
     </plurals>
+    <string name="physical_check_change_password">Alterar senha</string>
+    <string name="physical_check_change_password_desc">Criptografa novamente fotos, peso e notas com uma nova senha.</string>
+    <string name="physical_check_current_password">Senha atual</string>
+    <string name="physical_check_password_changed">Senha alterada</string>
 </resources>

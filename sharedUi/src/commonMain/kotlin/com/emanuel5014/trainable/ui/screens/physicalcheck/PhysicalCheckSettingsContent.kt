@@ -1,5 +1,16 @@
 package com.emanuel5014.trainable.ui.screens.physicalcheck
 
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Password
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.semantics.Role
+import com.emanuel5014.trainable.data.repository.PhysicalCheckRepository
+import com.emanuel5014.trainable.sharedui.resources.physical_check_change_password
+import com.emanuel5014.trainable.sharedui.resources.physical_check_change_password_desc
+import com.emanuel5014.trainable.sharedui.resources.physical_check_current_password
+import com.emanuel5014.trainable.sharedui.resources.physical_check_password_changed
+import com.emanuel5014.trainable.sharedui.resources.save
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -111,6 +122,9 @@ private fun SettingsBody(
 
     var showEnableEncryptionDialog by remember { mutableStateOf(false) }
     var showDisableEncryptionDialog by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    val passwordChangedText = stringResource(Res.string.physical_check_password_changed)
+    val wrongPasswordText = stringResource(Res.string.physical_check_password_error)
     var showResetConfirmDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -167,10 +181,116 @@ private fun SettingsBody(
                                 if (on) showEnableEncryptionDialog = true else showDisableEncryptionDialog = true
                             }
                         )
+                        if (encryptionEnabled) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(role = Role.Button) { showChangePasswordDialog = true },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Rounded.Password, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        stringResource(Res.string.physical_check_change_password),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = OnSurface,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                    Text(
+                                        stringResource(Res.string.physical_check_change_password_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OnSurfaceVariant
+                                    )
+                                }
+                                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    if (showChangePasswordDialog) {
+        var current by remember { mutableStateOf("") }
+        var newPassword by remember { mutableStateOf("") }
+        var confirmPassword by remember { mutableStateOf("") }
+        var errorText by remember { mutableStateOf<String?>(null) }
+        var working by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            modifier = Modifier.imePadding(),
+            onDismissRequest = { if (!working) showChangePasswordDialog = false },
+            title = { Text(stringResource(Res.string.physical_check_change_password), fontWeight = FontWeight.Bold) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    PhysicalCheckPasswordField(
+                        value = current,
+                        onValueChange = { current = it; errorText = null },
+                        label = stringResource(Res.string.physical_check_current_password)
+                    )
+                    PhysicalCheckPasswordField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it; errorText = null },
+                        label = stringResource(Res.string.physical_check_new_password)
+                    )
+                    PhysicalCheckPasswordField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it; errorText = null },
+                        label = stringResource(Res.string.physical_check_confirm_password),
+                        isError = errorText != null
+                    )
+                    errorText?.let {
+                        Text(text = it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (working) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !working,
+                    onClick = {
+                        if (newPassword.length < PhysicalCheckRepository.MIN_PASSWORD_LENGTH) {
+                            errorText = passwordMinLengthText
+                            return@Button
+                        }
+                        if (newPassword != confirmPassword) {
+                            errorText = passwordsDontMatchText
+                            return@Button
+                        }
+                        // Every photo is encrypted again: it can take a moment with many photos
+                        working = true
+                        viewModel.changePassword(
+                            oldPassword = current,
+                            newPassword = newPassword,
+                            onSuccess = {
+                                working = false
+                                showMessage(passwordChangedText)
+                                showChangePasswordDialog = false
+                            },
+                            onError = {
+                                working = false
+                                errorText = wrongPasswordText
+                            }
+                        )
+                    }
+                ) {
+                    Text(stringResource(Res.string.save))
+                }
+            },
+            dismissButton = {
+                TextButton(enabled = !working, onClick = { showChangePasswordDialog = false }) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            }
+        )
     }
 
     if (showEnableEncryptionDialog) {
@@ -211,7 +331,7 @@ private fun SettingsBody(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (password.length < 4) {
+                        if (password.length < PhysicalCheckRepository.MIN_PASSWORD_LENGTH) {
                             errorText = passwordMinLengthText
                             return@Button
                         }

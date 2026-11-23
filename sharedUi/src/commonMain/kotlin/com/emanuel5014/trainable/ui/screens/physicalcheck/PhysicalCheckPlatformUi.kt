@@ -21,9 +21,19 @@ interface PhysicalCheckPlatformUi {
         onCameraDenied: () -> Unit
     ): PhotoCapture
 
-    /** Asks for the fingerprint/face or device credential; null when no prompt can be shown here. */
+    /**
+     * Asks for the fingerprint/face or device credential, with [title] and [subtitle] in the app's language where the
+     * platform shows them; null when no prompt can be shown here.
+     */
     @Composable
-    fun rememberBiometricPrompt(): ((onSuccess: () -> Unit, onError: () -> Unit) -> Unit)?
+    fun rememberBiometricPrompt(title: String, subtitle: String): ((onSuccess: () -> Unit, onError: () -> Unit) -> Unit)?
+
+    /**
+     * Keeps what the section shows private while it is composed: Android blocks screenshots and screen recording and
+     * blanks the recent-apps preview (its sheets and dialogs inherit that); iOS covers the app in the app switcher.
+     */
+    @Composable
+    fun KeepPrivate()
 
     /** Crop and rotate one photo; [onConfirm] gets the edited JPEG. */
     @Composable

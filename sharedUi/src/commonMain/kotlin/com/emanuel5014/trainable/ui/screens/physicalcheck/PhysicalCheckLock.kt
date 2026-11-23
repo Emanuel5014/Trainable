@@ -53,6 +53,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import com.emanuel5014.trainable.sharedui.resources.cancel
 import com.emanuel5014.trainable.sharedui.resources.physical_check_auth_button
+import com.emanuel5014.trainable.sharedui.resources.physical_check_auth_reason
 import com.emanuel5014.trainable.sharedui.resources.physical_check_encrypted_vault
 import com.emanuel5014.trainable.sharedui.resources.physical_check_encryption_disabled
 import com.emanuel5014.trainable.sharedui.resources.physical_check_enter_password_desc
@@ -197,7 +198,13 @@ internal fun PhysicalCheckGate(model: PhysicalCheckModel, onNavigateBack: () -> 
     var passwordInput by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf(false) }
     var showResetConfirmDialog by remember { mutableStateOf(false) }
-    val biometricPrompt = LocalPhysicalCheckPlatform.current.rememberBiometricPrompt()
+    val platform = LocalPhysicalCheckPlatform.current
+    // Screenshots, screen recording and the app-switcher preview never show the section (lock screens included)
+    platform.KeepPrivate()
+    val biometricPrompt = platform.rememberBiometricPrompt(
+        title = stringResource(Res.string.physical_check_protected_access),
+        subtitle = stringResource(Res.string.physical_check_auth_reason)
+    )
     val showMessage = LocalShowMessage.current
     val encryptionDisabledText = stringResource(Res.string.physical_check_encryption_disabled)
 

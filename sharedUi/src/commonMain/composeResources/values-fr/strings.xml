@@ -1182,7 +1182,7 @@
     <string name="physical_check_enable_encryption_desc">Définissez un mot de passe. Il vous servira à accéder aux données si vous restaurez la sauvegarde sur un autre appareil.</string>
     <string name="physical_check_encrypted_vault">Coffre-fort Crypté</string>
     <string name="physical_check_encryption">Chiffrement des Données et Photos</string>
-    <string name="physical_check_encryption_desc">Chiffrez toutes les photos localement avec un mot de passe portable. Sûr dans les sauvegardes.</string>
+    <string name="physical_check_encryption_desc">Chiffre photos, poids et notes avec un mot de passe qui protège aussi tes sauvegardes. Les dates restent visibles.</string>
     <string name="physical_check_encryption_disabled">Chiffrement désactivé</string>
     <string name="physical_check_encryption_enabled">Chiffrement activé avec succès</string>
     <string name="physical_check_encryption_error">Erreur lors de l'activation du chiffrement</string>
@@ -1200,7 +1200,7 @@
     <string name="physical_check_notes_label">Notes / Sensations</string>
     <string name="physical_check_password_error">Mot de passe incorrect. Réessayez.</string>
     <string name="physical_check_password_label">Mot de passe</string>
-    <string name="physical_check_password_min_length">Le mot de passe doit comporter au moins 4 caractères</string>
+    <string name="physical_check_password_min_length">Le mot de passe doit comporter au moins 8 caractères</string>
     <string name="physical_check_passwords_dont_match">Les mots de passe ne correspondent pas</string>
     <string name="physical_check_photos_count">Photos (%1$d)</string>
     <string name="physical_check_photos_selected">Photos sélectionnées : %1$d</string>
@@ -1837,4 +1837,8 @@
         <item quantity="one">en %1$d jour</item>
         <item quantity="other">en %1$d jours</item>
     </plurals>
+    <string name="physical_check_change_password">Changer le mot de passe</string>
+    <string name="physical_check_change_password_desc">Chiffre à nouveau photos, poids et notes avec un nouveau mot de passe.</string>
+    <string name="physical_check_current_password">Mot de passe actuel</string>
+    <string name="physical_check_password_changed">Mot de passe modifié</string>
 </resources>

@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -140,16 +141,27 @@ object AndroidPhysicalCheckPlatform : PhysicalCheckPlatformUi {
     }
 
     @Composable
-    override fun rememberBiometricPrompt(): ((onSuccess: () -> Unit, onError: () -> Unit) -> Unit)? {
+    override fun rememberBiometricPrompt(title: String, subtitle: String): ((onSuccess: () -> Unit, onError: () -> Unit) -> Unit)? {
         val activity = LocalContext.current as? FragmentActivity ?: return null
-        return remember(activity) {
+        return remember(activity, title, subtitle) {
             { onSuccess, onError ->
                 BiometricHelper.checkAndShowBiometricPrompt(
                     activity = activity,
+                    title = title,
+                    subtitle = subtitle,
                     onSuccess = onSuccess,
                     onError = { onError() }
                 )
             }
+        }
+    }
+
+    @Composable
+    override fun KeepPrivate() {
+        val activity = LocalContext.current as? android.app.Activity ?: return
+        DisposableEffect(activity) {
+            SecureWindow.acquire(activity)
+            onDispose { SecureWindow.release(activity) }
         }
     }
 
@@ -166,4 +178,21 @@ private fun createCheckTempImageUri(context: Context): Uri {
         "${context.packageName}.fileprovider",
         tempFile
     )
+}
+
+/**
+ * FLAG_SECURE on the activity window while any physical-check screen is shown. Counted, because during a transition
+ * (list to compare) two screens are composed at once and the first one leaving must not clear it.
+ */
+private object SecureWindow {
+    private var count = 0
+
+    fun acquire(activity: android.app.Activity) {
+        if (count++ == 0) activity.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+    }
+
+    fun release(activity: android.app.Activity) {
+        count = (count - 1).coerceAtLeast(0)
+        if (count == 0) activity.window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+    }
 }

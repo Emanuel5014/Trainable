@@ -1182,7 +1182,7 @@
     <string name="physical_check_enable_encryption_desc">Establece una contraseña. La necesitarás para acceder a los datos si restauras la copia en otro dispositivo.</string>
     <string name="physical_check_encrypted_vault">Caja Fuerte Cifrada</string>
     <string name="physical_check_encryption">Cifrado de Datos y Fotos</string>
-    <string name="physical_check_encryption_desc">Cifra localmente todas las fotos con una contraseña portátil. Segura en backups.</string>
+    <string name="physical_check_encryption_desc">Cifra fotos, peso y notas con una contraseña que también protege tus backups. Las fechas siguen visibles.</string>
     <string name="physical_check_encryption_disabled">Cifrado desactivado</string>
     <string name="physical_check_encryption_enabled">Cifrado activado con éxito</string>
     <string name="physical_check_encryption_error">Error al activar el cifrado</string>
@@ -1200,7 +1200,7 @@
     <string name="physical_check_notes_label">Notas / Sensaciones</string>
     <string name="physical_check_password_error">Contraseña incorrecta. Intente de nuevo.</string>
     <string name="physical_check_password_label">Contraseña</string>
-    <string name="physical_check_password_min_length">La contraseña debe tener al menos 4 caracteres</string>
+    <string name="physical_check_password_min_length">La contraseña debe tener al menos 8 caracteres</string>
     <string name="physical_check_passwords_dont_match">Las contraseñas no coinciden</string>
     <string name="physical_check_photos_count">Fotos (%1$d)</string>
     <string name="physical_check_photos_selected">Fotos seleccionadas: %1$d</string>
@@ -1837,4 +1837,8 @@
         <item quantity="one">en %1$d día</item>
         <item quantity="other">en %1$d días</item>
     </plurals>
+    <string name="physical_check_change_password">Cambiar contraseña</string>
+    <string name="physical_check_change_password_desc">Vuelve a cifrar fotos, peso y notas con una nueva contraseña.</string>
+    <string name="physical_check_current_password">Contraseña actual</string>
+    <string name="physical_check_password_changed">Contraseña cambiada</string>
 </resources>

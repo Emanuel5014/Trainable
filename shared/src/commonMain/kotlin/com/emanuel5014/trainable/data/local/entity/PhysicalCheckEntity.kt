@@ -10,5 +10,10 @@ data class PhysicalCheckEntity(
     val timestamp: Long,
     val peso: Float?,
     val note: String?,
-    val fotoFilenames: String // Nomi delle foto salvate sul disco divisi da virgole
+    val fotoFilenames: String, // Nomi delle foto salvate sul disco divisi da virgole
+    /**
+     * With the vault on: the weight and the note, encrypted with the vault's key (hex), while [peso] and [note]
+     * stay null in the database. The repository hands out rows with them decrypted back into [peso] and [note].
+     */
+    val secret: String? = null
 )

@@ -1182,7 +1182,7 @@
     <string name="physical_check_enable_encryption_desc">Imposta una password. Ti servirà per accedere ai dati qualora ripristinassi il backup su un altro dispositivo.</string>
     <string name="physical_check_encrypted_vault">Cassaforte Cifrata</string>
     <string name="physical_check_encryption">Cifratura Dati e Foto</string>
-    <string name="physical_check_encryption_desc">Cifra localmente tutte le foto usando una password portabile. Sicura nei backup.</string>
+    <string name="physical_check_encryption_desc">Cifra foto, peso e note con una password che protegge anche i backup. Le date restano visibili.</string>
     <string name="physical_check_encryption_disabled">Cifratura disattivata</string>
     <string name="physical_check_encryption_enabled">Cifratura attivata con successo</string>
     <string name="physical_check_encryption_error">Errore durante l'attivazione della cifratura</string>
@@ -1200,7 +1200,7 @@
     <string name="physical_check_notes_label">Note / Sensazioni</string>
     <string name="physical_check_password_error">Password errata. Riprova.</string>
     <string name="physical_check_password_label">Password</string>
-    <string name="physical_check_password_min_length">La password deve essere di almeno 4 caratteri</string>
+    <string name="physical_check_password_min_length">La password deve essere di almeno 8 caratteri</string>
     <string name="physical_check_passwords_dont_match">Le password non coincidono</string>
     <string name="physical_check_photos_count">Foto (%1$d)</string>
     <string name="physical_check_photos_selected">Foto selezionate: %1$d</string>
@@ -1837,4 +1837,8 @@
         <item quantity="one">in %1$d giorno</item>
         <item quantity="other">in %1$d giorni</item>
     </plurals>
+    <string name="physical_check_change_password">Cambia password</string>
+    <string name="physical_check_change_password_desc">Cifra di nuovo foto, peso e note con una nuova password.</string>
+    <string name="physical_check_current_password">Password attuale</string>
+    <string name="physical_check_password_changed">Password cambiata</string>
 </resources>

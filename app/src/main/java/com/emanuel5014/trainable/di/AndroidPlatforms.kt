@@ -69,9 +69,23 @@ class AndroidPhysicalCheckFiles(private val context: Context) : com.emanuel5014.
     override fun list(): List<String> = filesDirectory.listFiles()?.filter { it.isFile }?.map { it.name } ?: emptyList()
     override fun exists(name: String): Boolean = file(name)?.exists() == true
     override fun read(name: String): ByteArray = (file(name) ?: error("Bad name")).readBytes()
-    override fun write(name: String, bytes: ByteArray) = (file(name) ?: error("Bad name")).writeBytes(bytes)
+    override fun write(name: String, bytes: ByteArray) {
+        // Through a temporary file and a rename: a crash leaves the old file or the new one, never half a photo
+        val target = file(name) ?: error("Bad name")
+        val temp = java.io.File(target.parentFile, "$name.tmp")
+        java.io.FileOutputStream(temp).use { out ->
+            out.write(bytes)
+            out.fd.sync()
+        }
+        check(temp.renameTo(target)) { "Cannot write $name" }
+    }
     override fun delete(name: String) {
         file(name)?.delete()
+    }
+    override fun move(from: String, to: String) {
+        val source = file(from) ?: error("Bad name")
+        val target = file(to) ?: error("Bad name")
+        check(source.renameTo(target)) { "Cannot move $from" }
     }
     override fun compressImage(bytes: ByteArray): ByteArray = ImageStorageUtils.compressImageBytes(bytes)
 }

@@ -207,6 +207,13 @@ class IosPhysicalCheckFiles(private val directory: () -> String = { documentsFol
         NSFileManager.defaultManager.removeItemAtPath(path(name), null)
     }
 
+    override fun move(from: String, to: String) {
+        val manager = NSFileManager.defaultManager
+        val target = path(to)
+        if (manager.fileExistsAtPath(target)) manager.removeItemAtPath(target, null)
+        check(manager.moveItemAtPath(path(from), target, null)) { "Cannot move $from" }
+    }
+
     override fun compressImage(bytes: ByteArray): ByteArray = encodeIosJpeg(bytes, maxSide = 1280, quality = 80) ?: bytes
 }
 

@@ -90,9 +90,44 @@ private object IosPhysicalCheckPlatform : PhysicalCheckPlatformUi {
         onCameraDenied = onCameraDenied
     )
 
+    /** Face ID / Touch ID show the system's own title; the reason (in the app's language) is the subtitle. */
     @Composable
-    override fun rememberBiometricPrompt(): ((onSuccess: () -> Unit, onError: () -> Unit) -> Unit)? =
+    override fun rememberBiometricPrompt(title: String, subtitle: String): ((onSuccess: () -> Unit, onError: () -> Unit) -> Unit)? =
         rememberIosBiometricPrompt()
+
+    /**
+     * iOS cannot block screenshots; it can keep the photos out of the app switcher: a plain cover goes over the
+     * window when the app stops being active and comes off when it is active again.
+     */
+    @Composable
+    override fun KeepPrivate() {
+        DisposableEffect(Unit) {
+            val center = NSNotificationCenter.defaultCenter
+            var cover: UIView? = null
+            fun removeCover() {
+                cover?.removeFromSuperview()
+                cover = null
+            }
+            val resign = center.addObserverForName(UIApplicationWillResignActiveNotification, null, NSOperationQueue.mainQueue) { _ ->
+                @Suppress("DEPRECATION")
+                val window = UIApplication.sharedApplication.keyWindow
+                if (window != null && cover == null) {
+                    cover = UIView(frame = window.bounds).apply {
+                        backgroundColor = UIColor.systemBackgroundColor
+                        autoresizingMask = UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
+                    }.also { window.addSubview(it) }
+                }
+            }
+            val active = center.addObserverForName(UIApplicationDidBecomeActiveNotification, null, NSOperationQueue.mainQueue) { _ ->
+                removeCover()
+            }
+            onDispose {
+                center.removeObserver(resign)
+                center.removeObserver(active)
+                removeCover()
+            }
+        }
+    }
 
     /** The shared crop/rotate editor, as on Android. */
     @Composable

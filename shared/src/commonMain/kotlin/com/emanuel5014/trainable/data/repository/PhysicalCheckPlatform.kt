@@ -32,8 +32,11 @@ interface PhysicalCheckFiles {
     fun list(): List<String>
     fun exists(name: String): Boolean
     fun read(name: String): ByteArray
+    /** Writes the whole file or nothing (a crash never leaves half a photo under [name]). */
     fun write(name: String, bytes: ByteArray)
     fun delete(name: String)
+    /** Renames [from] to [to], replacing [to] when it exists. */
+    fun move(from: String, to: String)
     /** The photo made smaller as stored (at most 1280 px, JPEG); the bytes unchanged when they are not an image. */
     fun compressImage(bytes: ByteArray): ByteArray
 }

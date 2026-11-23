@@ -1182,6 +1182,29 @@ class UserPreferencesRepository(
         }
     }
 
+    /**
+     * The salt, validation block and device-wrapped password of the physical-check vault in one write, so a crash
+     * never leaves a salt of one password next to the validation block of another. Null values are removed.
+     */
+    suspend fun setPhysicalCheckVaultKeys(
+        salt: String?,
+        validationBlock: String?,
+        validationIv: String?,
+        wrappedKey: String?,
+        wrappedKeyIv: String?
+    ) {
+        dataStore.edit { preferences ->
+            fun put(key: androidx.datastore.preferences.core.Preferences.Key<String>, value: String?) {
+                if (value != null) preferences[key] = value else preferences.remove(key)
+            }
+            put(PHYSICAL_CHECK_ENCRYPTION_SALT, salt)
+            put(PHYSICAL_CHECK_VALIDATION_BLOCK, validationBlock)
+            put(PHYSICAL_CHECK_VALIDATION_IV, validationIv)
+            put(PHYSICAL_CHECK_WRAPPED_KEY_KEYSTORE, wrappedKey)
+            put(PHYSICAL_CHECK_WRAPPED_KEY_IV, wrappedKeyIv)
+        }
+    }
+
     suspend fun setPhysicalCheckEncryptionSalt(salt: String?) {
         dataStore.edit { preferences ->
             if (salt != null) {

@@ -1179,7 +1179,7 @@
     <string name="physical_check_enable_encryption_desc">Set a password. You'll need it to access data if you restore the backup on another device.</string>
     <string name="physical_check_encrypted_vault">Encrypted Vault</string>
     <string name="physical_check_encryption">Data &amp; Photo Encryption</string>
-    <string name="physical_check_encryption_desc">Encrypt all photos locally using a portable password. Safe in backups.</string>
+    <string name="physical_check_encryption_desc">Encrypts photos, weight and notes with a password that also protects your backups. Dates stay visible.</string>
     <string name="physical_check_encryption_disabled">Encryption disabled</string>
     <string name="physical_check_encryption_enabled">Encryption enabled successfully</string>
     <string name="physical_check_encryption_error">Error enabling encryption</string>
@@ -1197,7 +1197,7 @@
     <string name="physical_check_notes_label">Notes / Feelings</string>
     <string name="physical_check_password_error">Wrong password. Try again.</string>
     <string name="physical_check_password_label">Password</string>
-    <string name="physical_check_password_min_length">Password must be at least 4 characters</string>
+    <string name="physical_check_password_min_length">Password must be at least 8 characters</string>
     <string name="physical_check_passwords_dont_match">Passwords don't match</string>
     <string name="physical_check_photos_count">Photos (%1$d)</string>
     <string name="physical_check_photos_selected">Photos selected: %1$d</string>
@@ -1824,4 +1824,8 @@
         <item quantity="one">in %1$d day</item>
         <item quantity="other">in %1$d days</item>
     </plurals>
+    <string name="physical_check_change_password">Change password</string>
+    <string name="physical_check_change_password_desc">Encrypts the photos, weight and notes again with a new password.</string>
+    <string name="physical_check_current_password">Current password</string>
+    <string name="physical_check_password_changed">Password changed</string>
 </resources>

@@ -26,6 +26,13 @@ interface PhysicalCheckDao {
     @Delete
     suspend fun deletePhysicalCheck(check: PhysicalCheckEntity)
 
+    @Query("SELECT * FROM physical_checks")
+    suspend fun getAllOnce(): List<PhysicalCheckEntity>
+
+    /** All in one transaction, so a vault change never leaves half the rows on the old key. */
+    @Update
+    suspend fun updateAll(checks: List<PhysicalCheckEntity>)
+
     @Query("DELETE FROM physical_checks")
     suspend fun deleteAll()
 }
