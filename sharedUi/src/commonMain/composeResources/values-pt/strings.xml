@@ -5,6 +5,8 @@
     <string name="delete">Excluir</string>
     <string name="delete_session">Excluir Sessão?</string>
     <string name="delete_session_message">Isso excluirá permanentemente esta sessão de treino.</string>
+    <string name="workout_exercise_delete_title">Excluir exercício?</string>
+    <string name="workout_exercise_delete_message">%1$s e todas as suas séries serão excluídos deste treino. Sua rotina e a lista de exercícios não mudam.</string>
     <string name="existing_workout_message">Já existe um treino inacabado para "%1$s". Retomar?</string>
     <string name="expired">Vencida</string>
     <string name="expires_in_days">Vence em %1$d dias</string>
@@ -1760,4 +1762,56 @@
     <string name="onboarding_colors_title">Suas cores</string>
     <string name="onboarding_colors_more">As cores de destaque, o tom dos fundos e os temas salvos estão em Configurações › Personalização.</string>
     <string name="onboarding_ready_colors">Cores</string>
+    <plurals name="bulk_delete_sessions_title">
+        <item quantity="one">Excluir %1$d treino?</item>
+        <item quantity="many">Excluir %1$d treinos?</item>
+        <item quantity="other">Excluir %1$d treinos?</item>
+    </plurals>
+    <plurals name="bulk_delete_sessions_message">
+        <item quantity="one">O treino selecionado será excluído permanentemente.</item>
+        <item quantity="many">Os %1$d treinos selecionados serão excluídos permanentemente.</item>
+        <item quantity="other">Os %1$d treinos selecionados serão excluídos permanentemente.</item>
+    </plurals>
+    <plurals name="bulk_delete_routines_title">
+        <item quantity="one">Excluir %1$d rotina?</item>
+        <item quantity="many">Excluir %1$d rotinas?</item>
+        <item quantity="other">Excluir %1$d rotinas?</item>
+    </plurals>
+    <plurals name="bulk_delete_routines_message">
+        <item quantity="one">A rotina selecionada e todos os seus exercícios serão excluídos permanentemente.</item>
+        <item quantity="many">As %1$d rotinas selecionadas e todos os seus exercícios serão excluídos permanentemente.</item>
+        <item quantity="other">As %1$d rotinas selecionadas e todos os seus exercícios serão excluídos permanentemente.</item>
+    </plurals>
+    <plurals name="bulk_archive_routines_title">
+        <item quantity="one">Arquivar %1$d rotina?</item>
+        <item quantity="many">Arquivar %1$d rotinas?</item>
+        <item quantity="other">Arquivar %1$d rotinas?</item>
+    </plurals>
+    <plurals name="bulk_archive_routines_message">
+        <item quantity="one">A rotina selecionada será movida para a seção arquivada.</item>
+        <item quantity="many">As %1$d rotinas selecionadas serão movidas para a seção arquivada.</item>
+        <item quantity="other">As %1$d rotinas selecionadas serão movidas para a seção arquivada.</item>
+    </plurals>
+    <plurals name="bulk_unarchive_routines_title">
+        <item quantity="one">Restaurar %1$d rotina?</item>
+        <item quantity="many">Restaurar %1$d rotinas?</item>
+        <item quantity="other">Restaurar %1$d rotinas?</item>
+    </plurals>
+    <plurals name="bulk_unarchive_routines_message">
+        <item quantity="one">A rotina selecionada voltará para suas rotinas ativas.</item>
+        <item quantity="many">As %1$d rotinas selecionadas voltarão para suas rotinas ativas.</item>
+        <item quantity="other">As %1$d rotinas selecionadas voltarão para suas rotinas ativas.</item>
+    </plurals>
+    <string name="routine_exercise_remove_title">Remover exercício?</string>
+    <string name="routine_exercise_remove_message">%1$s é removido desta rotina. Seus treinos anteriores mantêm as séries.</string>
+    <string name="routine_photo_remove_title">Remover foto?</string>
+    <string name="routine_photo_remove_message">A foto é removida desta rotina e excluída deste dispositivo.</string>
+    <string name="one_rep_max_delete_title">Excluir este 1RM?</string>
+    <string name="one_rep_max_delete_message">%1$s de %2$s é removido do histórico deste exercício.</string>
+    <string name="body_weight_delete_title">Excluir este peso?</string>
+    <string name="body_weight_delete_message">%1$s de %2$s é removido do seu histórico de peso corporal.</string>
+    <string name="routine_group_archive_confirm">Arquivar %1$s?</string>
+    <string name="routine_group_restore_confirm">Restaurar %1$s?</string>
+    <string name="routine_group_dissolve_confirm">Desfazer %1$s?</string>
+    <string name="routine_group_dissolve_message">As rotinas ficam, sem grupo. O nome e a cor do grupo são perdidos.</string>
 </resources>

@@ -2,6 +2,9 @@
 
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.sharedui.resources.routine_exercise_remove_message
+import com.emanuel5014.trainable.sharedui.resources.routine_exercise_remove_title
+import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
 import com.emanuel5014.trainable.ui.util.bodyPadding
 import com.emanuel5014.trainable.ui.util.scrollEndInset
 import com.emanuel5014.trainable.ui.util.plusBottom
@@ -434,6 +437,24 @@ fun RoutineDetailContent(
     // Looked up on every composition: a cached copy would still hold the blocks / starting weight the exercise had
     // before it was last saved, and saving would write those old values back
     val editingExercise = localExercises.find { it.planExercise.id == editingExerciseId }
+    var confirmRemoveExercise by remember { mutableStateOf(false) }
+    if (confirmRemoveExercise && editingExercise != null) {
+        ConfirmDeleteDialog(
+            title = stringResource(Res.string.routine_exercise_remove_title),
+            message = stringResource(Res.string.routine_exercise_remove_message, ExerciseTranslations.translate(editingExercise.exercise.nome, languageCode)),
+            onConfirm = {
+                confirmRemoveExercise = false
+                scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
+                    if (!exerciseSheetState.isVisible) {
+                        showExerciseSheet = false
+                    }
+                }
+                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                state.removeExercise(editingExercise.planExercise)
+            },
+            onDismiss = { confirmRemoveExercise = false }
+        )
+    }
 
     // Sync local list with UI state when not dragging
     LaunchedEffect(uiState.planDetails?.exercises, draggedItemIndex == null) {
@@ -1517,17 +1538,8 @@ fun RoutineDetailContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                          GymButton(
-                            onClick = {
-                                scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
-                                    if (!exerciseSheetState.isVisible) {
-                                        showExerciseSheet = false
-                                    }
-                                }
-                                editingExercise?.let {
-                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    state.removeExercise(it.planExercise)
-                                }
-                            },
+                            // Asks first, like deleting an exercise from a past workout (#73)
+                            onClick = { if (editingExercise != null) confirmRemoveExercise = true },
                             modifier = Modifier.size(60.dp),
                             height = 56,
                             containerColor = Error.copy(alpha = 0.15f),

@@ -61,6 +61,19 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_plans WHERE id = :planId")
     suspend fun getPlanOnce(planId: Int): WorkoutPlanEntity?
 
+    /**
+     * Workouts whose own name is empty or only repeats their routine's name go back to having none, so they follow the
+     * routine again when it is renamed. Older versions saved the routine's name there on any edit of the details (#74).
+     */
+    @Query(
+        """UPDATE workout_sessions SET note_sessione = NULL
+        WHERE note_sessione IS NOT NULL AND (
+            TRIM(note_sessione) = ''
+            OR TRIM(note_sessione) = (SELECT TRIM(p.nome) FROM workout_plans p WHERE p.id = workout_sessions.plan_id)
+        )"""
+    )
+    suspend fun clearSessionNamesThatRepeatTheRoutine(): Int
+
     @Transaction
     @Query("SELECT * FROM workout_plans WHERE id IN (:planIds)")
     suspend fun getPlansWithDetails(planIds: List<Int>): List<PlanWithDetails>
@@ -311,6 +324,14 @@ interface WorkoutDao {
 
     @Query("UPDATE workout_sessions SET duration_ms = :durationMs WHERE id = :sessionId")
     suspend fun setSessionDuration(sessionId: Int, durationMs: Long)
+
+    /** The workout's own name (null: it goes by its routine's). */
+    @Query("UPDATE workout_sessions SET note_sessione = :name WHERE id = :sessionId")
+    suspend fun updateSessionName(sessionId: Int, name: String?)
+
+    /** What the details sheet of a past workout edits, and nothing else of the row. */
+    @Query("UPDATE workout_sessions SET note_sessione = :name, timestamp = :timestamp, duration_ms = :durationMs WHERE id = :sessionId")
+    suspend fun updateSessionDetails(sessionId: Int, name: String?, timestamp: Long, durationMs: Long?)
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSet(set: SetLogEntity): Long

@@ -5,6 +5,8 @@
     <string name="delete">Supprimer</string>
     <string name="delete_session">Supprimer la Session ?</string>
     <string name="delete_session_message">Cela supprimera définitivement cette session d'entraînement.</string>
+    <string name="workout_exercise_delete_title">Supprimer l'exercice ?</string>
+    <string name="workout_exercise_delete_message">%1$s et toutes ses séries seront supprimés de cet entraînement. Ta routine et la liste des exercices ne changent pas.</string>
     <string name="existing_workout_message">Un entraînement non terminé pour "%1$s" existe déjà. Reprendre?</string>
     <string name="expired">Expiré</string>
     <string name="expires_in_days">Expire dans %1$d jours</string>
@@ -1760,4 +1762,56 @@
     <string name="onboarding_colors_title">Vos couleurs</string>
     <string name="onboarding_colors_more">Les couleurs d'accent, la teinte des fonds et les thèmes enregistrés sont dans Paramètres › Personnalisation.</string>
     <string name="onboarding_ready_colors">Couleurs</string>
+    <plurals name="bulk_delete_sessions_title">
+        <item quantity="one">Supprimer %1$d entraînement ?</item>
+        <item quantity="many">Supprimer %1$d entraînements ?</item>
+        <item quantity="other">Supprimer %1$d entraînements ?</item>
+    </plurals>
+    <plurals name="bulk_delete_sessions_message">
+        <item quantity="one">L'entraînement sélectionné sera supprimé définitivement.</item>
+        <item quantity="many">Les %1$d entraînements sélectionnés seront supprimés définitivement.</item>
+        <item quantity="other">Les %1$d entraînements sélectionnés seront supprimés définitivement.</item>
+    </plurals>
+    <plurals name="bulk_delete_routines_title">
+        <item quantity="one">Supprimer %1$d routine ?</item>
+        <item quantity="many">Supprimer %1$d routines ?</item>
+        <item quantity="other">Supprimer %1$d routines ?</item>
+    </plurals>
+    <plurals name="bulk_delete_routines_message">
+        <item quantity="one">La routine sélectionnée et tous ses exercices seront supprimés définitivement.</item>
+        <item quantity="many">Les %1$d routines sélectionnées et tous leurs exercices seront supprimés définitivement.</item>
+        <item quantity="other">Les %1$d routines sélectionnées et tous leurs exercices seront supprimés définitivement.</item>
+    </plurals>
+    <plurals name="bulk_archive_routines_title">
+        <item quantity="one">Archiver %1$d routine ?</item>
+        <item quantity="many">Archiver %1$d routines ?</item>
+        <item quantity="other">Archiver %1$d routines ?</item>
+    </plurals>
+    <plurals name="bulk_archive_routines_message">
+        <item quantity="one">La routine sélectionnée sera déplacée dans la section archivée.</item>
+        <item quantity="many">Les %1$d routines sélectionnées seront déplacées dans la section archivée.</item>
+        <item quantity="other">Les %1$d routines sélectionnées seront déplacées dans la section archivée.</item>
+    </plurals>
+    <plurals name="bulk_unarchive_routines_title">
+        <item quantity="one">Restaurer %1$d routine ?</item>
+        <item quantity="many">Restaurer %1$d routines ?</item>
+        <item quantity="other">Restaurer %1$d routines ?</item>
+    </plurals>
+    <plurals name="bulk_unarchive_routines_message">
+        <item quantity="one">La routine sélectionnée sera restaurée dans tes routines actives.</item>
+        <item quantity="many">Les %1$d routines sélectionnées seront restaurées dans tes routines actives.</item>
+        <item quantity="other">Les %1$d routines sélectionnées seront restaurées dans tes routines actives.</item>
+    </plurals>
+    <string name="routine_exercise_remove_title">Retirer l'exercice ?</string>
+    <string name="routine_exercise_remove_message">%1$s est retiré de cette routine. Tes entraînements passés gardent ses séries.</string>
+    <string name="routine_photo_remove_title">Supprimer la photo ?</string>
+    <string name="routine_photo_remove_message">La photo est retirée de cette routine et supprimée de cet appareil.</string>
+    <string name="one_rep_max_delete_title">Supprimer ce 1RM ?</string>
+    <string name="one_rep_max_delete_message">%1$s du %2$s est retiré de l'historique de cet exercice.</string>
+    <string name="body_weight_delete_title">Supprimer ce poids ?</string>
+    <string name="body_weight_delete_message">%1$s du %2$s est retiré de ton historique de poids corporel.</string>
+    <string name="routine_group_archive_confirm">Archiver %1$s ?</string>
+    <string name="routine_group_restore_confirm">Restaurer %1$s ?</string>
+    <string name="routine_group_dissolve_confirm">Dissoudre %1$s ?</string>
+    <string name="routine_group_dissolve_message">Les routines restent, sans groupe. Le nom et la couleur du groupe sont perdus.</string>
 </resources>

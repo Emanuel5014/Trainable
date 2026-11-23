@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.onerepmax
 
+import com.emanuel5014.trainable.sharedui.resources.one_rep_max_delete_message
+import com.emanuel5014.trainable.sharedui.resources.one_rep_max_delete_title
+import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
 import com.emanuel5014.trainable.ui.util.bodyPadding
 import com.emanuel5014.trainable.ui.util.scrollEndInset
 import com.emanuel5014.trainable.ui.util.plusBottom
@@ -289,6 +292,18 @@ private fun OneRepMaxDetailSheet(
     onAdd: () -> Unit,
     onDelete: (OneRepMaxEntity) -> Unit
 ) {
+    var entryToDelete by remember { mutableStateOf<OneRepMaxEntity?>(null) }
+    entryToDelete?.let { entry ->
+        ConfirmDeleteDialog(
+            title = stringResource(Res.string.one_rep_max_delete_title),
+            message = stringResource(Res.string.one_rep_max_delete_message, formatWeight(entry.weightKg, weightUnit), DateFormatter.format(entry.date)),
+            onConfirm = {
+                entryToDelete = null
+                onDelete(entry)
+            },
+            onDismiss = { entryToDelete = null }
+        )
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -381,7 +396,7 @@ private fun OneRepMaxDetailSheet(
                                     color = OnSurfaceVariant
                                 )
                             }
-                            IconButton(onClick = { onDelete(entry) }) {
+                            IconButton(onClick = { entryToDelete = entry }) {
                                 Icon(Icons.Rounded.Delete, contentDescription = stringResource(Res.string.one_rep_max_delete_entry), tint = Error)
                             }
                         }

@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.routine_photo_remove_message
+import com.emanuel5014.trainable.sharedui.resources.routine_photo_remove_title
+import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -221,6 +224,21 @@ private fun ImagePickerContent(
         return
     }
 
+    // The X deletes the photo file too: asked first, like the photos of a physical check
+    var imageToRemove by remember { mutableStateOf<WorkoutPlanImageEntity?>(null) }
+    imageToRemove?.let { image ->
+        ConfirmDeleteDialog(
+            title = stringResource(Res.string.routine_photo_remove_title),
+            message = stringResource(Res.string.routine_photo_remove_message),
+            onConfirm = {
+                imageToRemove = null
+                onImageRemove(image)
+                platform.deleteFile(image.imageUri)
+            },
+            onDismiss = { imageToRemove = null }
+        )
+    }
+
     LazyRow(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 0.dp),
@@ -245,10 +263,7 @@ private fun ImagePickerContent(
                         .size(28.dp)
                         .clip(CircleShape)
                         .background(Surface.copy(alpha = 0.8f))
-                        .clickable {
-                            onImageRemove(image)
-                            platform.deleteFile(image.imageUri)
-                        },
+                        .clickable { imageToRemove = image },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(

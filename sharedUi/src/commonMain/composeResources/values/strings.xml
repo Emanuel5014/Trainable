@@ -5,6 +5,8 @@
     <string name="delete">Delete</string>
     <string name="delete_session">Delete Session?</string>
     <string name="delete_session_message">This will permanently delete this workout session.</string>
+    <string name="workout_exercise_delete_title">Delete exercise?</string>
+    <string name="workout_exercise_delete_message">%1$s and all its sets will be deleted from this workout. Your routine and the exercise list don't change.</string>
     <string name="existing_workout_message">An unfinished workout for "%1$s" already exists. Resume it?</string>
     <string name="expired">Expired</string>
     <string name="expires_in_days">Expires in %1$d days</string>
@@ -1755,4 +1757,48 @@
     <string name="onboarding_colors_title">Your colors</string>
     <string name="onboarding_colors_more">Accent colors, background tint and saved themes are in Settings › Personalization.</string>
     <string name="onboarding_ready_colors">Colors</string>
+    <plurals name="bulk_delete_sessions_title">
+        <item quantity="one">Delete %1$d workout?</item>
+        <item quantity="other">Delete %1$d workouts?</item>
+    </plurals>
+    <plurals name="bulk_delete_sessions_message">
+        <item quantity="one">The selected workout will be permanently deleted.</item>
+        <item quantity="other">The %1$d selected workouts will be permanently deleted.</item>
+    </plurals>
+    <plurals name="bulk_delete_routines_title">
+        <item quantity="one">Delete %1$d routine?</item>
+        <item quantity="other">Delete %1$d routines?</item>
+    </plurals>
+    <plurals name="bulk_delete_routines_message">
+        <item quantity="one">The selected routine and all its exercises will be permanently deleted.</item>
+        <item quantity="other">The %1$d selected routines and all their exercises will be permanently deleted.</item>
+    </plurals>
+    <plurals name="bulk_archive_routines_title">
+        <item quantity="one">Archive %1$d routine?</item>
+        <item quantity="other">Archive %1$d routines?</item>
+    </plurals>
+    <plurals name="bulk_archive_routines_message">
+        <item quantity="one">The selected routine will be moved to the archived section.</item>
+        <item quantity="other">The %1$d selected routines will be moved to the archived section.</item>
+    </plurals>
+    <plurals name="bulk_unarchive_routines_title">
+        <item quantity="one">Restore %1$d routine?</item>
+        <item quantity="other">Restore %1$d routines?</item>
+    </plurals>
+    <plurals name="bulk_unarchive_routines_message">
+        <item quantity="one">The selected routine will be restored to your active routines.</item>
+        <item quantity="other">The %1$d selected routines will be restored to your active routines.</item>
+    </plurals>
+    <string name="routine_exercise_remove_title">Remove exercise?</string>
+    <string name="routine_exercise_remove_message">%1$s is removed from this routine. Your past workouts keep its sets.</string>
+    <string name="routine_photo_remove_title">Remove photo?</string>
+    <string name="routine_photo_remove_message">The photo is removed from this routine and deleted from this device.</string>
+    <string name="one_rep_max_delete_title">Delete this 1RM?</string>
+    <string name="one_rep_max_delete_message">%1$s of %2$s is removed from the history of this exercise.</string>
+    <string name="body_weight_delete_title">Delete this weight?</string>
+    <string name="body_weight_delete_message">%1$s of %2$s is removed from your body weight history.</string>
+    <string name="routine_group_archive_confirm">Archive %1$s?</string>
+    <string name="routine_group_restore_confirm">Restore %1$s?</string>
+    <string name="routine_group_dissolve_confirm">Ungroup %1$s?</string>
+    <string name="routine_group_dissolve_message">The routines stay, in no group. The group's name and color are lost.</string>
 </resources>

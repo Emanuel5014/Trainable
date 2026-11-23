@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.domain.session.SessionName
 import com.emanuel5014.trainable.data.local.dao.RunMove
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
 import com.emanuel5014.trainable.data.local.entity.nextSet
@@ -890,47 +891,17 @@ class EditWorkoutModel(
         }
     }
 
-    fun updateSessionName(name: String) {
-        scope.launch {
-            val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
-            if (sessionDetails != null) {
-                workoutRepository.updateSession(sessionDetails.session.copy(noteSessione = name.ifBlank { null }))
-            }
-        }
-    }
-
-    fun updateSessionDate(newTimestamp: Long) {
-        scope.launch {
-            val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
-            if (sessionDetails != null) {
-                workoutRepository.updateSession(sessionDetails.session.copy(timestamp = newTimestamp))
-            }
-        }
-    }
-
-    fun updateSessionDuration(durationMs: Long?) {
-        scope.launch {
-            val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
-            if (sessionDetails != null) {
-                workoutRepository.updateSession(sessionDetails.session.copy(durationMs = durationMs))
-                _state.update { it.copy(sessionDurationMs = durationMs) }
-            }
-        }
-    }
-
     fun updateSessionDetails(name: String, timestamp: Long, durationMs: Long?) {
         scope.launch {
             val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
             if (sessionDetails != null) {
-                val updatedSession = sessionDetails.session.copy(
-                    noteSessione = name.ifBlank { null },
-                    timestamp = timestamp,
-                    durationMs = durationMs
-                )
-                workoutRepository.updateSession(updatedSession)
+                // The sheet comes filled with the current name: left as it is, the workout keeps following its routine
+                val note = SessionName.toSave(name, _state.value.planName, sessionDetails.session.noteSessione, sessionDetails.plan.nome)
+                // Only these columns: the rest of the row (journal, timers) may have changed since it was read
+                workoutRepository.updateSessionDetails(sessionId, note, timestamp, durationMs)
                 _state.update {
                     it.copy(
-                        planName = name.ifBlank { sessionDetails.plan.nome },
+                        planName = sessionName(note, sessionDetails.plan.nome),
                         sessionTimestamp = timestamp,
                         sessionDurationMs = durationMs
                     )

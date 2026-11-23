@@ -106,6 +106,8 @@ class WorkoutRepository(
     fun getRoutineGroups(): Flow<List<RoutineGroupEntity>> = workoutDao.getRoutineGroups()
     
     fun getPlanWithDetails(planId: Int): Flow<PlanWithDetails?> = workoutDao.getPlanWithDetails(planId)
+
+    suspend fun getPlanOnce(planId: Int): WorkoutPlanEntity? = workoutDao.getPlanOnce(planId)
     
     suspend fun savePlan(plan: WorkoutPlanEntity): Long {
         return workoutDao.insertPlan(plan)
@@ -810,6 +812,11 @@ class WorkoutRepository(
     }
 
     suspend fun updateSession(session: WorkoutSessionEntity) = workoutDao.updateSession(session)
+
+    suspend fun updateSessionName(sessionId: Int, name: String?) = workoutDao.updateSessionName(sessionId, name)
+
+    suspend fun updateSessionDetails(sessionId: Int, name: String?, timestamp: Long, durationMs: Long?) =
+        workoutDao.updateSessionDetails(sessionId, name, timestamp, durationMs)
 
     suspend fun deleteExerciseFromSession(sessionId: Int, exerciseId: Int) = 
         workoutDao.deleteExerciseFromSession(sessionId, exerciseId)

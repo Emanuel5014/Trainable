@@ -106,8 +106,6 @@ import com.emanuel5014.trainable.sharedui.resources.cardio_cat_label
 import com.emanuel5014.trainable.sharedui.resources.confirm
 import com.emanuel5014.trainable.sharedui.resources.custom_workout
 import com.emanuel5014.trainable.sharedui.resources.delete
-import com.emanuel5014.trainable.sharedui.resources.delete_routine
-import com.emanuel5014.trainable.sharedui.resources.delete_routine_message
 import com.emanuel5014.trainable.sharedui.resources.delete_session
 import com.emanuel5014.trainable.sharedui.resources.delete_session_message
 import com.emanuel5014.trainable.sharedui.resources.edit
@@ -129,6 +127,8 @@ import com.emanuel5014.trainable.sharedui.resources.tap_plus_to_add
 import com.emanuel5014.trainable.sharedui.resources.time_and_reps_badge
 import com.emanuel5014.trainable.sharedui.resources.time_and_weight_badge
 import com.emanuel5014.trainable.sharedui.resources.workout_duration
+import com.emanuel5014.trainable.sharedui.resources.workout_exercise_delete_message
+import com.emanuel5014.trainable.sharedui.resources.workout_exercise_delete_title
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
@@ -225,7 +225,8 @@ fun EditWorkoutContent(
     var editingCardio by remember { mutableStateOf<CardioLogEntity?>(null) }
     var showExercisePicker by remember { mutableStateOf(false) }
     var exerciseToSwap by remember { mutableStateOf<ExerciseKey?>(null) }
-    var showDeleteExerciseDialog by remember { mutableStateOf<ExerciseKey?>(null) }
+    // A whole exercise (strength run or cardio block) waiting for the user to confirm its removal from this workout
+    var exerciseToDelete by remember { mutableStateOf<ExerciseDeletion?>(null) }
     var showEditDetailsSheet by remember { mutableStateOf(false) }
     var showJournalSheet by remember { mutableStateOf(false) }
     // A cardio picked from the add sheet: its entry sheet is open (picker → sheet, without a date)
@@ -413,7 +414,12 @@ fun EditWorkoutContent(
                                             showExercisePicker = true
                                         },
                                         onEditPrescription = { exerciseToEditPrescription = exerciseState.key },
-                                        onDeleteExercise = { showDeleteExerciseDialog = exerciseState.key },
+                                        onDeleteExercise = {
+                                            exerciseToDelete = ExerciseDeletion(
+                                                name = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
+                                                delete = { viewModel.deleteExercise(exerciseState.key) }
+                                            )
+                                        },
                                         onMoveSetUp = { viewModel.moveSetUp(it) },
                                         onMoveSetDown = { viewModel.moveSetDown(it) },
                                         onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.key) },
@@ -432,7 +438,12 @@ fun EditWorkoutContent(
                                         isDragging = isDragging,
                                         onEditSet = { editingCardio = it },
                                         onAddSet = { viewModel.addCardioSet(item) },
-                                        onDelete = { viewModel.deleteCardioExercise(item) },
+                                        onDelete = {
+                                            exerciseToDelete = ExerciseDeletion(
+                                                name = CardioNames.of(item.first, state.exercisesById, languageCode),
+                                                delete = { viewModel.deleteCardioExercise(item) }
+                                            )
+                                        },
                                         onMoveUp = { viewModel.moveCardio(item, displayedItems, -1) },
                                         onMoveDown = { viewModel.moveCardio(item, displayedItems, 1) },
                                         onRestoreExercise = { viewModel.restoreExercise(it) }
@@ -670,18 +681,18 @@ fun EditWorkoutContent(
         )
     }
 
-    if (showDeleteExerciseDialog != null) {
+    exerciseToDelete?.let { deletion ->
         AlertDialog(
-            onDismissRequest = { showDeleteExerciseDialog = null },
-            title = { Text(stringResource(Res.string.delete_routine)) },
-            text = { Text(stringResource(Res.string.delete_routine_message)) },
+            onDismissRequest = { exerciseToDelete = null },
+            title = { Text(stringResource(Res.string.workout_exercise_delete_title)) },
+            text = { Text(stringResource(Res.string.workout_exercise_delete_message, deletion.name)) },
             confirmButton = {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                     modifier = Modifier.padding(bottom = Spacing.small)
                 ) {
                     GymButton(
-                        onClick = { showDeleteExerciseDialog = null },
+                        onClick = { exerciseToDelete = null },
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
@@ -689,8 +700,8 @@ fun EditWorkoutContent(
                     }
                     GymButton(
                         onClick = {
-                            showDeleteExerciseDialog?.let { viewModel.deleteExercise(it) }
-                            showDeleteExerciseDialog = null
+                            deletion.delete()
+                            exerciseToDelete = null
                         },
                         containerColor = Error.copy(alpha = 0.15f),
                         contentColor = Error
@@ -1655,3 +1666,6 @@ fun EditWorkoutDetailsBottomSheet(
         }
     }
 }
+
+/** A whole exercise of the workout the user asked to delete: [name] as the card shows it, [delete] once confirmed. */
+private class ExerciseDeletion(val name: String, val delete: () -> Unit)

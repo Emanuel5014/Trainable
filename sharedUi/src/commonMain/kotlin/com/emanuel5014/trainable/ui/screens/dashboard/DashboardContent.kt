@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import com.emanuel5014.trainable.sharedui.resources.bulk_delete_sessions_message
+import com.emanuel5014.trainable.sharedui.resources.bulk_delete_sessions_title
+import org.jetbrains.compose.resources.pluralStringResource
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import androidx.compose.runtime.key
 import androidx.compose.foundation.verticalScroll
@@ -437,8 +440,8 @@ fun DashboardContent(
     if (showBulkDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showBulkDeleteDialog = false },
-            title = { Text(stringResource(Res.string.delete_session)) },
-            text = { Text(stringResource(Res.string.delete_session_message)) },
+            title = { val n = uiState.selectedSessionIds.size; Text(pluralStringResource(Res.plurals.bulk_delete_sessions_title, n, n)) },
+            text = { val n = uiState.selectedSessionIds.size; Text(pluralStringResource(Res.plurals.bulk_delete_sessions_message, n, n)) },
             confirmButton = {
                 GymButton(
                     onClick = {

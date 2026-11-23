@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.sharedui.resources.remove_set_confirm
+import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -175,6 +177,19 @@ fun CardioSetDialog(
     onSave: (seconds: Int, distanceKm: Float, note: String, rpe: Float?) -> Unit,
     onDelete: (() -> Unit)?
 ) {
+    // Deleting a set asks first, as it does in the open workout
+    var confirmDelete by remember { mutableStateOf(false) }
+    if (confirmDelete) {
+        ConfirmDeleteDialog(
+            title = stringResource(Res.string.cardio_remove_set),
+            message = stringResource(Res.string.remove_set_confirm),
+            onConfirm = {
+                confirmDelete = false
+                onDelete?.invoke()
+            },
+            onDismiss = { confirmDelete = false }
+        )
+    }
     var minutes by remember { mutableStateOf((set.elapsedSeconds / 60).toString()) }
     var seconds by remember { mutableStateOf((set.elapsedSeconds % 60).toString()) }
     // Typed in the user's unit; left untouched the stored km are saved exactly
@@ -237,7 +252,7 @@ fun CardioSetDialog(
         confirmButton = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (onDelete != null) {
-                    IconButton(onClick = onDelete) {
+                    IconButton(onClick = { confirmDelete = true }) {
                         Icon(Icons.Rounded.Delete, contentDescription = stringResource(Res.string.cardio_remove_set), tint = Error)
                     }
                 }

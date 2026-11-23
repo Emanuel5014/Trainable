@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.domain.session.SessionName
 import com.emanuel5014.trainable.data.local.entity.straightReps
 import com.emanuel5014.trainable.data.local.entity.encodePerformed
 import com.emanuel5014.trainable.data.local.entity.parts
@@ -3726,8 +3727,16 @@ class WorkoutModel(
         val sessionId = _state.value.sessionId ?: return
         modelScope.launch {
             val session = workoutRepository.getSessionWithSets(sessionId).firstOrNull()?.session ?: return@launch
-            workoutRepository.updateSession(session.copy(noteSessione = newName))
-            _state.update { it.copy(planName = newName) }
+            val plan = workoutRepository.getPlanOnce(session.planId)
+            val shown = _state.value.planName
+            // The dialog comes filled with the current name: left as it is (or emptied), the workout keeps following its routine
+            val note = plan?.let { SessionName.toSave(newName, shown, session.noteSessione, it.nome) }
+                ?: newName.trim().ifEmpty { null }
+            // Only the name: the timers of the running workout are written to the same row meanwhile
+            workoutRepository.updateSessionName(sessionId, note)
+            // Nothing of its own: the title is the routine's name (a quick workout's, translated)
+            val title = note ?: if (_state.value.isQuickWorkout) workoutText().quickWorkout else plan?.nome ?: shown
+            _state.update { it.copy(planName = title) }
         }
     }
 

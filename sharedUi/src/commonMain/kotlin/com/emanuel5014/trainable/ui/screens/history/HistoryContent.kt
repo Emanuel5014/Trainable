@@ -1,5 +1,11 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.sharedui.resources.remove_set_confirm
+import com.emanuel5014.trainable.sharedui.resources.cardio_remove_set
+import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
+import com.emanuel5014.trainable.sharedui.resources.bulk_delete_sessions_message
+import com.emanuel5014.trainable.sharedui.resources.bulk_delete_sessions_title
+import org.jetbrains.compose.resources.pluralStringResource
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.util.WeightUnitConverter
@@ -748,8 +754,8 @@ fun HistoryContent(
         if (showBulkDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showBulkDeleteDialog = false },
-                title = { Text(stringResource(Res.string.delete_session)) },
-                text = { Text(stringResource(Res.string.delete_session_message)) },
+                title = { val n = uiState.selectedSessionIds.size; Text(pluralStringResource(Res.plurals.bulk_delete_sessions_title, n, n)) },
+                text = { val n = uiState.selectedSessionIds.size; Text(pluralStringResource(Res.plurals.bulk_delete_sessions_message, n, n)) },
                 confirmButton = {
                     GymButton(
                         onClick = {
@@ -1023,6 +1029,19 @@ fun EditSetDialog(
     onConfirm: (SetLogEntity) -> Unit,
     onDelete: (SetLogEntity) -> Unit
 ) {
+    // Deleting a set asks first, as it does in the open workout
+    var confirmDelete by remember { mutableStateOf(false) }
+    if (confirmDelete) {
+        ConfirmDeleteDialog(
+            title = stringResource(Res.string.cardio_remove_set),
+            message = stringResource(Res.string.remove_set_confirm),
+            onConfirm = {
+                confirmDelete = false
+                onDelete(set)
+            },
+            onDismiss = { confirmDelete = false }
+        )
+    }
     var weight by remember {
         mutableStateOf(
             if (isNewSet) ""
@@ -1207,7 +1226,7 @@ fun EditSetDialog(
             ) {
                 if (!isNewSet) {
                     GymButton(
-                        onClick = { onDelete(set) },
+                        onClick = { confirmDelete = true },
                         containerColor = Error.copy(alpha = 0.15f),
                         contentColor = Error,
                         height = 48,

@@ -49,6 +49,7 @@ fun RoomDatabase.Builder<GymDatabase>.withAppSetup(
                         syncExercises(dbInstance.exerciseDao(), retiredPresets)
                         // After the sync, so that a preset it just added can take its logs
                         repairCardioLinks(dbInstance.workoutDao())
+                        relinkSessionNames(dbInstance.workoutDao())
                     }
                 }
             }
@@ -79,6 +80,15 @@ private suspend fun syncExercises(exerciseDao: ExerciseDao, retiredPresets: Reti
         // Exercises might already exist, ignore
     }
     hideRetiredPresets(exerciseDao, retiredPresets)
+}
+
+/** Puts back on their routine's name the workouts that only copied it (#74). A failure is ignored: the next launch tries again. */
+private suspend fun relinkSessionNames(workoutDao: WorkoutDao) {
+    try {
+        workoutDao.clearSessionNamesThatRepeatTheRoutine()
+    } catch (e: Exception) {
+        // Shown the same either way: only the link to a later rename of the routine waits for the next launch
+    }
 }
 
 /** Links the cardio logs left without an exercise (normally none). A failure is ignored: the next launch tries again. */

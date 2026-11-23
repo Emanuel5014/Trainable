@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDialog
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.ui.util.bodyPadding
 import com.emanuel5014.trainable.ui.util.scrollEndInset
@@ -482,37 +483,6 @@ private fun NameDialog(
         confirmButton = {
             TextButton(onClick = { onConfirm(name) }, enabled = name.isNotBlank()) {
                 Text(stringResource(Res.string.save).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
-            }
-        }
-    )
-}
-
-@Composable
-private fun ConfirmDialog(
-    title: String,
-    message: String,
-    confirmLabel: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    destructive: Boolean = false
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = SurfaceContainerHigh,
-        title = { Text(title, fontWeight = FontWeight.ExtraBold, color = OnSurface) },
-        text = { Text(message, color = OnSurfaceVariant) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(
-                    confirmLabel.uppercase(),
-                    color = if (destructive) Error else Primary,
-                    fontWeight = FontWeight.ExtraBold
-                )
             }
         },
         dismissButton = {

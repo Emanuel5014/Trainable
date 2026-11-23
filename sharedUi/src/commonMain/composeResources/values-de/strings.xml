@@ -5,6 +5,8 @@
     <string name="delete">Löschen</string>
     <string name="delete_session">Sitzung löschen?</string>
     <string name="delete_session_message">Dies löscht dauerhaft diese Trainingssitzung.</string>
+    <string name="workout_exercise_delete_title">Übung löschen?</string>
+    <string name="workout_exercise_delete_message">%1$s und alle zugehörigen Sätze werden aus diesem Training gelöscht. Deine Routine und die Übungsliste bleiben unverändert.</string>
     <string name="existing_workout_message">Ein unerledigtes Training für "%1$s" ist bereits vorhanden. Fortsetzen?</string>
     <string name="expired">Abgelaufen</string>
     <string name="expires_in_days">Läuft in %1$d Tagen ab</string>
@@ -1754,4 +1756,48 @@
     <string name="onboarding_colors_title">Deine Farben</string>
     <string name="onboarding_colors_more">Akzentfarben, Hintergrundtönung und gespeicherte Themen findest du unter Einstellungen › Personalisierung.</string>
     <string name="onboarding_ready_colors">Farben</string>
+    <plurals name="bulk_delete_sessions_title">
+        <item quantity="one">%1$d Training löschen?</item>
+        <item quantity="other">%1$d Trainings löschen?</item>
+    </plurals>
+    <plurals name="bulk_delete_sessions_message">
+        <item quantity="one">Das ausgewählte Training wird dauerhaft gelöscht.</item>
+        <item quantity="other">Die %1$d ausgewählten Trainings werden dauerhaft gelöscht.</item>
+    </plurals>
+    <plurals name="bulk_delete_routines_title">
+        <item quantity="one">%1$d Routine löschen?</item>
+        <item quantity="other">%1$d Routinen löschen?</item>
+    </plurals>
+    <plurals name="bulk_delete_routines_message">
+        <item quantity="one">Die ausgewählte Routine und alle ihre Übungen werden dauerhaft gelöscht.</item>
+        <item quantity="other">Die %1$d ausgewählten Routinen und alle ihre Übungen werden dauerhaft gelöscht.</item>
+    </plurals>
+    <plurals name="bulk_archive_routines_title">
+        <item quantity="one">%1$d Routine archivieren?</item>
+        <item quantity="other">%1$d Routinen archivieren?</item>
+    </plurals>
+    <plurals name="bulk_archive_routines_message">
+        <item quantity="one">Die ausgewählte Routine wird in den archivierten Bereich verschoben.</item>
+        <item quantity="other">Die %1$d ausgewählten Routinen werden in den archivierten Bereich verschoben.</item>
+    </plurals>
+    <plurals name="bulk_unarchive_routines_title">
+        <item quantity="one">%1$d Routine wiederherstellen?</item>
+        <item quantity="other">%1$d Routinen wiederherstellen?</item>
+    </plurals>
+    <plurals name="bulk_unarchive_routines_message">
+        <item quantity="one">Die ausgewählte Routine wird zu deinen aktiven Routinen zurückgeholt.</item>
+        <item quantity="other">Die %1$d ausgewählten Routinen werden zu deinen aktiven Routinen zurückgeholt.</item>
+    </plurals>
+    <string name="routine_exercise_remove_title">Übung entfernen?</string>
+    <string name="routine_exercise_remove_message">%1$s wird aus dieser Routine entfernt. Deine vergangenen Trainings behalten ihre Sätze.</string>
+    <string name="routine_photo_remove_title">Foto entfernen?</string>
+    <string name="routine_photo_remove_message">Das Foto wird aus dieser Routine entfernt und von diesem Gerät gelöscht.</string>
+    <string name="one_rep_max_delete_title">Dieses 1RM löschen?</string>
+    <string name="one_rep_max_delete_message">%1$s vom %2$s wird aus dem Verlauf dieser Übung entfernt.</string>
+    <string name="body_weight_delete_title">Dieses Gewicht löschen?</string>
+    <string name="body_weight_delete_message">%1$s vom %2$s wird aus deinem Körpergewichtsverlauf entfernt.</string>
+    <string name="routine_group_archive_confirm">%1$s archivieren?</string>
+    <string name="routine_group_restore_confirm">%1$s wiederherstellen?</string>
+    <string name="routine_group_dissolve_confirm">%1$s auflösen?</string>
+    <string name="routine_group_dissolve_message">Die Routinen bleiben, ohne Gruppe. Name und Farbe der Gruppe gehen verloren.</string>
 </resources>

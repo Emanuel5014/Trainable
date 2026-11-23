@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.analytics
 
+import com.emanuel5014.trainable.sharedui.resources.body_weight_delete_message
+import com.emanuel5014.trainable.sharedui.resources.body_weight_delete_title
+import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -752,6 +755,23 @@ fun BodyWeightChartSection(
 
                 var showHistory by remember { mutableStateOf(false) }
                 val recentEntries = bodyWeightHistory.takeLast(5).reversed()
+                // Each row's X asks first: the weight is gone for good
+                var weightToDelete by remember { mutableStateOf<AnalyticsChartPoint?>(null) }
+                weightToDelete?.let { entry ->
+                    ConfirmDeleteDialog(
+                        title = stringResource(Res.string.body_weight_delete_title),
+                        message = stringResource(
+                            Res.string.body_weight_delete_message,
+                            WeightUnitConverter.formatWithUnit(entry.value, weightUnit),
+                            DateFormatter.formatShort(entry.timestamp)
+                        ),
+                        onConfirm = {
+                            weightToDelete = null
+                            onDeleteWeight?.invoke(entry.id)
+                        },
+                        onDismiss = { weightToDelete = null }
+                    )
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -804,7 +824,7 @@ fun BodyWeightChartSection(
                                     )
                                     if (onDeleteWeight != null && entry.id > 0) {
                                         IconButton(
-                                            onClick = { onDeleteWeight(entry.id) },
+                                            onClick = { weightToDelete = entry },
                                             modifier = Modifier.size(28.dp)
                                         ) {
                                             Icon(

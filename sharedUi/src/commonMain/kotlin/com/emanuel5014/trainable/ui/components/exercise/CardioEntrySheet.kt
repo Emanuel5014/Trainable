@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.remove_set_confirm
+import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
 import com.emanuel5014.trainable.util.DistanceUnitConverter
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -143,6 +145,19 @@ fun CardioEntrySheet(
     /** Editing a set of an exercise done in several sets: its number, shown above the title. */
     setNumber: Int? = null
 ) {
+    // Deleting a set asks first, as it does in the open workout
+    var confirmDelete by remember { mutableStateOf(false) }
+    if (confirmDelete) {
+        ConfirmDeleteDialog(
+            title = stringResource(Res.string.cardio_remove_set),
+            message = stringResource(Res.string.remove_set_confirm),
+            onConfirm = {
+                confirmDelete = false
+                onDelete?.invoke()
+            },
+            onDismiss = { confirmDelete = false }
+        )
+    }
     val zone = remember { TimeZone.currentSystemDefault() }
     val separator = remember { formatLocalDecimals(1.5, 1).getOrElse(1) { '.' } }
 
@@ -191,7 +206,9 @@ fun CardioEntrySheet(
                     },
                     title = title ?: ExerciseTranslations.translate(exercise.nome, languageCode),
                     onChange = onChangeExercise.takeIf { mode != CardioEntryMode.EDIT_SET },
-                    onDelete = onDelete.takeIf { mode == CardioEntryMode.EDIT_SET }
+                    onDelete = if (onDelete != null && mode == CardioEntryMode.EDIT_SET) {
+                        { confirmDelete = true }
+                    } else null
                 )
 
                 if (mode == CardioEntryMode.ADD_FROM_HISTORY) {

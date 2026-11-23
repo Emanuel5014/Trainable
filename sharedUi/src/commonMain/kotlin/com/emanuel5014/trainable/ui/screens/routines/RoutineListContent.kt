@@ -1,5 +1,21 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.sharedui.resources.routine_group_dissolve
+import com.emanuel5014.trainable.sharedui.resources.routine_group_restore
+import com.emanuel5014.trainable.sharedui.resources.routine_group_archive
+import com.emanuel5014.trainable.sharedui.resources.routine_group_dissolve_message
+import com.emanuel5014.trainable.sharedui.resources.routine_group_restore_hint
+import com.emanuel5014.trainable.sharedui.resources.routine_group_archive_hint
+import com.emanuel5014.trainable.sharedui.resources.routine_group_dissolve_confirm
+import com.emanuel5014.trainable.sharedui.resources.routine_group_restore_confirm
+import com.emanuel5014.trainable.sharedui.resources.routine_group_archive_confirm
+import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDialog
+import com.emanuel5014.trainable.sharedui.resources.bulk_unarchive_routines_message
+import com.emanuel5014.trainable.sharedui.resources.bulk_unarchive_routines_title
+import com.emanuel5014.trainable.sharedui.resources.bulk_archive_routines_message
+import com.emanuel5014.trainable.sharedui.resources.bulk_archive_routines_title
+import com.emanuel5014.trainable.sharedui.resources.bulk_delete_routines_message
+import com.emanuel5014.trainable.sharedui.resources.bulk_delete_routines_title
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.ui.glass.actionGlass
@@ -251,6 +267,8 @@ fun RoutineListContent(
     // The group whose ⋮ was tapped, and whether on the Archived tab
     var groupMenu by remember { mutableStateOf<Pair<RoutineGroupEntity, Boolean>?>(null) }
     var groupToRename by remember { mutableStateOf<RoutineGroupEntity?>(null) }
+    // Archive, restore or ungroup picked from the group menu, waiting for the user's OK (archiving one routine asks too)
+    var groupAction by remember { mutableStateOf<Pair<RoutineGroupEntity, GroupAction>?>(null) }
     var groupToRecolor by remember { mutableStateOf<RoutineGroupEntity?>(null) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
@@ -643,6 +661,39 @@ fun RoutineListContent(
         )
     }
 
+    groupAction?.let { (group, action) ->
+        val title = when (action) {
+            GroupAction.ARCHIVE -> Res.string.routine_group_archive_confirm
+            GroupAction.RESTORE -> Res.string.routine_group_restore_confirm
+            GroupAction.DISSOLVE -> Res.string.routine_group_dissolve_confirm
+        }
+        val message = when (action) {
+            GroupAction.ARCHIVE -> Res.string.routine_group_archive_hint
+            GroupAction.RESTORE -> Res.string.routine_group_restore_hint
+            GroupAction.DISSOLVE -> Res.string.routine_group_dissolve_message
+        }
+        val confirm = when (action) {
+            GroupAction.ARCHIVE -> Res.string.routine_group_archive
+            GroupAction.RESTORE -> Res.string.routine_group_restore
+            GroupAction.DISSOLVE -> Res.string.routine_group_dissolve
+        }
+        ConfirmDialog(
+            title = stringResource(title, group.name),
+            message = stringResource(message),
+            confirmLabel = stringResource(confirm),
+            destructive = action == GroupAction.DISSOLVE,
+            onConfirm = {
+                when (action) {
+                    GroupAction.ARCHIVE -> state.setGroupArchived(group, archived = true)
+                    GroupAction.RESTORE -> state.setGroupArchived(group, archived = false)
+                    GroupAction.DISSOLVE -> state.dissolveGroup(group)
+                }
+                groupAction = null
+            },
+            onDismiss = { groupAction = null }
+        )
+    }
+
     groupMenu?.let { (group, archivedTab) ->
         val all = uiState.plans + uiState.archivedPlans
         // Neighbours as this tab shows them, so "move up" never swaps with a group the tab does not show
@@ -668,11 +719,11 @@ fun RoutineListContent(
                 groupMenu = null
             },
             onArchive = {
-                state.setGroupArchived(group, archived = !archivedTab)
+                groupAction = group to if (archivedTab) GroupAction.RESTORE else GroupAction.ARCHIVE
                 groupMenu = null
             },
             onDissolve = {
-                state.dissolveGroup(group)
+                groupAction = group to GroupAction.DISSOLVE
                 groupMenu = null
             },
             onDismiss = { groupMenu = null }
@@ -704,8 +755,8 @@ fun RoutineListContent(
     if (showBulkDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showBulkDeleteDialog = false },
-            title = { Text(stringResource(Res.string.delete_routine)) },
-            text = { Text(stringResource(Res.string.delete_routine_message)) },
+            title = { val n = uiState.selectedPlanIds.size; Text(pluralStringResource(Res.plurals.bulk_delete_routines_title, n, n)) },
+            text = { val n = uiState.selectedPlanIds.size; Text(pluralStringResource(Res.plurals.bulk_delete_routines_message, n, n)) },
             confirmButton = {
                 GymButton(
                     onClick = {
@@ -737,10 +788,11 @@ fun RoutineListContent(
 
     if (showBulkArchiveDialog) {
         val isArchiving = pagerState.currentPage == 0
+        val n = uiState.selectedPlanIds.size
         AlertDialog(
             onDismissRequest = { showBulkArchiveDialog = false },
-            title = { Text(stringResource(if (isArchiving) Res.string.archive_routine else Res.string.unarchive_routine)) },
-            text = { Text(stringResource(if (isArchiving) Res.string.archive_routine_message else Res.string.unarchive_routine_message)) },
+            title = { Text(pluralStringResource(if (isArchiving) Res.plurals.bulk_archive_routines_title else Res.plurals.bulk_unarchive_routines_title, n, n)) },
+            text = { Text(pluralStringResource(if (isArchiving) Res.plurals.bulk_archive_routines_message else Res.plurals.bulk_unarchive_routines_message, n, n)) },
             confirmButton = {
                 GymButton(
                     onClick = {
@@ -1437,3 +1489,6 @@ private fun RoutineListItem(
         )
     }
 }
+
+/** What the group menu asks to do to a whole group, confirmed by the user first. */
+private enum class GroupAction { ARCHIVE, RESTORE, DISSOLVE }
