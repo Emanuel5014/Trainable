@@ -9,5 +9,9 @@ data class CardioSetWithSession(
     @Embedded val cardio: CardioLogEntity,
     @ColumnInfo(name = "session_timestamp") val sessionTimestamp: Long,
     @ColumnInfo(name = "session_note") val sessionNote: String?,
-    @ColumnInfo(name = "plan_name") val planName: String
+    @ColumnInfo(name = "plan_name") val planName: String,
+    /** The plan is one of the app's own: the workout has no routine. */
+    @ColumnInfo(name = "plan_is_system") val planIsSystem: Boolean = false,
+    /** The workout has other sets than cardio: it is not a cardio workout. */
+    @ColumnInfo(name = "session_has_strength") val sessionHasStrength: Boolean = false
 )

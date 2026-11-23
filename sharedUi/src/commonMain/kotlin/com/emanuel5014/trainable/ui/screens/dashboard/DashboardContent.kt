@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import com.emanuel5014.trainable.ui.screens.history.title
+import com.emanuel5014.trainable.ui.screens.history.displayText
 import com.emanuel5014.trainable.sharedui.resources.bulk_delete_sessions_message
 import com.emanuel5014.trainable.sharedui.resources.bulk_delete_sessions_title
 import org.jetbrains.compose.resources.pluralStringResource
@@ -152,7 +154,7 @@ fun DashboardContent(
         AlertDialog(
             onDismissRequest = { existingSessionForPlan = null },
             title = { Text(stringResource(Res.string.resume_workout)) },
-            text = { Text(stringResource(Res.string.existing_workout_message, session.displayName)) },
+            text = { Text(stringResource(Res.string.existing_workout_message, session.title.displayText())) },
             confirmButton = {
                 GymButton(
                     onClick = {

@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.compare
 
+import com.emanuel5014.trainable.ui.screens.history.title
+import com.emanuel5014.trainable.ui.screens.history.displayText
 import com.emanuel5014.trainable.ui.util.bodyPadding
 import com.emanuel5014.trainable.ui.util.scrollEndInset
 import com.emanuel5014.trainable.ui.util.plusBottom
@@ -310,7 +312,8 @@ private fun SessionPill(
             color = OnSurface
         )
         Text(
-            text = session.plan.nome,
+            // The workout's own name, else its routine's, else what it holds (#75)
+            text = session.title.displayText(),
             style = MaterialTheme.typography.bodySmall,
             color = OnSurfaceVariant,
             maxLines = 2,

@@ -2,6 +2,8 @@
 
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.ui.screens.history.title
+import com.emanuel5014.trainable.ui.screens.history.displayText
 import com.emanuel5014.trainable.sharedui.resources.routine_exercise_remove_message
 import com.emanuel5014.trainable.sharedui.resources.routine_exercise_remove_title
 import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
@@ -592,7 +594,7 @@ fun RoutineDetailContent(
         AlertDialog(
             onDismissRequest = { existingSessionForPlan = null },
             title = { Text(stringResource(Res.string.resume_workout)) },
-            text = { Text(stringResource(Res.string.existing_workout_message, session.displayName)) },
+            text = { Text(stringResource(Res.string.existing_workout_message, session.title.displayText())) },
             confirmButton = {
                 GymButton(
                     onClick = {

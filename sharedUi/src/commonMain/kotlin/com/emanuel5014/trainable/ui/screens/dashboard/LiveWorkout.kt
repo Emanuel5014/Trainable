@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import com.emanuel5014.trainable.domain.session.WorkoutTitle
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import kotlinx.serialization.Serializable
@@ -19,6 +20,8 @@ data class LiveWorkoutSnapshot(
     /** The next set to do; null when every set is done, or for a moment (the pause of a mini-set). */
     val next: LiveNextSet? = null,
     val allDone: Boolean = false,
+    /** Every exercise is cardio: a quick workout without a name is shown as a cardio workout (#75). */
+    val cardioOnly: Boolean = false,
     val writtenAt: Long
 ) {
     fun encode(): String = json.encodeToString(serializer(), this)
@@ -124,6 +127,8 @@ data class LiveWorkoutUi(
     val sessionId: Int,
     val title: String,
     val elapsedMinutes: Int,
+    /** What the workout is called, translated where it is shown; [title] is the stored name. */
+    val workoutTitle: WorkoutTitle = WorkoutTitle.Named(title),
     /** When the workout started (epoch ms), for the h:mm:ss clock of the status line. */
     val startedAt: Long = 0L,
     val phase: Phase,
@@ -184,6 +189,10 @@ data class LiveWorkoutUi(
                 sessionId = session.id,
                 title = item.displayName,
                 elapsedMinutes = elapsed,
+                workoutTitle = WorkoutTitle.of(
+                    item.session.noteSessione, item.planNome, item.planIsSystem,
+                    hasStrength = false, hasCardio = snap?.cardioOnly == true
+                ),
                 startedAt = session.timestamp,
                 phase = phase,
                 seconds = seconds,

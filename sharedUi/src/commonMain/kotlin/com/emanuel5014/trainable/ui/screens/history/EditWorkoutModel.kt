@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.isSystemPlan
+import com.emanuel5014.trainable.domain.session.WorkoutTitle
 import com.emanuel5014.trainable.domain.session.SessionName
 import com.emanuel5014.trainable.data.local.dao.RunMove
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
@@ -51,6 +53,10 @@ data class EditWorkoutState(
     val isLoading: Boolean = true,
     val sessionId: Int = 0,
     val planName: String = "",
+    /** The workout's own name (null: it goes by its routine's, or by what it holds when it has no routine). */
+    val ownName: String? = null,
+    /** The plan is one of the app's own: the workout has no routine. */
+    val isSystemPlan: Boolean = false,
     val exercises: List<EditExerciseState> = emptyList(),
     val cardioLogs: List<CardioLogEntity> = emptyList(),
     val availableExercises: List<ExerciseEntity> = emptyList(),
@@ -72,6 +78,14 @@ data class EditWorkoutState(
     /** The tags of the workout, for showing them. */
     val journalTags: List<SessionTagEntity> = emptyList()
 )
+
+/** What the name field of the details sheet starts with: no routine and no name of its own leaves it empty. */
+val EditWorkoutState.editableName: String
+    get() = ownName ?: if (isSystemPlan) "" else planName
+
+/** The workout's name as shown, following its exercises when it has no routine (#75). */
+val EditWorkoutState.title: WorkoutTitle
+    get() = WorkoutTitle.of(ownName, planName, isSystemPlan, hasStrength = exercises.isNotEmpty(), hasCardio = cardioLogs.isNotEmpty())
 
 data class EditExerciseState(
     val exercise: ExerciseEntity,
@@ -154,7 +168,9 @@ class EditWorkoutModel(
                             it.copy(
                                 isLoading = false,
                                 sessionId = sessionId,
-                                planName = sessionName(sessionDetails.session.noteSessione, sessionDetails.plan.nome),
+                                planName = sessionDetails.plan.nome,
+                                ownName = sessionDetails.session.noteSessione?.takeIf { it.isNotBlank() },
+                                isSystemPlan = sessionDetails.plan.isSystemPlan,
                                 sessionTimestamp = sessionDetails.session.timestamp,
                                 sessionDurationMs = sessionDetails.session.durationMs,
                                 exercises = exercises,
@@ -896,12 +912,12 @@ class EditWorkoutModel(
             val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
             if (sessionDetails != null) {
                 // The sheet comes filled with the current name: left as it is, the workout keeps following its routine
-                val note = SessionName.toSave(name, _state.value.planName, sessionDetails.session.noteSessione, sessionDetails.plan.nome)
+                val note = SessionName.toSave(name, _state.value.editableName, sessionDetails.session.noteSessione, sessionDetails.plan.nome)
                 // Only these columns: the rest of the row (journal, timers) may have changed since it was read
                 workoutRepository.updateSessionDetails(sessionId, note, timestamp, durationMs)
                 _state.update {
                     it.copy(
-                        planName = sessionName(note, sessionDetails.plan.nome),
+                        ownName = note,
                         sessionTimestamp = timestamp,
                         sessionDurationMs = durationMs
                     )

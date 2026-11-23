@@ -39,7 +39,7 @@ class QuickStartWidget : GlanceAppWidget() {
 
         provideContent {
             val theme by themeFlow.collectAsState(initial = initialTheme)
-            val state = collectRoutineWidgetState(workoutRepository, withExerciseCount = false)
+            val state = collectRoutineWidgetState(workoutRepository, withExerciseCount = false, quickWorkoutName = context.getString(R.string.workout_title_quick))
             val colors = remember(theme) { theme.colorProviders(context) }
             GlanceTheme(colors = colors) {
                 QuickStartContent(context, state)

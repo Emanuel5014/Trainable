@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import com.emanuel5014.trainable.ui.screens.history.title
+import com.emanuel5014.trainable.ui.screens.history.displayText
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -147,8 +149,9 @@ private fun actionStyle(action: DashboardAction): ActionStyle {
     }
 }
 
+@Composable
 private fun DashboardAction.title(): String = when (this) {
-    is DashboardAction.Resume -> session.displayName
+    is DashboardAction.Resume -> session.title.displayText()
     is DashboardAction.Today -> plan.nome
     is DashboardAction.Suggested -> plan.nome
 }

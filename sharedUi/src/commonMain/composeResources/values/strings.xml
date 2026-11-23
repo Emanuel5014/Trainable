@@ -1801,4 +1801,6 @@
     <string name="routine_group_restore_confirm">Restore %1$s?</string>
     <string name="routine_group_dissolve_confirm">Ungroup %1$s?</string>
     <string name="routine_group_dissolve_message">The routines stay, in no group. The group's name and color are lost.</string>
+    <string name="workout_title_quick">Quick Workout</string>
+    <string name="workout_title_cardio">Cardio Workout</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.screens.history.displayText
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -220,7 +221,7 @@ fun ExerciseOverview(state: WorkoutState, overview: ExerciseOverviewState, langu
                 .padding(20.dp)
         ) {
             Text(
-                text = state.planName,
+                text = state.title.displayText(),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Black,
                 color = OnSurface,

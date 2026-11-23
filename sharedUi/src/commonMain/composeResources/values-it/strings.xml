@@ -1814,4 +1814,6 @@
     <string name="routine_group_restore_confirm">Ripristinare %1$s?</string>
     <string name="routine_group_dissolve_confirm">Sciogliere %1$s?</string>
     <string name="routine_group_dissolve_message">Le schede restano, senza gruppo. Il nome e il colore del gruppo vanno persi.</string>
+    <string name="workout_title_quick">Allenamento Veloce</string>
+    <string name="workout_title_cardio">Allenamento Cardio</string>
 </resources>

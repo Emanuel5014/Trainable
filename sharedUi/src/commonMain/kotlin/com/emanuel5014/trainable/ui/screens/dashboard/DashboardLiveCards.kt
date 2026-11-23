@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import com.emanuel5014.trainable.ui.screens.history.displayText
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -408,7 +409,7 @@ private fun ExerciseProgress(ui: LiveWorkoutUi, isActive: Boolean) {
 /** What the screen reader says for the whole card, instead of every text and the moving seconds. */
 @Composable
 private fun liveSummary(ui: LiveWorkoutUi): String {
-    val parts = mutableListOf(ui.title, stringResource(Res.string.dashboard_live_in_progress, elapsedText(ui.elapsedMinutes)))
+    val parts = mutableListOf(ui.workoutTitle.displayText(), stringResource(Res.string.dashboard_live_in_progress, elapsedText(ui.elapsedMinutes)))
     when (ui.phase) {
         LiveWorkoutUi.Phase.REST, LiveWorkoutUi.Phase.WARMUP -> {
             parts += "${phaseLabel(ui).lowercase()} ${clock(ui.seconds)}"
@@ -445,7 +446,7 @@ internal fun LiveWorkoutCard(ui: LiveWorkoutUi, isActive: Boolean, onClick: () -
             Column(Modifier.weight(1f)) {
                 LiveStatus(ui, isActive)
                 Text(
-                    ui.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold,
+                    ui.workoutTitle.displayText(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold,
                     color = ResumeInk, maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
             }
@@ -599,7 +600,7 @@ internal fun LiveWorkoutPanel(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 LiveStatus(ui, isActive)
-                Text(ui.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = ResumeInk, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(ui.workoutTitle.displayText(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = ResumeInk, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Spacer(Modifier.width(8.dp))
             val deleteLabel = stringResource(Res.string.dashboard_live_delete)

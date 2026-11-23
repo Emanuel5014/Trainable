@@ -41,6 +41,7 @@ class IosHomeWidgetsTest {
         override val goalUnit = "workouts"
         override val goalMet = "Goal met"
         override val openTrainable = "Open Trainable"
+        override val quickWorkout = "Quick workout"
         override fun startedAt(timestampMillis: Long) = "Started at $timestampMillis"
         override fun dayLetter(day: DayOfWeek) = day.name.take(1)
         override suspend fun exerciseCount(count: Int) = "$count exercises"

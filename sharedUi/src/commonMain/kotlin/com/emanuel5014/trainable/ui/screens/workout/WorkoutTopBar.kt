@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.screens.history.displayText
 import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.SecondaryContainer
 import androidx.compose.ui.text.style.TextOverflow
@@ -84,14 +85,17 @@ fun WorkoutTopBar(
                         .clickable {
                             when {
                                 routineId != null && state.inlineExerciseModificationsEnabled -> showTitleMenu = true
-                                state.isQuickWorkout || state.inlineExerciseModificationsEnabled -> ui.showRenameDialog = true
+                                state.isQuickWorkout || state.inlineExerciseModificationsEnabled -> {
+                                    ui.newSessionName = state.editableName
+                                    ui.showRenameDialog = true
+                                }
                                 else -> routineId?.let { onNavigateToRoutine(it) }
                             }
                         },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = state.planName, 
+                        text = state.title.displayText(),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black,
                         maxLines = 2,
@@ -106,6 +110,7 @@ fun WorkoutTopBar(
                         leadingIcon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
                         onClick = {
                             showTitleMenu = false
+                            ui.newSessionName = state.editableName
                             ui.showRenameDialog = true
                         }
                     )

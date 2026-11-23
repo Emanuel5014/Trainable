@@ -245,11 +245,7 @@ fun EditWorkoutContent(
             TopAppBar(
                 title = {
                     Text(
-                        text = when (state.planName) {
-                            "Cardio" -> stringResource(Res.string.add_cardio).replace(stringResource(Res.string.add) + " ", "")
-                            "Custom Workout" -> stringResource(Res.string.custom_workout)
-                            else -> state.planName
-                        },
+                        text = state.title.displayText(),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black,
                         maxLines = 1,
@@ -538,7 +534,8 @@ fun EditWorkoutContent(
 
     if (showEditDetailsSheet) {
         EditWorkoutDetailsBottomSheet(
-            currentName = state.planName,
+            currentName = state.editableName,
+            namePlaceholder = state.title.displayText(),
             currentTimestamp = state.sessionTimestamp,
             currentDurationMs = state.sessionDurationMs,
             onDismiss = { showEditDetailsSheet = false },
@@ -1457,6 +1454,8 @@ fun WorkoutSessionHeaderCard(
 @Composable
 fun EditWorkoutDetailsBottomSheet(
     currentName: String,
+    /** Shown in the empty name field: what the workout is called when it has no name of its own. */
+    namePlaceholder: String,
     currentTimestamp: Long,
     currentDurationMs: Long?,
     onDismiss: () -> Unit,
@@ -1464,7 +1463,7 @@ fun EditWorkoutDetailsBottomSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var nameText by remember {
-        mutableStateOf(if (currentName == "Custom Workout" || currentName == "Cardio") "" else currentName)
+        mutableStateOf(currentName)
     }
     var selectedTimestamp by remember { mutableLongStateOf(currentTimestamp) }
 
@@ -1504,7 +1503,7 @@ fun EditWorkoutDetailsBottomSheet(
                     OutlinedTextField(
                         value = nameText,
                         onValueChange = { nameText = it },
-                        placeholder = { Text(text = stringResource(Res.string.custom_workout)) },
+                        placeholder = { Text(text = namePlaceholder) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Rounded.FitnessCenter,

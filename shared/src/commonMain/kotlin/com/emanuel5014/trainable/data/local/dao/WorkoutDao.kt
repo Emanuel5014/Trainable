@@ -289,7 +289,7 @@ interface WorkoutDao {
     fun getUnfinishedSessions(): Flow<List<WorkoutSessionEntity>>
 
     @Query("""
-        SELECT ws.*, wp.nome as plan_nome 
+        SELECT ws.*, wp.nome as plan_nome, (wp.note IS NOT NULL AND wp.note = 'SYSTEM_PLAN') AS plan_is_system
         FROM workout_sessions ws 
         INNER JOIN workout_plans wp ON ws.plan_id = wp.id 
         WHERE ws.is_finished = 0 
@@ -468,7 +468,8 @@ interface WorkoutDao {
      * Reads only: the exercise detail screen builds its records and history from this.
      */
     @Query("""
-        SELECT sl.*, ws.timestamp AS session_timestamp, ws.note_sessione AS session_note, wp.nome AS plan_name
+        SELECT sl.*, ws.timestamp AS session_timestamp, ws.note_sessione AS session_note, wp.nome AS plan_name,
+            (wp.note IS NOT NULL AND wp.note = 'SYSTEM_PLAN') AS plan_is_system
         FROM set_logs sl
         INNER JOIN workout_sessions ws ON sl.session_id = ws.id
         INNER JOIN workout_plans wp ON ws.plan_id = wp.id
@@ -483,7 +484,9 @@ interface WorkoutDao {
      * Reads only: the exercise detail screen builds the history of a cardio exercise from this.
      */
     @Query("""
-        SELECT cl.*, ws.timestamp AS session_timestamp, ws.note_sessione AS session_note, wp.nome AS plan_name
+        SELECT cl.*, ws.timestamp AS session_timestamp, ws.note_sessione AS session_note, wp.nome AS plan_name,
+            (wp.note IS NOT NULL AND wp.note = 'SYSTEM_PLAN') AS plan_is_system,
+            EXISTS(SELECT 1 FROM set_logs s WHERE s.session_id = ws.id) AS session_has_strength
         FROM cardio_logs cl
         INNER JOIN workout_sessions ws ON cl.session_id = ws.id
         INNER JOIN workout_plans wp ON ws.plan_id = wp.id

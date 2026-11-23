@@ -145,7 +145,7 @@ internal fun HistoryRow(
                         )
                     }
                     Text(
-                        text = SessionTitle.of(planName).displayText(),
+                        text = planName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = OnSurface,

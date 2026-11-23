@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.domain.session.WorkoutTitle
 import com.emanuel5014.trainable.data.local.entity.straightReps
 import com.emanuel5014.trainable.data.local.entity.parts
 import com.emanuel5014.trainable.data.local.entity.pauses
@@ -30,10 +31,24 @@ import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.util.TimerAdjustment
 
+/**
+ * What the workout is called on screen: its own name, else its routine's; a quick workout without a name follows what it
+ * holds, a cardio workout while it holds only cardio (#75).
+ */
+val WorkoutState.title: WorkoutTitle
+    get() = if (!isQuickWorkout) WorkoutTitle.Named(ownName ?: planName)
+    else WorkoutTitle.of(ownName, planName, isSystemPlan = true, hasStrength = exercises.any { !it.isCardio }, hasCardio = exercises.any { it.isCardio })
+
+/** What the rename field starts with: the workout's own name, its routine's name, empty for a quick workout. */
+val WorkoutState.editableName: String
+    get() = ownName ?: if (isQuickWorkout) "" else planName
+
 data class WorkoutState(
     val isLoading: Boolean = true,
     val planId: Int? = null,
     val planName: String = "",
+    /** The workout's own name, the one the user gave it (null: none). */
+    val ownName: String? = null,
     val sessionId: Int? = null,
     val exercises: List<WorkoutExerciseState> = emptyList(),
     val currentExerciseIndex: Int = 0,

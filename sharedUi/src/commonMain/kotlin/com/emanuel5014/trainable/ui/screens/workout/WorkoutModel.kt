@@ -513,6 +513,7 @@ class WorkoutModel(
         val planId = sessionWithSets.session.planId
         val planWithDetails = workoutRepository.getPlanWithDetails(planId).firstOrNull() ?: return
         val planName = sessionName(sessionWithSets.session.noteSessione, planWithDetails.plan.nome)
+        val ownName = sessionWithSets.session.noteSessione?.takeIf { it.isNotBlank() }
         
         val swaps = workoutRepository.getSwapsForSession(sessionId).firstOrNull()
         // Changes made to the prescription of an exercise during this workout: the last one is what it follows now
@@ -918,6 +919,7 @@ class WorkoutModel(
                 isLoading = false,
                 planId = planId,
                 planName = planName,
+                ownName = ownName,
                 sessionId = sessionId,
                 exercises = exerciseStates,
                 currentExerciseIndex = finalActiveIndex,
@@ -1128,6 +1130,7 @@ class WorkoutModel(
                 isLoading = false,
                 planId = planId,
                 planName = displayName,
+                ownName = name?.takeIf { it.isNotBlank() },
                 sessionId = sessionId,
                 exercises = emptyList(),
                 currentExerciseIndex = 0,
@@ -2584,6 +2587,7 @@ class WorkoutModel(
             exercises = exercises,
             next = next,
             allDone = exercises.all { it.done >= it.total },
+            cardioOnly = state.exercises.isNotEmpty() && state.exercises.all { it.isCardio },
             writtenAt = 0L
         )
     }
@@ -3728,15 +3732,16 @@ class WorkoutModel(
         modelScope.launch {
             val session = workoutRepository.getSessionWithSets(sessionId).firstOrNull()?.session ?: return@launch
             val plan = workoutRepository.getPlanOnce(session.planId)
-            val shown = _state.value.planName
+            // What the dialog was filled with (see WorkoutState.editableName)
+            val shown = _state.value.editableName
             // The dialog comes filled with the current name: left as it is (or emptied), the workout keeps following its routine
             val note = plan?.let { SessionName.toSave(newName, shown, session.noteSessione, it.nome) }
                 ?: newName.trim().ifEmpty { null }
             // Only the name: the timers of the running workout are written to the same row meanwhile
             workoutRepository.updateSessionName(sessionId, note)
-            // Nothing of its own: the title is the routine's name (a quick workout's, translated)
-            val title = note ?: if (_state.value.isQuickWorkout) workoutText().quickWorkout else plan?.nome ?: shown
-            _state.update { it.copy(planName = title) }
+            // Nothing of its own: the routine's name, or for a quick workout what it holds (WorkoutState.title)
+            val planName = note ?: if (_state.value.isQuickWorkout) workoutText().quickWorkout else plan?.nome ?: _state.value.planName
+            _state.update { it.copy(planName = planName, ownName = note) }
         }
     }
 

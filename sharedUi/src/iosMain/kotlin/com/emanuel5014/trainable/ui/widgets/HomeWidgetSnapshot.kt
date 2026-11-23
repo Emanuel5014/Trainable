@@ -87,6 +87,8 @@ interface HomeWidgetTexts {
     val goalUnit: String
     val goalMet: String
     val openTrainable: String
+    /** The name of an open workout that has no routine and no name of its own. */
+    val quickWorkout: String
     fun startedAt(timestampMillis: Long): String
     fun dayLetter(day: DayOfWeek): String
     suspend fun exerciseCount(count: Int): String
@@ -132,7 +134,7 @@ suspend fun buildHomeWidgetSnapshot(
         val suggestion = WorkoutSuggester.suggest(plans, finished, date, zone)
         val countedId = (suggestion.todayPlan ?: suggestion.suggestedPlan)?.id
         val count = countedId?.let { id -> counts.getOrPut(id) { exerciseCount(id) } }
-        val state = routineWidgetState(unfinished.firstOrNull(), suggestion.todayPlan, suggestion.suggestedPlan, count)
+        val state = routineWidgetState(unfinished.firstOrNull(), suggestion.todayPlan, suggestion.suggestedPlan, count, texts.quickWorkout)
         val cardio = if (weekStartDate(date, firstDay) == thisWeek) cardioThisWeek else 0
         val week = weekProgress(timestamps, goal, cardio, date, firstDay, zone)
         HomeWidgetDay(

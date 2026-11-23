@@ -9,5 +9,7 @@ data class ExerciseSetWithSession(
     @Embedded val setLog: SetLogEntity,
     @ColumnInfo(name = "session_timestamp") val sessionTimestamp: Long,
     @ColumnInfo(name = "session_note") val sessionNote: String?,
-    @ColumnInfo(name = "plan_name") val planName: String
+    @ColumnInfo(name = "plan_name") val planName: String,
+    /** The plan is one of the app's own: the workout has no routine. */
+    @ColumnInfo(name = "plan_is_system") val planIsSystem: Boolean = false
 )

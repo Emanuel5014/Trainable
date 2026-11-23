@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.widgets
 
+import com.emanuel5014.trainable.sharedui.resources.workout_title_quick
 import androidx.compose.ui.graphics.toArgb
 import com.emanuel5014.trainable.data.repository.IosWorkoutsChanged
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -151,6 +152,7 @@ internal object IosHomeWidgets {
         val goalUnit = getString(Res.string.widget_goal_unit)
         val goalMet = getString(Res.string.widget_goal_met)
         val openTrainable = getString(Res.string.widget_cd_open)
+        val quickWorkout = getString(Res.string.workout_title_quick)
         val timeFormat = NSDateFormatter().apply {
             locale = IosAppLocale.formattingLocale()
             dateStyle = NSDateFormatterNoStyle
@@ -169,6 +171,7 @@ internal object IosHomeWidgets {
             override val goalUnit = goalUnit
             override val goalMet = goalMet
             override val openTrainable = openTrainable
+            override val quickWorkout = quickWorkout
             override fun startedAt(timestampMillis: Long) = startedAtTemplate.replace(
                 "%TIME%", timeFormat.stringFromDate(NSDate.dateWithTimeIntervalSince1970(timestampMillis / 1000.0))
             )

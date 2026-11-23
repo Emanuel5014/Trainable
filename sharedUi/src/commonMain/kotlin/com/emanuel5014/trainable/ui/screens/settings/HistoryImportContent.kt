@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.ui.screens.history.displayText
+import com.emanuel5014.trainable.domain.session.WorkoutTitle
 import com.emanuel5014.trainable.ui.util.bodyPadding
 import com.emanuel5014.trainable.ui.util.scrollEndInset
 import com.emanuel5014.trainable.ui.util.plusBottom
@@ -864,11 +866,12 @@ private fun WorkoutRow(
     val routineName = when (val target = workout.routine) {
         is RoutineTarget.Existing -> target.plan.nome
         is RoutineTarget.Create -> target.name
-        is RoutineTarget.System -> workout.sessionNote ?: when (target.kind) {
-            SystemPlanKind.QUICK -> stringResource(Res.string.quick_workout).lowercase().replaceFirstChar { it.uppercase() }
-            SystemPlanKind.CUSTOM -> stringResource(Res.string.custom_workout)
-            SystemPlanKind.CARDIO -> stringResource(Res.string.import_history_cardio_workouts)
-        }
+        // Named as the history will name it: after what it holds (#75)
+        is RoutineTarget.System -> WorkoutTitle.of(
+            workout.sessionNote, target.kind.planName, isSystemPlan = true,
+            hasStrength = workout.entries.any { it.kind != RowKind.CARDIO },
+            hasCardio = workout.entries.any { it.kind == RowKind.CARDIO }
+        ).displayText()
     }
     val alpha = if (skipped) 0.55f else 1f
     Column(

@@ -573,7 +573,8 @@ fun HistoryContent(
 
                             itemsIndexed(month.sessions, key = { _, s -> s.session.id }, contentType = { _, _ -> "row" }) { index, sessionDetails ->
                                 val session = sessionDetails.session
-                                val planName = sessionName(sessionDetails.session.noteSessione, sessionDetails.plan.nome)
+                                // Named after what it holds when it has no routine and no name of its own (#75)
+                                val planName = sessionDetails.title.displayText()
                                 val rowShape = routineRowCorners(index, month.sessions.size).toShape()
                                 val summary = remember(sessionDetails) { historyRowSummary(sessionDetails) }
 
@@ -709,7 +710,7 @@ fun HistoryContent(
             if (uiState.isSelectionMode) openSessionId = null
         }
         if (openDetails != null) {
-            val openPlanName = sessionName(openDetails.session.noteSessione, openDetails.plan.nome)
+            val openPlanName = openDetails.title.displayText()
             val details = uiState.selectedSession?.takeIf { it.session.id == openSessionId }
             WorkoutDetailSheet(
                 sessionDetails = openDetails,

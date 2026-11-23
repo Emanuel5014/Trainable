@@ -1800,4 +1800,6 @@
     <string name="routine_group_restore_confirm">%1$s wiederherstellen?</string>
     <string name="routine_group_dissolve_confirm">%1$s auflösen?</string>
     <string name="routine_group_dissolve_message">Die Routinen bleiben, ohne Gruppe. Name und Farbe der Gruppe gehen verloren.</string>
+    <string name="workout_title_quick">Schnelles Training</string>
+    <string name="workout_title_cardio">Cardio-Training</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.domain.exercise
 
+import com.emanuel5014.trainable.domain.session.WorkoutTitle
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.relation.CardioSetWithSession
 
@@ -13,7 +14,9 @@ data class CardioPerformance(
     val sessionNote: String?,
     val planName: String,
     /** In the order done: by run, then by set. */
-    val sets: List<CardioLogEntity>
+    val sets: List<CardioLogEntity>,
+    /** What the workout is called: a cardio workout when it holds only cardio and has no routine. */
+    val title: WorkoutTitle = WorkoutTitle.Named(sessionNote?.takeIf { it.isNotBlank() } ?: planName)
 ) {
     /** The sets of each run of the activity, in the order done. */
     val runs: List<List<CardioLogEntity>> = sets.groupBy { it.ordineEsercizio }.values.toList()
@@ -66,7 +69,8 @@ data class CardioHistory(
                     timestamp = first.sessionTimestamp,
                     sessionNote = first.sessionNote,
                     planName = first.planName,
-                    sets = group.map { it.cardio }.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie }, { it.id }))
+                    sets = group.map { it.cardio }.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie }, { it.id })),
+                    title = WorkoutTitle.of(first.sessionNote, first.planName, first.planIsSystem, hasStrength = first.sessionHasStrength, hasCardio = true)
                 )
             }
             return CardioHistory(performances, recordsOf(performances))

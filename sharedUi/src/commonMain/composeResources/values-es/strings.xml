@@ -1814,4 +1814,6 @@
     <string name="routine_group_restore_confirm">¿Restaurar %1$s?</string>
     <string name="routine_group_dissolve_confirm">¿Deshacer %1$s?</string>
     <string name="routine_group_dissolve_message">Las rutinas se quedan, sin grupo. El nombre y el color del grupo se pierden.</string>
+    <string name="workout_title_quick">Entrenamiento Rápido</string>
+    <string name="workout_title_cardio">Entrenamiento Cardio</string>
 </resources>

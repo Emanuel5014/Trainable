@@ -14,7 +14,7 @@ import kotlinx.datetime.toKotlinLocalDate
 
 /** What the Routine and Quick start widgets show, from the database (same choice as the dashboard). */
 @Composable
-fun collectRoutineWidgetState(workoutRepository: WorkoutRepository, withExerciseCount: Boolean): RoutineWidgetState {
+fun collectRoutineWidgetState(workoutRepository: WorkoutRepository, withExerciseCount: Boolean, quickWorkoutName: String): RoutineWidgetState {
     val plans by workoutRepository.getActivePlans().collectAsState(initial = emptyList())
     val allSessions by workoutRepository.getAllSessions().collectAsState(initial = emptyList())
     val unfinishedSessions by workoutRepository.getUnfinishedSessionsWithPlanName().collectAsState(initial = emptyList())
@@ -26,5 +26,5 @@ fun collectRoutineWidgetState(workoutRepository: WorkoutRepository, withExercise
         countedPlanId?.let { workoutRepository.countPlanExercises(it) } ?: flowOf(null)
     }.collectAsState(initial = null)
 
-    return routineWidgetState(unfinishedSessions.firstOrNull(), todayPlan, suggestedPlan, exerciseCount)
+    return routineWidgetState(unfinishedSessions.firstOrNull(), todayPlan, suggestedPlan, exerciseCount, quickWorkoutName)
 }

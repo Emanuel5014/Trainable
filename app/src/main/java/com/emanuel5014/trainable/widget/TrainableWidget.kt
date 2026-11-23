@@ -76,7 +76,7 @@ class TrainableWidget : GlanceAppWidget() {
 
         provideContent {
             val theme by themeFlow.collectAsState(initial = initialTheme)
-            val state = collectRoutineWidgetState(workoutRepository, withExerciseCount = true)
+            val state = collectRoutineWidgetState(workoutRepository, withExerciseCount = true, quickWorkoutName = context.getString(R.string.workout_title_quick))
             val colors = remember(theme) { theme.colorProviders(context) }
 
             GlanceTheme(colors = colors) {

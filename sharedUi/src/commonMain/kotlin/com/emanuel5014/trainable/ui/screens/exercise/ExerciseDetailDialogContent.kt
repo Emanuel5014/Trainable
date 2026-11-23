@@ -151,9 +151,7 @@ import com.emanuel5014.trainable.ui.components.labelText
 import com.emanuel5014.trainable.ui.components.setValueText
 import com.emanuel5014.trainable.ui.components.analytics.AnalyticsLineChart
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsChartPoint
-import com.emanuel5014.trainable.ui.screens.history.SessionTitle
 import com.emanuel5014.trainable.ui.screens.history.displayText
-import com.emanuel5014.trainable.ui.screens.history.sessionName
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -668,7 +666,7 @@ private fun PerformanceCard(performance: ExercisePerformance, kind: ExerciseKind
                     color = OnSurface
                 )
                 Text(
-                    text = SessionTitle.of(sessionName(performance.sessionNote, performance.planName)).displayText(),
+                    text = performance.title.displayText(),
                     style = MaterialTheme.typography.labelSmall,
                     color = Primary,
                     fontWeight = FontWeight.ExtraBold,
@@ -742,7 +740,7 @@ private fun CardioPerformanceCard(performance: CardioPerformance) {
                     color = OnSurface
                 )
                 Text(
-                    text = SessionTitle.of(sessionName(performance.sessionNote, performance.planName)).displayText(),
+                    text = performance.title.displayText(),
                     style = MaterialTheme.typography.labelSmall,
                     color = Primary,
                     fontWeight = FontWeight.ExtraBold,

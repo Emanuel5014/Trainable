@@ -1,35 +1,33 @@
 package com.emanuel5014.trainable.ui.screens.history
 
-import com.emanuel5014.trainable.sharedui.resources.Res
-import com.emanuel5014.trainable.sharedui.resources.add
-import com.emanuel5014.trainable.sharedui.resources.add_cardio
-import com.emanuel5014.trainable.sharedui.resources.custom_workout
 import androidx.compose.runtime.Composable
+import com.emanuel5014.trainable.data.local.entity.isSystemPlan
+import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
+import com.emanuel5014.trainable.domain.session.WorkoutTitle
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.workout_title_cardio
+import com.emanuel5014.trainable.sharedui.resources.workout_title_quick
 import org.jetbrains.compose.resources.stringResource
 
-/** What a workout is called in the history: the plans the app creates for itself have a translated name. */
-sealed interface SessionTitle {
-    data object Cardio : SessionTitle
-
-    data object CustomWorkout : SessionTitle
-
-    data class Named(val name: String) : SessionTitle
-
-    companion object {
-        fun of(name: String): SessionTitle = when (name) {
-            "Cardio" -> Cardio
-            "Custom Workout" -> CustomWorkout
-            else -> Named(name)
-        }
-    }
-}
-
+/** The name to show for a workout without a routine, in the language of the app. */
 @Composable
-fun SessionTitle.displayText(): String = when (this) {
-    SessionTitle.Cardio -> stringResource(Res.string.add_cardio).replace(stringResource(Res.string.add) + " ", "")
-    SessionTitle.CustomWorkout -> stringResource(Res.string.custom_workout)
-    is SessionTitle.Named -> name
+fun WorkoutTitle.displayText(): String = when (this) {
+    WorkoutTitle.Quick -> stringResource(Res.string.workout_title_quick)
+    WorkoutTitle.Cardio -> stringResource(Res.string.workout_title_cardio)
+    is WorkoutTitle.Named -> name
 }
+
+/** What this workout is called, from what it holds now (#75). */
+val SessionWithDetails.title: WorkoutTitle
+    get() = WorkoutTitle.of(session.noteSessione, plan.nome, plan.isSystemPlan, hasStrength = sets.isNotEmpty(), hasCardio = cardio.isNotEmpty())
+
+/**
+ * What an unfinished workout is called where its exercises are not at hand (dashboard, widgets): a workout without a
+ * routine is a quick workout until it is done.
+ */
+val SessionWithPlanName.title: WorkoutTitle
+    get() = WorkoutTitle.of(session.noteSessione, planNome, isSystemPlan = planIsSystem, hasStrength = false, hasCardio = false)
 
 /** The name a workout goes by: the note the user gave the session, or else the name of its plan. */
 fun sessionName(note: String?, planName: String): String = note?.takeIf { it.isNotBlank() } ?: planName

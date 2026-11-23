@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.domain.exercise
 
+import com.emanuel5014.trainable.domain.session.WorkoutTitle
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.isInParts
@@ -27,7 +28,9 @@ data class ExercisePerformance(
     val timestamp: Long,
     val sessionNote: String?,
     val planName: String,
-    val sets: List<SetLogEntity>
+    val sets: List<SetLogEntity>,
+    /** What the workout is called (it has sets of this exercise, so it is never a cardio workout). */
+    val title: WorkoutTitle = WorkoutTitle.Named(sessionNote?.takeIf { it.isNotBlank() } ?: planName)
 ) {
     /** The sets of each run of the exercise, every run numbered from its own first set. */
     val groups: List<List<SetLogEntity>> = sets.groupBy { it.ordineEsercizio }.values.toList()
@@ -84,7 +87,8 @@ data class ExerciseHistory(
                     timestamp = first.sessionTimestamp,
                     sessionNote = first.sessionNote,
                     planName = first.planName,
-                    sets = group.map { it.setLog }.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie }))
+                    sets = group.map { it.setLog }.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie })),
+                    title = WorkoutTitle.of(first.sessionNote, first.planName, first.planIsSystem, hasStrength = true, hasCardio = false)
                 )
             }
             val allSets = rows.map { it.setLog }
