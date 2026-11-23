@@ -2,7 +2,6 @@ package com.emanuel5014.trainable.ui.screens.dashboard
 
 import com.emanuel5014.trainable.ui.screens.history.title
 import com.emanuel5014.trainable.ui.screens.history.displayText
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -65,13 +64,14 @@ import com.emanuel5014.trainable.sharedui.resources.no_active_routines_message
 import com.emanuel5014.trainable.sharedui.resources.quick_workout
 import com.emanuel5014.trainable.sharedui.resources.resume_workout
 import com.emanuel5014.trainable.sharedui.resources.select_routine
+import com.emanuel5014.trainable.sharedui.resources.delete
 import com.emanuel5014.trainable.sharedui.resources.started
 import com.emanuel5014.trainable.sharedui.resources.suggested_plan
 import com.emanuel5014.trainable.sharedui.resources.today_workout
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.components.QuickSwipeBox
-import com.emanuel5014.trainable.ui.theme.Error
+import com.emanuel5014.trainable.ui.components.quickSwipeDanger
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.OutlineVariant
@@ -386,38 +386,15 @@ internal fun SessionSwipeToDelete(
     val haptic = LocalHapticFeedback.current
 
     QuickSwipeBox(
-        enableStartToEnd = false,
-        enableEndToStart = enabled,
+        startToEnd = null,
+        endToStart = if (enabled) quickSwipeDanger(Icons.Rounded.DeleteSweep, stringResource(Res.string.delete)) else null,
         onSwiped = { direction ->
             if (direction == SwipeToDismissBoxValue.EndToStart) {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onDeleteRequest()
             }
         },
-        backgroundContent = { direction, progress ->
-            val color by animateColorAsState(
-                when {
-                    progress > 0f && direction == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
-                    else -> Color.Transparent
-                }, label = "swipe_bg"
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(Shapes.extraLarge)
-                    .background(color)
-                    .padding(horizontal = 28.dp)
-            ) {
-                if (progress > 0f && direction == SwipeToDismissBoxValue.EndToStart) {
-                    Icon(
-                        Icons.Rounded.DeleteSweep,
-                        contentDescription = "Delete",
-                        tint = Error,
-                        modifier = Modifier.align(Alignment.CenterEnd).size(28.dp)
-                    )
-                }
-            }
-        }
+        shape = Shapes.extraLarge
     ) {
         content()
     }

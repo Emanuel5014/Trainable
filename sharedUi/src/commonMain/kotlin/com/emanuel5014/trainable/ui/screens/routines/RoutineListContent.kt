@@ -188,6 +188,8 @@ import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.EmptyState
 import com.emanuel5014.trainable.ui.components.QuickSwipeBox
+import com.emanuel5014.trainable.ui.components.quickSwipeDanger
+import com.emanuel5014.trainable.ui.components.quickSwipePrimary
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
@@ -1399,9 +1401,13 @@ private fun RoutineListItem(
     val rowShape = routineRowCorners(position, count, hasHead).toShape()
 
     // A fast flick changes tab; the actions need a real drag and fire when the finger is lifted
+    val swipeOn = !isSelectionMode && swipeActionsEnabled
     QuickSwipeBox(
-        enableStartToEnd = !isSelectionMode && swipeActionsEnabled,
-        enableEndToStart = !isSelectionMode && swipeActionsEnabled,
+        startToEnd = if (swipeOn) quickSwipePrimary(
+            if (isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
+            stringResource(if (isArchived) Res.string.unarchive else Res.string.archive)
+        ) else null,
+        endToStart = if (swipeOn) quickSwipeDanger(Icons.Rounded.DeleteSweep, stringResource(Res.string.delete)) else null,
         onSwiped = { direction ->
             if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             when (direction) {
@@ -1410,40 +1416,7 @@ private fun RoutineListItem(
                 SwipeToDismissBoxValue.Settled -> {}
             }
         },
-        backgroundContent = { direction, progress ->
-            val color by animateColorAsState(
-                when {
-                    progress > 0f && direction == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
-                    progress > 0f && direction == SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
-                    else -> Color.Transparent
-                }, label = "bg_color"
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(rowShape)
-                    .background(color)
-                    .padding(horizontal = 28.dp)
-            ) {
-                if (progress > 0f && direction == SwipeToDismissBoxValue.StartToEnd) {
-                    Icon(
-                        if (isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
-                        contentDescription = "Archive",
-                        tint = Primary,
-                        modifier = Modifier.align(Alignment.CenterStart).size(28.dp)
-                    )
-                }
-                if (progress > 0f && direction == SwipeToDismissBoxValue.EndToStart) {
-                    Icon(
-                        Icons.Rounded.DeleteSweep,
-                        contentDescription = "Delete",
-                        tint = Error,
-                        modifier = Modifier.align(Alignment.CenterEnd).size(28.dp)
-                    )
-                }
-            }
-        },
+        shape = rowShape,
         modifier = modifier
     ) {
         RoutineRow(

@@ -49,6 +49,8 @@ import com.emanuel5014.trainable.sharedui.resources.workout_logs
 import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
 import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
 import com.emanuel5014.trainable.ui.components.QuickSwipeBox
+import com.emanuel5014.trainable.ui.components.quickSwipeDanger
+import com.emanuel5014.trainable.ui.components.quickSwipePrimary
 import com.emanuel5014.trainable.ui.glass.GlassSource
 import com.emanuel5014.trainable.ui.util.PlatformBackHandler
 import androidx.compose.ui.semantics.Role
@@ -69,7 +71,6 @@ import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_WEIGHT
 import com.emanuel5014.trainable.data.local.entity.asKind
 import com.emanuel5014.trainable.data.local.entity.kind
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -578,9 +579,10 @@ fun HistoryContent(
                                 val summary = remember(sessionDetails) { historyRowSummary(sessionDetails) }
 
                                 // A fast flick changes tab; the actions need a real drag and fire when the finger is lifted
+                                val swipeOn = swipeActionsEnabled && !uiState.isSelectionMode
                                 QuickSwipeBox(
-                                    enableStartToEnd = swipeActionsEnabled && !uiState.isSelectionMode,
-                                    enableEndToStart = swipeActionsEnabled && !uiState.isSelectionMode,
+                                    startToEnd = if (swipeOn) quickSwipePrimary(Icons.Rounded.Edit, stringResource(Res.string.edit)) else null,
+                                    endToStart = if (swipeOn) quickSwipeDanger(Icons.Rounded.DeleteSweep, stringResource(Res.string.delete)) else null,
                                     onSwiped = { direction ->
                                         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         when (direction) {
@@ -589,42 +591,7 @@ fun HistoryContent(
                                             SwipeToDismissBoxValue.Settled -> {}
                                         }
                                     },
-                                    backgroundContent = { direction, _ ->
-
-                                        val color by animateColorAsState(
-                                            when (direction) {
-                                                SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
-                                                SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
-                                                else -> Color.Transparent
-                                            },
-                                            label = "bg_color"
-                                        )
-
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .clip(rowShape)
-                                                .background(color)
-                                                .padding(horizontal = 28.dp),
-                                            contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
-                                        ) {
-                                            if (direction == SwipeToDismissBoxValue.EndToStart) {
-                                                Icon(
-                                                    Icons.Rounded.DeleteSweep,
-                                                    contentDescription = "Delete",
-                                                    tint = Error,
-                                                    modifier = Modifier.size(28.dp)
-                                                )
-                                            } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
-                                                Icon(
-                                                    Icons.Rounded.Edit,
-                                                    contentDescription = "Edit",
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(28.dp)
-                                                )
-                                            }
-                                        }
-                                    }
+                                    shape = rowShape
                                 ) {
                                     HistoryRow(
                                         sessionDetails = sessionDetails,
