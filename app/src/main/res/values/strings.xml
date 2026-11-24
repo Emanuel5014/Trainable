@@ -778,4 +778,31 @@
     <string name="analytics_time_range_1w">1W</string>
     <string name="analytics_time_range_6m">6M</string>
     <string name="workout_title_quick">Quick Workout</string>
+    <string name="live_card_channel">Workout in progress</string>
+    <string name="live_card_set_title">%1$s · set %2$d of %3$d</string>
+    <string name="live_card_last_time">last time %1$d</string>
+    <string name="live_card_exercise_of">Exercise %1$d of %2$d</string>
+    <string name="live_card_then">then %1$s</string>
+    <string name="live_card_rest">Rest</string>
+    <string name="live_card_next">Next: %1$s</string>
+    <string name="live_card_next_exercise">Next exercise: %1$s</string>
+    <string name="live_card_rest_finished">Rest over</string>
+    <string name="live_card_go">Go</string>
+    <string name="live_card_warmup">Warm-up</string>
+    <string name="live_card_warmup_finished">Warm-up over</string>
+    <string name="live_card_all_done">All sets done</string>
+    <string name="live_card_volume">Volume %1$s</string>
+    <string name="live_card_finish">Finish</string>
+    <string name="live_card_done">Done</string>
+    <string name="live_card_superset">Superset</string>
+    <string name="live_card_exercises_done">%1$d of %2$d exercises</string>
+    <plurals name="live_card_sets">
+        <item quantity="one">%d set</item>
+        <item quantity="other">%d sets</item>
+    </plurals>
+    <plurals name="live_card_exercises">
+        <item quantity="one">%d exercise</item>
+        <item quantity="other">%d exercises</item>
+    </plurals>
+    <string name="workout_title_cardio">Cardio Workout</string>
 </resources>

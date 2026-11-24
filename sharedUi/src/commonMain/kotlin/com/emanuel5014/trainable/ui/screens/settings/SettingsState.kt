@@ -285,6 +285,24 @@ class SettingsState(
         initialValue = true
     )
 
+    val workoutLiveCard = userPrefsRepository.workoutLiveCard.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val workoutLiveCardSetDone = userPrefsRepository.workoutLiveCardSetDone.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    val workoutLiveCardAlert = userPrefsRepository.workoutLiveCardAlert.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
     val dashboardWorkoutMode = userPrefsRepository.dashboardWorkoutMode.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -480,6 +498,24 @@ class SettingsState(
     fun setTimerShowSkipButton(show: Boolean) {
         scope.launch {
             userPrefsRepository.setTimerShowSkipButton(show)
+        }
+    }
+
+    fun setWorkoutLiveCard(enabled: Boolean) {
+        scope.launch {
+            userPrefsRepository.setWorkoutLiveCard(enabled)
+        }
+    }
+
+    fun setWorkoutLiveCardAlert(enabled: Boolean) {
+        scope.launch {
+            userPrefsRepository.setWorkoutLiveCardAlert(enabled)
+        }
+    }
+
+    fun setWorkoutLiveCardSetDone(enabled: Boolean) {
+        scope.launch {
+            userPrefsRepository.setWorkoutLiveCardSetDone(enabled)
         }
     }
 

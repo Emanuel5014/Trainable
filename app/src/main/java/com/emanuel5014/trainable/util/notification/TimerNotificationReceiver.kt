@@ -40,6 +40,8 @@ class TimerNotificationReceiver : BroadcastReceiver() {
         const val ACTION_TIMER_FINISHED = "com.emanuel5014.trainable.ACTION_TIMER_FINISHED"
         const val ACTION_REST_NEXT_SET = "com.emanuel5014.trainable.ACTION_REST_NEXT_SET"
         const val ACTION_REST_MORE = "com.emanuel5014.trainable.ACTION_REST_MORE"
+        /** "Set done" on the live card during the set. */
+        const val ACTION_LIVE_SET_DONE = "com.emanuel5014.trainable.ACTION_LIVE_SET_DONE"
 
         const val ACTION_WARMUP_SKIP = "com.emanuel5014.trainable.ACTION_WARMUP_SKIP"
         const val ACTION_WARMUP_ADD_30S = "com.emanuel5014.trainable.ACTION_WARMUP_ADD_30S"
@@ -58,6 +60,9 @@ class TimerNotificationReceiver : BroadcastReceiver() {
         /** How long a boundary alarm keeps the receiver alive so the workout can act on it with the CPU awake. */
         private const val BOUNDARY_HOLD_MILLIS = 1500L
 
+        /** How long a press on the live card waits for the open workout to answer before the card is drawn. */
+        private const val LIVE_SETTLE_MILLIS = 400L
+
         val timerEvents = MutableSharedFlow<TimerAction>(extraBufferCapacity = 1)
         val warmupTimerEvents = MutableSharedFlow<WarmupTimerAction>(extraBufferCapacity = 1)
         val emomEvents = MutableSharedFlow<EmomAction>(extraBufferCapacity = 4)
@@ -75,12 +80,14 @@ class TimerNotificationReceiver : BroadcastReceiver() {
                         try {
                             workoutRepository.updateRestTimer(sessionId, null, null)
                             timerNotificationHelper.cancelTimer()
+                            settleLive()
                         } finally {
                             pendingResult.finish()
                         }
                     }
                 } else {
                     timerNotificationHelper.cancelTimer()
+                    holdForLive()
                 }
             }
             ACTION_ADD_30S -> adjust(TimerAction.ADD, RestButton.ADD, sessionId)
@@ -88,6 +95,7 @@ class TimerNotificationReceiver : BroadcastReceiver() {
             ACTION_DISMISS -> {
                 timerEvents.tryEmit(TimerAction.DISMISS)
                 timerNotificationHelper.cancelTimer()
+                holdForLive()
             }
             ACTION_TIMER_FINISHED -> {
                 timerEvents.tryEmit(TimerAction.FINISHED)
@@ -97,6 +105,7 @@ class TimerNotificationReceiver : BroadcastReceiver() {
                     scope.launch {
                         try {
                             workoutRepository.updateRestTimer(sessionId, null, null)
+                            settleLive()
                         } finally {
                             pendingResult.finish()
                         }
@@ -106,16 +115,19 @@ class TimerNotificationReceiver : BroadcastReceiver() {
 
             ACTION_REST_NEXT_SET -> forwardRest(TimerAction.NEXT_SET)
             ACTION_REST_MORE -> forwardRest(TimerAction.MORE_REST)
+            ACTION_LIVE_SET_DONE -> forwardRest(TimerAction.LIVE_SET_DONE)
 
             ACTION_WARMUP_SKIP -> {
                 warmupTimerEvents.tryEmit(WarmupTimerAction.SKIP)
                 timerNotificationHelper.cancelWarmupTimer()
+                holdForLive()
             }
             ACTION_WARMUP_ADD_30S -> adjustWarmup(WarmupTimerAction.ADD, RestButton.ADD, sessionId)
             ACTION_WARMUP_SUBTRACT -> adjustWarmup(WarmupTimerAction.SUBTRACT, RestButton.SUBTRACT, sessionId)
             ACTION_WARMUP_DISMISS -> {
                 warmupTimerEvents.tryEmit(WarmupTimerAction.DISMISS)
                 timerNotificationHelper.cancelWarmupTimer()
+                holdForLive()
             }
             ACTION_WARMUP_FINISHED -> {
                 warmupTimerEvents.tryEmit(WarmupTimerAction.FINISHED)
@@ -133,10 +145,10 @@ class TimerNotificationReceiver : BroadcastReceiver() {
                     }
                 }
             }
-            ACTION_EMOM_DONE -> forwardEmom(EmomAction.DONE)
-            ACTION_EMOM_PAUSE -> forwardEmom(EmomAction.PAUSE)
-            ACTION_EMOM_RESUME -> forwardEmom(EmomAction.RESUME)
-            ACTION_EMOM_STOP -> forwardEmom(EmomAction.STOP)
+            ACTION_EMOM_DONE -> { forwardEmom(EmomAction.DONE); holdForLive() }
+            ACTION_EMOM_PAUSE -> { forwardEmom(EmomAction.PAUSE); holdForLive() }
+            ACTION_EMOM_RESUME -> { forwardEmom(EmomAction.RESUME); holdForLive() }
+            ACTION_EMOM_STOP -> { forwardEmom(EmomAction.STOP); holdForLive() }
         }
     }
 
@@ -144,6 +156,7 @@ class TimerNotificationReceiver : BroadcastReceiver() {
     private fun adjust(action: TimerAction, button: RestButton, sessionId: Int) {
         if (timerEvents.subscriptionCount.value > 0) {
             timerEvents.tryEmit(action)
+            holdForLive()
             return
         }
         adjustSaved(button, sessionId.takeIf { it != -1 } ?: timerNotificationHelper.workoutSessionId)
@@ -152,6 +165,7 @@ class TimerNotificationReceiver : BroadcastReceiver() {
     private fun adjustWarmup(action: WarmupTimerAction, button: RestButton, sessionId: Int) {
         if (warmupTimerEvents.subscriptionCount.value > 0) {
             warmupTimerEvents.tryEmit(action)
+            holdForLive()
             return
         }
         adjustSaved(button, sessionId.takeIf { it != -1 } ?: timerNotificationHelper.workoutSessionId)
@@ -164,6 +178,7 @@ class TimerNotificationReceiver : BroadcastReceiver() {
             try {
                 SavedTimers.adjust(workoutRepository, userPreferencesRepository, sessionId, button, System.currentTimeMillis())
                     ?.let { timerNotificationHelper.followSavedTimer(it) }
+                timerNotificationHelper.flushLiveCard()
             } finally {
                 pendingResult.finish()
             }
@@ -178,6 +193,26 @@ class TimerNotificationReceiver : BroadcastReceiver() {
             return
         }
         timerEvents.tryEmit(action)
+        holdForLive()
+    }
+
+    /** With the live card on, keeps the receiver alive while the open workout answers, then draws the card. */
+    private fun holdForLive() {
+        if (!timerNotificationHelper.isLive()) return
+        val pendingResult = goAsync()
+        scope.launch {
+            try {
+                settleLive()
+            } finally {
+                pendingResult.finish()
+            }
+        }
+    }
+
+    private suspend fun settleLive() {
+        if (!timerNotificationHelper.isLive()) return
+        delay(LIVE_SETTLE_MILLIS)
+        timerNotificationHelper.flushLiveCard()
     }
 
     private fun forwardEmom(action: EmomAction) {

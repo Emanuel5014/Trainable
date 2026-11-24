@@ -1915,4 +1915,10 @@
         <item quantity="one">Fertig · %1$d Übung</item>
         <item quantity="other">Fertig · %1$d Übungen</item>
     </plurals>
+    <string name="workout_live_card">Live-Benachrichtigung fürs Training</string>
+    <string name="workout_live_card_desc">Eine einzige Benachrichtigung fürs ganze Training statt der Timer: Übung, Sätze, Pause und Gesamtzeit</string>
+    <string name="workout_live_card_set_done">Satz erledigt auch während des Satzes</string>
+    <string name="workout_live_card_set_done_desc">Die Taste erscheint auch während des Satzes; bei gesperrtem Handy musst du es entsperren</string>
+    <string name="workout_live_card_alert">Eigener Hinweis am Timer-Ende</string>
+    <string name="workout_live_card_alert_desc">Ende von Pause, Aufwärmen und EMOM kommt auch als normale Benachrichtigung, damit Uhren und Fitnessbänder sie bekommen; sie verschwindet, sobald du weitermachst</string>
 </resources>

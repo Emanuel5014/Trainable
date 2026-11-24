@@ -66,6 +66,10 @@ import com.emanuel5014.trainable.util.notification.EmomAction
 import com.emanuel5014.trainable.util.notification.EmomCue
 import com.emanuel5014.trainable.util.notification.NextSetKey
 import com.emanuel5014.trainable.util.notification.RestNextSet
+import com.emanuel5014.trainable.util.notification.LiveSegment
+import com.emanuel5014.trainable.util.notification.LiveSetKind
+import com.emanuel5014.trainable.util.notification.WorkoutLiveCard
+import com.emanuel5014.trainable.domain.session.WorkoutTitle
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.util.TimerAdjustment
@@ -145,6 +149,9 @@ class WorkoutModel(
 
         /** Wait after the last change before the dashboard's copy is written (a tick changes the state several times). */
         const val LIVE_SNAPSHOT_DEBOUNCE_MILLIS = 300L
+
+        /** Wait after the last change before the live card is redrawn: a tick changes the state several times. */
+        const val LIVE_CARD_DEBOUNCE_MILLIS = 120L
     }
 
     private val _languageCode = MutableStateFlow("en")
@@ -217,6 +224,16 @@ class WorkoutModel(
                 }
         }
 
+        // The live card of the whole workout, when the setting is on: redrawn on every change of what it shows
+        modelScope.launch {
+            combine(_state, userPreferencesRepository.workoutLiveCard, userPreferencesRepository.workoutLiveCardSetDone) { state, on, setDone ->
+                if (on && !liveCardClosed && state.timerNotificationsEnabled && workoutTimers.hasNotificationPermission()) liveCardOf(state, setDone) else null
+            }
+                .distinctUntilChanged()
+                .debounce(LIVE_CARD_DEBOUNCE_MILLIS)
+                .collect { card -> publishLiveCard(card) }
+        }
+
         modelScope.launch {
             userPreferencesRepository.timerNotificationsEnabled.collect { enabled ->
                 _state.update { it.copy(timerNotificationsEnabled = enabled) }
@@ -239,6 +256,7 @@ class WorkoutModel(
                     // The notification shows what the model last announced (it is redrawn on every change)
                     TimerAction.NEXT_SET -> logAnnouncedSet(announcedNextSetKey)
                     TimerAction.MORE_REST -> extendRest()
+                    TimerAction.LIVE_SET_DONE -> logLiveCardSet()
                 }
             }
         }
@@ -2605,6 +2623,137 @@ class WorkoutModel(
         )
     }
 
+    /** Set once the session is gone: nothing may draw its live card again. */
+    private var liveCardClosed = false
+
+    /** The live card last sent, so a press on its "Set done" can only log the set it showed. */
+    private var publishedLiveCard: WorkoutLiveCard? = null
+
+    private fun publishLiveCard(card: WorkoutLiveCard?) {
+        val shown = publishedLiveCard
+        publishedLiveCard = card
+        if (card != null) workoutTimers.showLiveCard(card)
+        else if (shown != null) workoutTimers.endLiveCard(shown.sessionId)
+    }
+
+    /**
+     * "Set done" on the live card during the set: ticks the set the card showed if it is still the one to do, as the tick
+     * in the workout would. During a rest the card has no such button; anything else redraws the card with what is true.
+     */
+    fun logLiveCardSet() {
+        val shown = publishedLiveCard ?: return
+        if (_state.value.restTimerEndTime != null) return workoutTimers.showLiveCard(shown)
+        val target = nextSetTarget()
+        if (target != null && shown.setDoneToken != null && target.info.key?.token() == shown.setDoneToken && target.setIndex >= 0) {
+            toggleSetComplete(target.exerciseIndex, target.setIndex)
+        } else {
+            workoutTimers.showLiveCard(shown)
+        }
+    }
+
+    /**
+     * What the live card shows of [state]: the set to do (the one the rest card announces) with the bar of its exercise,
+     * of the whole block in a superset, or the bar of the exercises once every set is done. The timers are added by the
+     * platform. [setDoneOnCard]: the "Set done during the set too" setting. Null when there is no workout to show.
+     */
+    private fun liveCardOf(state: WorkoutState, setDoneOnCard: Boolean): WorkoutLiveCard? {
+        val sessionId = state.sessionId ?: return null
+        if (state.isLoading || state.isFinished || state.exercises.isEmpty()) return null
+        val startedAt = state.sessionStartTime ?: return null
+        val language = _languageCode.value
+        val nameOf = { ex: WorkoutExerciseState -> ExerciseTranslations.translate(ex.exercise.nome, language) }
+        val doneOf = { ex: WorkoutExerciseState -> if (ex.isCardio) ex.cardioSets.count { it.isCompleted } else ex.sets.count { it.isCompleted } }
+        val totalOf = { ex: WorkoutExerciseState -> if (ex.isCardio) ex.cardioSets.size.coerceAtLeast(1) else ex.sets.size }
+        val title = state.title
+        val base = WorkoutLiveCard(
+            sessionId = sessionId,
+            workoutName = (title as? WorkoutTitle.Named)?.name,
+            cardioOnly = title is WorkoutTitle.Cardio,
+            startedAtMillis = startedAt,
+            exerciseCount = state.exercises.size,
+            doneSets = state.exercises.sumOf { doneOf(it) },
+            doneExercises = state.exercises.count { totalOf(it) > 0 && doneOf(it) >= totalOf(it) }
+        )
+        if (state.exercises.all { doneOf(it) >= totalOf(it) }) {
+            val unit = state.weightUnit
+            val volumeKg = state.exercises.filter { !it.isCardio }.sumOf { ex ->
+                ex.sets.filter { it.isCompleted && !it.isWarmup }.sumOf { (it.weight * it.reps).toDouble() }
+            }.toFloat()
+            return base.copy(
+                allDone = true,
+                segments = List(state.exercises.size) { LiveSegment.DONE },
+                volume = volumeKg.takeIf { it > 0f }?.let { WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, unit), unit) }
+            )
+        }
+        // During the pause of a mini-set nothing is announced: the card keeps the exercise on screen
+        val target = nextSetTarget()
+        val index = target?.exerciseIndex ?: state.currentExerciseIndex
+        val ex = state.exercises.getOrNull(index) ?: return base
+        val info = target?.info
+        val currentSet = when {
+            target == null -> -1
+            ex.isCardio -> ex.cardioSets.indexOfFirst { !it.isCompleted }
+            else -> target.setIndex
+        }
+        val set = ex.sets.getOrNull(currentSet)
+        val kind = when {
+            ex.isCardio -> LiveSetKind.CARDIO
+            set?.isEmom == true -> LiveSetKind.EMOM
+            ex.isTimed -> LiveSetKind.TIMED
+            else -> LiveSetKind.STRENGTH
+        }
+        val block = ex.supersetId?.let { id -> state.exercises.indices.filter { state.exercises[it].supersetId == id } }
+            ?.takeIf { it.size > 1 }
+        val segmentOf = { exIndex: Int, setIndex: Int ->
+            val e = state.exercises[exIndex]
+            val done = if (e.isCardio) e.cardioSets.getOrNull(setIndex)?.isCompleted == true else e.sets.getOrNull(setIndex)?.isCompleted == true
+            when {
+                done -> LiveSegment.DONE
+                exIndex == index && setIndex == currentSet -> LiveSegment.CURRENT
+                else -> LiveSegment.TODO
+            }
+        }
+        val segments = if (block != null) {
+            // A superset is done one set of each exercise at a time: the bar follows that order
+            val rounds = block.maxOf { totalOf(state.exercises[it]) }
+            (0 until rounds).flatMap { round -> block.filter { round < totalOf(state.exercises[it]) }.map { segmentOf(it, round) } }
+        } else {
+            List(totalOf(ex)) { segmentOf(index, it) }
+        }
+        val value = info?.let {
+            it.text ?: (WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it.weight, it.weightUnit), it.weightUnit) +
+                " × " + (it.repsLabel ?: it.reps.toString()))
+        }
+        // A timed or cardio set on its clock, paused time taken out; its goal (if any) is when the clock ends
+        val clockStart = when {
+            ex.isCardio && state.cardioTimerRunning -> state.cardioTimerStartedAt?.let { it - state.cardioTimerBaseSeconds * 1000L }
+            !ex.isCardio && state.setTimerRunning -> state.setTimerStartedAt?.let { it - state.setTimerBaseSeconds * 1000L }
+            else -> null
+        }
+        val clockGoal = when {
+            clockStart == null -> null
+            ex.isCardio -> ex.cardioDurataTargetSeconds
+            else -> set?.timeSeconds ?: ex.timeTargetSeconds
+        }
+        return base.copy(
+            exerciseName = nameOf(ex),
+            exerciseNumber = index + 1,
+            setNumber = info?.setNumber,
+            setsInExercise = totalOf(ex),
+            value = value,
+            previousReps = info?.previousReps?.takeIf { it != info.reps && info.repsLabel == null && info.text == null },
+            detail = info?.detail,
+            nextExerciseName = state.exercises.getOrNull((block?.last() ?: index) + 1)?.let(nameOf),
+            startsExercise = currentSet == 0 && doneOf(ex) == 0,
+            inSuperset = block != null,
+            kind = kind,
+            segments = segments,
+            setDoneToken = info?.key?.token()?.takeIf { setDoneOnCard },
+            clockStartedAtMillis = clockStart,
+            clockEndsAtMillis = clockGoal?.takeIf { it > 0 }?.let { clockStart!! + it * 1000L }
+        )
+    }
+
     /** Where the announced next set lives, so a button on the card can tick exactly that set. */
     private data class NextSetTarget(val exerciseIndex: Int, val setIndex: Int, val info: NextSetInfo)
 
@@ -3441,6 +3590,8 @@ class WorkoutModel(
         stopRestTimer()
         stopWarmupTimer()
         workoutTimers.cancelEmom()
+        liveCardClosed = true
+        publishLiveCard(null)
         cardioTimerJob?.cancel()
         cardioTimerJob = null
         setTimerJob?.cancel()

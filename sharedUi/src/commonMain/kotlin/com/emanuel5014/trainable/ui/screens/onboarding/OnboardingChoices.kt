@@ -42,6 +42,12 @@ class OnboardingChoices {
     val timerShowNextSetButton = mutableStateOf(true)
     /** Workout mode of the dashboard (rest, its buttons and the exercise list on top); off in every style. */
     val dashboardWorkoutMode = mutableStateOf(false)
+    /** One card for the whole workout in place of the timer cards; off in every style. */
+    val workoutLiveCard = mutableStateOf(false)
+    /** Sub-option of [workoutLiveCard], as in Workout settings. */
+    val workoutLiveCardSetDone = mutableStateOf(true)
+    /** Sub-option of [workoutLiveCard]: a plain alert at the end of a timer too, for watches and bands. */
+    val workoutLiveCardAlert = mutableStateOf(true)
     val keepScreenOnSetTimer = mutableStateOf(true)
     val keepScreenOnCardioTimer = mutableStateOf(true)
     val autoStopCardioAtTarget = mutableStateOf(true)

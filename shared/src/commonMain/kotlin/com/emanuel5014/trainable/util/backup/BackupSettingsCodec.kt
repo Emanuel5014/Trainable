@@ -96,6 +96,9 @@ object BackupSettingsCodec {
         json.put("timer_show_time_buttons", prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] ?: true)
         json.put("timer_show_skip_button", prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] ?: true)
         prefs[UserPreferencesRepository.TIMER_SHOW_NEXT_SET_BUTTON]?.let { json.put("timer_show_next_set_button", it) }
+        prefs[UserPreferencesRepository.WORKOUT_LIVE_CARD]?.let { json.put("workout_live_card", it) }
+        prefs[UserPreferencesRepository.WORKOUT_LIVE_CARD_SET_DONE]?.let { json.put("workout_live_card_set_done", it) }
+        prefs[UserPreferencesRepository.WORKOUT_LIVE_CARD_ALERT]?.let { json.put("workout_live_card_alert", it) }
         prefs[UserPreferencesRepository.DASHBOARD_WORKOUT_MODE]?.let { json.put("dashboard_workout_mode", it) }
         json.put("starting_weight_enabled", prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] ?: false)
         json.put("reps_from_last_workout", prefs[UserPreferencesRepository.REPS_FROM_LAST_WORKOUT] ?: true)
@@ -250,6 +253,12 @@ object BackupSettingsCodec {
             prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] = jsonObject.getBoolean("timer_show_skip_button")
         if (jsonObject.has("timer_show_next_set_button"))
             prefs[UserPreferencesRepository.TIMER_SHOW_NEXT_SET_BUTTON] = jsonObject.getBoolean("timer_show_next_set_button")
+        if (jsonObject.has("workout_live_card"))
+            prefs[UserPreferencesRepository.WORKOUT_LIVE_CARD] = jsonObject.getBoolean("workout_live_card")
+        if (jsonObject.has("workout_live_card_set_done"))
+            prefs[UserPreferencesRepository.WORKOUT_LIVE_CARD_SET_DONE] = jsonObject.getBoolean("workout_live_card_set_done")
+        if (jsonObject.has("workout_live_card_alert"))
+            prefs[UserPreferencesRepository.WORKOUT_LIVE_CARD_ALERT] = jsonObject.getBoolean("workout_live_card_alert")
         if (jsonObject.has("dashboard_workout_mode"))
             prefs[UserPreferencesRepository.DASHBOARD_WORKOUT_MODE] = jsonObject.getBoolean("dashboard_workout_mode")
         if (jsonObject.has("starting_weight_enabled"))

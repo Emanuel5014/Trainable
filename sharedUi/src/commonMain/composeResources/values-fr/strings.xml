@@ -1935,4 +1935,10 @@
         <item quantity="other">OK · %1$d exercices</item>
         <item quantity="many">OK · %1$d exercices</item>
     </plurals>
+    <string name="workout_live_card">Notification de séance en direct</string>
+    <string name="workout_live_card_desc">Une seule notification pour toute la séance à la place de celles des minuteurs : exercice, séries, repos et temps total</string>
+    <string name="workout_live_card_set_done">Série faite aussi pendant la série</string>
+    <string name="workout_live_card_set_done_desc">Le bouton apparaît aussi pendant la série ; téléphone verrouillé, il faut le déverrouiller</string>
+    <string name="workout_live_card_alert">Alerte séparée en fin de minuteur</string>
+    <string name="workout_live_card_alert_desc">La fin du repos, de l'échauffement et de l'EMOM arrive aussi en notification normale, pour les montres et bracelets ; elle disparaît dès que vous continuez</string>
 </resources>

@@ -1935,4 +1935,10 @@
         <item quantity="other">Listo · %1$d ejercicios</item>
         <item quantity="many">Listo · %1$d ejercicios</item>
     </plurals>
+    <string name="workout_live_card">Notificación en vivo del entrenamiento</string>
+    <string name="workout_live_card_desc">Una sola notificación para todo el entrenamiento en lugar de las de los temporizadores: ejercicio, series, descanso y tiempo total</string>
+    <string name="workout_live_card_set_done">Serie hecha también durante la serie</string>
+    <string name="workout_live_card_set_done_desc">El botón aparece también mientras haces la serie; con el teléfono bloqueado pide desbloquearlo</string>
+    <string name="workout_live_card_alert">Aviso aparte al terminar el temporizador</string>
+    <string name="workout_live_card_alert_desc">El fin del descanso, del calentamiento y del EMOM llega también como notificación normal, para que lo reciban relojes y pulseras; desaparece en cuanto sigues</string>
 </resources>

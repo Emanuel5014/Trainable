@@ -1935,4 +1935,10 @@
         <item quantity="other">Fatto · %1$d esercizi</item>
         <item quantity="many">Fatto · %1$d esercizi</item>
     </plurals>
+    <string name="workout_live_card">Notifica allenamento live</string>
+    <string name="workout_live_card_desc">Una sola notifica per tutto l'allenamento al posto di quelle dei timer: esercizio, serie, recupero e tempo totale</string>
+    <string name="workout_live_card_set_done">Serie fatta anche durante la serie</string>
+    <string name="workout_live_card_set_done_desc">Il pulsante compare anche mentre fai la serie; a telefono bloccato chiede di sbloccarlo</string>
+    <string name="workout_live_card_alert">Avviso separato a fine timer</string>
+    <string name="workout_live_card_alert_desc">Fine recupero, riscaldamento ed EMOM arrivano anche come notifica normale, così li ricevono orologi e band; sparisce appena vai avanti</string>
 </resources>

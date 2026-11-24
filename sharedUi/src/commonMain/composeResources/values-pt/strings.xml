@@ -1935,4 +1935,10 @@
         <item quantity="other">Pronto · %1$d exercícios</item>
         <item quantity="many">Pronto · %1$d exercícios</item>
     </plurals>
+    <string name="workout_live_card">Notificação ao vivo do treino</string>
+    <string name="workout_live_card_desc">Uma única notificação para todo o treino no lugar das dos timers: exercício, séries, descanso e tempo total</string>
+    <string name="workout_live_card_set_done">Série feita também durante a série</string>
+    <string name="workout_live_card_set_done_desc">O botão aparece também enquanto você faz a série; com o celular bloqueado, pede para desbloquear</string>
+    <string name="workout_live_card_alert">Aviso separado no fim do timer</string>
+    <string name="workout_live_card_alert_desc">O fim do descanso, do aquecimento e do EMOM chega também como notificação normal, para relógios e pulseiras; some assim que você continua</string>
 </resources>

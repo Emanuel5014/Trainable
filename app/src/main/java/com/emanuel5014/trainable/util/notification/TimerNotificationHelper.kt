@@ -56,6 +56,26 @@ class TimerNotificationHelper @Inject constructor(
     private val emomFinishedChannelId = "emom_finished_channel_v1"
     private val emomNotificationId = 1003
 
+    /** The live card of the whole workout: the rest notification's id, so the two can never show together. */
+    private val liveChannelId = "workout_live_channel_v1"
+    private val liveRenderer = LiveCardRenderer(context)
+    private val liveLock = Any()
+    /** The "workout live card" setting. */
+    @Volatile private var liveEnabled = false
+    /** What the open workout last said of its sets; kept in the preferences so a recreated process can redraw it. */
+    @Volatile private var liveCard: WorkoutLiveCard? = null
+    /** The timers as the calls below left them, kept also without a live card so turning it on mid-rest works. */
+    @Volatile private var liveTimers = LiveTimers()
+    /** A button of the card found no open workout: the card says to open the app until the workout speaks again. */
+    @Volatile private var liveNeedsApp = false
+    /** What the card was last drawn from, so nothing is posted again when nothing changed. */
+    private var liveDrawn: LiveCardInput? = null
+    private var liveRenderJob: kotlinx.coroutines.Job? = null
+    /** The "separate alert at timer end" setting, and the finished state whose plain alert is on screen. */
+    @Volatile private var liveSeparateAlert = true
+    private var liveAlertMode: LiveMode? = null
+    private val liveAlertNotificationId = 1004
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /** What the + and - buttons of the timer notifications move the countdown by (Workout settings). */
@@ -81,12 +101,26 @@ class TimerNotificationHelper @Inject constructor(
     init {
         scope.launch {
             workoutRepository.deletedSessions.collect { id ->
-                if (id == workoutSessionId) {
+                if (id == workoutSessionId || id == liveCard?.sessionId) {
                     cancelTimer()
                     cancelWarmupTimer()
                     cancelEmom()
+                    endLiveCard(id)
                     workoutSessionId = null
                 }
+            }
+        }
+        // Read now, not later: a button pressed after the process was recreated must find the card it pressed
+        kotlinx.coroutines.runBlocking {
+            liveEnabled = userPrefsRepository.workoutLiveCard.first()
+            liveCard = WorkoutLiveCard.decode(userPrefsRepository.workoutLiveCardState.first())
+        }
+        scope.launch { userPrefsRepository.workoutLiveCardAlert.collect { liveSeparateAlert = it } }
+        scope.launch {
+            userPrefsRepository.workoutLiveCard.collect { enabled ->
+                val was = liveEnabled
+                liveEnabled = enabled
+                if (was && !enabled) dropLiveCard()
             }
         }
         scope.launch { userPrefsRepository.timerAddSeconds.collect { addSeconds = it } }
@@ -186,6 +220,8 @@ class TimerNotificationHelper @Inject constructor(
      * from Android 16 it is a live update whose bar has one segment per round.
      */
     fun showEmomNotification(info: EmomNotificationInfo) {
+        liveTimers = liveTimers.copy(emom = info, emomFinishedTitle = null, emomFinishedText = null)
+        if (isLive()) return requestLiveRender()
         val builder = NotificationCompat.Builder(context, emomRunningChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(info.title)
@@ -225,6 +261,8 @@ class TimerNotificationHelper @Inject constructor(
     /** Replaces the ongoing EMOM notification with an alerting one saying the run is over. */
     fun showEmomFinished(title: String, text: String) {
         cancelEmomBoundaryAlarm()
+        liveTimers = liveTimers.copy(emom = null, emomFinishedTitle = title, emomFinishedText = text)
+        if (isLive()) return renderLive(LiveCardAlert(emomFinishedChannelId, NotificationCompat.DEFAULT_ALL, silenceVibration = false))
         val notification = NotificationCompat.Builder(context, emomFinishedChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(title)
@@ -256,6 +294,11 @@ class TimerNotificationHelper @Inject constructor(
     }
 
     fun cancelEmom() {
+        liveTimers = liveTimers.copy(emom = null, emomFinishedTitle = null, emomFinishedText = null)
+        if (isLive()) {
+            cancelEmomBoundaryAlarm()
+            return requestLiveRender()
+        }
         notificationManager.cancel(emomNotificationId)
         cancelEmomBoundaryAlarm()
     }
@@ -361,6 +404,19 @@ class TimerNotificationHelper @Inject constructor(
             }
             notificationManager.createNotificationChannel(emomRunningChannel)
             notificationManager.createNotificationChannel(emomFinishedChannel)
+
+            // The live card of the whole workout: silent like the running timers, its alerts use their channels
+            val liveChannel = NotificationChannel(
+                liveChannelId,
+                context.getString(R.string.live_card_channel),
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = context.getString(R.string.timer_notifications_desc)
+                setShowBadge(false)
+                setSound(null, null)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            }
+            notificationManager.createNotificationChannel(liveChannel)
         }
     }
 
@@ -414,8 +470,17 @@ class TimerNotificationHelper @Inject constructor(
         /** The set "Set done" may log once the rest ends; null hides that button. */
         nextSetKey: NextSetKey? = null
     ) {
-        val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
+        var triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
         lastNextSetKey = nextSetKey
+        val restTotal = if (totalSeconds != null && totalSeconds > 0) totalSeconds else remainingSeconds
+        // The per-second redraws of a running rest name the same end give or take a second: keep the one on the card
+        liveTimers.restEndsAtMillis?.let { shown -> if (kotlin.math.abs(shown - triggerTime) < 1500 && liveTimers.restTotalSeconds == restTotal) triggerTime = shown }
+        liveTimers = liveTimers.copy(restEndsAtMillis = triggerTime, restTotalSeconds = restTotal, restFinished = false)
+        if (isLive()) {
+            cancelCustomVibration()
+            if (scheduleAlarm) scheduleRestFinish(triggerTime, sessionId)
+            return requestLiveRender()
+        }
         
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -486,21 +551,17 @@ class TimerNotificationHelper @Inject constructor(
         notificationManager.notify(notificationId, notification)
         cancelCustomVibration()
 
-        if (scheduleAlarm) {
-            // Schedule Alarm for exact finish
-            val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { 
-                action = TimerNotificationReceiver.ACTION_TIMER_FINISHED
-                putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, sessionId)
-            }
-            val finishPendingIntent = PendingIntent.getBroadcast(context, 4, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-            
-            AlarmManagerCompat.setExactAndAllowWhileIdle(
-                alarmManager,
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                finishPendingIntent
-            )
+        if (scheduleAlarm) scheduleRestFinish(triggerTime, sessionId)
+    }
+
+    /** The alarm that ends the rest on time, also with the screen off. */
+    private fun scheduleRestFinish(triggerTime: Long, sessionId: Int) {
+        val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_TIMER_FINISHED
+            putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, sessionId)
         }
+        val finishPendingIntent = PendingIntent.getBroadcast(context, 4, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        AlarmManagerCompat.setExactAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, triggerTime, finishPendingIntent)
     }
 
     /** The rest is over; [next] (from the open workout) is the set the card now announces. */
@@ -509,6 +570,16 @@ class TimerNotificationHelper @Inject constructor(
             lastNextSetLabel = nextSetLabelOf(next.exerciseName, next.setNumber, next.weight, next.reps, next.previousReps,
                 next.weightUnit, next.repsLabel, next.detail, next.text)
             lastNextSetKey = next.key
+        }
+        val alreadyFinished = liveTimers.restFinished
+        liveTimers = liveTimers.copy(restEndsAtMillis = null, restFinished = true)
+        if (isLive()) {
+            // The alarm and the open workout both say the rest is over: it rings once
+            if (alreadyFinished) return renderLive(null)
+            val (custom, seconds) = lockscreenVibration()
+            if (custom) startCustomVibration(seconds)
+            val defaults = if (custom) NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_LIGHTS else NotificationCompat.DEFAULT_ALL
+            return renderLive(LiveCardAlert(finishedChannelId, defaults, silenceVibration = custom))
         }
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -527,21 +598,7 @@ class TimerNotificationHelper @Inject constructor(
             context.getString(R.string.rest_end)
         }
 
-        val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
-        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-        val isLockedOrScreenOff = keyguardManager?.isKeyguardLocked == true || powerManager?.isInteractive == false
-
-        var useCustomVibration = false
-        var durationSeconds = 0
-
-        if (isLockedOrScreenOff) {
-            durationSeconds = kotlinx.coroutines.runBlocking {
-                userPrefsRepository.timerFinishedLockscreenVibrationDuration.first()
-            }
-            if (durationSeconds > 0) {
-                useCustomVibration = true
-            }
-        }
+        val (useCustomVibration, durationSeconds) = lockscreenVibration()
 
         val notificationBuilder = NotificationCompat.Builder(context, finishedChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
@@ -572,6 +629,16 @@ class TimerNotificationHelper @Inject constructor(
         notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
+    /** With the phone locked or the screen off, the long vibration of the settings (when it has a length) replaces the usual one. */
+    private fun lockscreenVibration(): Pair<Boolean, Int> {
+        val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val isLockedOrScreenOff = keyguardManager?.isKeyguardLocked == true || powerManager?.isInteractive == false
+        if (!isLockedOrScreenOff) return false to 0
+        val seconds = kotlinx.coroutines.runBlocking { userPrefsRepository.timerFinishedLockscreenVibrationDuration.first() }
+        return (seconds > 0) to seconds
+    }
+
     private fun restActionIntent(action: String, requestCode: Int): PendingIntent {
         val intent = Intent(context, TimerNotificationReceiver::class.java).apply {
             this.action = action
@@ -583,6 +650,10 @@ class TimerNotificationHelper @Inject constructor(
     /** A "Set done" / "+s" press reached no open workout: say so, with no button that would do nothing again. */
     fun showOpenAppToContinue() {
         cancelCustomVibration()
+        if (isLive()) {
+            liveNeedsApp = true
+            return renderLive(null)
+        }
         val intent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
         val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val text = context.getString(R.string.open_app_to_continue)
@@ -629,6 +700,12 @@ class TimerNotificationHelper @Inject constructor(
     }
 
     fun cancelTimer() {
+        liveTimers = liveTimers.copy(restEndsAtMillis = null, restFinished = false)
+        if (isLive()) {
+            cancelFinishAlarm()
+            cancelCustomVibration()
+            return requestLiveRender()
+        }
         notificationManager.cancel(notificationId)
         cancelFinishAlarm()
         cancelCustomVibration()
@@ -647,7 +724,14 @@ class TimerNotificationHelper @Inject constructor(
         totalSeconds: Int? = null,
         scheduleAlarm: Boolean = true
     ) {
-        val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
+        var triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
+        val warmupTotal = if (totalSeconds != null && totalSeconds > 0) totalSeconds else remainingSeconds
+        liveTimers.warmupEndsAtMillis?.let { shown -> if (kotlin.math.abs(shown - triggerTime) < 1500 && liveTimers.warmupTotalSeconds == warmupTotal) triggerTime = shown }
+        liveTimers = liveTimers.copy(warmupEndsAtMillis = triggerTime, warmupTotalSeconds = warmupTotal, warmupFinished = false)
+        if (isLive()) {
+            if (scheduleAlarm) scheduleWarmupFinish(triggerTime)
+            return requestLiveRender()
+        }
 
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -718,20 +802,24 @@ class TimerNotificationHelper @Inject constructor(
 
         notificationManager.notify(warmupNotificationId, notification)
 
-        if (scheduleAlarm) {
-            val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
-                action = TimerNotificationReceiver.ACTION_WARMUP_FINISHED
-            }
-            val finishPendingIntent = PendingIntent.getBroadcast(
-                context, 14, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            AlarmManagerCompat.setExactAndAllowWhileIdle(
-                alarmManager, AlarmManager.RTC_WAKEUP, triggerTime, finishPendingIntent
-            )
+        if (scheduleAlarm) scheduleWarmupFinish(triggerTime)
+    }
+
+    private fun scheduleWarmupFinish(triggerTime: Long) {
+        val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_WARMUP_FINISHED
         }
+        val finishPendingIntent = PendingIntent.getBroadcast(
+            context, 14, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        AlarmManagerCompat.setExactAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, triggerTime, finishPendingIntent)
     }
 
     fun showWarmupTimerFinished() {
+        val warmupAlreadyFinished = liveTimers.warmupFinished
+        liveTimers = liveTimers.copy(warmupEndsAtMillis = null, warmupFinished = true)
+        if (isLive() && warmupAlreadyFinished) return renderLive(null)
+        if (isLive()) return renderLive(LiveCardAlert(warmupFinishedChannelId, NotificationCompat.DEFAULT_ALL, silenceVibration = false))
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -765,6 +853,11 @@ class TimerNotificationHelper @Inject constructor(
     }
 
     fun cancelWarmupTimer() {
+        liveTimers = liveTimers.copy(warmupEndsAtMillis = null, warmupFinished = false)
+        if (isLive()) {
+            cancelWarmupFinishAlarm()
+            return requestLiveRender()
+        }
         notificationManager.cancel(warmupNotificationId)
         cancelWarmupFinishAlarm()
     }
@@ -773,5 +866,127 @@ class TimerNotificationHelper @Inject constructor(
         val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_WARMUP_FINISHED }
         val finishPendingIntent = PendingIntent.getBroadcast(context, 14, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         alarmManager.cancel(finishPendingIntent)
+    }
+
+    // ---- Live card of the whole workout ----
+
+    /** A live card is on: the timer calls above draw in it instead of in their own notifications. */
+    fun isLive(): Boolean = liveEnabled && liveCard != null
+
+    /** What the open workout says of its sets now (sent again on every change). */
+    fun showLiveCard(card: WorkoutLiveCard) {
+        val previous = liveCard
+        liveCard = card
+        workoutSessionId = card.sessionId
+        liveNeedsApp = false
+        // A finished warm-up or EMOM run is over once the workout moved on
+        if (previous != null && previous != card) liveTimers = liveTimers.copy(warmupFinished = false, emomFinishedTitle = null, emomFinishedText = null)
+        if (previous == null && liveEnabled) {
+            // The card takes the place of the warm-up and EMOM notifications (the rest one shares its id)
+            notificationManager.cancel(warmupNotificationId)
+            notificationManager.cancel(emomNotificationId)
+        }
+        scope.launch { userPrefsRepository.setWorkoutLiveCardState(card.encode()) }
+        if (liveEnabled) requestLiveRender()
+    }
+
+    /** The workout [sessionId] is over (finished, cancelled, deleted) or the setting went off: its card goes. */
+    fun endLiveCard(sessionId: Int) {
+        val card = liveCard ?: return
+        if (card.sessionId != sessionId) return
+        dropLiveCard()
+        liveCard = null
+        liveTimers = LiveTimers()
+        scope.launch { userPrefsRepository.setWorkoutLiveCardState(null) }
+    }
+
+    /** Takes the drawn card away (the notification shares the rest's id). */
+    private fun dropLiveCard() {
+        synchronized(liveLock) {
+            liveRenderJob?.cancel()
+            liveRenderJob = null
+            if (liveDrawn != null) notificationManager.cancel(notificationId)
+            liveDrawn = null
+            if (liveAlertMode != null) notificationManager.cancel(liveAlertNotificationId)
+            liveAlertMode = null
+        }
+    }
+
+    /** Draws the card a moment later: a tick in the workout calls several of the functions above in a row. */
+    private fun requestLiveRender() {
+        synchronized(liveLock) {
+            liveRenderJob?.cancel()
+            liveRenderJob = scope.launch {
+                delay(LIVE_RENDER_DELAY_MILLIS)
+                renderLive(null)
+            }
+        }
+    }
+
+    /**
+     * Draws what is pending now. A broadcast receiver calls it before it lets the process go, so the card it changed is
+     * drawn even if the process is frozen right after.
+     */
+    fun flushLiveCard() {
+        if (isLive()) renderLive(null)
+    }
+
+    /** Draws the card now; [alert] rings once on its channel (end of a rest, a warm-up, an EMOM run). */
+    private fun renderLive(alert: LiveCardAlert?) {
+        synchronized(liveLock) {
+            liveRenderJob?.cancel()
+            liveRenderJob = null
+            val card = liveCard ?: return
+            if (!liveEnabled || !hasNotificationPermission()) return
+            val timers = liveTimers
+            val mode = liveModeOf(card, timers)
+            val settings = LiveButtonSettings(showTimeButtons, addEnabled, subtractEnabled, showSkipButton)
+            val input = LiveCardInput(
+                card = card,
+                timers = timers,
+                mode = mode,
+                buttons = liveButtonsOf(mode, card, settings, lastNextSetKey, liveNeedsApp),
+                segments = liveSegmentsOf(mode, card, timers),
+                needsApp = liveNeedsApp,
+                addSeconds = addSeconds,
+                subtractSeconds = subtractSeconds,
+                // Only the finished card writes the time down; elsewhere the system counts it
+                nowMillis = if (mode == LiveMode.ALL_DONE) (liveDrawn?.takeIf { it.mode == LiveMode.ALL_DONE }?.nowMillis ?: System.currentTimeMillis()) else 0L,
+                countdownPermille = when (mode) {
+                    LiveMode.REST -> timers.restEndsAtMillis?.let { countdownPermille(it, timers.restTotalSeconds) }
+                    LiveMode.WARMUP -> timers.warmupEndsAtMillis?.let { countdownPermille(it, timers.warmupTotalSeconds) }
+                    else -> null
+                }
+            )
+            // The plain alert of a finished timer goes as soon as the card shows something else
+            if (liveAlertMode != null && liveAlertMode != mode) {
+                notificationManager.cancel(liveAlertNotificationId)
+                liveAlertMode = null
+            }
+            if (alert == null && input == liveDrawn) return
+            liveDrawn = input
+            if (alert != null && liveSeparateAlert) {
+                // The card updates in silence; the alert that rings is a plain notification watches forward
+                notificationManager.notify(notificationId, liveRenderer.build(input, liveChannelId, null))
+                notificationManager.notify(liveAlertNotificationId, liveRenderer.buildAlert(input, alert))
+                liveAlertMode = mode
+            } else {
+                notificationManager.notify(notificationId, liveRenderer.build(input, liveChannelId, alert))
+            }
+        }
+    }
+
+    /**
+     * How much of a countdown ending at [endsAt] after [totalSeconds] is gone, 0..1000, in whole seconds: the open
+     * workout redraws a running rest every second (from Android 16), and so does the bar.
+     */
+    private fun countdownPermille(endsAt: Long, totalSeconds: Int): Int {
+        if (totalSeconds <= 0) return 0
+        val remaining = ((endsAt - System.currentTimeMillis() + 999) / 1000).coerceIn(0, totalSeconds.toLong())
+        return ((totalSeconds - remaining) * 1000 / totalSeconds).toInt()
+    }
+
+    private companion object {
+        const val LIVE_RENDER_DELAY_MILLIS = 60L
     }
 }

@@ -90,4 +90,10 @@ class AndroidWorkoutTimers(private val helper: TimerNotificationHelper) : Workou
 
     override fun vibrateEmomCue(cue: EmomCue) =
         helper.vibrateEmomCue(cue)
+
+    override fun showLiveCard(card: WorkoutLiveCard) =
+        helper.showLiveCard(card)
+
+    override fun endLiveCard(sessionId: Int) =
+        helper.endLiveCard(sessionId)
 }

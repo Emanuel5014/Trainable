@@ -1916,4 +1916,10 @@
         <item quantity="one">Done · %1$d exercise</item>
         <item quantity="other">Done · %1$d exercises</item>
     </plurals>
+    <string name="workout_live_card">Workout live notification</string>
+    <string name="workout_live_card_desc">One notification for the whole workout instead of the timer ones: exercise, sets, rest and total time</string>
+    <string name="workout_live_card_set_done">Set done during the set too</string>
+    <string name="workout_live_card_set_done_desc">The button also shows while you do the set; on a locked phone it asks you to unlock it</string>
+    <string name="workout_live_card_alert">Separate alert at timer end</string>
+    <string name="workout_live_card_alert_desc">Rest, warm-up and EMOM endings also arrive as a normal notification, so watches and bands get them; it goes away once you move on</string>
 </resources>

@@ -71,6 +71,13 @@ import com.emanuel5014.trainable.sharedui.resources.timer_next_set_button_desc
 import com.emanuel5014.trainable.sharedui.resources.workout_section_after
 import com.emanuel5014.trainable.sharedui.resources.dashboard_workout_mode
 import com.emanuel5014.trainable.sharedui.resources.dashboard_workout_mode_desc
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_desc
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_set_done
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_set_done_desc
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_alert
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_alert_desc
+import com.emanuel5014.trainable.ui.util.workoutLiveCardSupported
 import com.emanuel5014.trainable.sharedui.resources.exercise_setup_setting
 import com.emanuel5014.trainable.sharedui.resources.exercise_setup_setting_desc
 import com.emanuel5014.trainable.sharedui.resources.workout_section_programming
@@ -112,6 +119,9 @@ import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SpaceDashboard
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.Watch
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.EventSeat
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -296,6 +306,9 @@ private fun DuringWorkoutCard(state: SettingsState) {
     val rpeScale by state.rpeScale.collectAsState()
     val exerciseSetupVisible by state.exerciseSetupVisible.collectAsState()
     val dashboardWorkoutMode by state.dashboardWorkoutMode.collectAsState()
+    val workoutLiveCard by state.workoutLiveCard.collectAsState()
+    val workoutLiveCardSetDone by state.workoutLiveCardSetDone.collectAsState()
+    val workoutLiveCardAlert by state.workoutLiveCardAlert.collectAsState()
 
     GymCard(containerColor = SurfaceContainerHigh) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -309,6 +322,39 @@ private fun DuringWorkoutCard(state: SettingsState) {
             )
 
             SettingDivider()
+
+            if (workoutLiveCardSupported) {
+                // One card for the whole workout in place of the rest, warm-up and EMOM ones
+                SettingSwitchRow(
+                    icon = Icons.Rounded.NotificationsActive,
+                    title = stringResource(Res.string.workout_live_card),
+                    description = stringResource(Res.string.workout_live_card_desc),
+                    checked = workoutLiveCard,
+                    onCheckedChange = { state.setWorkoutLiveCard(it) }
+                )
+
+                AnimatedVisibility(visible = workoutLiveCard) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        SettingSwitchRow(
+                            icon = Icons.Rounded.CheckCircle,
+                            title = stringResource(Res.string.workout_live_card_set_done),
+                            description = stringResource(Res.string.workout_live_card_set_done_desc),
+                            checked = workoutLiveCardSetDone,
+                            onCheckedChange = { state.setWorkoutLiveCardSetDone(it) }
+                        )
+                        // Watches and bands skip ongoing notifications: the end of a timer also gets a plain one
+                        SettingSwitchRow(
+                            icon = Icons.Rounded.Watch,
+                            title = stringResource(Res.string.workout_live_card_alert),
+                            description = stringResource(Res.string.workout_live_card_alert_desc),
+                            checked = workoutLiveCardAlert,
+                            onCheckedChange = { state.setWorkoutLiveCardAlert(it) }
+                        )
+                    }
+                }
+
+                SettingDivider()
+            }
 
             SettingSwitchRow(
                 icon = Icons.Rounded.Timer,

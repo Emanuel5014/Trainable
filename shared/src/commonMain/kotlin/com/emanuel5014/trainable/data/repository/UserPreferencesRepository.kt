@@ -201,6 +201,14 @@ class UserPreferencesRepository(
     val TIMER_SHOW_SKIP_BUTTON = booleanPreferencesKey("timer_show_skip_button")
     /** The "Set done" button of the finished-rest notification / Live Activity. On by default. */
     val TIMER_SHOW_NEXT_SET_BUTTON = booleanPreferencesKey("timer_show_next_set_button")
+    /** One card for the whole workout (Android notification / iOS Live Activity) in place of the timer cards. Off by default. */
+    val WORKOUT_LIVE_CARD = booleanPreferencesKey("workout_live_card")
+    /** "Set done" on the live card during the set too, not only once a rest is over. On by default. */
+    val WORKOUT_LIVE_CARD_SET_DONE = booleanPreferencesKey("workout_live_card_set_done")
+    /** With the live card on, the end of a rest, warm-up or EMOM also posts a plain alert (watches skip ongoing ones). On by default. */
+    val WORKOUT_LIVE_CARD_ALERT = booleanPreferencesKey("workout_live_card_alert")
+    /** What the open workout last told the live card, so the card can be redrawn after the process was recreated. */
+    val WORKOUT_LIVE_CARD_STATE = stringPreferencesKey("workout_live_card_state")
     /** Workout mode of the dashboard: while a workout runs, a big panel with the rest and its buttons goes on top. */
     val DASHBOARD_WORKOUT_MODE = booleanPreferencesKey("dashboard_workout_mode")
     /** What the open workout last announced (current set, progress), so the dashboard can show it once the workout is closed. */
@@ -719,6 +727,42 @@ class UserPreferencesRepository(
     suspend fun setTimerShowNextSetButton(show: Boolean) {
         dataStore.edit { preferences ->
             preferences[TIMER_SHOW_NEXT_SET_BUTTON] = show
+        }
+    }
+
+    val workoutLiveCard: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[WORKOUT_LIVE_CARD] ?: false }
+
+    suspend fun setWorkoutLiveCard(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[WORKOUT_LIVE_CARD] = enabled
+        }
+    }
+
+    val workoutLiveCardSetDone: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[WORKOUT_LIVE_CARD_SET_DONE] ?: true }
+
+    suspend fun setWorkoutLiveCardSetDone(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[WORKOUT_LIVE_CARD_SET_DONE] = enabled
+        }
+    }
+
+    val workoutLiveCardAlert: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[WORKOUT_LIVE_CARD_ALERT] ?: true }
+
+    suspend fun setWorkoutLiveCardAlert(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[WORKOUT_LIVE_CARD_ALERT] = enabled
+        }
+    }
+
+    val workoutLiveCardState: Flow<String?> = dataStore.data
+        .map { preferences -> preferences[WORKOUT_LIVE_CARD_STATE] }
+
+    suspend fun setWorkoutLiveCardState(json: String?) {
+        dataStore.edit { preferences ->
+            if (json == null) preferences.remove(WORKOUT_LIVE_CARD_STATE) else preferences[WORKOUT_LIVE_CARD_STATE] = json
         }
     }
 

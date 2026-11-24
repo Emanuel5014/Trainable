@@ -2,8 +2,11 @@ package com.emanuel5014.trainable.util.notification
 
 import kotlinx.coroutines.flow.SharedFlow
 
-/** NEXT_SET logs the set the finished-rest card shows; MORE_REST gives the rest back for the "+" seconds. */
-enum class TimerAction { SKIP, ADD, SUBTRACT, DISMISS, FINISHED, NEXT_SET, MORE_REST }
+/**
+ * NEXT_SET logs the set the finished-rest card shows; MORE_REST gives the rest back for the "+" seconds;
+ * LIVE_SET_DONE logs the set the live card shows during the set.
+ */
+enum class TimerAction { SKIP, ADD, SUBTRACT, DISMISS, FINISHED, NEXT_SET, MORE_REST, LIVE_SET_DONE }
 enum class WarmupTimerAction { SKIP, ADD, SUBTRACT, DISMISS, FINISHED }
 
 /** What the EMOM notification or its round alarm asks of the workout. */
@@ -129,4 +132,14 @@ interface WorkoutTimers {
     )
 
     fun vibrateEmomCue(cue: EmomCue)
+
+    /**
+     * The live card of the whole workout ("workout live card" setting): what the open workout says of its sets, sent
+     * again on every change. While a live card is on, the rest, warm-up and EMOM calls above keep their alarms and
+     * alerts but are drawn inside it. A platform without a live card ignores both.
+     */
+    fun showLiveCard(card: WorkoutLiveCard) {}
+
+    /** The workout [sessionId] was finished, cancelled or deleted, or the setting was turned off: its live card goes. */
+    fun endLiveCard(sessionId: Int) {}
 }
