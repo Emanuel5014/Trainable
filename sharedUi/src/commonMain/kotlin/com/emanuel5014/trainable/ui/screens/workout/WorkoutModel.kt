@@ -2332,6 +2332,10 @@ class WorkoutModel(
                         // A journal that cannot be saved must never keep the workout from finishing
                         if (journal != null) runCatching { journalRepository.saveJournal(id, journal) }
                     }
+                    // Back on the tabs, a quick workout can be kept as a routine
+                    if (_state.value.isQuickWorkout) {
+                        com.emanuel5014.trainable.ui.screens.routines.RoutineFromWorkoutRequests.quickWorkoutFinished(id)
+                    }
                     advanceProgramWeek()
                     stopRestTimer()
                     stopWarmupTimer()

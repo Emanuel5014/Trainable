@@ -1841,4 +1841,31 @@
     <string name="physical_check_change_password_desc">Vuelve a cifrar fotos, peso y notas con una nueva contraseña.</string>
     <string name="physical_check_current_password">Contraseña actual</string>
     <string name="physical_check_password_changed">Contraseña cambiada</string>
+    <!-- Routine from a quick workout -->
+    <string name="save_as_routine">GUARDAR COMO RUTINA</string>
+    <string name="routine_from_workout_of">Del entrenamiento del %1$s</string>
+    <string name="routine_from_moves_title">El entrenamiento pasa a la rutina.</string>
+    <string name="routine_from_moves_body">La próxima vez, pesos y repeticiones parten de aquí. Pesos, RPE y notas quedan en el historial, no en la rutina.</string>
+    <string name="routine_from_rest">desc. %1$s</string>
+    <string name="routine_from_cardio">Cardio</string>
+    <string name="routine_from_pick_title">¿De qué entrenamiento?</string>
+    <string name="routine_from_pick_hint">Tus entrenamientos rápidos, del más reciente.</string>
+    <string name="routine_from_pick_empty">Aún no hay entrenamientos rápidos de los que partir.</string>
+    <string name="routine_from_option_title">Desde un entrenamiento rápido</string>
+    <string name="routine_from_option_body">Ejercicios, series y descansos ya listos</string>
+    <string name="routine_from_or_scratch">O DESDE CERO</string>
+    <string name="workout_saved">Entrenamiento guardado</string>
+    <string name="routine_created">Rutina creada</string>
+    <plurals name="routine_from_exercises">
+        <item quantity="one">%1$d ejercicio</item>
+        <item quantity="other">%1$d ejercicios</item>
+    </plurals>
+    <plurals name="routine_from_sets">
+        <item quantity="one">%1$d serie</item>
+        <item quantity="other">%1$d series</item>
+    </plurals>
+    <plurals name="routine_from_warmups">
+        <item quantity="one">sin %1$d serie de calentamiento</item>
+        <item quantity="other">sin %1$d series de calentamiento</item>
+    </plurals>
 </resources>

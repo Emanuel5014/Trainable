@@ -332,6 +332,37 @@ interface WorkoutDao {
     /** What the details sheet of a past workout edits, and nothing else of the row. */
     @Query("UPDATE workout_sessions SET note_sessione = :name, timestamp = :timestamp, duration_ms = :durationMs WHERE id = :sessionId")
     suspend fun updateSessionDetails(sessionId: Int, name: String?, timestamp: Long, durationMs: Long?)
+
+    /** Moves one workout to another routine, with the own name it has there (null: it goes by the routine's). */
+    @Query("UPDATE workout_sessions SET plan_id = :planId, note_sessione = :name, program_week = NULL WHERE id = :sessionId")
+    suspend fun moveSessionToPlan(sessionId: Int, planId: Int, name: String?)
+
+    /**
+     * Creates a routine from a workout in one go: the routine, its exercises with their blocks (week 1) and the
+     * workout moved into it (none when [sessionId] is null). Returns the new routine's id.
+     */
+    @Transaction
+    suspend fun createPlanFromSession(
+        plan: WorkoutPlanEntity,
+        exercises: List<Pair<PlanExerciseEntity, List<PlanExerciseBlockEntity>>>,
+        sessionId: Int?,
+        sessionName: String?
+    ): Int {
+        val planId = insertPlan(plan).toInt()
+        exercises.forEach { (exercise, blocks) ->
+            val planExerciseId = insertPlanExercise(exercise.copy(id = 0, planId = planId)).toInt()
+            if (blocks.isNotEmpty()) insertBlocks(blocks.map { it.copy(id = 0, planExerciseId = planExerciseId) })
+        }
+        if (sessionId != null) moveSessionToPlan(sessionId, planId, sessionName)
+        return planId
+    }
+
+    /** Takes back [createPlanFromSession]: the workout goes back where it was, then the routine is deleted. */
+    @Transaction
+    suspend fun undoPlanFromSession(plan: WorkoutPlanEntity, sessionId: Int, previousPlanId: Int, previousName: String?) {
+        moveSessionToPlan(sessionId, previousPlanId, previousName)
+        deletePlan(plan)
+    }
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSet(set: SetLogEntity): Long

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,6 +62,8 @@ import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.isArchived
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.ui.components.GymButton
+import com.emanuel5014.trainable.sharedui.resources.save_as_routine
 import com.emanuel5014.trainable.sharedui.resources.share
 import com.emanuel5014.trainable.sharedui.resources.edit
 import com.emanuel5014.trainable.sharedui.resources.cancel
@@ -215,7 +218,9 @@ internal fun WorkoutDetailSheet(
     onRestoreExercise: (Int) -> Unit,
     onDismiss: () -> Unit,
     /** The heart-rate card, under the numbers; it adds its own bottom gap when it shows. */
-    heartSection: (@Composable () -> Unit)? = null
+    heartSection: (@Composable () -> Unit)? = null,
+    /** Saves the workout as a routine; null when it already belongs to one (only quick workouts offer it). */
+    onSaveAsRoutine: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val session = sessionDetails.session
@@ -275,6 +280,19 @@ internal fun WorkoutDetailSheet(
             if (tiles.isNotEmpty()) {
                 item(key = "stats") {
                     WorkoutStatTiles(tiles, Modifier.padding(bottom = 13.dp))
+                }
+            }
+
+            if (onSaveAsRoutine != null) {
+                item(key = "save_as_routine") {
+                    GymButton(
+                        onClick = onSaveAsRoutine,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 13.dp)
+                    ) {
+                        Icon(Icons.Rounded.LibraryAdd, contentDescription = null, modifier = Modifier.size(22.dp))
+                        Spacer(Modifier.width(10.dp))
+                        Text(stringResource(Res.string.save_as_routine), fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                    }
                 }
             }
 

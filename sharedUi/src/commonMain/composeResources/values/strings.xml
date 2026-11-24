@@ -1828,4 +1828,31 @@
     <string name="physical_check_change_password_desc">Encrypts the photos, weight and notes again with a new password.</string>
     <string name="physical_check_current_password">Current password</string>
     <string name="physical_check_password_changed">Password changed</string>
+    <!-- Routine from a quick workout -->
+    <string name="save_as_routine">SAVE AS ROUTINE</string>
+    <string name="routine_from_workout_of">From the workout of %1$s</string>
+    <string name="routine_from_moves_title">The workout moves into the routine.</string>
+    <string name="routine_from_moves_body">Next time weights and reps start from here. Weights, RPE and notes stay in the history, not in the routine.</string>
+    <string name="routine_from_rest">rest %1$s</string>
+    <string name="routine_from_cardio">Cardio</string>
+    <string name="routine_from_pick_title">Which workout?</string>
+    <string name="routine_from_pick_hint">Your quick workouts, newest first.</string>
+    <string name="routine_from_pick_empty">No quick workouts to start from yet.</string>
+    <string name="routine_from_option_title">From a quick workout</string>
+    <string name="routine_from_option_body">Exercises, sets and rests ready</string>
+    <string name="routine_from_or_scratch">OR FROM SCRATCH</string>
+    <string name="workout_saved">Workout saved</string>
+    <string name="routine_created">Routine created</string>
+    <plurals name="routine_from_exercises">
+        <item quantity="one">%1$d exercise</item>
+        <item quantity="other">%1$d exercises</item>
+    </plurals>
+    <plurals name="routine_from_sets">
+        <item quantity="one">%1$d set</item>
+        <item quantity="other">%1$d sets</item>
+    </plurals>
+    <plurals name="routine_from_warmups">
+        <item quantity="one">without %1$d warm-up set</item>
+        <item quantity="other">without %1$d warm-up sets</item>
+    </plurals>
 </resources>

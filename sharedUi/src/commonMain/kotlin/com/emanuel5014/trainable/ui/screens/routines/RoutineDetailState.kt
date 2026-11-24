@@ -52,6 +52,13 @@ class RoutineDetailState(
     private val oneRepMaxRepository: OneRepMaxRepository,
     private val scope: CoroutineScope
 ) {
+    /** True when [result] made this routine (its page then offers to undo it). */
+    fun wasCreatedBy(result: com.emanuel5014.trainable.domain.session.RoutineFromWorkoutResult): Boolean = result.planId == planId
+
+    /** Undoes the routine just made from a workout: the workout goes back where it was, the routine is deleted. */
+    suspend fun undoRoutineFromWorkout(result: com.emanuel5014.trainable.domain.session.RoutineFromWorkoutResult) =
+        workoutRepository.undoRoutineFromWorkout(result)
+
     companion object {
         const val MAX_WEEKS = 52
     }

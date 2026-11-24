@@ -366,10 +366,15 @@ private fun IosMainTabs(
     analytics: AnalyticsState
 ) {
     val hapticEnabled by IosAppGraph.preferences.hapticEnabled.collectAsState(initial = true)
+    val routineScope = androidx.compose.runtime.rememberCoroutineScope()
+    val routineFromWorkout = remember {
+        com.emanuel5014.trainable.ui.screens.routines.RoutineFromWorkoutState(IosAppGraph.workouts, routineScope)
+    }
     // Rows with quick swipe actions hand fast flicks back to this pager
     androidx.compose.runtime.CompositionLocalProvider(
         com.emanuel5014.trainable.ui.components.LocalMainPagerState provides pagerState
     ) {
+    Box(modifier = Modifier.fillMaxSize()) {
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
@@ -418,6 +423,13 @@ private fun IosMainTabs(
                 }
             )
         }
+    }
+    // "Save as routine": the offer after a quick workout and the sheets the tabs ask for
+    com.emanuel5014.trainable.ui.screens.routines.RoutineFromWorkoutHost(
+        state = routineFromWorkout,
+        languageCode = com.emanuel5014.trainable.platform.IosAppLocale.language(),
+        onOpenRoutine = { planId -> navController.navigate(RoutineDetail(planId)) }
+    )
     }
     }
 }

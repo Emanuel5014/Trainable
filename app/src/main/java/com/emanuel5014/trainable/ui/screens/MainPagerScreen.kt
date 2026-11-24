@@ -3,17 +3,21 @@ package com.emanuel5014.trainable.ui.screens
 import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.BottomBarManager
@@ -27,6 +31,8 @@ import com.emanuel5014.trainable.ui.navigation.Report
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsScreen
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardScreen
 import com.emanuel5014.trainable.ui.screens.history.HistoryScreen
+import com.emanuel5014.trainable.ui.screens.routines.RoutineFromWorkoutHost
+import com.emanuel5014.trainable.ui.screens.routines.RoutineFromWorkoutViewModel
 import com.emanuel5014.trainable.ui.screens.routines.RoutineListScreen
 import kotlinx.coroutines.launch
 
@@ -55,8 +61,12 @@ fun MainPagerScreen(
         }
     }
     
+    val routineFromWorkout: RoutineFromWorkoutViewModel = hiltViewModel()
+    val routineLanguage by routineFromWorkout.languageCode.collectAsState()
+
     // Rows with quick swipe actions hand fast flicks back to this pager
     CompositionLocalProvider(LocalMainPagerState provides pagerState) {
+    Box(modifier = Modifier.fillMaxSize()) {
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
@@ -95,6 +105,13 @@ fun MainPagerScreen(
                 onNavigateToOneRepMaxes = { navController.navigate(com.emanuel5014.trainable.ui.navigation.OneRepMaxes) }
             )
         }
+    }
+    // "Save as routine": the offer after a quick workout and the sheets the tabs ask for
+    RoutineFromWorkoutHost(
+        state = routineFromWorkout.state,
+        languageCode = routineLanguage,
+        onOpenRoutine = { planId -> navController.navigate(RoutineDetail(planId)) }
+    )
     }
     }
 }

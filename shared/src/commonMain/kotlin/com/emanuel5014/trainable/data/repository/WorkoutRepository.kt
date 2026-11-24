@@ -45,6 +45,9 @@ import com.emanuel5014.trainable.domain.csvimport.HistoryCsvRowOrder
 import com.emanuel5014.trainable.domain.csvimport.JournalCsv
 import com.emanuel5014.trainable.domain.csvimport.SessionDuration
 import com.emanuel5014.trainable.domain.csvimport.SupersetCsv
+import com.emanuel5014.trainable.domain.session.RoutineExerciseDraft
+import com.emanuel5014.trainable.domain.session.RoutineFromWorkout
+import com.emanuel5014.trainable.domain.session.RoutineFromWorkoutResult
 import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
@@ -509,6 +512,75 @@ class WorkoutRepository(
         )
     }
     
+    /** What the routine made from workout [sessionId] would hold, for the sheet that shows it before it is created. */
+    suspend fun routineDraftsOf(sessionId: Int): List<RoutineExerciseDraft> {
+        val sets = workoutDao.getSessionWithSets(sessionId).first()?.sets ?: return emptyList()
+        return RoutineFromWorkout.drafts(sets, workoutDao.getCardioLogsForSession(sessionId).first())
+    }
+
+    /**
+     * Creates a routine named [name] from workout [sessionId] (see [RoutineFromWorkout]) and moves the workout into it,
+     * so the routine starts with it as its last time. The routine starts on the day of the workout, so the start-date
+     * cutoff keeps it. A workout of a real routine stays where it is: only quick and custom ones move.
+     * Null when there is nothing to make a routine of.
+     */
+    suspend fun createRoutineFromWorkout(sessionId: Int, name: String): RoutineFromWorkoutResult? {
+        val user = userDao.getUser().first() ?: return null
+        val session = workoutDao.getSessionWithSets(sessionId).first()?.session ?: return null
+        val drafts = routineDraftsOf(sessionId)
+        if (drafts.isEmpty() || name.isBlank()) return null
+        val previousPlan = workoutDao.getPlanOnce(session.planId)
+        val moves = previousPlan?.isSystemPlan == true
+        val supersetIds = drafts.mapNotNull { it.supersetKey }.distinct().associateWith { Uuid.random().toString() }
+        val exercises = drafts.mapIndexed { index, draft ->
+            PlanExerciseEntity(
+                planId = 0,
+                exerciseId = draft.exerciseId,
+                serieTarget = draft.sets,
+                repsTarget = draft.repsTarget,
+                repsMax = draft.repsMax,
+                recuperoTarget = draft.restSeconds,
+                ordine = index,
+                supersetId = draft.supersetKey?.let { supersetIds[it] },
+                exerciseType = draft.exerciseType,
+                durataTargetSecondi = draft.durationSeconds,
+                distanzaTargetKm = draft.distanceKm,
+                cardioCategoria = if (draft.isCardio) "Cardio" else null
+            ) to draft.blocks.mapIndexed { order, block -> PlanExerciseBlockEntity.fromDomain(block, 0, 1, order) }
+        }
+        val routineName = name.trim()
+        // The workout's own name became the routine's: it now goes by the routine
+        val sessionName = session.noteSessione?.takeUnless { it.trim().equals(routineName, ignoreCase = true) }
+        val nextOrder = (workoutDao.getAllPlans().first().maxOfOrNull { it.ordine } ?: -1) + 1
+        val plan = WorkoutPlanEntity(
+            userId = user.id,
+            nome = routineName,
+            dataInizio = session.timestamp,
+            isActive = true,
+            ordine = nextOrder
+        )
+        val planId = workoutDao.createPlanFromSession(plan, exercises, sessionId.takeIf { moves }, sessionName)
+        triggerWidgetUpdate()
+        return RoutineFromWorkoutResult(
+            planId = planId,
+            sessionId = sessionId,
+            previousPlanId = session.planId,
+            previousName = session.noteSessione,
+            movedWorkout = moves
+        )
+    }
+
+    /** Takes back [createRoutineFromWorkout]: the workout goes back to where it was and the routine is deleted. */
+    suspend fun undoRoutineFromWorkout(result: RoutineFromWorkoutResult) {
+        val plan = workoutDao.getPlanOnce(result.planId) ?: return
+        if (result.movedWorkout) {
+            workoutDao.undoPlanFromSession(plan, result.sessionId, result.previousPlanId, result.previousName)
+        } else {
+            workoutDao.deletePlan(plan)
+        }
+        triggerWidgetUpdate()
+    }
+
     fun getSessionWithSets(sessionId: Int): Flow<SessionWithSets?> = workoutDao.getSessionWithSets(sessionId)
 
     fun getSessionWithDetails(sessionId: Int): Flow<SessionWithDetails?> = workoutDao.getSessionWithDetails(sessionId)

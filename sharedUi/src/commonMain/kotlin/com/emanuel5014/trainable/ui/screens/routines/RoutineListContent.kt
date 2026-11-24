@@ -928,6 +928,14 @@ fun RoutineListContent(
                         )
                     }
 
+                    RoutineFromWorkoutOption(
+                        onClick = {
+                            // Closed first: the list of quick workouts opens over the tabs
+                            showSheet = false
+                            RoutineFromWorkoutRequests.pick()
+                        }
+                    )
+
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         GymInputField(
                             value = routineName,

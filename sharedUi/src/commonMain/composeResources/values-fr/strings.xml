@@ -1841,4 +1841,31 @@
     <string name="physical_check_change_password_desc">Chiffre à nouveau photos, poids et notes avec un nouveau mot de passe.</string>
     <string name="physical_check_current_password">Mot de passe actuel</string>
     <string name="physical_check_password_changed">Mot de passe modifié</string>
+    <!-- Routine from a quick workout -->
+    <string name="save_as_routine">ENREGISTRER COMME ROUTINE</string>
+    <string name="routine_from_workout_of">De l'entraînement du %1$s</string>
+    <string name="routine_from_moves_title">L'entraînement passe dans la routine.</string>
+    <string name="routine_from_moves_body">La prochaine fois, poids et répétitions partent d'ici. Poids, RPE et notes restent dans l'historique, pas dans la routine.</string>
+    <string name="routine_from_rest">repos %1$s</string>
+    <string name="routine_from_cardio">Cardio</string>
+    <string name="routine_from_pick_title">À partir de quel entraînement ?</string>
+    <string name="routine_from_pick_hint">Tes entraînements rapides, du plus récent.</string>
+    <string name="routine_from_pick_empty">Pas encore d'entraînement rapide d'où partir.</string>
+    <string name="routine_from_option_title">À partir d'un entraînement rapide</string>
+    <string name="routine_from_option_body">Exercices, séries et repos déjà prêts</string>
+    <string name="routine_from_or_scratch">OU DE ZÉRO</string>
+    <string name="workout_saved">Entraînement enregistré</string>
+    <string name="routine_created">Routine créée</string>
+    <plurals name="routine_from_exercises">
+        <item quantity="one">%1$d exercice</item>
+        <item quantity="other">%1$d exercices</item>
+    </plurals>
+    <plurals name="routine_from_sets">
+        <item quantity="one">%1$d série</item>
+        <item quantity="other">%1$d séries</item>
+    </plurals>
+    <plurals name="routine_from_warmups">
+        <item quantity="one">sans %1$d série d'échauffement</item>
+        <item quantity="other">sans %1$d séries d'échauffement</item>
+    </plurals>
 </resources>

@@ -1841,4 +1841,31 @@
     <string name="physical_check_change_password_desc">Criptografa novamente fotos, peso e notas com uma nova senha.</string>
     <string name="physical_check_current_password">Senha atual</string>
     <string name="physical_check_password_changed">Senha alterada</string>
+    <!-- Routine from a quick workout -->
+    <string name="save_as_routine">SALVAR COMO ROTINA</string>
+    <string name="routine_from_workout_of">Do treino de %1$s</string>
+    <string name="routine_from_moves_title">O treino passa para a rotina.</string>
+    <string name="routine_from_moves_body">Na próxima vez, pesos e repetições partem daqui. Pesos, RPE e notas ficam no histórico, não na rotina.</string>
+    <string name="routine_from_rest">desc. %1$s</string>
+    <string name="routine_from_cardio">Cardio</string>
+    <string name="routine_from_pick_title">De qual treino?</string>
+    <string name="routine_from_pick_hint">Seus treinos rápidos, do mais recente.</string>
+    <string name="routine_from_pick_empty">Ainda não há treinos rápidos para começar.</string>
+    <string name="routine_from_option_title">A partir de um treino rápido</string>
+    <string name="routine_from_option_body">Exercícios, séries e descansos já prontos</string>
+    <string name="routine_from_or_scratch">OU DO ZERO</string>
+    <string name="workout_saved">Treino salvo</string>
+    <string name="routine_created">Rotina criada</string>
+    <plurals name="routine_from_exercises">
+        <item quantity="one">%1$d exercício</item>
+        <item quantity="other">%1$d exercícios</item>
+    </plurals>
+    <plurals name="routine_from_sets">
+        <item quantity="one">%1$d série</item>
+        <item quantity="other">%1$d séries</item>
+    </plurals>
+    <plurals name="routine_from_warmups">
+        <item quantity="one">sem %1$d série de aquecimento</item>
+        <item quantity="other">sem %1$d séries de aquecimento</item>
+    </plurals>
 </resources>

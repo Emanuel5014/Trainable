@@ -692,6 +692,16 @@ fun HistoryContent(
                 },
                 onRestoreExercise = state::restoreExercise,
                 onDismiss = { openSessionId = null },
+                // A quick or custom workout can become a routine; one of a routine already is one
+                onSaveAsRoutine = if (!openDetails.plan.isSystemPlan || !openDetails.session.isFinished ||
+                    (openDetails.sets.isEmpty() && openDetails.cardio.isEmpty())) null else {
+                    {
+                        // Closed first: the routine sheet opens over the tabs
+                        val sessionId = openDetails.session.id
+                        openSessionId = null
+                        com.emanuel5014.trainable.ui.screens.routines.RoutineFromWorkoutRequests.save(sessionId)
+                    }
+                },
                 heartSection = {
                     HistoryHeartSection(
                         state = state,

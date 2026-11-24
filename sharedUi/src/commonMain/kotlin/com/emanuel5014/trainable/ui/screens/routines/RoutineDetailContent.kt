@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.ui.util.bodyPadding
 import com.emanuel5014.trainable.ui.util.scrollEndInset
 import com.emanuel5014.trainable.ui.util.plusBottom
 import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.routine_created
 import com.emanuel5014.trainable.sharedui.resources.add
 import com.emanuel5014.trainable.sharedui.resources.add_exercise
 import com.emanuel5014.trainable.sharedui.resources.advanced_needs_block
@@ -666,6 +667,23 @@ fun RoutineDetailContent(
     // The Start button shrinks to its icon once the list is scrolled away from the top
     val startFabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
 
+    // A routine just made from a workout can be taken back from here, once
+    val createdSnackbar = remember { androidx.compose.material3.SnackbarHostState() }
+    val createdText = stringResource(Res.string.routine_created)
+    val undoText = stringResource(Res.string.cancel).uppercase()
+    LaunchedEffect(state) {
+        // Collected, not keyed on the value: taking it back must not cancel the snackbar on screen
+        RoutineFromWorkoutRequests.created.collect { created ->
+            val result = created?.takeIf { state.wasCreatedBy(it) } ?: return@collect
+            RoutineFromWorkoutRequests.consumeCreated()
+            val answer = createdSnackbar.showSnackbar(createdText, actionLabel = undoText, duration = androidx.compose.material3.SnackbarDuration.Long)
+            if (answer == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                state.undoRoutineFromWorkout(result)
+                onNavigateBack()
+            }
+        }
+    }
+
     val actionGlass = rememberActionGlassSource()
     Scaffold(
         modifier = Modifier
@@ -674,6 +692,7 @@ fun RoutineDetailContent(
                 if (isScanActive) Modifier.hazeSource(state = scanHazeState) else Modifier
             ),
         containerColor = Surface,
+        snackbarHost = { androidx.compose.material3.SnackbarHost(createdSnackbar) },
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.End,
