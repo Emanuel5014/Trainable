@@ -21,6 +21,18 @@ internal actual class ReportDateFormats actual constructor(languageCode: String)
         timeStyle = NSDateFormatterShortStyle
     }
 
+    private val weekdayFormat = NSDateFormatter().apply {
+        locale = this@ReportDateFormats.locale
+        setLocalizedDateFormatFromTemplate("EEE")
+    }
+    private val monthFormat = NSDateFormatter().apply {
+        locale = this@ReportDateFormats.locale
+        setLocalizedDateFormatFromTemplate("LLLLyyyy")
+    }
+
+    actual fun weekday(millis: Long): String = weekdayFormat.stringFromDate(NSDate.dateWithTimeIntervalSince1970(millis / 1000.0)).trimEnd('.')
+    actual fun monthYear(millis: Long): String = monthFormat.stringFromDate(NSDate.dateWithTimeIntervalSince1970(millis / 1000.0))
+        .replaceFirstChar { it.uppercase() }
     actual fun day(millis: Long): String = date.stringFromDate(NSDate.dateWithTimeIntervalSince1970(millis / 1000.0))
     actual fun moment(millis: Long): String = dateTime.stringFromDate(NSDate.dateWithTimeIntervalSince1970(millis / 1000.0))
 }

@@ -78,7 +78,18 @@ private val ENGLISH = mapOf(
     "longest_set" to "Longest Set",
     "best_reps" to "Most Reps",
     "total_reps" to "Total Reps",
-    "total_distance" to "Total Distance"
+    "total_distance" to "Total Distance",
+    "overview" to "Overview",
+    "week" to "Week",
+    "week_of" to "Week {0} of {1}",
+    "program_length" to "{0}-week program",
+    "program" to "Program",
+    "exercise_one" to "exercise",
+    "exercises_unit" to "exercises",
+    "earlier_workouts" to "Earlier workouts",
+    "back_to_top" to "Back to top",
+    "sections" to "Sections",
+    "trend" to "Best set of each workout"
 )
 
 private val ITALIAN = ENGLISH + mapOf(
@@ -135,7 +146,18 @@ private val ITALIAN = ENGLISH + mapOf(
     "longest_set" to "Serie più Lunga",
     "best_reps" to "Reps Max",
     "total_reps" to "Reps Totali",
-    "total_distance" to "Distanza Totale"
+    "total_distance" to "Distanza Totale",
+    "overview" to "Panoramica",
+    "week" to "Settimana",
+    "week_of" to "Settimana {0} di {1}",
+    "program_length" to "Programma di {0} settimane",
+    "program" to "Programma",
+    "exercise_one" to "esercizio",
+    "exercises_unit" to "esercizi",
+    "earlier_workouts" to "Allenamenti precedenti",
+    "back_to_top" to "Torna su",
+    "sections" to "Sezioni",
+    "trend" to "Serie migliore di ogni allenamento"
 )
 
 private val SPANISH = ENGLISH + mapOf(
@@ -192,7 +214,18 @@ private val SPANISH = ENGLISH + mapOf(
     "longest_set" to "Serie más Larga",
     "best_reps" to "Reps Máx",
     "total_reps" to "Reps Totales",
-    "total_distance" to "Distancia Total"
+    "total_distance" to "Distancia Total",
+    "overview" to "Resumen",
+    "week" to "Semana",
+    "week_of" to "Semana {0} de {1}",
+    "program_length" to "Programa de {0} semanas",
+    "program" to "Programa",
+    "exercise_one" to "ejercicio",
+    "exercises_unit" to "ejercicios",
+    "earlier_workouts" to "Entrenamientos anteriores",
+    "back_to_top" to "Volver arriba",
+    "sections" to "Secciones",
+    "trend" to "Mejor serie de cada entrenamiento"
 )
 
 private val FRENCH = ENGLISH + mapOf(
@@ -247,7 +280,18 @@ private val FRENCH = ENGLISH + mapOf(
     "longest_set" to "Série la plus Longue",
     "best_reps" to "Reps Max",
     "total_reps" to "Reps Totales",
-    "total_distance" to "Distance Totale"
+    "total_distance" to "Distance Totale",
+    "overview" to "Vue d'ensemble",
+    "week" to "Semaine",
+    "week_of" to "Semaine {0} sur {1}",
+    "program_length" to "Programme de {0} semaines",
+    "program" to "Programme",
+    "exercise_one" to "exercice",
+    "exercises_unit" to "exercices",
+    "earlier_workouts" to "Séances précédentes",
+    "back_to_top" to "Retour en haut",
+    "sections" to "Sections",
+    "trend" to "Meilleure série de chaque séance"
 )
 
 private val GERMAN = ENGLISH + mapOf(
@@ -305,7 +349,18 @@ private val GERMAN = ENGLISH + mapOf(
     "longest_set" to "Längster Satz",
     "best_reps" to "Max Wdh",
     "total_reps" to "Gesamt Wdh",
-    "total_distance" to "Gesamtdistanz"
+    "total_distance" to "Gesamtdistanz",
+    "overview" to "Übersicht",
+    "week" to "Woche",
+    "week_of" to "Woche {0} von {1}",
+    "program_length" to "{0}-Wochen-Programm",
+    "program" to "Programm",
+    "exercise_one" to "Übung",
+    "exercises_unit" to "Übungen",
+    "earlier_workouts" to "Frühere Einheiten",
+    "back_to_top" to "Nach oben",
+    "sections" to "Abschnitte",
+    "trend" to "Bester Satz jeder Einheit"
 )
 
 private val PORTUGUESE = ENGLISH + mapOf(
@@ -361,5 +416,16 @@ private val PORTUGUESE = ENGLISH + mapOf(
     "longest_set" to "Série mais Longa",
     "best_reps" to "Reps Máx",
     "total_reps" to "Reps Totais",
-    "total_distance" to "Distância Total"
+    "total_distance" to "Distância Total",
+    "overview" to "Visão geral",
+    "week" to "Semana",
+    "week_of" to "Semana {0} de {1}",
+    "program_length" to "Programa de {0} semanas",
+    "program" to "Programa",
+    "exercise_one" to "exercício",
+    "exercises_unit" to "exercícios",
+    "earlier_workouts" to "Treinos anteriores",
+    "back_to_top" to "Voltar ao topo",
+    "sections" to "Seções",
+    "trend" to "Melhor série de cada treino"
 )

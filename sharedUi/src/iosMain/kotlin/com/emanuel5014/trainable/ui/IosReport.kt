@@ -27,7 +27,10 @@ import com.emanuel5014.trainable.sharedui.resources.program_edit_block_removed
 import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
 import com.emanuel5014.trainable.ui.components.PrescriptionText
 import com.emanuel5014.trainable.ui.screens.routines.ReportContent
+import com.emanuel5014.trainable.ui.screens.routines.ReportLook
 import com.emanuel5014.trainable.ui.screens.routines.ReportModel
+import com.emanuel5014.trainable.ui.theme.AppColorSchemes
+import kotlinx.coroutines.flow.first
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.usePinned
@@ -68,7 +71,11 @@ internal fun IosReportScreen(planIdsString: String, onNavigateBack: () -> Unit) 
             reportGenerator = ReportGenerator(IosAppGraph.workouts, IosAppGraph.preferences) { text },
             htmlReportFormatter = HtmlReportFormatter(),
             languageCode = { com.emanuel5014.trainable.platform.IosAppLocale.language() },
-            scope = scope
+            scope = scope,
+            theme = {
+                val settings = IosAppGraph.preferences.themeSettings.first()
+                ReportLook.theme(AppColorSchemes.scheme(settings, false), AppColorSchemes.scheme(settings, true))
+            }
         )
     }
     // The picker holds its delegate weakly: this one lives as long as the screen

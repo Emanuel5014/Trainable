@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.screens.routines
 import com.emanuel5014.trainable.data.report.HtmlReportFormatter
 import com.emanuel5014.trainable.data.report.PlanReport
 import com.emanuel5014.trainable.data.report.ReportGenerator
+import com.emanuel5014.trainable.data.report.ReportTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,14 +21,16 @@ data class ReportUiState(
 
 /**
  * The report of [planIds] as one HTML page, without the platform: Android's ReportViewModel and the iOS screen hold one
- * and write or share the page their own way. [languageCode] is the language the report is written in.
+ * and write or share the page their own way. [languageCode] is the language the report is written in, [theme] the
+ * colours and font it is drawn with (the app's, see [ReportLook]).
  */
 class ReportModel(
     private val planIds: List<Int>,
     private val reportGenerator: ReportGenerator,
     private val htmlReportFormatter: HtmlReportFormatter,
     private val languageCode: suspend () -> String,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val theme: suspend () -> ReportTheme = { ReportTheme() }
 ) {
     private val _uiState = MutableStateFlow(ReportUiState(isLoading = true))
     val uiState: StateFlow<ReportUiState> = _uiState.asStateFlow()
@@ -42,7 +45,7 @@ class ReportModel(
                 val language = languageCode()
                 val reports = reportGenerator.generateReports(planIds, language)
                 // One page for all the routines: glued pages would be several documents in one file
-                val html = htmlReportFormatter.format(reports, language)
+                val html = htmlReportFormatter.format(reports, language, theme())
                 _uiState.update { it.copy(html = html, isLoading = false, reports = reports) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message, isLoading = false) }

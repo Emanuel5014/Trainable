@@ -32,7 +32,8 @@ fun ReportScreen(
                 factory = { ctx ->
                     WebView(ctx).apply {
                         webViewClient = WebViewClient()
-                        settings.javaScriptEnabled = false
+                        // The page's own small script: it marks the part in view and opens what a link points at
+                        settings.javaScriptEnabled = true
                         settings.builtInZoomControls = true
                         settings.displayZoomControls = false
                         settings.loadWithOverviewMode = true

@@ -27,6 +27,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
+import com.emanuel5014.trainable.data.report.HtmlReportFormatter
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -152,7 +154,11 @@ fun ReportContent(
                     )
                 }
             } else if (uiState.html != null) {
-                preview(uiState.html!!, Modifier.fillMaxSize(), paddingValues.scrollEndInset())
+                // The preview follows the app's light or dark; the saved and shared file follows whoever opens it
+                val dark = androidx.compose.material3.MaterialTheme.colorScheme.surface.luminance() < 0.5f
+                val html = uiState.html!!
+                val previewHtml = androidx.compose.runtime.remember(html, dark) { HtmlReportFormatter.withScheme(html, dark) }
+                preview(previewHtml, Modifier.fillMaxSize(), paddingValues.scrollEndInset())
             }
         }
     }

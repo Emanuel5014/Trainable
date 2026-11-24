@@ -9,9 +9,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.report.HtmlReportFormatter
 import com.emanuel5014.trainable.data.report.ReportGenerator
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.ui.theme.getAppColorScheme
 import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -23,6 +26,7 @@ class ReportViewModel @Inject constructor(
     reportGenerator: ReportGenerator,
     htmlReportFormatter: HtmlReportFormatter,
     localeManager: AppLocaleManager,
+    userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -31,7 +35,12 @@ class ReportViewModel @Inject constructor(
         reportGenerator = reportGenerator,
         htmlReportFormatter = htmlReportFormatter,
         languageCode = { localeManager.getResolvedLanguage() },
-        scope = viewModelScope
+        scope = viewModelScope,
+        // Drawn in the user's theme, light and dark, wallpaper colours included
+        theme = {
+            val settings = userPreferencesRepository.themeSettings.first()
+            ReportLook.theme(getAppColorScheme(context, settings, false), getAppColorScheme(context, settings, true))
+        }
     )
 
     fun shareReport() {
