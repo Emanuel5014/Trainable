@@ -31,26 +31,8 @@ import com.emanuel5014.trainable.ui.components.rememberWorkoutElapsed
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material.icons.automirrored.rounded.ListAlt
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import com.emanuel5014.trainable.sharedui.resources.open_routine
-import com.emanuel5014.trainable.sharedui.resources.deload_workout
-import com.emanuel5014.trainable.sharedui.resources.deload_workout_desc
 import com.emanuel5014.trainable.sharedui.resources.deload_weights_at
 import com.emanuel5014.trainable.ui.components.deload.DeloadBadge
-import com.emanuel5014.trainable.ui.screens.settings.SettingsSwitch
-import androidx.compose.material.icons.automirrored.rounded.TrendingDown
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.toggleableState
-import androidx.compose.ui.state.ToggleableState
-import com.emanuel5014.trainable.sharedui.resources.rename_workout
-import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -96,7 +78,7 @@ fun WorkoutTopBar(
                 Box {
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(8.dp))
                         .clickable { showTitleMenu = true },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -110,54 +92,21 @@ fun WorkoutTopBar(
                         modifier = Modifier.weight(1f, fill = false)
                     )
                     if (state.isDeload) DeloadBadge(showIcon = false)
+                    TitleMenuChevron(open = showTitleMenu)
                 }
-                DropdownMenu(expanded = showTitleMenu, onDismissRequest = { showTitleMenu = false }) {
-                    LocalPlatformGlass.current.NotAnOverlay()
-                    if (canRename) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.rename_workout)) },
-                            leadingIcon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
-                            onClick = {
-                                showTitleMenu = false
-                                ui.newSessionName = state.editableName
-                                ui.showRenameDialog = true
-                            }
-                        )
-                    }
-                    if (routineId != null) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.open_routine)) },
-                            leadingIcon = { Icon(Icons.AutoMirrored.Rounded.ListAlt, contentDescription = null) },
-                            onClick = {
-                                showTitleMenu = false
-                                onNavigateToRoutine(routineId)
-                            }
-                        )
-                    }
-                    if (canRename || routineId != null) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                    // A deload workout stays in the history, out of stats, records and the next workout's values
-                    DropdownMenuItem(
-                        text = {
-                            Column(
-                                modifier = Modifier.widthIn(max = 220.dp),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Text(stringResource(Res.string.deload_workout))
-                                Text(
-                                    stringResource(Res.string.deload_workout_desc),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant
-                                )
-                            }
-                        },
-                        leadingIcon = { Icon(Icons.AutoMirrored.Rounded.TrendingDown, contentDescription = null) },
-                        trailingIcon = {
-                            SettingsSwitch(checked = state.isDeload, onCheckedChange = { onSetDeload(it) })
-                        },
-                        onClick = { onSetDeload(!state.isDeload) },
-                        modifier = Modifier.semantics { toggleableState = ToggleableState(state.isDeload) }
-                    )
-                }
+                WorkoutTitleMenu(
+                    expanded = showTitleMenu,
+                    onDismiss = { showTitleMenu = false },
+                    canRename = canRename,
+                    canOpenRoutine = routineId != null,
+                    isDeload = state.isDeload,
+                    onRename = {
+                        ui.newSessionName = state.editableName
+                        ui.showRenameDialog = true
+                    },
+                    onOpenRoutine = { routineId?.let(onNavigateToRoutine) },
+                    onSetDeload = onSetDeload
+                )
                 }
                 val startedAt = state.sessionStartTime
                 if (state.isDeload) {
