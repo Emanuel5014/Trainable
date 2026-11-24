@@ -28,7 +28,6 @@ import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.ui.screens.dashboard.WorkoutModePreview
 import com.emanuel5014.trainable.sharedui.resources.*
-import com.emanuel5014.trainable.ui.util.workoutLiveCardSupported
 import com.emanuel5014.trainable.util.TimerAdjustment
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -125,15 +124,11 @@ private fun groupRows(group: TweakGroup, c: OnboardingChoices): List<@Composable
         },
         rowOf(c.inlineModifications, Res.string.inline_exercise_modifications, Res.string.inline_exercise_modifications_desc)
     )
-    TweakGroup.Timers -> listOfNotNull(
+    TweakGroup.Timers -> listOf(
         rowOf(c.restTimerEnabled, Res.string.rest_timer_setting, Res.string.rest_timer_setting_desc),
         rowOf(c.dashboardWorkoutMode, Res.string.dashboard_workout_mode, Res.string.dashboard_workout_mode_desc) {
             WorkoutModePreview()
         },
-        if (workoutLiveCardSupported) rowOf(c.workoutLiveCard, Res.string.workout_live_card, Res.string.workout_live_card_desc) {
-            InnerSwitch(c.workoutLiveCardSetDone, Res.string.workout_live_card_set_done)
-            InnerSwitch(c.workoutLiveCardAlert, Res.string.workout_live_card_alert)
-        } else null,
         rowOf(c.warmupTimerEnabled, Res.string.warmup_timer, Res.string.warmup_timer_settings_desc),
         rowOf(c.workoutTimerEnabled, Res.string.workout_timer, Res.string.workout_timer_desc),
         rowOf(c.timerAddEnabled, Res.string.timer_add_time, null) {
@@ -192,7 +187,7 @@ private fun rowOf(
 
 /** A sub-switch inside a row's options (journal prompt, stars). */
 @Composable
-private fun InnerSwitch(state: MutableState<Boolean>, title: StringResource) {
+internal fun InnerSwitch(state: MutableState<Boolean>, title: StringResource) {
     var checked by state
     Row(
         modifier = Modifier

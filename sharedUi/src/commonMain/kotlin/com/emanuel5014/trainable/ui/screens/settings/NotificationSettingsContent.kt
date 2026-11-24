@@ -19,6 +19,15 @@ import com.emanuel5014.trainable.sharedui.resources.vibration_default
 import com.emanuel5014.trainable.sharedui.resources.vibration_seconds
 import com.emanuel5014.trainable.sharedui.resources.warmup_timer
 import com.emanuel5014.trainable.sharedui.resources.warmup_timer_settings_desc
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_desc
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_set_done
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_set_done_desc
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_alert
+import com.emanuel5014.trainable.sharedui.resources.workout_live_card_alert_desc
+import com.emanuel5014.trainable.ui.util.workoutLiveCardSupported
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,6 +48,9 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Watch
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -89,6 +101,9 @@ fun NotificationSettingsContent(
     val gymMembershipExpiryNotificationsEnabled by state.gymMembershipExpiryNotificationsEnabled.collectAsState()
     val gymMembershipExpiryNotificationDaysBefore by state.gymMembershipExpiryNotificationDaysBefore.collectAsState()
     val warmupTimerEnabled by state.warmupTimerEnabled.collectAsState()
+    val workoutLiveCard by state.workoutLiveCard.collectAsState()
+    val workoutLiveCardSetDone by state.workoutLiveCardSetDone.collectAsState()
+    val workoutLiveCardAlert by state.workoutLiveCardAlert.collectAsState()
     val haptic = LocalHapticFeedback.current
     Scaffold(
         containerColor = Surface,
@@ -221,6 +236,39 @@ fun NotificationSettingsContent(
                         }
                     }
 
+                    if (timerNotificationsEnabled && deliveryAvailable && workoutLiveCardSupported) {
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        // One card for the whole workout in place of the rest, warm-up and EMOM ones
+                        LiveCardSwitchRow(
+                            icon = Icons.Rounded.NotificationsActive,
+                            title = stringResource(Res.string.workout_live_card),
+                            description = stringResource(Res.string.workout_live_card_desc),
+                            checked = workoutLiveCard,
+                            onCheckedChange = { state.setWorkoutLiveCard(it) }
+                        )
+
+                        AnimatedVisibility(visible = workoutLiveCard) {
+                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                LiveCardSwitchRow(
+                                    icon = Icons.Rounded.CheckCircle,
+                                    title = stringResource(Res.string.workout_live_card_set_done),
+                                    description = stringResource(Res.string.workout_live_card_set_done_desc),
+                                    checked = workoutLiveCardSetDone,
+                                    onCheckedChange = { state.setWorkoutLiveCardSetDone(it) }
+                                )
+                                // Watches and bands skip ongoing notifications: the end of a timer also gets a plain one
+                                LiveCardSwitchRow(
+                                    icon = Icons.Rounded.Watch,
+                                    title = stringResource(Res.string.workout_live_card_alert),
+                                    description = stringResource(Res.string.workout_live_card_alert_desc),
+                                    checked = workoutLiveCardAlert,
+                                    onCheckedChange = { state.setWorkoutLiveCardAlert(it) }
+                                )
+                            }
+                        }
+                    }
+
                     HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                     Row(
@@ -312,5 +360,26 @@ fun NotificationSettingsContent(
                 }
             }
         }
+    }
+}
+
+/** A switch row in the look of this screen: icon, title and description, switch on the right. */
+@Composable
+private fun LiveCardSwitchRow(icon: ImageVector, title: String, description: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            Icon(imageVector = icon, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                Text(description, style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+            }
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        SettingsSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

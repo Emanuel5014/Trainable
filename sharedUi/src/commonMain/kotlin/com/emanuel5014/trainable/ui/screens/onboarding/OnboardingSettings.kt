@@ -172,7 +172,7 @@ private fun OnboardingChoices.rows(group: TweakGroup): List<Boolean> = when (gro
         inlineModifications.value
     )
     TweakGroup.Timers -> listOf(
-        restTimerEnabled.value, dashboardWorkoutMode.value, workoutLiveCard.value, warmupTimerEnabled.value, workoutTimerEnabled.value, timerAddEnabled.value,
+        restTimerEnabled.value, dashboardWorkoutMode.value, warmupTimerEnabled.value, workoutTimerEnabled.value, timerAddEnabled.value,
         timerSubtractEnabled.value, timerShowNextSetButton.value, keepScreenOnSetTimer.value,
         keepScreenOnCardioTimer.value, autoStopCardioAtTarget.value, autoStopTimeWeightAtTarget.value
     )

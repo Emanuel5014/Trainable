@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.sharedui.resources.*
 import com.emanuel5014.trainable.ui.components.Slider
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.workoutLiveCardSupported
 
 /** "Resta aggiornato": timer notifications (+ lock-screen vibration on Android) and the membership reminder. */
 @Composable
@@ -33,6 +34,7 @@ fun AlertsStep(choices: OnboardingChoices, customVibrationSupported: Boolean, he
     var timer by choices.timerNotificationsEnabled
     var vibration by choices.timerFinishedLockscreenVibrationDuration
     var membership by choices.gymMembershipExpiryNotificationsEnabled
+    var liveCard by choices.workoutLiveCard
     var daysBefore by choices.gymMembershipExpiryNotificationDaysBefore
     val haptic = LocalHapticFeedback.current
     val hapticEnabled by choices.hapticEnabled
@@ -42,7 +44,7 @@ fun AlertsStep(choices: OnboardingChoices, customVibrationSupported: Boolean, he
         OnboardingTitle(stringResource(Res.string.onboarding_notifications_title))
 
         JoinedColumn(
-            listOf(
+            listOfNotNull(
                 { position ->
                     SwitchRow(
                         position = position,
@@ -90,6 +92,20 @@ fun AlertsStep(choices: OnboardingChoices, customVibrationSupported: Boolean, he
                         } else null
                     )
                 },
+                // One card for the whole workout, only where the platform draws it and the timers notify at all
+                if (workoutLiveCardSupported && timer) { position ->
+                    SwitchRow(
+                        position = position,
+                        title = stringResource(Res.string.workout_live_card),
+                        description = stringResource(Res.string.workout_live_card_desc),
+                        checked = liveCard,
+                        onCheckedChange = { liveCard = it },
+                        options = {
+                            InnerSwitch(choices.workoutLiveCardSetDone, Res.string.workout_live_card_set_done)
+                            InnerSwitch(choices.workoutLiveCardAlert, Res.string.workout_live_card_alert)
+                        }
+                    )
+                } else null,
                 { position ->
                     SwitchRow(
                         position = position,
