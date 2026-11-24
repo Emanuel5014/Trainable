@@ -245,7 +245,8 @@ private fun ExpandedHeader(
             }
         }
 
-        targetExState.progressionToShow?.let { suggestion ->
+        // A deload workout does not progress: its weights are the deload share of the last normal ones
+        targetExState.progressionToShow?.takeUnless { state.isDeload }?.let { suggestion ->
             ProgressionSuggestionCard(
                 suggestion = suggestion,
                 weightUnit = state.weightUnit,

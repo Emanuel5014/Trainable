@@ -27,8 +27,9 @@ class AnalyticsRepository(
 
     fun getAllPersonalBests(): Flow<List<PersonalBestRow>> = analyticsDao.getAllPersonalBests()
 
-    fun getConsistency(planId: Int, startDate: Long): Flow<ConsistencyRow?> =
-        analyticsDao.getConsistency(planId, startDate)
+    /** [includeDeload]: deload workouts count as days trained (the "counts for the weekly goal" setting). */
+    fun getConsistency(planId: Int, startDate: Long, includeDeload: Boolean = true): Flow<ConsistencyRow?> =
+        analyticsDao.getConsistency(planId, startDate, includeDeload)
 
     fun getStrengthIndex(startDate: Long): Flow<Float?> {
         val previousStartDate = startDate - 30L * 24 * 60 * 60 * 1000
@@ -44,14 +45,14 @@ class AnalyticsRepository(
     fun getExerciseProgressHistory(exerciseId: Int, startDate: Long) =
         analyticsDao.getExerciseProgressHistory(exerciseId, startDate)
 
-    fun getPeriodMetrics(startDate: Long, endDate: Long): Flow<PeriodMetrics> =
-        analyticsDao.getPeriodMetrics(startDate, endDate)
+    fun getPeriodMetrics(startDate: Long, endDate: Long, includeDeload: Boolean = true): Flow<PeriodMetrics> =
+        analyticsDao.getPeriodMetrics(startDate, endDate, includeDeload)
 
     fun getPeriodExerciseBreakdown(startDate: Long, endDate: Long): Flow<List<PeriodExerciseRow>> =
         analyticsDao.getPeriodExerciseBreakdown(startDate, endDate)
 
-    fun getTrainingDays(startDate: Long, endDate: Long): Flow<Int> =
-        analyticsDao.getTrainingDays(startDate, endDate)
+    fun getTrainingDays(startDate: Long, endDate: Long, includeDeload: Boolean = true): Flow<Int> =
+        analyticsDao.getTrainingDays(startDate, endDate, includeDeload)
 
     fun getWeightHistory(startDate: Long): Flow<List<WeightLogEntity>> =
         weightLogDao.getWeightHistory(startDate)

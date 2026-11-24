@@ -312,7 +312,8 @@ fun WorkoutExecutionContent(
                         state = state,
                         ui = ui,
                         onClose = safeNavigateBack,
-                        onNavigateToRoutine = onNavigateToRoutine
+                        onNavigateToRoutine = onNavigateToRoutine,
+                        onSetDeload = viewModel::setDeload
                     )
                 },
                 containerColor = Surface

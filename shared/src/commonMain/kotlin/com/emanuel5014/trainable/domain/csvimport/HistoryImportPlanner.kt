@@ -110,7 +110,9 @@ data class PlannedWorkout(
     /** The workout journal, when the file carries one: how it went (1..5), its tag names, its note. */
     val rating: Int? = null,
     val tags: List<String> = emptyList(),
-    val journalNote: String? = null
+    val journalNote: String? = null,
+    /** A deload workout (any of its rows says so). */
+    val deload: Boolean = false
 ) {
     val isDuplicate: Boolean get() = duplicateOf != null
     val setCount: Int get() = entries.sumOf { it.sets.size }
@@ -250,7 +252,8 @@ object HistoryImportPlanner {
                 duplicateOf = duplicateOf(d.date, target, entries, known.sessions, plansByName),
                 rating = d.rows.firstNotNullOfOrNull { it.row.rating },
                 tags = d.rows.firstOrNull { it.row.tags.isNotEmpty() }?.row?.tags.orEmpty(),
-                journalNote = d.rows.firstNotNullOfOrNull { it.row.journalNote }
+                journalNote = d.rows.firstNotNullOfOrNull { it.row.journalNote },
+                deload = d.rows.any { it.row.deload }
             )
         }
 

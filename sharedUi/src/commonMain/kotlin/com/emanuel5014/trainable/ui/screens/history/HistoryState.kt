@@ -273,6 +273,11 @@ class HistoryState(
         scope.launch { exerciseRepository.restoreExercise(exerciseId) }
     }
 
+    /** Marks a workout as a deload or back to a normal one (see DeloadRules); the list follows through its flow. */
+    fun setDeload(sessionId: Int, deload: Boolean) {
+        scope.launch { repository.setSessionDeload(sessionId, deload) }
+    }
+
     /** Replaces the rating, note and tags of a workout (the card follows through the history flow). */
     fun saveJournal(sessionId: Int, journal: SessionJournal) {
         scope.launch { journalRepository.saveJournal(sessionId, journal) }

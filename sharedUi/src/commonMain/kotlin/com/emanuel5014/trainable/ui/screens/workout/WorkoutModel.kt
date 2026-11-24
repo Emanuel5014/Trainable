@@ -430,6 +430,12 @@ class WorkoutModel(
         }
 
         modelScope.launch {
+            userPreferencesRepository.deloadWeightPercent.collect { percent ->
+                _state.update { it.copy(deloadPercent = percent) }
+            }
+        }
+
+        modelScope.launch {
             userPreferencesRepository.inlineExerciseModificationsEnabled.collect { enabled ->
                 _state.update { it.copy(inlineExerciseModificationsEnabled = enabled) }
             }
@@ -921,6 +927,7 @@ class WorkoutModel(
                 planName = planName,
                 ownName = ownName,
                 sessionId = sessionId,
+                isDeload = sessionWithSets.session.isDeload,
                 exercises = exerciseStates,
                 currentExerciseIndex = finalActiveIndex,
                 programWeek = sessionWithSets.session.programWeek.takeIf { resumeAdvanced },
@@ -1093,6 +1100,7 @@ class WorkoutModel(
                 planId = planId,
                 planName = planName,
                 sessionId = sessionId,
+                isDeload = false,
                 programWeek = programWeek,
                 weeksCount = if (advanced) plan.weeksCount else 1,
                 autoAdvanceWeek = plan.autoAdvanceWeek && advanced,
@@ -1132,6 +1140,7 @@ class WorkoutModel(
                 planName = displayName,
                 ownName = name?.takeIf { it.isNotBlank() },
                 sessionId = sessionId,
+                isDeload = false,
                 exercises = emptyList(),
                 currentExerciseIndex = 0,
                 isQuickWorkout = true,
@@ -3210,6 +3219,8 @@ class WorkoutModel(
                     curr.copy(exercises = mutableExercises)
                 }
             }
+            // A deload workout proposes its share of the last weights for the one swapped in too
+            if (_state.value.isDeload) rescaleForDeload(true, exerciseIndex)
         }
     }
 
@@ -3522,6 +3533,7 @@ class WorkoutModel(
                     currentExerciseIndex = actualIndex
                 )
             }
+            if (_state.value.isDeload) rescaleForDeload(true, _state.value.currentExerciseIndex)
         }
     }
 
@@ -3606,6 +3618,7 @@ class WorkoutModel(
                     currentExerciseIndex = insertAt
                 )
             }
+            if (_state.value.isDeload) rescaleForDeload(true, _state.value.currentExerciseIndex)
         }
     }
 
@@ -3746,6 +3759,43 @@ class WorkoutModel(
             // Nothing of its own: the routine's name, or for a quick workout what it holds (WorkoutState.title)
             val planName = note ?: if (_state.value.isQuickWorkout) workoutText().quickWorkout else plan?.nome ?: _state.value.planName
             _state.update { it.copy(planName = planName, ownName = note) }
+        }
+    }
+
+    /**
+     * Marks the running workout as a deload, or back to a normal one (see DeloadRules): saved on the session at once,
+     * and the weights still at the last normal workout's go to the deload share of it (and back).
+     */
+    fun setDeload(deload: Boolean) {
+        val sessionId = _state.value.sessionId ?: return
+        if (_state.value.isDeload == deload) return
+        _state.update { it.copy(isDeload = deload) }
+        modelScope.launch {
+            workoutRepository.setSessionDeload(sessionId, deload)
+        }
+        rescaleForDeload(deload, null)
+    }
+
+    /** Applies [DeloadWeights] to every exercise (or the one at [onlyIndex]) and saves the sets it changed. */
+    private fun rescaleForDeload(deload: Boolean, onlyIndex: Int?) {
+        var changed: List<Int> = emptyList()
+        _state.update { curr ->
+            val result = DeloadWeights.apply(curr.exercises, deload, curr.deloadPercent, curr.weightUnit, curr.loadRoundingIncrement, onlyIndex)
+            changed = result.changedIndices
+            curr.copy(exercises = result.exercises)
+        }
+        val curr = _state.value
+        val sessionId = curr.sessionId ?: return
+        changed.forEach { index ->
+            val exState = curr.exercises.getOrNull(index) ?: return@forEach
+            val saved = exState.sets.filter { it.id != null && !it.isCompleted }
+            if (saved.isNotEmpty()) {
+                modelScope.launch {
+                    saved.forEach { workoutRepository.updateSet(it.toLogEntity(sessionId, exState, exState.executionOrder)) }
+                }
+            }
+            // Sets with no row yet would be rebuilt at the normal weight on resume: give them one
+            persistPendingSets(index)
         }
     }
 

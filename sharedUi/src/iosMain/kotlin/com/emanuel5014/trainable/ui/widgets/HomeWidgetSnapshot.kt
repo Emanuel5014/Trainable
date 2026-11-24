@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.widgets
 
+import com.emanuel5014.trainable.domain.session.DeloadRules
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
@@ -124,10 +125,12 @@ suspend fun buildHomeWidgetSnapshot(
     firstDay: DayOfWeek,
     texts: HomeWidgetTexts,
     accent: HomeWidgetAccent,
-    dayCount: Int = 7
+    dayCount: Int = 7,
+    /** Deload workouts count for the weekly goal (setting, see DeloadRules). */
+    deloadCounts: Boolean = true
 ): HomeWidgetSnapshot {
     val thisWeek = weekStartDate(today, firstDay)
-    val timestamps = finished.map { it.timestamp }
+    val timestamps = finished.filter { DeloadRules.countsAsTrained(it, deloadCounts) }.map { it.timestamp }
     val counts = mutableMapOf<Int, Int?>()
     val days = (0 until dayCount).map { offset ->
         val date = today.plus(offset, DateTimeUnit.DAY)

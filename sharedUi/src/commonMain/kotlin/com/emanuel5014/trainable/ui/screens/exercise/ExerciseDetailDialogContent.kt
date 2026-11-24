@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.exercise
 
+import androidx.compose.ui.draw.alpha
+import com.emanuel5014.trainable.sharedui.resources.deload_records_note
+import com.emanuel5014.trainable.ui.components.deload.DeloadBadge
 import androidx.compose.material3.TextButton
 import com.emanuel5014.trainable.ui.components.ExerciseSetupCard
 import com.emanuel5014.trainable.ui.components.ExerciseSetupSheet
@@ -553,7 +556,7 @@ fun ExerciseDetailContent(
             }
         }
         if (cardio != null) {
-            item(key = "cardio_records") { CardioRecordsCard(records = cardio.records) }
+            item(key = "cardio_records") { CardioRecordsCard(records = cardio.records, hasDeload = cardio.performances.any { it.isDeload }) }
             item(key = "cardio_history_title") { SectionTitle(stringResource(Res.string.exercise_detail_history)) }
             items(cardio.performances, key = { "cardio_${it.sessionId}" }) { performance ->
                 CardioPerformanceCard(performance = performance)
@@ -656,7 +659,8 @@ private fun PerformanceCard(performance: ExercisePerformance, kind: ExerciseKind
             ?.let { stringResource(Res.string.compare_reps_value, it) }
         ExerciseKind.TIMED -> performance.longestHoldSeconds.takeIf { it > 0 }?.let { "${it}s" }
     }
-    GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+    // A deload workout is listed, stepped back: its sets are not records
+    GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth().alpha(if (performance.isDeload) 0.7f else 1f)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -665,14 +669,18 @@ private fun PerformanceCard(performance: ExercisePerformance, kind: ExerciseKind
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurface
                 )
-                Text(
-                    text = performance.title.displayText(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Primary,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = performance.title.displayText(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Primary,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (performance.isDeload) DeloadBadge()
+                }
             }
             summary?.let { PrescriptionPill(text = it, containerColor = Primary.copy(alpha = 0.12f), contentColor = Primary, emphasized = true) }
         }
@@ -730,7 +738,7 @@ private fun PerformanceSetRow(set: SetLogEntity, weightUnit: String) {
 @Composable
 private fun CardioPerformanceCard(performance: CardioPerformance) {
     val summary = performance.averageSpeedKmh?.let { cardioSpeedText(it) }
-    GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+    GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth().alpha(if (performance.isDeload) 0.7f else 1f)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -739,14 +747,18 @@ private fun CardioPerformanceCard(performance: CardioPerformance) {
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurface
                 )
-                Text(
-                    text = performance.title.displayText(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Primary,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = performance.title.displayText(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Primary,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (performance.isDeload) DeloadBadge()
+                }
             }
             summary?.let { PrescriptionPill(text = it, containerColor = Primary.copy(alpha = 0.12f), contentColor = Primary, emphasized = true) }
         }
@@ -800,7 +812,7 @@ private fun CardioSetRow(set: CardioLogEntity) {
 }
 
 @Composable
-private fun CardioRecordsCard(records: CardioRecords) {
+private fun CardioRecordsCard(records: CardioRecords, hasDeload: Boolean = false) {
     GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
         SectionTitle(stringResource(Res.string.exercise_detail_records))
         records.longestSession?.let {
@@ -829,7 +841,19 @@ private fun CardioRecordsCard(records: CardioRecords) {
             color = OnSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)
         )
+        if (hasDeload) DeloadRecordsNote()
     }
+}
+
+/** Under the records when the exercise has a deload workout: why it is not among them. */
+@Composable
+private fun DeloadRecordsNote() {
+    Text(
+        text = stringResource(Res.string.deload_records_note),
+        style = MaterialTheme.typography.bodySmall,
+        color = OnSurfaceVariant,
+        modifier = Modifier.padding(top = 4.dp)
+    )
 }
 
 @Composable
@@ -867,6 +891,7 @@ private fun RecordsCard(history: ExerciseHistory, weightUnit: String) {
             color = OnSurfaceVariant,
             modifier = Modifier.padding(top = 12.dp)
         )
+        if (history.performances.any { it.isDeload }) DeloadRecordsNote()
     }
 }
 

@@ -887,6 +887,12 @@ class WorkoutRepository(
 
     suspend fun updateSessionName(sessionId: Int, name: String?) = workoutDao.updateSessionName(sessionId, name)
 
+    /** A deload workout leaves statistics, records and the next workout's values; the widgets may count it (setting). */
+    suspend fun setSessionDeload(sessionId: Int, deload: Boolean) {
+        workoutDao.updateSessionDeload(sessionId, deload)
+        triggerWidgetUpdate()
+    }
+
     suspend fun updateSessionDetails(sessionId: Int, name: String?, timestamp: Long, durationMs: Long?) =
         workoutDao.updateSessionDetails(sessionId, name, timestamp, durationMs)
 
@@ -942,10 +948,12 @@ class WorkoutRepository(
 
         // A column for supersets only when the history has one, like the RPE column: nobody else gets an empty column
         val supersetColumn = sessions.any { s -> SupersetCsv.numbering(s.sets.map { it.setLog }).isNotEmpty() }
+        // And a Deload column only when the history has a deload workout
+        val deloadColumn = sessions.any { it.session.isDeload }
 
         val sb = StringBuilder()
         val exercisesById = getExercisesById().first()
-        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced, journalEnabled, rpeColumn, supersetColumn))
+        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced, journalEnabled, rpeColumn, supersetColumn, deloadColumn))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -966,6 +974,7 @@ class WorkoutRepository(
             } else ""
             // The number of each superset of this workout, repeated on the rows of its exercises
             val supersetNumbers = SupersetCsv.numbering(session.sets.map { it.setLog })
+            val deloadCell = if (deloadColumn) "," + (if (session.session.isDeload) "1" else "") else ""
 
             // In the order the history shows the workout, not the order its rows were saved in
             HistoryCsvRowOrder.of(session.sets, session.cardio).forEach { row -> when (row) {
@@ -1018,7 +1027,7 @@ class WorkoutRepository(
                 }.orEmpty()
                 val performanceColumns = ",${setLog.parts.joinToString("+")},${setLog.pauses.joinToString("/")},${setLog.assistedReps},${setLog.partialReps},${escapeCsv(performed)}"
                 val supersetCell = if (supersetColumn) "," + SupersetCsv.cell(setLog.supersetId?.let { supersetNumbers[it] }) else ""
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes$journalCells$supersetCell")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes$journalCells$supersetCell$deloadCell")
             }
 
             is HistoryCsvRow.Cardio -> {
@@ -1033,7 +1042,7 @@ class WorkoutRepository(
                     else -> ""
                 }
                 val note = escapeCsv(cardio.note ?: "")
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes$journalCells${if (supersetColumn) "," else ""}")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes$journalCells${if (supersetColumn) "," else ""}$deloadCell")
             }
             } }
         }

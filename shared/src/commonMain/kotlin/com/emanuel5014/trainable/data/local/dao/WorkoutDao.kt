@@ -297,7 +297,7 @@ interface WorkoutDao {
     """)
     fun getUnfinishedSessionsWithPlanName(): Flow<List<SessionWithPlanName>>
 
-    @Query("SELECT * FROM workout_sessions WHERE plan_id = :planId AND is_finished = 1 AND timestamp >= :since ORDER BY timestamp DESC LIMIT 1")
+    @Query("SELECT * FROM workout_sessions WHERE plan_id = :planId AND is_finished = 1 AND is_deload = 0 AND timestamp >= :since ORDER BY timestamp DESC LIMIT 1")
     fun getLastFinishedSessionForPlan(planId: Int, since: Long): Flow<WorkoutSessionEntity?>
 
     @Query("UPDATE workout_sessions SET is_finished = 1 WHERE id = :sessionId")
@@ -326,6 +326,10 @@ interface WorkoutDao {
     suspend fun setSessionDuration(sessionId: Int, durationMs: Long)
 
     /** The workout's own name (null: it goes by its routine's). */
+    /** Marks a workout as a deload (or back to a normal one): see DeloadRules. */
+    @Query("UPDATE workout_sessions SET is_deload = :deload WHERE id = :sessionId")
+    suspend fun updateSessionDeload(sessionId: Int, deload: Boolean)
+
     @Query("UPDATE workout_sessions SET note_sessione = :name WHERE id = :sessionId")
     suspend fun updateSessionName(sessionId: Int, name: String?)
 
@@ -469,9 +473,10 @@ interface WorkoutDao {
         SELECT * FROM set_logs 
         WHERE exercise_id = :exerciseId 
         AND session_id = (
-            SELECT session_id FROM set_logs 
-            WHERE exercise_id = :exerciseId 
-            ORDER BY session_id DESC LIMIT 1
+            SELECT sl.session_id FROM set_logs sl
+            INNER JOIN workout_sessions ws ON ws.id = sl.session_id
+            WHERE sl.exercise_id = :exerciseId AND ws.is_deload = 0
+            ORDER BY sl.session_id DESC LIMIT 1
         )
         ORDER BY numero_serie ASC
     """)
@@ -487,6 +492,7 @@ interface WorkoutDao {
             INNER JOIN set_logs sl2 ON sl2.session_id = ws2.id
             WHERE sl2.exercise_id = :exerciseId
             AND ws2.is_finished = 1
+            AND ws2.is_deload = 0
             ORDER BY ws2.timestamp DESC, ws2.id DESC
             LIMIT 1
         )
@@ -500,7 +506,7 @@ interface WorkoutDao {
      */
     @Query("""
         SELECT sl.*, ws.timestamp AS session_timestamp, ws.note_sessione AS session_note, wp.nome AS plan_name,
-            (wp.note IS NOT NULL AND wp.note = 'SYSTEM_PLAN') AS plan_is_system
+            (wp.note IS NOT NULL AND wp.note = 'SYSTEM_PLAN') AS plan_is_system, ws.is_deload AS session_is_deload
         FROM set_logs sl
         INNER JOIN workout_sessions ws ON sl.session_id = ws.id
         INNER JOIN workout_plans wp ON ws.plan_id = wp.id
@@ -517,7 +523,8 @@ interface WorkoutDao {
     @Query("""
         SELECT cl.*, ws.timestamp AS session_timestamp, ws.note_sessione AS session_note, wp.nome AS plan_name,
             (wp.note IS NOT NULL AND wp.note = 'SYSTEM_PLAN') AS plan_is_system,
-            EXISTS(SELECT 1 FROM set_logs s WHERE s.session_id = ws.id) AS session_has_strength
+            EXISTS(SELECT 1 FROM set_logs s WHERE s.session_id = ws.id) AS session_has_strength,
+            ws.is_deload AS session_is_deload
         FROM cardio_logs cl
         INNER JOIN workout_sessions ws ON cl.session_id = ws.id
         INNER JOIN workout_plans wp ON ws.plan_id = wp.id
@@ -535,6 +542,7 @@ interface WorkoutDao {
         INNER JOIN workout_sessions ws ON sl.session_id = ws.id
         WHERE sl.exercise_id = :exerciseId
         AND ws.is_finished = 1
+        AND ws.is_deload = 0
         AND sl.is_completed = 1
         AND sl.is_warmup = 0
         AND sl.peso_sollevato > 0
@@ -555,6 +563,7 @@ interface WorkoutDao {
             WHERE ws2.plan_id = :planId
             AND sl2.exercise_id = :exerciseId
             AND ws2.is_finished = 1
+            AND ws2.is_deload = 0
             AND ws2.timestamp >= :since
             ORDER BY ws2.timestamp DESC, ws2.id DESC
             LIMIT 1

@@ -73,7 +73,9 @@ data class ParsedRow(
     val tags: List<String> = emptyList(),
     val journalNote: String? = null,
     /** The Superset cell: null when the exercise is not in a superset. */
-    val superset: SupersetMark? = null
+    val superset: SupersetMark? = null,
+    /** The Deload cell: the workout is a deload. */
+    val deload: Boolean = false
 )
 
 enum class DateOrder { DAY_FIRST, MONTH_FIRST }
@@ -288,7 +290,8 @@ object HistoryCsvReader {
             rating = rating,
             tags = tags,
             journalNote = journalNote,
-            superset = SupersetCsv.parse(text(CsvColumn.SUPERSET))
+            superset = SupersetCsv.parse(text(CsvColumn.SUPERSET)),
+            deload = flag(text(CsvColumn.DELOAD))
         )
     }
 

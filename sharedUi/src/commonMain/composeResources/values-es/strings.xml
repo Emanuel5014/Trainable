@@ -1868,4 +1868,18 @@
         <item quantity="one">sin %1$d serie de calentamiento</item>
         <item quantity="other">sin %1$d series de calentamiento</item>
     </plurals>
+    <!-- Deload workouts -->
+    <string name="deload_workout">Entrenamiento de descarga</string>
+    <string name="deload_workout_desc">No cuenta para estadísticas, récords ni autocompletado</string>
+    <string name="deload_badge">Descarga</string>
+    <string name="deload_weights_at">PESOS AL %1$s</string>
+    <string name="deload_sheet_desc">Excluido de estadísticas, récords y autocompletado. Sigue en tu historial.</string>
+    <string name="deload_records_note">Los récords y gráficos no cuentan los entrenamientos de descarga.</string>
+    <string name="deload_last_normal">Último normal: %1$s</string>
+    <string name="history_deload_count">%1$d de descarga</string>
+    <string name="workout_section_deload">DESCARGA</string>
+    <string name="deload_weight_percent">Peso propuesto</string>
+    <string name="deload_weight_percent_desc">La parte del peso del último entrenamiento normal con la que empieza una descarga</string>
+    <string name="deload_counts_for_goal">Cuenta para el objetivo semanal</string>
+    <string name="deload_counts_for_goal_desc">Los días de entrenamiento, el objetivo semanal y los widgets cuentan también la descarga</string>
 </resources>

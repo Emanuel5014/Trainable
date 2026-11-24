@@ -1868,4 +1868,18 @@
         <item quantity="one">senza %1$d serie di riscaldamento</item>
         <item quantity="other">senza %1$d serie di riscaldamento</item>
     </plurals>
+    <!-- Deload workouts -->
+    <string name="deload_workout">Allenamento di scarico</string>
+    <string name="deload_workout_desc">Non conta per statistiche, record e autoriempimento</string>
+    <string name="deload_badge">Scarico</string>
+    <string name="deload_weights_at">PESI AL %1$s</string>
+    <string name="deload_sheet_desc">Escluso da statistiche, record e autoriempimento. Resta nello storico.</string>
+    <string name="deload_records_note">Record e grafici non contano gli allenamenti di scarico.</string>
+    <string name="deload_last_normal">Ultimo normale: %1$s</string>
+    <string name="history_deload_count">%1$d di scarico</string>
+    <string name="workout_section_deload">SCARICO</string>
+    <string name="deload_weight_percent">Peso proposto</string>
+    <string name="deload_weight_percent_desc">La parte del peso dell'ultimo allenamento normale da cui parte uno scarico</string>
+    <string name="deload_counts_for_goal">Conta per l'obiettivo settimanale</string>
+    <string name="deload_counts_for_goal_desc">Giorni di allenamento, obiettivo e widget contano anche lo scarico</string>
 </resources>

@@ -13,5 +13,7 @@ data class CardioSetWithSession(
     /** The plan is one of the app's own: the workout has no routine. */
     @ColumnInfo(name = "plan_is_system") val planIsSystem: Boolean = false,
     /** The workout has other sets than cardio: it is not a cardio workout. */
-    @ColumnInfo(name = "session_has_strength") val sessionHasStrength: Boolean = false
+    @ColumnInfo(name = "session_has_strength") val sessionHasStrength: Boolean = false,
+    /** The workout is a deload: shown, but left out of records and charts. */
+    @ColumnInfo(name = "session_is_deload") val sessionIsDeload: Boolean = false
 )

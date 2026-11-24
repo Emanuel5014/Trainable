@@ -37,6 +37,18 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import com.emanuel5014.trainable.sharedui.resources.open_routine
+import com.emanuel5014.trainable.sharedui.resources.deload_workout
+import com.emanuel5014.trainable.sharedui.resources.deload_workout_desc
+import com.emanuel5014.trainable.sharedui.resources.deload_weights_at
+import com.emanuel5014.trainable.ui.components.deload.DeloadBadge
+import com.emanuel5014.trainable.ui.screens.settings.SettingsSwitch
+import androidx.compose.material.icons.automirrored.rounded.TrendingDown
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import com.emanuel5014.trainable.sharedui.resources.rename_workout
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import androidx.compose.ui.Alignment
@@ -68,31 +80,26 @@ fun WorkoutTopBar(
     state: WorkoutState,
     ui: WorkoutScreenUiState,
     onClose: () -> Unit,
-    onNavigateToRoutine: (Int) -> Unit
+    onNavigateToRoutine: (Int) -> Unit,
+    onSetDeload: (Boolean) -> Unit = {}
 ) {
     val fractions = remember(state.exercises) { ExerciseProgress.fractions(state.exercises) }
     Column {
     TopAppBar(
         title = { 
             Column {
-                // With inline changes on, a workout from a routine can be renamed or open its routine: ask which
+                // The title opens a menu: rename (quick workouts, or with inline changes on), open the routine, and
+                // mark the workout as a deload
                 var showTitleMenu by remember { mutableStateOf(false) }
                 val routineId = state.planId?.takeUnless { state.isQuickWorkout }
+                val canRename = state.isQuickWorkout || state.inlineExerciseModificationsEnabled
                 Box {
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
-                        .clickable {
-                            when {
-                                routineId != null && state.inlineExerciseModificationsEnabled -> showTitleMenu = true
-                                state.isQuickWorkout || state.inlineExerciseModificationsEnabled -> {
-                                    ui.newSessionName = state.editableName
-                                    ui.showRenameDialog = true
-                                }
-                                else -> routineId?.let { onNavigateToRoutine(it) }
-                            }
-                        },
-                    verticalAlignment = Alignment.CenterVertically
+                        .clickable { showTitleMenu = true },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = state.title.displayText(),
@@ -102,30 +109,60 @@ fun WorkoutTopBar(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
+                    if (state.isDeload) DeloadBadge(showIcon = false)
                 }
                 DropdownMenu(expanded = showTitleMenu, onDismissRequest = { showTitleMenu = false }) {
                     LocalPlatformGlass.current.NotAnOverlay()
+                    if (canRename) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.rename_workout)) },
+                            leadingIcon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
+                            onClick = {
+                                showTitleMenu = false
+                                ui.newSessionName = state.editableName
+                                ui.showRenameDialog = true
+                            }
+                        )
+                    }
+                    if (routineId != null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.open_routine)) },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Rounded.ListAlt, contentDescription = null) },
+                            onClick = {
+                                showTitleMenu = false
+                                onNavigateToRoutine(routineId)
+                            }
+                        )
+                    }
+                    if (canRename || routineId != null) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    // A deload workout stays in the history, out of stats, records and the next workout's values
                     DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.rename_workout)) },
-                        leadingIcon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
-                        onClick = {
-                            showTitleMenu = false
-                            ui.newSessionName = state.editableName
-                            ui.showRenameDialog = true
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.open_routine)) },
-                        leadingIcon = { Icon(Icons.AutoMirrored.Rounded.ListAlt, contentDescription = null) },
-                        onClick = {
-                            showTitleMenu = false
-                            routineId?.let { onNavigateToRoutine(it) }
-                        }
+                        text = {
+                            Column(
+                                modifier = Modifier.widthIn(max = 220.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(stringResource(Res.string.deload_workout))
+                                Text(
+                                    stringResource(Res.string.deload_workout_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        },
+                        leadingIcon = { Icon(Icons.AutoMirrored.Rounded.TrendingDown, contentDescription = null) },
+                        trailingIcon = {
+                            SettingsSwitch(checked = state.isDeload, onCheckedChange = { onSetDeload(it) })
+                        },
+                        onClick = { onSetDeload(!state.isDeload) },
+                        modifier = Modifier.semantics { toggleableState = ToggleableState(state.isDeload) }
                     )
                 }
                 }
                 val startedAt = state.sessionStartTime
-                if (state.showWorkoutElapsed && startedAt != null) {
+                if (state.isDeload) {
+                    DeloadSubtitle(state.deloadPercent, if (state.showWorkoutElapsed) startedAt else null)
+                } else if (state.showWorkoutElapsed && startedAt != null) {
                     SessionElapsedLabel(startedAt)
                 } else {
                     Text(
@@ -220,6 +257,32 @@ fun WorkoutTopBar(
         completedCount = state.completedExercises
     )
     }
+}
+
+/** "WEIGHTS AT 60%", with the clock of the workout after it when that is on ("WEIGHTS AT 60% · 0:42:07"). */
+@Composable
+private fun DeloadSubtitle(percent: Int, startedAt: Long?) {
+    val label = stringResource(Res.string.deload_weights_at, "$percent%")
+    if (startedAt == null) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = OnSecondaryContainer,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1
+        )
+        return
+    }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    val resumed by lifecycle.currentStateFlow.collectAsState()
+    val elapsed = rememberWorkoutElapsed(startedAt, isActive = resumed.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED))
+    Text(
+        text = "$label · $elapsed",
+        style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+        color = OnSecondaryContainer,
+        fontWeight = FontWeight.ExtraBold,
+        maxLines = 1
+    )
 }
 
 /**

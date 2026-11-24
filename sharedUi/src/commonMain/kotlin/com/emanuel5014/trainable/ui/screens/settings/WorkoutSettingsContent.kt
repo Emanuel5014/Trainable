@@ -1,5 +1,20 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.sharedui.resources.deload_counts_for_goal_desc
+import com.emanuel5014.trainable.sharedui.resources.deload_counts_for_goal
+import com.emanuel5014.trainable.sharedui.resources.deload_weight_percent_desc
+import com.emanuel5014.trainable.sharedui.resources.deload_weight_percent
+import com.emanuel5014.trainable.sharedui.resources.workout_section_deload
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import kotlin.math.roundToInt
+import androidx.compose.material.icons.rounded.EventAvailable
+import androidx.compose.material.icons.automirrored.rounded.TrendingDown
+import androidx.compose.material3.Slider
+import com.emanuel5014.trainable.domain.session.DeloadRules
 import com.emanuel5014.trainable.ui.util.bodyPadding
 import com.emanuel5014.trainable.ui.util.scrollEndInset
 import com.emanuel5014.trainable.ui.util.plusBottom
@@ -202,9 +217,66 @@ fun WorkoutSettingsContent(
                     onNavigateToOneRepMaxes = onNavigateToOneRepMaxes
                 )
             }
+            SettingsSection(title = stringResource(Res.string.workout_section_deload)) {
+                DeloadCard(state)
+            }
             SettingsSection(title = stringResource(Res.string.workout_section_after)) {
                 AfterWorkoutCard(state, onNavigateToJournalTags)
             }
+        }
+    }
+}
+
+/** Deload workouts (see DeloadRules): the share of the last weights they propose, and whether they count as days trained. */
+@Composable
+private fun DeloadCard(state: SettingsState) {
+    val percent by state.deloadWeightPercent.collectAsState()
+    val countsForGoal by state.deloadCountsForGoal.collectAsState()
+    // The slider moves on its own while dragged and saves once let go
+    var dragging by remember { mutableStateOf<Float?>(null) }
+    val shown = (dragging ?: percent.toFloat()).roundToInt()
+
+    GymCard(containerColor = SurfaceContainerHigh) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SettingHeader(
+                        Icons.AutoMirrored.Rounded.TrendingDown,
+                        stringResource(Res.string.deload_weight_percent),
+                        stringResource(Res.string.deload_weight_percent_desc),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "$shown%",
+                        style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                        fontWeight = FontWeight.ExtraBold,
+                        color = OnSurface
+                    )
+                }
+                val steps = (DeloadRules.MAX_PERCENT - DeloadRules.MIN_PERCENT) / DeloadRules.PERCENT_STEP - 1
+                Slider(
+                    value = dragging ?: percent.toFloat(),
+                    onValueChange = { dragging = it },
+                    onValueChangeFinished = {
+                        dragging?.let { state.setDeloadWeightPercent(it.roundToInt()) }
+                        dragging = null
+                    },
+                    valueRange = DeloadRules.MIN_PERCENT.toFloat()..DeloadRules.MAX_PERCENT.toFloat(),
+                    steps = steps,
+                    modifier = Modifier.semantics { contentDescription = "$shown%" }
+                )
+            }
+
+            SettingDivider()
+
+            SettingSwitchRow(
+                icon = Icons.Rounded.EventAvailable,
+                title = stringResource(Res.string.deload_counts_for_goal),
+                description = stringResource(Res.string.deload_counts_for_goal_desc),
+                checked = countsForGoal,
+                onCheckedChange = { state.setDeloadCountsForGoal(it) }
+            )
         }
     }
 }

@@ -14,6 +14,8 @@ enum class CsvColumn(
     RATING, TAGS, JOURNAL_NOTE,
     /** The group of a superset inside the workout (see [SupersetCsv]). */
     SUPERSET,
+    /** A deload workout (see DeloadRules): 1 on every row of the workout, only when the history has one. */
+    DELOAD,
     EXTRA(imported = false), PERCENT(imported = false), TARGET_REPS(imported = false), TECHNIQUES(imported = false),
     PERFORMED_TECHNIQUE(imported = false), PROGRAM_CHANGED(imported = false), PROGRAM_ORIGINAL(imported = false)
 }
@@ -75,6 +77,7 @@ object HistoryCsvColumns {
             "sitzungsnotiz", "nota sessao"
         ),
         CsvColumn.SUPERSET to listOf("superset", "super set", "super serie", "superserie", "supersatz"),
+        CsvColumn.DELOAD to listOf("deload", "scarico", "descarga", "decharge", "deload workout", "allenamento di scarico"),
         CsvColumn.WEEK to listOf("week", "settimana", "semana", "semaine", "woche"),
         CsvColumn.RPE to listOf("rpe"),
         CsvColumn.EXTRA to listOf("extra", "bonus"),

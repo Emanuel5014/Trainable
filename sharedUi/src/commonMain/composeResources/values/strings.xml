@@ -1855,4 +1855,18 @@
         <item quantity="one">without %1$d warm-up set</item>
         <item quantity="other">without %1$d warm-up sets</item>
     </plurals>
+    <!-- Deload workouts -->
+    <string name="deload_workout">Deload workout</string>
+    <string name="deload_workout_desc">Doesn't count for stats, records and autofill</string>
+    <string name="deload_badge">Deload</string>
+    <string name="deload_weights_at">WEIGHTS AT %1$s</string>
+    <string name="deload_sheet_desc">Left out of statistics, records and autofill. It stays in your history.</string>
+    <string name="deload_records_note">Records and charts leave out deload workouts.</string>
+    <string name="deload_last_normal">Last normal: %1$s</string>
+    <string name="history_deload_count">%1$d deload</string>
+    <string name="workout_section_deload">DELOAD</string>
+    <string name="deload_weight_percent">Proposed weight</string>
+    <string name="deload_weight_percent_desc">The share of the last normal workout's weight a deload workout starts from</string>
+    <string name="deload_counts_for_goal">Counts for the weekly goal</string>
+    <string name="deload_counts_for_goal_desc">Training days, the weekly goal and widgets count deload workouts too</string>
 </resources>

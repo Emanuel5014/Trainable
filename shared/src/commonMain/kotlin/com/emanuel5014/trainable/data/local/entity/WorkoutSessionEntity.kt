@@ -66,5 +66,11 @@ data class WorkoutSessionEntity(
     val journalNote: String? = null,
     /** How the workout went, 1..5 stars; null = not rated. */
     @ColumnInfo(name = "rating")
-    val rating: Int? = null
+    val rating: Int? = null,
+    /**
+     * A deload workout: it stays in the history but is left out of statistics, records, and the weights and reps the
+     * next workout starts from (see DeloadRules).
+     */
+    @ColumnInfo(name = "is_deload", defaultValue = "0")
+    val isDeload: Boolean = false
 )

@@ -263,7 +263,8 @@ class HistoryCsvImporter(
                 noteSessione = workout.sessionNote,
                 isFinished = true,
                 durationMs = workout.durationMs,
-                programWeek = workout.programWeek
+                programWeek = workout.programWeek,
+                isDeload = workout.deload
             )
         ).toInt()
 

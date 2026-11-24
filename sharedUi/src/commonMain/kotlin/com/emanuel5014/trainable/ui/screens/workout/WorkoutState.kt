@@ -107,6 +107,9 @@ data class WorkoutState(
     val workoutTimerEnabled: Boolean = false,
     /** The clock of the whole workout (h:mm:ss) under its name in the top bar (Workout settings). */
     val showWorkoutElapsed: Boolean = false,
+    /** A deload workout: left out of statistics and records, weights proposed at [deloadPercent] (see DeloadRules). */
+    val isDeload: Boolean = false,
+    val deloadPercent: Int = com.emanuel5014.trainable.domain.session.DeloadRules.DEFAULT_PERCENT,
     val inlineExerciseModificationsEnabled: Boolean = false,
     val hapticEnabled: Boolean = true,
     val cardioTimerSeconds: Int = 0,

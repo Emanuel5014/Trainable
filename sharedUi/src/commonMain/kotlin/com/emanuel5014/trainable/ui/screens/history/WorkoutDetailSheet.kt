@@ -1,5 +1,15 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import androidx.compose.foundation.layout.FlowRow
+import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
+import com.emanuel5014.trainable.ui.theme.SecondaryContainer
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.automirrored.rounded.TrendingDown
+import com.emanuel5014.trainable.sharedui.resources.deload_sheet_desc
+import com.emanuel5014.trainable.sharedui.resources.deload_workout
+import com.emanuel5014.trainable.ui.screens.settings.SettingsSwitch
+import com.emanuel5014.trainable.ui.components.deload.DeloadBadge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -220,7 +230,9 @@ internal fun WorkoutDetailSheet(
     /** The heart-rate card, under the numbers; it adds its own bottom gap when it shows. */
     heartSection: (@Composable () -> Unit)? = null,
     /** Saves the workout as a routine; null when it already belongs to one (only quick workouts offer it). */
-    onSaveAsRoutine: (() -> Unit)? = null
+    onSaveAsRoutine: (() -> Unit)? = null,
+    /** Marks the workout as a deload or back; null hides the switch (a workout still running). */
+    onSetDeload: ((Boolean) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val session = sessionDetails.session
@@ -259,6 +271,7 @@ internal fun WorkoutDetailSheet(
                     timestamp = session.timestamp,
                     programWeek = session.programWeek,
                     isPlanArchived = sessionDetails.plan.isArchived,
+                    isDeload = session.isDeload,
                     showEdit = showEdit,
                     onEdit = onEdit,
                     onShare = onShare,
@@ -280,6 +293,16 @@ internal fun WorkoutDetailSheet(
             if (tiles.isNotEmpty()) {
                 item(key = "stats") {
                     WorkoutStatTiles(tiles, Modifier.padding(bottom = 13.dp))
+                }
+            }
+
+            if (onSetDeload != null) {
+                item(key = "deload") {
+                    DeloadSwitchCard(
+                        checked = session.isDeload,
+                        onCheckedChange = onSetDeload,
+                        modifier = Modifier.padding(bottom = 13.dp)
+                    )
                 }
             }
 
@@ -360,12 +383,14 @@ internal fun WorkoutDetailSheet(
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun WorkoutSheetHeader(
     planName: String,
     timestamp: Long,
     programWeek: Int?,
     isPlanArchived: Boolean,
+    isDeload: Boolean,
     showEdit: Boolean,
     onEdit: () -> Unit,
     onShare: (() -> Unit)?,
@@ -378,15 +403,19 @@ private fun WorkoutSheetHeader(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // The pills go under the name when they do not fit beside it, instead of squeezing it
+            FlowRow(
+                itemVerticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = planName,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurface,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
+                    overflow = TextOverflow.Ellipsis
                 )
                 if (advancedProgramming && programWeek != null) {
                     PrescriptionPill(
@@ -398,6 +427,9 @@ private fun WorkoutSheetHeader(
                 }
                 if (isPlanArchived) {
                     ArchivedRoutineBadge()
+                }
+                if (isDeload) {
+                    DeloadBadge()
                 }
             }
             Text(
@@ -863,6 +895,45 @@ private fun CardioHistoryNote(note: String) {
         Icon(Icons.AutoMirrored.Rounded.Notes, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(12.dp))
         Spacer(modifier = Modifier.width(4.dp))
         Text(text = note, style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontStyle = FontStyle.Italic)
+    }
+}
+
+/**
+ * "Deload workout": the switch that takes a workout out of statistics, records and autofill (see DeloadRules), on the
+ * secondary container so it reads as a state of the workout, not an action.
+ */
+@Composable
+private fun DeloadSwitchCard(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(SecondaryContainer)
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.TrendingDown,
+            contentDescription = null,
+            tint = OnSecondaryContainer,
+            modifier = Modifier.size(24.dp)
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = stringResource(Res.string.deload_workout),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = OnSurface
+            )
+            Text(
+                text = stringResource(Res.string.deload_sheet_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSecondaryContainer
+            )
+        }
+        SettingsSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

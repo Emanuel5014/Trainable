@@ -171,8 +171,10 @@ class AnalyticsState(
             merges = merges
         )
     }.flatMapLatest { context ->
-        val consistencyFlow = context.activePlan?.let {
-            analyticsRepository.getConsistency(it.id, context.startDate)
+        // Deload workouts count as days trained only with the "counts for the weekly goal" setting (see DeloadRules)
+        val deloadCounts = userPreferencesRepository.deloadCountsForGoal
+        val consistencyFlow = context.activePlan?.let { plan ->
+            deloadCounts.flatMapLatest { analyticsRepository.getConsistency(plan.id, context.startDate, it) }
         } ?: flowOf(null)
 
         val volumeFlow = combine(
@@ -278,12 +280,12 @@ class AnalyticsState(
         val period2StartDate = context.period2Range.startDate(period1StartDate)
         val period2EndDate = period1StartDate
 
-        val period1MetricsFlow = analyticsRepository.getPeriodMetrics(period1StartDate, period1EndDate)
-        val period2MetricsFlow = analyticsRepository.getPeriodMetrics(period2StartDate, period2EndDate)
+        val period1MetricsFlow = deloadCounts.flatMapLatest { analyticsRepository.getPeriodMetrics(period1StartDate, period1EndDate, it) }
+        val period2MetricsFlow = deloadCounts.flatMapLatest { analyticsRepository.getPeriodMetrics(period2StartDate, period2EndDate, it) }
         val period1ExercisesFlow = analyticsRepository.getPeriodExerciseBreakdown(period1StartDate, period1EndDate)
         val period2ExercisesFlow = analyticsRepository.getPeriodExerciseBreakdown(period2StartDate, period2EndDate)
-        val period1TrainingDaysFlow = analyticsRepository.getTrainingDays(period1StartDate, period1EndDate)
-        val period2TrainingDaysFlow = analyticsRepository.getTrainingDays(period2StartDate, period2EndDate)
+        val period1TrainingDaysFlow = deloadCounts.flatMapLatest { analyticsRepository.getTrainingDays(period1StartDate, period1EndDate, it) }
+        val period2TrainingDaysFlow = deloadCounts.flatMapLatest { analyticsRepository.getTrainingDays(period2StartDate, period2EndDate, it) }
 
         val timePeriodComparisonFlow = combine(
             combine(period1MetricsFlow, period2MetricsFlow) { p1, p2 -> p1 to p2 },

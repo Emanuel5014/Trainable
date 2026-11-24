@@ -303,6 +303,18 @@ class SettingsState(
         initialValue = true
     )
 
+    val deloadWeightPercent = userPrefsRepository.deloadWeightPercent.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = com.emanuel5014.trainable.domain.session.DeloadRules.DEFAULT_PERCENT
+    )
+
+    val deloadCountsForGoal = userPrefsRepository.deloadCountsForGoal.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
     val showWorkoutElapsed = userPrefsRepository.showWorkoutElapsed.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -487,6 +499,14 @@ class SettingsState(
         scope.launch {
             userPrefsRepository.setStartingWeightEnabled(enabled)
         }
+    }
+
+    fun setDeloadWeightPercent(percent: Int) {
+        scope.launch { userPrefsRepository.setDeloadWeightPercent(percent) }
+    }
+
+    fun setDeloadCountsForGoal(enabled: Boolean) {
+        scope.launch { userPrefsRepository.setDeloadCountsForGoal(enabled) }
     }
 
     fun setRepsFromLastWorkout(enabled: Boolean) {

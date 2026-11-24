@@ -46,7 +46,8 @@ fun historyMonths(sessions: List<SessionWithDetails>, timeZone: TimeZone): List<
         if (groups.lastOrNull()?.first == key) groups.last().second.add(s) else groups.add(key to mutableListOf(s))
     }
     return groups.map { (key, list) ->
-        HistoryMonth(key.first, key.second, list, list.sumOf { historyRowSummary(it).volumeKg.toDouble() }.toFloat())
+        // A deload workout is listed but its volume is not a statistic (see DeloadRules)
+        HistoryMonth(key.first, key.second, list, list.filter { !it.session.isDeload }.sumOf { historyRowSummary(it).volumeKg.toDouble() }.toFloat())
     }
 }
 

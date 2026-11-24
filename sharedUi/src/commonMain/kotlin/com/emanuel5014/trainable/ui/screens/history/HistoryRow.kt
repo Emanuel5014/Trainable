@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import androidx.compose.ui.draw.alpha
+import com.emanuel5014.trainable.sharedui.resources.history_deload_count
+import com.emanuel5014.trainable.ui.components.deload.DeloadBadge
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -114,6 +117,8 @@ internal fun HistoryRow(
                     .heightIn(min = 52.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(SurfaceContainerHighest)
+                    // A deload workout steps back: it is in the list but not in the numbers
+                    .alpha(if (session.isDeload) 0.55f else 1f)
                     .clearAndSetSemantics { contentDescription = dateDescription },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
@@ -164,6 +169,9 @@ internal fun HistoryRow(
                     }
                     if (sessionDetails.plan.isArchived) {
                         ArchivedRoutineBadge()
+                    }
+                    if (session.isDeload) {
+                        DeloadBadge()
                     }
                 }
 
@@ -256,8 +264,10 @@ internal fun HistoryMonthHeader(month: HistoryMonth, weightUnit: String, current
             modifier = Modifier.weight(1f)
         )
         val count = month.sessions.size
+        val deloads = month.sessions.count { it.session.isDeload }
         Text(
             text = pluralStringResource(Res.plurals.import_history_workouts_count, count, count) +
+                (if (deloads > 0) " · " + stringResource(Res.string.history_deload_count, deloads) else "") +
                 if (month.volumeKg > 0f) " · " + formatVolume(month.volumeKg, weightUnit) else "",
             style = MaterialTheme.typography.labelMedium,
             color = OnSurfaceVariant,

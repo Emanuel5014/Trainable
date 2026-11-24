@@ -56,7 +56,7 @@ interface OneRepMaxDao {
                MAX(CASE WHEN s.reps_effettive = 1 THEN s.peso_sollevato
                         ELSE s.peso_sollevato * (1 + s.reps_effettive / 30.0) END) AS e1rm
         FROM set_logs s INNER JOIN workout_sessions ws ON ws.id = s.session_id
-        WHERE ws.is_finished = 1 AND s.is_completed = 1 AND s.is_warmup = 0
+        WHERE ws.is_finished = 1 AND ws.is_deload = 0 AND s.is_completed = 1 AND s.is_warmup = 0
           AND s.peso_sollevato > 0 AND s.reps_effettive BETWEEN 1 AND 12
           AND s.durata_secondi IS NULL AND s.rep_parts IS NULL AND ws.timestamp >= :sinceTimestamp
         GROUP BY s.exercise_id

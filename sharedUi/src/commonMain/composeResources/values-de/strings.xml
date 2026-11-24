@@ -1854,4 +1854,18 @@
         <item quantity="one">ohne %1$d Aufwärmsatz</item>
         <item quantity="other">ohne %1$d Aufwärmsätze</item>
     </plurals>
+    <!-- Deload workouts -->
+    <string name="deload_workout">Deload-Training</string>
+    <string name="deload_workout_desc">Zählt nicht für Statistiken, Rekorde und Vorausfüllung</string>
+    <string name="deload_badge">Deload</string>
+    <string name="deload_weights_at">GEWICHTE BEI %1$s</string>
+    <string name="deload_sheet_desc">Nicht in Statistiken, Rekorden und Vorausfüllung. Bleibt im Verlauf.</string>
+    <string name="deload_records_note">Rekorde und Diagramme zählen Deload-Trainings nicht mit.</string>
+    <string name="deload_last_normal">Letztes normales: %1$s</string>
+    <string name="history_deload_count">%1$d Deload</string>
+    <string name="workout_section_deload">DELOAD</string>
+    <string name="deload_weight_percent">Vorgeschlagenes Gewicht</string>
+    <string name="deload_weight_percent_desc">Anteil des Gewichts aus dem letzten normalen Training, mit dem ein Deload beginnt</string>
+    <string name="deload_counts_for_goal">Zählt für das Wochenziel</string>
+    <string name="deload_counts_for_goal_desc">Trainingstage, Wochenziel und Widgets zählen Deload-Trainings mit</string>
 </resources>

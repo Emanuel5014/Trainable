@@ -692,6 +692,8 @@ fun HistoryContent(
                 },
                 onRestoreExercise = state::restoreExercise,
                 onDismiss = { openSessionId = null },
+                // Only a finished workout: a running one is marked from its own screen
+                onSetDeload = if (openDetails.session.isFinished) { deload -> state.setDeload(openDetails.session.id, deload) } else null,
                 // A quick or custom workout can become a routine; one of a routine already is one
                 onSaveAsRoutine = if (!openDetails.plan.isSystemPlan || !openDetails.session.isFinished ||
                     (openDetails.sets.isEmpty() && openDetails.cardio.isEmpty())) null else {

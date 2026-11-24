@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.widget
 
+import com.emanuel5014.trainable.domain.session.DeloadRules
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
@@ -73,6 +74,8 @@ class WeeklyGoalWidget : GlanceAppWidget() {
             val theme by themeFlow.collectAsState(initial = initialTheme)
             val goal by prefs.weeklyGoal.collectAsState(initial = initialGoal)
             val sessions by workoutRepository.getAllSessions().collectAsState(initial = emptyList())
+            // A deload workout counts for the goal unless the setting says otherwise (see DeloadRules)
+            val deloadCounts by prefs.deloadCountsForGoal.collectAsState(initial = true)
 
             // Same week as the dashboard: the locale's first day, midnight in the system zone
             val zone = TimeZone.currentSystemDefault()
@@ -82,7 +85,9 @@ class WeeklyGoalWidget : GlanceAppWidget() {
             val cardio by remember(weekStart) { workoutRepository.getCardioSessionCountSince(weekStart) }
                 .collectAsState(initial = 0)
 
-            val week = weekProgress(sessions.map { it.timestamp }, goal, cardio, today, firstDay, zone)
+            val week = weekProgress(
+                sessions.filter { DeloadRules.countsAsTrained(it, deloadCounts) }.map { it.timestamp }, goal, cardio, today, firstDay, zone
+            )
             val colors = remember(theme) { theme.colorProviders(context) }
 
             GlanceTheme(colors = colors) {

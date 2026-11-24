@@ -75,6 +75,14 @@ object HistoryCsvHeaders {
         else -> "Superset"
     }
 
+    /** A deload workout; written on every row of the workout, only when the history has one. */
+    fun deload(languageCode: String): String = when (languageCode) {
+        "it" -> "Scarico"
+        "es", "pt" -> "Descarga"
+        "fr" -> "Décharge"
+        else -> "Deload"
+    }
+
     /**
      * The header line the export writes; with [journal] the three journal columns follow, then the [supersetColumn]
      * closes it, and with [rpeColumn] (and advanced programming off) an RPE column follows the note.
@@ -85,7 +93,8 @@ object HistoryCsvHeaders {
         advanced: Boolean,
         journal: Boolean = false,
         rpeColumn: Boolean = false,
-        supersetColumn: Boolean = false
+        supersetColumn: Boolean = false,
+        deloadColumn: Boolean = false
     ): String =
         (when {
             advanced -> basic(languageCode, weightUnit) + "," + prescription(languageCode)
@@ -94,5 +103,6 @@ object HistoryCsvHeaders {
         }) +
             "," + performance(languageCode) + "," + programEdit(languageCode) + "," + sessionDuration(languageCode) +
             (if (journal) "," + journal(languageCode) else "") +
-            (if (supersetColumn) "," + superset(languageCode) else "")
+            (if (supersetColumn) "," + superset(languageCode) else "") +
+            (if (deloadColumn) "," + deload(languageCode) else "")
 }

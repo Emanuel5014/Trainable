@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import com.emanuel5014.trainable.domain.session.DeloadRules
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.model.GlassSettings
@@ -161,6 +162,10 @@ class UserPreferencesRepository(
      * in the last workout of the routine (when there is one). On by default: what was really done last time wins.
      */
     val REPS_FROM_LAST_WORKOUT = booleanPreferencesKey("reps_from_last_workout")
+    /** Deload workouts: the share (40..100%) of the last normal workout's weight they propose. 60 by default. */
+    val DELOAD_WEIGHT_PERCENT = intPreferencesKey("deload_weight_percent")
+    /** Deload workouts count as days trained (weekly goal, widgets, training days). On by default. */
+    val DELOAD_COUNTS_FOR_GOAL = booleanPreferencesKey("deload_counts_for_goal")
     /** The workout screen shows how long the workout has run (h:mm:ss) under its name. Off by default; the dashboard always does. */
     val SHOW_WORKOUT_ELAPSED = booleanPreferencesKey("show_workout_elapsed")
     /** The top of the routine screen (photos, note, muscle groups, big day pills) is open. Compact by default. */
@@ -759,6 +764,24 @@ class UserPreferencesRepository(
     suspend fun setRepsFromLastWorkout(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[REPS_FROM_LAST_WORKOUT] = enabled
+        }
+    }
+
+    val deloadWeightPercent: Flow<Int> = dataStore.data
+        .map { preferences -> DeloadRules.clampPercent(preferences[DELOAD_WEIGHT_PERCENT] ?: DeloadRules.DEFAULT_PERCENT) }
+
+    suspend fun setDeloadWeightPercent(percent: Int) {
+        dataStore.edit { preferences ->
+            preferences[DELOAD_WEIGHT_PERCENT] = DeloadRules.clampPercent(percent)
+        }
+    }
+
+    val deloadCountsForGoal: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[DELOAD_COUNTS_FOR_GOAL] ?: true }
+
+    suspend fun setDeloadCountsForGoal(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[DELOAD_COUNTS_FOR_GOAL] = enabled
         }
     }
 

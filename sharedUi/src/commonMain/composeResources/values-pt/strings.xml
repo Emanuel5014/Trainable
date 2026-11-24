@@ -1868,4 +1868,18 @@
         <item quantity="one">sem %1$d série de aquecimento</item>
         <item quantity="other">sem %1$d séries de aquecimento</item>
     </plurals>
+    <!-- Deload workouts -->
+    <string name="deload_workout">Treino de descarga</string>
+    <string name="deload_workout_desc">Não conta para estatísticas, recordes nem preenchimento automático</string>
+    <string name="deload_badge">Descarga</string>
+    <string name="deload_weights_at">PESOS A %1$s</string>
+    <string name="deload_sheet_desc">Excluído das estatísticas, recordes e preenchimento automático. Continua no seu histórico.</string>
+    <string name="deload_records_note">Recordes e gráficos não contam os treinos de descarga.</string>
+    <string name="deload_last_normal">Último normal: %1$s</string>
+    <string name="history_deload_count">%1$d de descarga</string>
+    <string name="workout_section_deload">DESCARGA</string>
+    <string name="deload_weight_percent">Peso proposto</string>
+    <string name="deload_weight_percent_desc">A parte do peso do último treino normal com que começa uma descarga</string>
+    <string name="deload_counts_for_goal">Conta para o objetivo semanal</string>
+    <string name="deload_counts_for_goal_desc">Os dias de treino, o objetivo semanal e os widgets contam também a descarga</string>
 </resources>

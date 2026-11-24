@@ -1868,4 +1868,18 @@
         <item quantity="one">sans %1$d série d'échauffement</item>
         <item quantity="other">sans %1$d séries d'échauffement</item>
     </plurals>
+    <!-- Deload workouts -->
+    <string name="deload_workout">Séance de décharge</string>
+    <string name="deload_workout_desc">Ne compte ni pour les statistiques, ni les records, ni le pré-remplissage</string>
+    <string name="deload_badge">Décharge</string>
+    <string name="deload_weights_at">CHARGES À %1$s</string>
+    <string name="deload_sheet_desc">Exclu des statistiques, des records et du pré-remplissage. Il reste dans ton historique.</string>
+    <string name="deload_records_note">Les records et graphiques ne comptent pas les séances de décharge.</string>
+    <string name="deload_last_normal">Dernière normale : %1$s</string>
+    <string name="history_deload_count">%1$d de décharge</string>
+    <string name="workout_section_deload">DÉCHARGE</string>
+    <string name="deload_weight_percent">Charge proposée</string>
+    <string name="deload_weight_percent_desc">La part de la charge de la dernière séance normale d'où part une décharge</string>
+    <string name="deload_counts_for_goal">Compte pour l'objectif hebdomadaire</string>
+    <string name="deload_counts_for_goal_desc">Les jours d'entraînement, l'objectif hebdomadaire et les widgets comptent aussi la décharge</string>
 </resources>

@@ -6,7 +6,15 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AnalyticsDao {
-    @Query("SELECT SUM(peso_sollevato * reps_effettive) FROM set_logs")
+    /** Only finished workouts that count: a deload workout is left out of every statistic (see is_deload). */
+    @Query(
+        """
+        SELECT SUM(s.peso_sollevato * s.reps_effettive)
+        FROM set_logs s
+        INNER JOIN workout_sessions w ON s.session_id = w.id
+        WHERE w.is_finished = 1 AND w.is_deload = 0
+        """
+    )
     fun getTotalVolume(): Flow<Float?>
 
     @Query(
@@ -14,7 +22,7 @@ interface AnalyticsDao {
         SELECT SUM(s.peso_sollevato * s.reps_effettive)
         FROM set_logs s
         INNER JOIN workout_sessions w ON s.session_id = w.id
-        WHERE w.timestamp >= :startDate
+        WHERE w.timestamp >= :startDate AND w.is_finished = 1 AND w.is_deload = 0
         """
     )
     fun getTotalVolumeSince(startDate: Long): Flow<Float?>
@@ -23,7 +31,7 @@ interface AnalyticsDao {
         SELECT SUM(s.peso_sollevato * s.reps_effettive) AS volume, MIN(w.timestamp) AS timestamp
         FROM set_logs s
         INNER JOIN workout_sessions w ON s.session_id = w.id
-        WHERE w.timestamp >= :startDate
+        WHERE w.timestamp >= :startDate AND w.is_finished = 1 AND w.is_deload = 0
         GROUP BY date(w.timestamp / 1000, 'unixepoch')
         ORDER BY MIN(w.timestamp) ASC
     """)
@@ -33,16 +41,17 @@ interface AnalyticsDao {
         SELECT SUM(s.peso_sollevato * s.reps_effettive) AS volume, MIN(w.timestamp) AS timestamp
         FROM set_logs s
         INNER JOIN workout_sessions w ON s.session_id = w.id
-        WHERE w.timestamp >= :startDate AND w.plan_id = :planId
+        WHERE w.timestamp >= :startDate AND w.plan_id = :planId AND w.is_finished = 1 AND w.is_deload = 0
         GROUP BY date(w.timestamp / 1000, 'unixepoch')
         ORDER BY MIN(w.timestamp) ASC
     """)
     fun getVolumeHistoryForPlan(planId: Int, startDate: Long): Flow<List<DailyVolume>>
     
     @Query("""
-        SELECT MAX(peso_sollevato) 
-        FROM set_logs 
-        WHERE exercise_id = :exerciseId
+        SELECT MAX(s.peso_sollevato)
+        FROM set_logs s
+        INNER JOIN workout_sessions w ON s.session_id = w.id
+        WHERE s.exercise_id = :exerciseId AND w.is_finished = 1 AND w.is_deload = 0
     """)
     fun getPersonalBest(exerciseId: Int): Flow<Float?>
 
@@ -56,9 +65,10 @@ interface AnalyticsDao {
             COALESCE(s.reps_effettive, 0) AS reps
         FROM exercises e
         LEFT JOIN set_logs s ON s.id = (
-            SELECT id FROM set_logs 
-            WHERE exercise_id = e.id 
-            ORDER BY peso_sollevato DESC, reps_effettive DESC 
+            SELECT sl.id FROM set_logs sl
+            INNER JOIN workout_sessions w ON sl.session_id = w.id
+            WHERE sl.exercise_id = e.id AND w.is_finished = 1 AND w.is_deload = 0
+            ORDER BY sl.peso_sollevato DESC, sl.reps_effettive DESC
             LIMIT 1
         )
         WHERE e.is_deleted = 0 OR s.id IS NOT NULL
@@ -73,12 +83,13 @@ interface AnalyticsDao {
             COALESCE(COUNT(DISTINCT date(w.timestamp / 1000, 'unixepoch')), 0) AS completedSessions,
             p.sessioni_target_settimana AS targetSessionsPerWeek
         FROM workout_plans p
-        LEFT JOIN workout_sessions w ON w.plan_id = p.id AND w.timestamp >= :startDate
+        LEFT JOIN workout_sessions w ON w.plan_id = p.id AND w.timestamp >= :startDate AND w.is_finished = 1
+            AND (:includeDeload OR w.is_deload = 0)
         WHERE p.id = :planId
         GROUP BY p.id, p.sessioni_target_settimana
         """
     )
-    fun getConsistency(planId: Int, startDate: Long): Flow<ConsistencyRow?>
+    fun getConsistency(planId: Int, startDate: Long, includeDeload: Boolean): Flow<ConsistencyRow?>
 
     @Query(
         """
@@ -86,14 +97,14 @@ interface AnalyticsDao {
             SELECT s.exercise_id, MAX(s.peso_sollevato) AS recent_max
             FROM set_logs s
             INNER JOIN workout_sessions w ON w.id = s.session_id
-            WHERE w.timestamp >= :startDate
+            WHERE w.timestamp >= :startDate AND w.is_finished = 1 AND w.is_deload = 0
             GROUP BY s.exercise_id
         ),
         previous AS (
             SELECT s.exercise_id, MAX(s.peso_sollevato) AS previous_max
             FROM set_logs s
             INNER JOIN workout_sessions w ON w.id = s.session_id
-            WHERE w.timestamp >= :previousStartDate AND w.timestamp < :startDate
+            WHERE w.timestamp >= :previousStartDate AND w.timestamp < :startDate AND w.is_finished = 1 AND w.is_deload = 0
             GROUP BY s.exercise_id
         )
         SELECT AVG(
@@ -117,6 +128,7 @@ interface AnalyticsDao {
         INNER JOIN exercises e ON e.id = s.exercise_id
         INNER JOIN workout_sessions w ON w.id = s.session_id
         WHERE w.timestamp >= :startDate
+            AND w.is_finished = 1 AND w.is_deload = 0
             AND s.is_completed = 1
             AND s.is_warmup = 0
         GROUP BY e.categoria
@@ -134,8 +146,9 @@ interface AnalyticsDao {
             MIN(w.timestamp) AS timestamp
         FROM set_logs s
         INNER JOIN workout_sessions w ON s.session_id = w.id
-        WHERE s.exercise_id = :exerciseId 
+        WHERE s.exercise_id = :exerciseId
             AND w.timestamp >= :startDate
+            AND w.is_finished = 1 AND w.is_deload = 0
             AND s.reps_effettive > 0
             AND s.is_warmup = 0
             AND s.rep_parts IS NULL
@@ -150,14 +163,15 @@ interface AnalyticsDao {
             (
                 SELECT COUNT(*) FROM workout_sessions ws
                 WHERE ws.is_finished = 1 AND ws.timestamp >= :startDate AND ws.timestamp <= :endDate
+                    AND (:includeDeload OR ws.is_deload = 0)
             ) AS sessionCount,
             COUNT(s.id) AS setCount,
             COALESCE(AVG(s.peso_sollevato), 0) AS avgWeight
         FROM set_logs s
         INNER JOIN workout_sessions w ON s.session_id = w.id
-        WHERE w.timestamp >= :startDate AND w.timestamp <= :endDate
+        WHERE w.timestamp >= :startDate AND w.timestamp <= :endDate AND w.is_finished = 1 AND w.is_deload = 0
     """)
-    fun getPeriodMetrics(startDate: Long, endDate: Long): Flow<PeriodMetrics>
+    fun getPeriodMetrics(startDate: Long, endDate: Long, includeDeload: Boolean): Flow<PeriodMetrics>
 
     @Query("""
         SELECT 
@@ -175,7 +189,7 @@ interface AnalyticsDao {
         FROM set_logs s
         INNER JOIN workout_sessions w ON s.session_id = w.id
         INNER JOIN exercises e ON e.id = s.exercise_id
-        WHERE w.timestamp >= :startDate AND w.timestamp <= :endDate
+        WHERE w.timestamp >= :startDate AND w.timestamp <= :endDate AND w.is_finished = 1 AND w.is_deload = 0
         GROUP BY e.id
         ORDER BY volume DESC
     """)
@@ -186,8 +200,9 @@ interface AnalyticsDao {
             COUNT(DISTINCT date(w.timestamp / 1000, 'unixepoch')) AS trainingDays
         FROM workout_sessions w
         WHERE w.timestamp >= :startDate AND w.timestamp <= :endDate AND w.is_finished = 1
+            AND (:includeDeload OR w.is_deload = 0)
     """)
-    fun getTrainingDays(startDate: Long, endDate: Long): Flow<Int>
+    fun getTrainingDays(startDate: Long, endDate: Long, includeDeload: Boolean): Flow<Int>
 }
 
 data class DailyExerciseMax(

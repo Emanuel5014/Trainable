@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import com.emanuel5014.trainable.domain.session.DeloadRules
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
@@ -79,7 +80,9 @@ class DashboardState(
         val dynamic: Boolean,
         val palette: Int,
         val swipe: Boolean,
-        val floating: Boolean
+        val floating: Boolean,
+        /** Deload workouts count for the weekly goal (setting, see DeloadRules). */
+        val deloadCounts: Boolean = true
     )
 
     private data class SessionData(
@@ -139,15 +142,17 @@ class DashboardState(
             ) { goal, expiry, dynamic, palette, swipe ->
                 listOf(goal, expiry, dynamic, palette, swipe)
             },
-            userPrefsRepository.floatingNavBar
-        ) { prefsList, floating ->
+            userPrefsRepository.floatingNavBar,
+            userPrefsRepository.deloadCountsForGoal
+        ) { prefsList, floating, deloadCounts ->
             PreferencesData(
                 goal = prefsList[0] as Int,
                 expiry = prefsList[1] as Long?,
                 dynamic = prefsList[2] as Boolean,
                 palette = prefsList[3] as Int,
                 swipe = prefsList[4] as Boolean,
-                floating = floating
+                floating = floating,
+                deloadCounts = deloadCounts
             )
         },
         combine(
@@ -160,10 +165,10 @@ class DashboardState(
         _selectedSessionIds
     ) { planVolumePair, user, prefs, sessionData, selectedIds ->
         val (plans, volume) = planVolumePair
-        val (goal, membershipExpiry, dynamic, palette, swipe, floating) = prefs
+        val (goal, membershipExpiry, dynamic, palette, swipe, floating, deloadCounts) = prefs
         val (allSessions, unfinished, cardioCount, day, live) = sessionData
         val weekStart = weekStartMillis(day)
-        val numWorkoutsThisWeek = allSessions.count { it.timestamp >= weekStart }
+        val numWorkoutsThisWeek = allSessions.count { it.timestamp >= weekStart && DeloadRules.countsAsTrained(it, deloadCounts) }
 
         // Which routine to offer: see WorkoutSuggester (the sequence of routines, the days only shape the card)
         val (todayPlan, suggestedPlan) = WorkoutSuggester.suggest(plans, allSessions, day)

@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.webserver
 
+import com.emanuel5014.trainable.domain.session.DeloadRules
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -321,7 +322,8 @@ fun Application.configureServer(
                     val weekStartMillis = cal.timeInMillis
 
                     val allSessions = workoutDao.getAllSessions().first()
-                    val workoutsThisWeek = allSessions.count { it.timestamp >= weekStartMillis }
+                    val deloadCounts = userPrefsRepo.deloadCountsForGoal.first()
+                    val workoutsThisWeek = allSessions.count { it.timestamp >= weekStartMillis && DeloadRules.countsAsTrained(it, deloadCounts) }
                     val cardioCount = workoutDao.getCardioSessionCountSince(weekStartMillis).first()
 
                     call.respondText(json.encodeToString(successJson(buildJsonObject {
@@ -339,7 +341,7 @@ fun Application.configureServer(
                     val totalVolume = analyticsDao.getTotalVolume().first() ?: 0f
                     val sessions = workoutDao.getAllSessions().first()
                     val thirtyDaysAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30)
-                    val trainingDays = analyticsDao.getTrainingDays(thirtyDaysAgo, System.currentTimeMillis()).first()
+                    val trainingDays = analyticsDao.getTrainingDays(thirtyDaysAgo, System.currentTimeMillis(), userPrefsRepo.deloadCountsForGoal.first()).first()
                     val personalBests = analyticsDao.getAllPersonalBests().first().count { it.maxWeight > 0 }
 
                     call.respondText(json.encodeToString(successJson(

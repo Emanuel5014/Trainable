@@ -30,7 +30,9 @@ data class ExercisePerformance(
     val planName: String,
     val sets: List<SetLogEntity>,
     /** What the workout is called (it has sets of this exercise, so it is never a cardio workout). */
-    val title: WorkoutTitle = WorkoutTitle.Named(sessionNote?.takeIf { it.isNotBlank() } ?: planName)
+    val title: WorkoutTitle = WorkoutTitle.Named(sessionNote?.takeIf { it.isNotBlank() } ?: planName),
+    /** A deload workout: listed, but its sets are not records and not on the chart. */
+    val isDeload: Boolean = false
 ) {
     /** The sets of each run of the exercise, every run numbered from its own first set. */
     val groups: List<List<SetLogEntity>> = sets.groupBy { it.ordineEsercizio }.values.toList()
@@ -88,16 +90,19 @@ data class ExerciseHistory(
                     sessionNote = first.sessionNote,
                     planName = first.planName,
                     sets = group.map { it.setLog }.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie })),
-                    title = WorkoutTitle.of(first.sessionNote, first.planName, first.planIsSystem, hasStrength = true, hasCardio = false)
+                    title = WorkoutTitle.of(first.sessionNote, first.planName, first.planIsSystem, hasStrength = true, hasCardio = false),
+                    isDeload = first.sessionIsDeload
                 )
             }
             val allSets = rows.map { it.setLog }
             val kind = ExerciseKind.of(allSets.filter { !it.isWarmup }.ifEmpty { allSets })
-            return ExerciseHistory(kind, performances, recordsOf(kind, performances), chartPointsOf(kind, performances))
+            // Deload workouts stay in the list but say nothing about records or progress
+            val counted = performances.filter { !it.isDeload }
+            return ExerciseHistory(kind, performances, recordsOf(kind, counted, performances), chartPointsOf(kind, counted))
         }
 
-        private fun recordsOf(kind: ExerciseKind, performances: List<ExercisePerformance>): ExerciseRecords {
-            val timestamps = performances.map { it.timestamp }
+        private fun recordsOf(kind: ExerciseKind, performances: List<ExercisePerformance>, all: List<ExercisePerformance>): ExerciseRecords {
+            val timestamps = all.map { it.timestamp }
             val strength = kind == ExerciseKind.STRENGTH
             return ExerciseRecords(
                 sessionCount = performances.size,

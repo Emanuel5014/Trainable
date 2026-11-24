@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.sharedui.resources.deload_last_normal
 import com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.LaunchedEffect
@@ -282,6 +284,13 @@ fun ColumnScope.SetList(
                         setPrescription?.techniques?.forEach { add(prescriptionText.technique(it)) }
                         set.rpe?.let { add(prescriptionText.rpeBadge(it, state.rpeScale)) }
                         if (set.isExtra) add(stringResource(Res.string.extra_badge))
+                        // A deload set at its share of last time: what the last normal workout did, on the set to do now
+                        val normalKg = set.previousWeight
+                        if (state.isDeload && isActive && !set.isCompleted && normalKg != null && normalKg > 0f && normalKg != set.weight) {
+                            val reps = set.previousReps?.let { " × $it" }.orEmpty()
+                            val load = WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(normalKg, state.weightUnit), state.weightUnit)
+                            add(stringResource(Res.string.deload_last_normal, load + reps))
+                        }
                         // How the set really went: parts after short pauses, help, partials, technique as done
                         addAll(prescriptionText.performanceBadges(set.repParts, set.pauses, set.assistedReps, set.partialReps, set.performedTechniques))
                     },

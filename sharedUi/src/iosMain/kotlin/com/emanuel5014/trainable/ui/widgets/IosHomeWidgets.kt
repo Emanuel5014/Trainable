@@ -85,15 +85,18 @@ internal object IosHomeWidgets {
         val unfinished: List<com.emanuel5014.trainable.data.local.relation.SessionWithPlanName>,
         val goal: Int,
         val theme: ThemeSettings,
-        val today: LocalDate
+        val today: LocalDate,
+        val deloadCounts: Boolean = true
     )
 
     suspend fun run(workouts: WorkoutRepository, preferences: UserPreferencesRepository) {
         val theme = preferences.themeSettings
         val data = combine(
             workouts.getActivePlans(), workouts.getAllSessions(), workouts.getUnfinishedSessionsWithPlanName(),
-            preferences.weeklyGoal, theme
-        ) { plans, finished, unfinished, goal, colors -> Inputs(plans, finished, unfinished, goal, colors, today()) }
+            preferences.weeklyGoal, combine(theme, preferences.deloadCountsForGoal) { colors, deload -> colors to deload }
+        ) { plans, finished, unfinished, goal, colorsAndDeload ->
+            Inputs(plans, finished, unfinished, goal, colorsAndDeload.first, today(), colorsAndDeload.second)
+        }
         combine(data, days(), IosWorkoutsChanged.ticks.onStart { emit(Unit) }) { inputs, today, _ -> inputs.copy(today = today) }
             .debounce(400)
             .mapLatest { inputs -> json.encodeToString(HomeWidgetSnapshot.serializer(), snapshot(inputs, workouts)) }
@@ -129,7 +132,8 @@ internal object IosHomeWidgets {
             zone = zone,
             firstDay = firstDay,
             texts = texts(),
-            accent = accent(inputs.theme)
+            accent = accent(inputs.theme),
+            deloadCounts = inputs.deloadCounts
         )
     }
 
