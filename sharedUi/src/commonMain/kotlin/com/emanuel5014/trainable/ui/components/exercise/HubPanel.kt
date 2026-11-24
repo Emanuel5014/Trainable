@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.ui.util.bodyRunsToBottomEdge
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import com.emanuel5014.trainable.ui.util.rememberDisplayCornerRadius
+import com.emanuel5014.trainable.ui.util.concentricCornerRadius
+import com.kyant.shapes.UnevenRoundedRectangle
 import com.emanuel5014.trainable.ui.glass.LocalPanelGlass
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.AnimatedVisibility
@@ -96,6 +103,8 @@ private val PANEL_SHAPE = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
  * padding already keeps the hub above the system bars.
  */
 private val GLASS_PANEL_INSET = 8.dp
+/** The top corners of the glass panel; the bottom ones follow the screen (concentricCornerRadius). */
+private val GLASS_PANEL_TOP_RADIUS = 32.dp
 
 /**
  * Where the bottom hub of the workout screen is: [expansion] is 1 when it is open and 0 when it is a thin strip,
@@ -257,7 +266,25 @@ fun HubPanel(
         modifier = modifier
     ) {
         val glass = LocalPanelGlass.current
-        val shape = glass?.shape ?: PANEL_SHAPE
+        // The glass panel floats GLASS_PANEL_INSET above the bottom of the screen's body. Only where that body runs
+        // to the screen's edge (iPhone, an Android without a navigation bar) do its bottom corners follow the
+        // screen's own (concentric); above Android's navigation bar it stays clear of the pill, with even corners.
+        val reachesScreenEdge = bodyRunsToBottomEdge ||
+            WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() == 0.dp
+        val displayRadius = rememberDisplayCornerRadius()
+        val bottomRadius = if (reachesScreenEdge) concentricCornerRadius(displayRadius, GLASS_PANEL_INSET) else null
+        val shape = when {
+            glass == null -> PANEL_SHAPE
+            bottomRadius == null -> glass.shape
+            else -> remember(bottomRadius) {
+                UnevenRoundedRectangle(
+                    topStart = GLASS_PANEL_TOP_RADIUS,
+                    topEnd = GLASS_PANEL_TOP_RADIUS,
+                    bottomEnd = bottomRadius,
+                    bottomStart = bottomRadius
+                )
+            }
+        }
         Surface(
             modifier = Modifier
                 .fillMaxWidth()

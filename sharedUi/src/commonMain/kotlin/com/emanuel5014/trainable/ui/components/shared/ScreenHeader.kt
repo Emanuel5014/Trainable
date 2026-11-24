@@ -1,5 +1,11 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,16 +58,15 @@ fun ScreenHeader(
     }
     ScreenHeader(
         titleContent = {
-            Text(
-                text = title,
-                style = titleStyle.copy(fontSize = fontSize, lineHeight = lineHeight),
-                color = OnSurface,
-                fontWeight = FontWeight.Black,
-                letterSpacing = (-1).sp,
-                lineHeight = lineHeight,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                softWrap = true
+            FittedScreenTitle(
+                title = title,
+                style = titleStyle.copy(
+                    fontSize = fontSize,
+                    lineHeight = lineHeight,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-1).sp,
+                    color = OnSurface
+                )
             )
         },
         subtitle = subtitle,
@@ -184,5 +189,48 @@ fun ScreenHeader(
                 }
             }
         }
+    }
+}
+
+/**
+ * The screen title at the largest size (down to [MIN_TITLE_SCALE] of [style]) at which every word fits whole on a
+ * line and the title takes at most two lines: a long single word ("STATISTICHE") between the header's buttons, a
+ * large system font or a long translation shrink it instead of breaking it mid-word.
+ */
+@Composable
+private fun FittedScreenTitle(title: String, style: TextStyle) {
+    BoxWithConstraints {
+        val measurer = rememberTextMeasurer()
+        val density = LocalDensity.current
+        val maxWidthPx = constraints.maxWidth
+        val fitted = remember(title, style, maxWidthPx, density) {
+            fitTitle(title, style, maxWidthPx, measurer)
+        }
+        Text(text = title, style = fitted, maxLines = 2, overflow = TextOverflow.Ellipsis, softWrap = true)
+    }
+}
+
+private const val MIN_TITLE_SCALE = 0.6f
+
+private fun fitTitle(title: String, style: TextStyle, maxWidthPx: Int, measurer: TextMeasurer): TextStyle {
+    if (maxWidthPx == Constraints.Infinity || maxWidthPx <= 0 || !style.fontSize.isSp) return style
+    val words = title.split(' ').filter { it.isNotBlank() }
+    val base = style.fontSize.value
+    val lineRatio = if (style.lineHeight.isSp) style.lineHeight.value / base else Float.NaN
+    var size = base
+    val smallest = base * MIN_TITLE_SCALE
+    while (true) {
+        val candidate = style.copy(
+            fontSize = size.sp,
+            lineHeight = if (lineRatio.isNaN()) style.lineHeight else (size * lineRatio).sp
+        )
+        val wordsFit = words.all { word ->
+            measurer.measure(word, candidate, maxLines = 1, softWrap = false).size.width <= maxWidthPx
+        }
+        val linesFit = wordsFit && !measurer.measure(
+            title, candidate, maxLines = 2, constraints = Constraints(maxWidth = maxWidthPx)
+        ).hasVisualOverflow
+        if (linesFit || size <= smallest) return candidate
+        size = (size - 1f).coerceAtLeast(smallest)
     }
 }
