@@ -270,7 +270,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = iosApp/Trainable.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/../sharedUi/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
@@ -284,7 +284,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
@@ -323,7 +323,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = iosApp/Trainable.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/../sharedUi/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
@@ -337,7 +337,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
@@ -374,13 +374,13 @@
 			APPLICATION_EXTENSION_API_ONLY = YES;
 			CODE_SIGN_ENTITLEMENTS = LiveActivities/LiveActivities.entitlements;
 			CODE_SIGN_STYLE = Automatic;
-			CURRENT_PROJECT_VERSION = 5;
+			CURRENT_PROJECT_VERSION = 6;
 			GENERATE_INFOPLIST_FILE = YES;
 			INFOPLIST_FILE = LiveActivities/Info.plist;
 			INFOPLIST_KEY_CFBundleDisplayName = Trainable;
 			IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 			LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
-			MARKETING_VERSION = 3.0.0;
+			MARKETING_VERSION = 3.1.0;
 			PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable.timers;
 			PRODUCT_NAME = TrainableTimers;
 			SKIP_INSTALL = YES;
@@ -392,13 +392,13 @@
 			APPLICATION_EXTENSION_API_ONLY = YES;
 			CODE_SIGN_ENTITLEMENTS = LiveActivities/LiveActivities.entitlements;
 			CODE_SIGN_STYLE = Automatic;
-			CURRENT_PROJECT_VERSION = 5;
+			CURRENT_PROJECT_VERSION = 6;
 			GENERATE_INFOPLIST_FILE = YES;
 			INFOPLIST_FILE = LiveActivities/Info.plist;
 			INFOPLIST_KEY_CFBundleDisplayName = Trainable;
 			IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 			LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
-			MARKETING_VERSION = 3.0.0;
+			MARKETING_VERSION = 3.1.0;
 			PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable.timers;
 			PRODUCT_NAME = TrainableTimers;
 			SKIP_INSTALL = YES;
