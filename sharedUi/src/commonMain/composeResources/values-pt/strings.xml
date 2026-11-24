@@ -1882,4 +1882,57 @@
     <string name="deload_weight_percent_desc">A parte do peso do último treino normal com que começa uma descarga</string>
     <string name="deload_counts_for_goal">Conta para o objetivo semanal</string>
     <string name="deload_counts_for_goal_desc">Os dias de treino, o objetivo semanal e os widgets contam também a descarga</string>
+    <!-- CSV export with filters -->
+    <string name="csv_export_title">Exportar CSV</string>
+    <string name="csv_export_subtitle">Mesmo formato da importação</string>
+    <string name="csv_export_routines">Rotinas</string>
+    <string name="csv_export_all">Todas</string>
+    <string name="csv_export_last_3_months">Últimos 3 meses</string>
+    <string name="csv_export_last_year">Ano passado</string>
+    <string name="csv_export_exercises">Exercícios</string>
+    <string name="csv_export_all_exercises">Todos os exercícios</string>
+    <string name="csv_export_all_exercises_hint">Toque para exportar só alguns exercícios</string>
+    <string name="csv_export_add_exercise">Adicionar</string>
+    <string name="csv_export_type">Tipo</string>
+    <string name="csv_export_type_all">Tudo</string>
+    <string name="csv_export_type_strength">Força</string>
+    <string name="csv_export_type_cardio">Cardio</string>
+    <string name="csv_export_include">Incluir</string>
+    <string name="csv_export_deload">Treinos de descarga</string>
+    <string name="csv_export_warmup">Séries de aquecimento</string>
+    <string name="csv_export_empty">Nenhum treino com estes filtros. Remova um filtro para exportar.</string>
+    <string name="csv_export_button">Exportar</string>
+    <string name="csv_export_pick_exercises">Escolher exercícios</string>
+    <string name="csv_export_pick_hint">Só os exercícios dos treinos escolhidos, com quantos treinos os têm.</string>
+    <string name="csv_export_no_exercises">Nenhum exercício</string>
+    <plurals name="csv_export_deload_hint">
+        <item quantity="one">%1$d descarga nesta seleção</item>
+        <item quantity="other">%1$d descargas nesta seleção</item>
+        <item quantity="many">%1$d descargas nesta seleção</item>
+    </plurals>
+    <plurals name="csv_export_warmup_hint">
+        <item quantity="one">%1$d série de aquecimento nesta seleção</item>
+        <item quantity="other">%1$d séries de aquecimento nesta seleção</item>
+        <item quantity="many">%1$d séries de aquecimento nesta seleção</item>
+    </plurals>
+    <plurals name="csv_export_workouts">
+        <item quantity="one">%1$d treino</item>
+        <item quantity="other">%1$d treinos</item>
+        <item quantity="many">%1$d treinos</item>
+    </plurals>
+    <plurals name="csv_export_rows">
+        <item quantity="one">%1$s linha</item>
+        <item quantity="other">%1$s linhas</item>
+        <item quantity="many">%1$s linhas</item>
+    </plurals>
+    <plurals name="csv_export_exercise_workouts">
+        <item quantity="one">em %1$d treino</item>
+        <item quantity="other">em %1$d treinos</item>
+        <item quantity="many">em %1$d treinos</item>
+    </plurals>
+    <plurals name="csv_export_done_count">
+        <item quantity="one">Pronto · %1$d exercício</item>
+        <item quantity="other">Pronto · %1$d exercícios</item>
+        <item quantity="many">Pronto · %1$d exercícios</item>
+    </plurals>
 </resources>

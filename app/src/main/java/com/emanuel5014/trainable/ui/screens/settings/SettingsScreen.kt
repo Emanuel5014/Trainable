@@ -215,21 +215,10 @@ fun SettingsScreen(
         uri?.let { viewModel.exportDatabase(it, includeImagesChoice) }
     }
 
-    val csvExportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/csv")
-    ) { uri ->
-        uri?.let { outputUri ->
-            viewModel.getCsvContent()?.let { csv ->
-                try {
-                    context.contentResolver.openOutputStream(outputUri)?.use { output ->
-                        output.write(csv.toByteArray())
-                    }
-                    Toast.makeText(context, "CSV exported successfully!", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(context, "Error writing file: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
+    // The CSV export sheet (routines, period, exercises ...); it picks where to save the file itself
+    var showCsvExport by remember { mutableStateOf(false) }
+    if (showCsvExport) {
+        com.emanuel5014.trainable.ui.screens.history.AndroidHistoryCsvExport(onDismiss = { showCsvExport = false })
     }
 
     val importLauncher = rememberLauncherForActivityResult(
@@ -446,11 +435,7 @@ fun SettingsScreen(
                     }
 
                     GymButton(
-                        onClick = {
-                            val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
-                            csvExportLauncher.launch("Workouts_$timestamp.csv")
-                            viewModel.exportWorkoutsToCsv()
-                        },
+                        onClick = { showCsvExport = true },
                         modifier = Modifier.fillMaxWidth(),
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurface

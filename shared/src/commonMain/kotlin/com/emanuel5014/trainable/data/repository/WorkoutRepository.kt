@@ -937,8 +937,14 @@ class WorkoutRepository(
     suspend fun getSwapsForSessions(sessionIds: List<Int>) =
         workoutDao.getSwapsForSessions(sessionIds)
 
-    suspend fun exportAllWorkoutsToCsv(weightUnit: String = "kg", languageCode: String = "en"): String {
-        val sessions = workoutDao.getAllSessionsWithDetails().first()
+    suspend fun exportAllWorkoutsToCsv(weightUnit: String = "kg", languageCode: String = "en"): String =
+        exportWorkoutsToCsv(workoutDao.getAllSessionsWithDetails().first(), weightUnit, languageCode)
+
+    /**
+     * The history CSV of [sessions] only (newest first, as the history lists them), in the same format as the whole
+     * history: the columns that only show when needed (RPE, Superset, Deload) follow what these workouts hold.
+     */
+    suspend fun exportWorkoutsToCsv(sessions: List<SessionWithDetails>, weightUnit: String = "kg", languageCode: String = "en"): String {
         // With advanced programming off the file keeps the classic columns
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
         // The workout journal adds its three columns only while it is on

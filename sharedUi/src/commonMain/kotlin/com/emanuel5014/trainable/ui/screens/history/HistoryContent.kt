@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.domain.csvimport.HistoryCsvFileName
+import com.emanuel5014.trainable.ui.screens.history.export.HistoryCsvQuickExport
 import com.emanuel5014.trainable.sharedui.resources.remove_set_confirm
 import com.emanuel5014.trainable.sharedui.resources.cardio_remove_set
 import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
@@ -233,7 +235,9 @@ fun HistoryContent(
     share: HistoryShareUi,
     onEditSession: (sessionId: Int) -> Unit,
     onCompareSessions: (sessionId1: Int, sessionId2: Int) -> Unit,
-    isVisible: Boolean = true
+    isVisible: Boolean = true,
+    /** Saves the workouts the filters show as a CSV (the filter sheet's button); null leaves the button out. */
+    csvExport: HistoryCsvQuickExport? = null
 ) {
     val uiState by state.uiState.collectAsState()
     val advancedProgramming = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
@@ -306,6 +310,7 @@ fun HistoryContent(
     var showCardioDialog by remember { mutableStateOf(false) }
     var showAddWorkoutSheet by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
+    val noRoutineFileLabel = stringResource(Res.string.no_routine)
     var sessionToJournal by remember { mutableStateOf<SessionWithDetails?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -846,85 +851,32 @@ fun HistoryContent(
                 onDismiss = { showFilterSheet = false },
                 journalEnabled = uiState.journalEnabled,
                 ratingEnabled = uiState.journalRatingEnabled,
-                availableTags = uiState.availableTags
+                availableTags = uiState.availableTags,
+                onExportCsv = csvExport?.let { export ->
+                    {
+                        val filters = uiState.filters
+                        // The file is named after the routine or group picked and the days of its first and last workout
+                        val scope = listOfNotNull(
+                            filters.groupId?.let { id -> uiState.routineGroups.firstOrNull { it.id == id }?.name }
+                                ?: filters.planId?.let { id ->
+                                    if (id == NO_ROUTINE_PLAN_ID) noRoutineFileLabel else uiState.availablePlans.firstOrNull { it.id == id }?.nome
+                                }
+                        )
+                        val sessions = uiState.filteredSessions
+                        val span = HistoryCsvFileName.span(sessions)
+                        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                        export.export(sessions, HistoryCsvFileName.of(scope, span?.first, span?.second, today))
+                    }
+                },
+                exportingCsv = csvExport?.exporting == true
             )
         }
         if (showDatePicker) {
-
-        val dateRangePickerState = rememberDateRangePickerState()
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                GymButton(
-                    onClick = {
-                        val start = dateRangePickerState.selectedStartDateMillis
-                        val end = dateRangePickerState.selectedEndDateMillis
-                        if (start != null && end != null) {
-                            val (from, to) = pickedDaysRange(start, end)
-                            state.setFilters(uiState.filters.copy(startDate = from, endDate = to))
-                        }
-                        showDatePicker = false
-                    },
-                    enabled = dateRangePickerState.selectedStartDateMillis != null && dateRangePickerState.selectedEndDateMillis != null
-                ) {
-                    Text(stringResource(Res.string.apply_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
-                }
-            },
-            dismissButton = {
-                GymButton(
-                    onClick = { showDatePicker = false },
-                    containerColor = Color.Transparent,
-                    contentColor = onSurfaceVariantColor
-                ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
-                }
-            },
-            colors = DatePickerDefaults.colors(
-                containerColor = surfaceContainerHighColor
-            )
-        ) {
-            DateRangePicker(
-                state = dateRangePickerState,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 320.dp, max = 560.dp).fillMaxHeight(0.85f),
-                title = {
-                    Text(
-                        text = stringResource(Res.string.select_date_range),
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                },
-                headline = {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (dateRangePickerState.selectedStartDateMillis != null) {
-                                DateFormatter.formatShort(dateRangePickerState.selectedStartDateMillis!!)
-                            } else "Start",
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-                        Text("-", style = MaterialTheme.typography.headlineSmall)
-                        Text(
-                            text = if (dateRangePickerState.selectedEndDateMillis != null) {
-                                DateFormatter.formatShort(dateRangePickerState.selectedEndDateMillis!!)
-                            } else "End",
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-                    }
-                },
-                colors = DatePickerDefaults.colors(
-                    containerColor = surfaceContainerHighColor,
-                    selectedDayContainerColor = primaryColor,
-                    todayDateBorderColor = primaryColor,
-                    dayInSelectionRangeContainerColor = primaryColor.copy(alpha = 0.1f)
-                )
+            HistoryDateRangeDialog(
+                onDismiss = { showDatePicker = false },
+                onPicked = { from, to -> state.setFilters(uiState.filters.copy(startDate = from, endDate = to)) }
             )
         }
-    }
 
     if (showAddWorkoutSheet) {
         ModalBottomSheet(

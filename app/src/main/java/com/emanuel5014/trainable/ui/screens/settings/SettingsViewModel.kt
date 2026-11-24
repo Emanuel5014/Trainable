@@ -21,7 +21,6 @@ import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
-import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.PlateCalculator
@@ -60,7 +59,6 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val userPrefsRepository: UserPreferencesRepository,
-    private val workoutRepository: WorkoutRepository,
     private val localeManager: AppLocaleManager,
     private val backupManager: BackupManager,
     private val nextcloudBackupManager: NextcloudBackupManager,
@@ -566,25 +564,6 @@ class SettingsViewModel @Inject constructor(
 
     fun clearStatus() {
         _backupStatus.value = null
-    }
-
-    private var _csvCache: String? = null
-
-    fun getCsvContent(): String? {
-        return _csvCache
-    }
-
-    fun exportWorkoutsToCsv() {
-        viewModelScope.launch {
-            _backupStatus.value = "Exporting CSV..."
-            try {
-                val languageCode = localeManager.getResolvedLanguage()
-                _csvCache = workoutRepository.exportAllWorkoutsToCsv(weightUnit.value, languageCode)
-                _backupStatus.value = "Export ready"
-            } catch (e: Exception) {
-                _backupStatus.value = "Export failed: ${e.message}"
-            }
-        }
     }
 
     fun setLanguage(languageCode: String, onLanguageChanged: () -> Unit) {

@@ -413,7 +413,8 @@ private fun IosMainTabs(
                 share = rememberIosHistoryShareUi(),
                 onEditSession = { sessionId -> navController.navigate(EditWorkoutSession(sessionId)) },
                 onCompareSessions = { first, second -> navController.navigate(CompareSessions(first, second)) },
-                isVisible = pagerState.currentPage == 2
+                isVisible = pagerState.currentPage == 2,
+                csvExport = rememberIosHistoryCsvQuickExport()
             )
             3 -> AnalyticsContent(
                 state = analytics,

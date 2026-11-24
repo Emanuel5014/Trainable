@@ -1,5 +1,11 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material3.CircularProgressIndicator
+import com.emanuel5014.trainable.sharedui.resources.csv_export_title
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -153,7 +159,11 @@ fun HistoryFilterBottomSheet(
     /** The workout journal is on: the tag, rating and note filters show. */
     journalEnabled: Boolean = false,
     ratingEnabled: Boolean = true,
-    availableTags: List<TagWithUsage> = emptyList()
+    availableTags: List<TagWithUsage> = emptyList(),
+    /** Saves the workouts the filters show as a CSV; null leaves the button out. */
+    onExportCsv: (() -> Unit)? = null,
+    /** A CSV is being written: the button waits. */
+    exportingCsv: Boolean = false
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -223,12 +233,31 @@ fun HistoryFilterBottomSheet(
             }
 
             SheetFormFooter(horizontalPadding = 20.dp) {
-                GymButton(onClick = ::close, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = if (counts.shown == 0) stringResource(Res.string.history_filter_none_shown).uppercase()
-                        else pluralStringResource(Res.plurals.history_filter_show, counts.shown, counts.shown).uppercase(),
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (onExportCsv != null) {
+                        // Saves what the list shows, so it waits while the filters leave nothing
+                        val exportLabel = stringResource(Res.string.csv_export_title)
+                        GymButton(
+                            onClick = onExportCsv,
+                            enabled = counts.shown > 0 && !exportingCsv,
+                            containerColor = SurfaceContainerHigh,
+                            contentColor = OnSurface,
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier
+                                .width(if (ResponsiveSize.isCompact) 56.dp else 64.dp)
+                                .semantics { contentDescription = exportLabel }
+                        ) {
+                            if (exportingCsv) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Primary)
+                            else Icon(Icons.Rounded.FileDownload, contentDescription = null, tint = Primary)
+                        }
+                    }
+                    GymButton(onClick = ::close, modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (counts.shown == 0) stringResource(Res.string.history_filter_none_shown).uppercase()
+                            else pluralStringResource(Res.plurals.history_filter_show, counts.shown, counts.shown).uppercase(),
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
                 }
             }
         }
@@ -263,7 +292,7 @@ private fun FilterHeader(shown: Int, total: Int, canReset: Boolean, onReset: () 
 }
 
 @Composable
-private fun SectionLabel(text: String) {
+internal fun SectionLabel(text: String) {
     Text(
         text = text.uppercase(),
         style = MaterialTheme.typography.labelMedium,
@@ -274,13 +303,42 @@ private fun SectionLabel(text: String) {
 }
 
 /** Corners of a row in a joined list: round at its ends, tight where rows touch. */
-private fun joinedShape(index: Int, count: Int): RoundedCornerShape {
+internal fun joinedShape(index: Int, count: Int): RoundedCornerShape {
     val top = if (index == 0) 24.dp else 8.dp
     val bottom = if (index == count - 1) 24.dp else 8.dp
     return RoundedCornerShape(topStart = top, topEnd = top, bottomStart = bottom, bottomEnd = bottom)
 }
 
 // --- Routine -----------------------------------------------------------------------------------------------------
+
+/**
+ * What the routine picker has picked and how a tap changes it: one routine, one group or "no routine" in the history's
+ * filters, any mix of them in the CSV export.
+ */
+internal interface RoutinePickerChoice {
+    fun groupPicked(groupId: Int): Boolean
+    fun routinePicked(planId: Int): Boolean
+    val noRoutinePicked: Boolean
+    fun toggleGroup(groupId: Int)
+    fun toggleRoutine(planId: Int)
+    fun toggleNoRoutine()
+}
+
+/** The history filters' choice: one routine, one group or "no routine", and picking one drops the others. */
+private class SingleRoutineChoice(
+    private val filters: HistoryFilters,
+    private val onFiltersChanged: (HistoryFilters) -> Unit
+) : RoutinePickerChoice {
+    override fun groupPicked(groupId: Int) = filters.groupId == groupId
+    override fun routinePicked(planId: Int) = filters.planId == planId
+    override val noRoutinePicked get() = filters.planId == NO_ROUTINE_PLAN_ID
+    override fun toggleGroup(groupId: Int) =
+        onFiltersChanged(filters.anyRoutine().copy(groupId = if (groupPicked(groupId)) null else groupId))
+    override fun toggleRoutine(planId: Int) =
+        onFiltersChanged(filters.anyRoutine().copy(planId = if (routinePicked(planId)) null else planId))
+    override fun toggleNoRoutine() =
+        onFiltersChanged(filters.anyRoutine().copy(planId = if (noRoutinePicked) null else NO_ROUTINE_PLAN_ID))
+}
 
 /** One row of the routine list: a block's head, its open content, or "no routine". */
 private sealed interface RoutineRow {
@@ -298,30 +356,52 @@ private fun RoutineSection(
     hasUnassignedSessions: Boolean,
     onFiltersChanged: (HistoryFilters) -> Unit
 ) {
+    val blocks = remember(availablePlans, routineGroups, counts) { routinePickerBlocks(availablePlans, routineGroups, counts) }
+    val choice = SingleRoutineChoice(filters, onFiltersChanged)
+    RoutinePickerSection(
+        title = stringResource(Res.string.history_filter_routine),
+        blocks = blocks,
+        noRoutineWorkouts = if (hasUnassignedSessions || choice.noRoutinePicked) counts.noRoutine else null,
+        choice = choice
+    )
+}
+
+/**
+ * The routines in blocks (the groups and the routines in none, or the active and the archived ones), each block folded
+ * or open, with a search field from [SEARCH_MIN_ROUTINES] routines; [noRoutineWorkouts] null leaves "no routine" out.
+ * [lead] goes between the title and the blocks.
+ */
+@Composable
+internal fun RoutinePickerSection(
+    title: String,
+    blocks: List<RoutinePickerBlock>,
+    noRoutineWorkouts: Int?,
+    choice: RoutinePickerChoice,
+    lead: (@Composable () -> Unit)? = null
+) {
     var query by remember { mutableStateOf("") }
     // Blocks the lifter opened or closed; the others follow [RoutinePickerBlock.openByDefault] and the selection
     val toggled = remember { mutableStateMapOf<String, Boolean>() }
     val noRoutineLabel = stringResource(Res.string.no_routine)
-    val blocks = remember(availablePlans, routineGroups, counts) { routinePickerBlocks(availablePlans, routineGroups, counts) }
     val routineCount = blocks.sumOf { it.routines.size }
-    val noRoutineSelected = filters.planId == NO_ROUTINE_PLAN_ID
-    if (routineCount == 0 && !hasUnassignedSessions && !noRoutineSelected) return
+    if (routineCount == 0 && noRoutineWorkouts == null) return
     val search = if (routineCount >= SEARCH_MIN_ROUTINES) query.trim() else ""
 
     val rows = buildList {
         blocks.forEach { block ->
             val routines = if (search.isEmpty()) block.routines else block.routines.filter { it.plan.nome.contains(search, ignoreCase = true) }
             if (routines.isEmpty()) return@forEach
-            val holdsSelection = block.contains(filters.planId) || (block.group != null && block.group.id == filters.groupId)
+            val holdsSelection = block.routines.any { choice.routinePicked(it.plan.id) } || (block.group != null && choice.groupPicked(block.group.id))
             val open = search.isNotEmpty() || (toggled[block.key] ?: (block.openByDefault || holdsSelection))
             add(RoutineRow.Head(block, open))
             if (open) add(RoutineRow.Content(block, routines))
         }
-        if ((hasUnassignedSessions || noRoutineSelected) && noRoutineLabel.contains(search, ignoreCase = true)) add(RoutineRow.NoRoutine)
+        if (noRoutineWorkouts != null && noRoutineLabel.contains(search, ignoreCase = true)) add(RoutineRow.NoRoutine)
     }
 
     Column {
-        SectionLabel(stringResource(Res.string.history_filter_routine))
+        SectionLabel(title)
+        lead?.invoke()
         if (routineCount >= SEARCH_MIN_ROUTINES) {
             GymInputField(
                 value = query,
@@ -355,7 +435,7 @@ private fun RoutineSection(
                         RoutineBlockHead(
                             block = row.block,
                             open = row.open,
-                            filters = filters,
+                            choice = choice,
                             shape = shape,
                             onToggle = { toggled[row.block.key] = !row.open }
                         )
@@ -364,18 +444,17 @@ private fun RoutineSection(
                         RoutineBlockContent(
                             block = row.block,
                             routines = row.routines,
-                            filters = filters,
-                            shape = shape,
-                            onFiltersChanged = onFiltersChanged
+                            choice = choice,
+                            shape = shape
                         )
                     }
                     RoutineRow.NoRoutine -> key("no-routine") {
                         NoRoutineRow(
                             label = noRoutineLabel,
-                            workouts = counts.noRoutine,
-                            selected = noRoutineSelected,
+                            workouts = noRoutineWorkouts ?: 0,
+                            selected = choice.noRoutinePicked,
                             shape = shape,
-                            onClick = { onFiltersChanged(filters.anyRoutine().copy(planId = if (noRoutineSelected) null else NO_ROUTINE_PLAN_ID)) }
+                            onClick = choice::toggleNoRoutine
                         )
                     }
                 }
@@ -388,7 +467,7 @@ private fun RoutineSection(
 private fun RoutineBlockHead(
     block: RoutinePickerBlock,
     open: Boolean,
-    filters: HistoryFilters,
+    choice: RoutinePickerChoice,
     shape: RoundedCornerShape,
     onToggle: () -> Unit
 ) {
@@ -401,14 +480,14 @@ private fun RoutineBlockHead(
     }
     // What is picked inside the block, in the accent colour; otherwise how many routines and when they were used
     val picked = when {
-        block.group != null && block.group.id == filters.groupId -> stringResource(Res.string.history_filter_whole_group)
-        else -> block.routines.firstOrNull { it.plan.id == filters.planId }?.let { routineLabel(it, monthNames) }
+        block.group != null && choice.groupPicked(block.group.id) -> stringResource(Res.string.history_filter_whole_group)
+        else -> block.routines.filter { choice.routinePicked(it.plan.id) }.map { routineLabel(it, monthNames) }
+            .takeIf { it.isNotEmpty() }?.joinToString(", ")
     }
     val summary = listOfNotNull(
         pluralStringResource(Res.plurals.routine_group_routines, block.routines.size, block.routines.size),
         block.period?.let { formatMonthRange(it.first, it.second, monthNames) }
     ).joinToString(" · ")
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -476,9 +555,8 @@ private fun routineLabel(item: RoutinePickerItem, monthNames: List<String>): Str
 private fun RoutineBlockContent(
     block: RoutinePickerBlock,
     routines: List<RoutinePickerItem>,
-    filters: HistoryFilters,
-    shape: RoundedCornerShape,
-    onFiltersChanged: (HistoryFilters) -> Unit
+    choice: RoutinePickerChoice,
+    shape: RoundedCornerShape
 ) {
     val monthNames = remember { MonthCalendar.shortMonthNames() }
     // No chip moves when one is picked: the counts are of the routines, not of the list
@@ -492,24 +570,22 @@ private fun RoutineBlockContent(
     ) {
         val group = block.group
         if (group != null) {
-            val selected = filters.groupId == group.id
             FilterOptionChip(
                 label = stringResource(Res.string.history_filter_whole_group),
                 count = block.workouts,
-                selected = selected,
-                onClick = { onFiltersChanged(filters.anyRoutine().copy(groupId = if (selected) null else group.id)) }
+                selected = choice.groupPicked(group.id),
+                onClick = { choice.toggleGroup(group.id) }
             )
         }
         routines.forEach { item ->
             key(item.plan.id) {
-                val selected = filters.planId == item.plan.id
                 FilterOptionChip(
                     label = routineLabel(item, monthNames),
                     count = item.workouts,
-                    selected = selected,
+                    selected = choice.routinePicked(item.plan.id),
                     // A whole archived block needs no mark on each routine
                     leadingIcon = if (item.plan.isArchived && !block.archived) Icons.Rounded.Archive else null,
-                    onClick = { onFiltersChanged(filters.anyRoutine().copy(planId = if (selected) null else item.plan.id)) }
+                    onClick = { choice.toggleRoutine(item.plan.id) }
                 )
             }
         }
@@ -666,7 +742,7 @@ private fun MonthCell(name: String, workouts: Int, selected: Boolean, modifier: 
 }
 
 @Composable
-private fun CustomRangeRow(range: String?, onClick: () -> Unit, onClear: () -> Unit) {
+internal fun CustomRangeRow(range: String?, onClick: () -> Unit, onClear: () -> Unit) {
     val active = range != null
     Row(
         modifier = Modifier
@@ -790,7 +866,7 @@ private fun JournalSection(
 /** A wrapping row of chips with an optional small caption above it. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ChipGroup(label: String?, content: @Composable () -> Unit) {
+internal fun ChipGroup(label: String?, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (label != null) {
             Text(
@@ -808,7 +884,7 @@ private fun ChipGroup(label: String?, content: @Composable () -> Unit) {
 
 /** A filter chip; [count] (how many workouts it leaves) follows the label in a lighter weight. */
 @Composable
-private fun FilterOptionChip(
+internal fun FilterOptionChip(
     label: String,
     count: Int?,
     selected: Boolean,
