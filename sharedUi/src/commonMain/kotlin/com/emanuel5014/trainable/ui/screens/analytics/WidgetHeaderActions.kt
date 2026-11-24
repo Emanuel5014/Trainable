@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.analytics
 
+import com.emanuel5014.trainable.ui.components.menu.MenuRowPosition
+import com.emanuel5014.trainable.ui.components.menu.ExpressiveMenuItem
+import com.emanuel5014.trainable.ui.components.menu.ExpressiveMenuGap
+import com.emanuel5014.trainable.ui.components.menu.ExpressiveMenu
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,17 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -43,7 +43,6 @@ import com.emanuel5014.trainable.sharedui.resources.analytics_more_options
 import com.emanuel5014.trainable.sharedui.resources.analytics_period
 import com.emanuel5014.trainable.sharedui.resources.analytics_remove
 import com.emanuel5014.trainable.sharedui.resources.edit
-import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import org.jetbrains.compose.resources.stringResource
 
 /** One entry of a widget's ⋮ menu. */
@@ -122,14 +121,14 @@ private fun PeriodChip(period: AnalyticsTimeRange, onPeriodChange: (AnalyticsTim
                 }
             }
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            LocalPlatformGlass.current.NotAnOverlay()
-            AnalyticsTimeRange.entries.forEach { range ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(range.labelResId)) },
-                    trailingIcon = if (range == period) {
-                        { Icon(Icons.Rounded.Check, contentDescription = null, tint = colors.primary) }
-                    } else null,
+        // The periods as joined rows; the chosen one is the filled pill with a check
+        val ranges = AnalyticsTimeRange.entries
+        ExpressiveMenu(expanded = open, onDismissRequest = { open = false }) {
+            ranges.forEachIndexed { i, range ->
+                ExpressiveMenuItem(
+                    text = stringResource(range.labelResId),
+                    position = MenuRowPosition(i, ranges.size),
+                    selected = range == period,
                     onClick = {
                         open = false
                         if (range != period) onPeriodChange(range)
@@ -153,14 +152,28 @@ private fun OverflowMenu(actions: List<WidgetMenuAction>) {
                 modifier = Modifier.size(20.dp)
             )
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            LocalPlatformGlass.current.NotAnOverlay()
-            actions.forEach { action ->
-                val tint = if (action.isDestructive) colors.error else colors.onSurface
-                DropdownMenuItem(
-                    text = { Text(action.label) },
-                    leadingIcon = { Icon(action.icon, contentDescription = null) },
-                    colors = MenuDefaults.itemColors(textColor = tint, leadingIconColor = tint),
+        // Plain actions as joined rows; a destructive one ("Remove") is set apart in its own run, in red
+        val plain = actions.filter { !it.isDestructive }
+        val destructive = actions.filter { it.isDestructive }
+        ExpressiveMenu(expanded = open, onDismissRequest = { open = false }) {
+            plain.forEachIndexed { i, action ->
+                ExpressiveMenuItem(
+                    text = action.label,
+                    leadingIcon = action.icon,
+                    position = MenuRowPosition(i, plain.size),
+                    onClick = {
+                        open = false
+                        action.onClick()
+                    }
+                )
+            }
+            if (plain.isNotEmpty() && destructive.isNotEmpty()) ExpressiveMenuGap()
+            destructive.forEachIndexed { i, action ->
+                ExpressiveMenuItem(
+                    text = action.label,
+                    leadingIcon = action.icon,
+                    position = MenuRowPosition(i, destructive.size),
+                    destructive = true,
                     onClick = {
                         open = false
                         action.onClick()

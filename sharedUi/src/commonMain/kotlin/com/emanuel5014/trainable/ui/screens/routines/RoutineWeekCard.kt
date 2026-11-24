@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.ui.components.menu.MenuRowPosition
+import com.emanuel5014.trainable.ui.components.menu.ExpressiveMenuItem
+import com.emanuel5014.trainable.ui.components.menu.ExpressiveMenu
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,8 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -204,10 +205,27 @@ private fun WeekDay(
                 maxLines = 1
             )
         }
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+        // The day's routines as joined rows, each with its number tile (in its group's colours when grouped)
+        ExpressiveMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             plans.forEachIndexed { i, p ->
-                DropdownMenuItem(
-                    text = { Text("${numbers[i]}  ${p.plan.nome}") },
+                val (tileFill, tileInk) = chips?.getOrNull(i) ?: (SurfaceContainerHigh to OnSurface)
+                ExpressiveMenuItem(
+                    text = p.plan.nome,
+                    position = MenuRowPosition(i, plans.size),
+                    leading = {
+                        Box(
+                            modifier = Modifier.size(28.dp).clip(RoundedCornerShape(9.dp)).background(tileFill),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${numbers[i]}",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Black,
+                                color = tileInk,
+                                maxLines = 1
+                            )
+                        }
+                    },
                     onClick = {
                         menuOpen = false
                         onOpenPlan(p.plan.id)
