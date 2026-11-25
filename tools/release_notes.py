@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""Release notes for Trainable's Android releases: one changelog.json, two outputs.
+"""Release notes for Trainable's releases: one changelog.json for both apps.
 
-The app reads `changelog.json`, attached to the GitHub release as an asset, and shows it in the update sheet in the
-user's language. The GitHub release text is generated from the same file, in the usual table style.
+The Android app reads `changelog.json`, attached to the GitHub release as an asset, and shows it in the update sheet
+in the user's language. The iOS app carries the file of its own version among its resources (`bundle` below) and
+shows it once after an update, since AltStore's notes box is hard to read. The GitHub release text is generated
+from the same file, in the usual table style. Items with "platforms" go only to those apps.
 
 Usage:
-    python3 tools/release_notes.py check changelog.json      # validate, exit 1 on problems
-    python3 tools/release_notes.py markdown changelog.json   # print the GitHub release text
+    python3 tools/release_notes.py check changelog.json                      # validate, exit 1 on problems
+    python3 tools/release_notes.py markdown changelog.json [android|ios]     # print the GitHub release text
+    python3 tools/release_notes.py bundle changelog.json                     # check, then copy into the apps
+                                                                             # (do it before building the IPA)
 
 Publishing (the APK and the notes travel together):
     python3 tools/release_notes.py markdown changelog.json > notes.md
@@ -24,16 +28,22 @@ Format (every text is an object with all of LANGUAGES):
       "title":   {...},                         a few words, no full stop
       "summary": {...},                         one line, at most SUMMARY_MAX characters
       "details": {...},                         optional: the full text, shown when the row is opened
-      "issues":  [57, 58]                       optional GitHub issue numbers
+      "issues":  [57, 58],                      optional GitHub issue numbers
+      "platforms": ["android"]                  optional: only these apps (android, ios); none = both
     }
   ]
 }
 """
 import json
+import os
 import sys
 
 LANGUAGES = ["en", "it", "de", "es", "fr", "pt"]
 TYPES = ["new", "improved", "fixed"]
+PLATFORMS = ["android", "ios"]
+# Where the apps read the notes of their own version (sharedUi BUNDLED_CHANGELOG)
+BUNDLED = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sharedUi", "src", "commonMain",
+                       "composeResources", "files", "changelog.json")
 SUMMARY_MAX = 110
 
 # area -> (emoji, English category) for the GitHub table; the app maps the same names to icons (areaIcon)
@@ -56,6 +66,8 @@ AREAS = {
     "widgets": ("🧩", "Widgets"),
     "journal": ("📓", "Journal"),
     "settings": ("⚙️", "Settings"),
+    "physical_check": ("📸", "Physical Check"),
+    "report": ("📄", "Report"),
     "other": ("✨", "Other"),
 }
 FIX_CATEGORY = "🛠️ **Fixes & Stability**"
@@ -105,7 +117,17 @@ def check(notes):
         issues = item.get("issues", [])
         if not all(isinstance(n, int) and n > 0 for n in issues):
             problems.append(f"{where}.issues: must be issue numbers")
+        platforms = item.get("platforms", [])
+        if not isinstance(platforms, list) or any(p not in PLATFORMS for p in platforms):
+            problems.append(f"{where}.platforms: must be a list of {PLATFORMS}")
+    for platform in PLATFORMS:
+        if items and not for_platform(items, platform):
+            problems.append(f"items: nothing for {platform}")
     return problems
+
+
+def for_platform(items, platform):
+    return [item for item in items if not item.get("platforms") or platform in item["platforms"]]
 
 
 SMALL_WORDS = {"a", "an", "the", "and", "or", "of", "in", "on", "to", "for", "with", "by", "at", "from", "as"}
@@ -125,7 +147,7 @@ def title_case(text):
     return " ".join(out)
 
 
-def markdown(notes):
+def markdown(notes, platform=None):
     version = notes["version"]
     lines = []
     notice = (notes.get("notice") or {}).get("en", "").strip()
@@ -139,7 +161,8 @@ def markdown(notes):
         "| Category | Feature / Fix | Description |",
         "| :--- | :--- | :--- |",
     ]
-    ordered = sorted(notes["items"], key=lambda item: TYPES.index(item["type"]))
+    items = for_platform(notes["items"], platform) if platform else notes["items"]
+    ordered = sorted(items, key=lambda item: TYPES.index(item["type"]))
     for item in ordered:
         if item["type"] == "fixed":
             category = FIX_CATEGORY
@@ -158,7 +181,8 @@ def markdown(notes):
 
 
 def main(argv):
-    if len(argv) != 3 or argv[1] not in ("check", "markdown"):
+    platform = argv[3] if len(argv) == 4 and argv[1] == "markdown" else None
+    if len(argv) not in (3, 4) or argv[1] not in ("check", "markdown", "bundle") or (len(argv) == 4 and platform not in PLATFORMS):
         print(__doc__)
         return 2
     with open(argv[2], encoding="utf-8") as f:
@@ -170,8 +194,15 @@ def main(argv):
     if argv[1] == "check":
         counts = {t: sum(1 for item in notes["items"] if item["type"] == t) for t in TYPES}
         print(f"ok: v{notes['version']}, " + ", ".join(f"{n} {t}" for t, n in counts.items()))
+        for p in PLATFORMS:
+            print(f"    {p}: {len(for_platform(notes['items'], p))} items")
+    elif argv[1] == "bundle":
+        with open(BUNDLED, "w", encoding="utf-8") as f:
+            json.dump(notes, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        print(f"bundled v{notes['version']} -> {os.path.relpath(BUNDLED)}")
     else:
-        sys.stdout.write(markdown(notes))
+        sys.stdout.write(markdown(notes, platform))
     return 0
 
 

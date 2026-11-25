@@ -6,7 +6,8 @@ import kotlinx.serialization.Serializable
  * The notes of a release, as the `changelog.json` attached to it (written once, see tools/release_notes.py, which
  * also turns it into the GitHub release text). Every text is a map from language code ("en", "it", "de", "es",
  * "fr", "pt") to the text; English is the fallback. Releases without the file are read from their markdown table
- * (see [com.emanuel5014.trainable.util.ReleaseNotesParser]).
+ * (see ReleaseNotesParser in the Android app). The iOS app carries the file of its own version among its resources
+ * (sharedUi composeResources/files/changelog.json) and shows it once after an update.
  */
 @Serializable
 data class ReleaseNotes(
@@ -30,14 +31,23 @@ data class ReleaseNoteItem(
     /** The full text, shown when the row is opened; optional. */
     val details: Map<String, String> = emptyMap(),
     /** GitHub issue numbers. */
-    val issues: List<Int> = emptyList()
+    val issues: List<Int> = emptyList(),
+    /** [PLATFORM_ANDROID] and/or [PLATFORM_IOS]; empty = both apps. */
+    val platforms: List<String> = emptyList()
 ) {
+    fun isFor(platform: String): Boolean = platforms.isEmpty() || platform in platforms
+
     companion object {
         const val TYPE_NEW = "new"
         const val TYPE_IMPROVED = "improved"
         const val TYPE_FIXED = "fixed"
+        const val PLATFORM_ANDROID = "android"
+        const val PLATFORM_IOS = "ios"
     }
 }
+
+/** Only the items meant for [platform] (see [ReleaseNoteItem.platforms]). */
+fun ReleaseNotes.forPlatform(platform: String): ReleaseNotes = copy(items = items.filter { it.isFor(platform) })
 
 /** The text in [language], else English, else any; empty when there is none. */
 fun Map<String, String>.localized(language: String): String =

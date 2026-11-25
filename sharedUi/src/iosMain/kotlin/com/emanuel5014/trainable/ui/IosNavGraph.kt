@@ -191,7 +191,8 @@ internal fun IosNavGraph(
                             onOpenSource = { uriHandler.openUri("https://github.com/Emanuel5014/Trainable") },
                             onSupport = { uriHandler.openUri("https://ko-fi.com/emanuel5014") },
                             onNavigateToDonors = { navController.navigate(Donors) },
-                            onAuthorEasterEgg = { uriHandler.openUri("https://www.youtube.com/watch?v=5jc_R9_im9w") }
+                            onAuthorEasterEgg = { uriHandler.openUri("https://www.youtube.com/watch?v=5jc_R9_im9w") },
+                            updateAction = { IosWhatsNewButton() }
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }

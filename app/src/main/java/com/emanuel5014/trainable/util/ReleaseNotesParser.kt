@@ -101,12 +101,3 @@ object ReleaseNotesParser {
         "setting" to "settings",
     )
 }
-
-/** "v3.0.0-beta2" → "3.0.0 beta 2", "v3.0.0-rc1" → "3.0.0 RC 1", "v3.0.0" → "3.0.0". */
-fun releaseDisplayVersion(tag: String): String {
-    val text = tag.trim().removePrefix("v").removePrefix("V")
-    val match = Regex("""^(\d+(?:\.\d+)*)-(alpha|beta|rc)\.?(\d+)$""", RegexOption.IGNORE_CASE).find(text) ?: return text
-    val (core, label, number) = match.destructured
-    val name = if (label.equals("rc", ignoreCase = true)) "RC" else label.lowercase()
-    return "$core $name $number"
-}

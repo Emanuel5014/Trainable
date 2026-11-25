@@ -1944,4 +1944,17 @@
         <item quantity="one">%d Übung</item>
         <item quantity="other">%d Übungen</item>
     </plurals>
+    <!-- Release notes (Android update sheet, iOS "What's new" after an update) -->
+    <string name="update_sheet_title">Trainable %1$s</string>
+    <string name="update_beta_chip">Beta</string>
+    <string name="update_section_new">Neu</string>
+    <string name="update_section_improved">Verbessert</string>
+    <string name="update_show_details">Details anzeigen</string>
+    <plurals name="update_fixes_count">
+        <item quantity="one">%1$d Korrektur</item>
+        <item quantity="other">%1$d Korrekturen</item>
+    </plurals>
+    <string name="whats_new_title">Neuigkeiten</string>
+    <string name="whats_new_settings">Neu in dieser Version</string>
+    <string name="whats_new_done">Verstanden</string>
 </resources>

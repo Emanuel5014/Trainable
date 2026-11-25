@@ -132,6 +132,8 @@ internal object IosAppGraph {
 private fun IosOnboardingRoot(content: @Composable () -> Unit) {
     val preferences = IosAppGraph.preferences
     val completed by preferences.hasCompletedOnboarding.collectAsState(initial = null)
+    // A fresh install: its own notes are not news, only the next update's are (IosWhatsNew)
+    LaunchedEffect(completed) { if (completed == false) IosWhatsNew.markSeen() }
     if (completed == true) {
         content()
         return
@@ -290,6 +292,7 @@ private fun TrainableIosApp() {
                 IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, history = history, analytics = analytics, navBarStyle = style, isDark = isDark)
                 IosBackupDialogs()
                 IosRoutineImportDialogs()
+                IosWhatsNewAfterUpdate()
             }
         }
     }

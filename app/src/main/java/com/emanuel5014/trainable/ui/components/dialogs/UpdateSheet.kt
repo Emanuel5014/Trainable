@@ -1,19 +1,10 @@
 package com.emanuel5014.trainable.ui.components
 
 import android.text.format.Formatter
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,35 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.BubbleChart
-import androidx.compose.material.icons.rounded.Build
-import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.CloudSync
-import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.material.icons.rounded.FitnessCenter
-import androidx.compose.material.icons.rounded.ImportExport
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Insights
-import androidx.compose.material.icons.rounded.NewReleases
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.SignalCellularAlt
-import androidx.compose.material.icons.rounded.SpaceDashboard
-import androidx.compose.material.icons.rounded.SportsGymnastics
 import androidx.compose.material.icons.rounded.SystemUpdate
-import androidx.compose.material.icons.rounded.Timer
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material.icons.rounded.ViewAgenda
-import androidx.compose.material.icons.rounded.WavingHand
-import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -76,21 +46,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.remote.GitHubRelease
-import com.emanuel5014.trainable.data.remote.ReleaseNoteItem
 import com.emanuel5014.trainable.data.remote.ReleaseNotes
 import com.emanuel5014.trainable.data.remote.localized
-import com.emanuel5014.trainable.ui.screens.routines.RowCorners
-import com.emanuel5014.trainable.ui.screens.routines.routineRowCorners
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.util.UpdateError
 import com.emanuel5014.trainable.util.UpdateFiles
@@ -102,8 +67,6 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
-
-private const val ISSUES_URL = "https://github.com/Emanuel5014/Trainable/issues/"
 
 /**
  * The update offer and everything after it, as a sheet: the release with its notes grouped as new, improved and
@@ -139,13 +102,8 @@ fun UpdateSheet(
     val sizeText = if (apkSize > 0) Formatter.formatShortFileSize(context, apkSize) else null
 
     val items = notes?.items.orEmpty()
-    val newItems = items.filter { it.type == ReleaseNoteItem.TYPE_NEW || it.type !in KNOWN_TYPES }
-    val improvedItems = items.filter { it.type == ReleaseNoteItem.TYPE_IMPROVED }
-    val fixedItems = items.filter { it.type == ReleaseNoteItem.TYPE_FIXED }
     val expanded = remember(release.tagName) { mutableStateOf(setOf<Int>()) }
-    var fixesOpen by rememberSaveable(release.tagName) {
-        mutableStateOf(newItems.isEmpty() && improvedItems.isEmpty())
-    }
+    var fixesOpen by rememberSaveable(release.tagName) { mutableStateOf(items.onlyFixes()) }
     val status = statusOf(phase)
     val toggle: (Int) -> Unit = { key ->
         expanded.value = if (key in expanded.value) expanded.value - key else expanded.value + key
@@ -191,50 +149,15 @@ fun UpdateSheet(
                 }
             }
 
-            listOf(
-                Triple("new", R.string.update_section_new, newItems),
-                Triple("improved", R.string.update_section_improved, improvedItems)
-            ).forEach { (key, label, list) ->
-                if (list.isEmpty()) return@forEach
-                item(key = "label-$key") { SectionLabel(stringResource(label), list.size) }
-                itemsIndexed(list, key = { index, _ -> "$key-$index" }) { index, item ->
-                    val rowKey = items.indexOf(item)
-                    NoteRow(
-                        item = item,
-                        language = language,
-                        corners = routineRowCorners(index, list.size),
-                        expanded = rowKey in expanded.value,
-                        onToggle = { toggle(rowKey) },
-                        onIssue = { onOpenUrl(ISSUES_URL + it) }
-                    )
-                }
-            }
-
-            if (fixedItems.isNotEmpty()) {
-                // The head row names the count itself ("3 fixes"), so the section needs no label of its own
-                item(key = "fixes-head") {
-                    FixesHead(
-                        modifier = Modifier.padding(top = 14.dp),
-                        count = fixedItems.size,
-                        open = fixesOpen,
-                        corners = if (fixesOpen) routineRowCorners(0, fixedItems.size + 1) else routineRowCorners(0, 1),
-                        onToggle = { fixesOpen = !fixesOpen }
-                    )
-                }
-                if (fixesOpen) {
-                    itemsIndexed(fixedItems, key = { index, _ -> "fixed-$index" }) { index, item ->
-                        val rowKey = items.indexOf(item)
-                        NoteRow(
-                            item = item,
-                            language = language,
-                            corners = routineRowCorners(index + 1, fixedItems.size + 1),
-                            expanded = rowKey in expanded.value,
-                            onToggle = { toggle(rowKey) },
-                            onIssue = { onOpenUrl(ISSUES_URL + it) }
-                        )
-                    }
-                }
-            }
+            releaseNoteItems(
+                items = items,
+                language = language,
+                expanded = expanded.value,
+                onToggle = toggle,
+                fixesOpen = fixesOpen,
+                onToggleFixes = { fixesOpen = !fixesOpen },
+                onIssue = { onOpenUrl(RELEASE_ISSUES_URL + it) }
+            )
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
@@ -252,8 +175,6 @@ fun UpdateSheet(
         )
     }
 }
-
-private val KNOWN_TYPES = setOf(ReleaseNoteItem.TYPE_NEW, ReleaseNoteItem.TYPE_IMPROVED, ReleaseNoteItem.TYPE_FIXED)
 
 private fun UpdatePhase.releaseOrNull(): GitHubRelease? = when (this) {
     UpdatePhase.Idle -> null
@@ -367,152 +288,6 @@ private fun StatusCard(status: SheetStatus, modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun SectionLabel(label: String, count: Int) {
-    Text(
-        text = "$label · $count",
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 14.dp, bottom = 6.dp, start = 4.dp)
-    )
-}
-
-private fun RowCorners.shape() =
-    RoundedCornerShape(topStart = top.dp, topEnd = top.dp, bottomEnd = bottom.dp, bottomStart = bottom.dp)
-
-@Composable
-private fun IconBubble(icon: ImageVector, container: Color, content: Color) {
-    Box(
-        modifier = Modifier.size(40.dp).clip(CircleShape).background(container),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(22.dp))
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun NoteRow(
-    item: ReleaseNoteItem,
-    language: String,
-    corners: RowCorners,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    onIssue: (Int) -> Unit
-) {
-    val details = item.details.localized(language)
-    val opens = details.isNotEmpty() || item.issues.isNotEmpty()
-    val fixed = item.type == ReleaseNoteItem.TYPE_FIXED
-    val colors = MaterialTheme.colorScheme
-    val chevron by animateFloatAsState(if (expanded) 180f else 0f, label = "chevron")
-    Surface(
-        shape = corners.shape(),
-        color = colors.surfaceContainer,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .then(if (opens) Modifier.clickable(onClick = onToggle) else Modifier)
-                .padding(horizontal = 14.dp, vertical = 12.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconBubble(
-                    icon = areaIcon(item.area),
-                    container = if (fixed) colors.secondaryContainer else colors.primaryContainer,
-                    content = if (fixed) colors.onSecondaryContainer else colors.onPrimaryContainer
-                )
-                Spacer(Modifier.width(14.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.title.localized(language),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                    val summary = item.summary.localized(language)
-                    if (summary.isNotEmpty()) {
-                        Text(
-                            text = summary,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
-                }
-                if (opens) {
-                    Spacer(Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Rounded.ExpandMore,
-                        contentDescription = stringResource(R.string.update_show_details),
-                        tint = colors.onSurfaceVariant,
-                        modifier = Modifier.rotate(chevron)
-                    )
-                }
-            }
-            AnimatedVisibility(
-                visible = expanded && opens,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(modifier = Modifier.padding(start = 54.dp, top = 8.dp)) {
-                    if (details.isNotEmpty()) {
-                        Text(text = details, style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
-                    }
-                    if (item.issues.isNotEmpty()) {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.padding(top = 8.dp)
-                        ) {
-                            item.issues.forEach { issue ->
-                                Surface(
-                                    shape = CircleShape,
-                                    color = colors.surfaceContainerHighest,
-                                    modifier = Modifier.clip(CircleShape).clickable { onIssue(issue) }
-                                ) {
-                                    Text(
-                                        text = "#$issue",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = colors.primary,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FixesHead(count: Int, open: Boolean, corners: RowCorners, onToggle: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    val chevron by animateFloatAsState(if (open) 180f else 0f, label = "fixes chevron")
-    Surface(shape = corners.shape(), color = colors.surfaceContainer, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.clickable(onClick = onToggle).padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconBubble(Icons.Rounded.Build, colors.secondaryContainer, colors.onSecondaryContainer)
-            Spacer(Modifier.width(14.dp))
-            Text(
-                text = pluralStringResource(R.plurals.update_fixes_count, count, count),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = Icons.Rounded.ExpandMore,
-                contentDescription = stringResource(R.string.update_show_details),
-                tint = colors.onSurfaceVariant,
-                modifier = Modifier.rotate(chevron)
-            )
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ActionBar(
@@ -612,29 +387,6 @@ private fun ActionBar(
             UpdatePhase.Idle -> Unit
         }
     }
-}
-
-/** The icon of a part of the app named in the notes (see tools/release_notes.py for the list). */
-fun areaIcon(area: String): ImageVector = when (area) {
-    "updates" -> Icons.Rounded.SystemUpdate
-    "dashboard" -> Icons.Rounded.SpaceDashboard
-    "routines" -> Icons.Rounded.ViewAgenda
-    "history" -> Icons.Rounded.CalendarMonth
-    "analytics" -> Icons.Rounded.Insights
-    "workouts" -> Icons.Rounded.FitnessCenter
-    "exercises" -> Icons.Rounded.SportsGymnastics
-    "timers" -> Icons.Rounded.Timer
-    "onboarding" -> Icons.Rounded.WavingHand
-    "notifications" -> Icons.Rounded.Notifications
-    "appearance" -> Icons.Rounded.Palette
-    "liquid_glass" -> Icons.Rounded.BubbleChart
-    "backup" -> Icons.Rounded.CloudSync
-    "import_export" -> Icons.Rounded.ImportExport
-    "ai" -> Icons.Rounded.AutoAwesome
-    "widgets" -> Icons.Rounded.Widgets
-    "journal" -> Icons.Rounded.EditNote
-    "settings" -> Icons.Rounded.Tune
-    else -> Icons.Rounded.NewReleases
 }
 
 /** The message for an updater error, in the user's language. */

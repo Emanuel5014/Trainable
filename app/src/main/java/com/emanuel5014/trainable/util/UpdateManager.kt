@@ -9,7 +9,9 @@ import android.util.Log
 import com.emanuel5014.trainable.BuildConfig
 import com.emanuel5014.trainable.data.remote.GitHubAsset
 import com.emanuel5014.trainable.data.remote.GitHubRelease
+import com.emanuel5014.trainable.data.remote.ReleaseNoteItem
 import com.emanuel5014.trainable.data.remote.ReleaseNotes
+import com.emanuel5014.trainable.data.remote.forPlatform
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -204,7 +206,9 @@ class UpdateManager @Inject constructor(
                     Log.w(TAG, "Release notes: HTTP ${response.code}")
                     null
                 } else {
-                    json.decodeFromString<ReleaseNotes>(response.body.string()).takeIf { it.items.isNotEmpty() }
+                    json.decodeFromString<ReleaseNotes>(response.body.string())
+                        .forPlatform(ReleaseNoteItem.PLATFORM_ANDROID)
+                        .takeIf { it.items.isNotEmpty() }
                 }
             }
         } catch (e: CancellationException) {

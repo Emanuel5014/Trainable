@@ -1966,4 +1966,18 @@
         <item quantity="many">%d exercícios</item>
         <item quantity="other">%d exercícios</item>
     </plurals>
+    <!-- Release notes (Android update sheet, iOS "What's new" after an update) -->
+    <string name="update_sheet_title">Trainable %1$s</string>
+    <string name="update_beta_chip">Beta</string>
+    <string name="update_section_new">Novidades</string>
+    <string name="update_section_improved">Melhorias</string>
+    <string name="update_show_details">Ver detalhes</string>
+    <plurals name="update_fixes_count">
+        <item quantity="one">%1$d correção</item>
+        <item quantity="other">%1$d correções</item>
+        <item quantity="many">%1$d correções</item>
+    </plurals>
+    <string name="whats_new_title">Novidades</string>
+    <string name="whats_new_settings">Novidades desta versão</string>
+    <string name="whats_new_done">Entendi</string>
 </resources>
