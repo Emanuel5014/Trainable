@@ -225,6 +225,10 @@ internal class IosWorkoutTimers(
         // The final alert was scheduled with all boundaries, so it also works after multiple suspended rounds.
         if (!emomFinishedScheduled) scheduler.schedule(listOf(IosNotice("workout.emom.0", title, text, now())))
     }
+    // The live card of the whole workout: the composer in front of the Swift service folds the timer cards into it
+    override fun showLiveCard(card: WorkoutLiveCard) { (live() as? IosLiveCardComposer)?.showBase(card) }
+    override fun endLiveCard(sessionId: Int) { (live() as? IosLiveCardComposer)?.endBase(sessionId) }
+
     override fun vibrateEmomCue(cue: EmomCue) {
         when (cue) {
             EmomCue.TICK -> UIImpactFeedbackGenerator(UIImpactFeedbackStyle.UIImpactFeedbackStyleLight).impactOccurred()

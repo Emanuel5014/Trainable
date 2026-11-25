@@ -26,6 +26,7 @@ import com.emanuel5014.trainable.sharedui.resources.workout_live_card_set_done_d
 import com.emanuel5014.trainable.sharedui.resources.workout_live_card_alert
 import com.emanuel5014.trainable.sharedui.resources.workout_live_card_alert_desc
 import com.emanuel5014.trainable.ui.util.workoutLiveCardSupported
+import com.emanuel5014.trainable.ui.util.workoutLiveCardSeparateAlertSupported
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.Arrangement
@@ -258,7 +259,7 @@ fun NotificationSettingsContent(
                                     onCheckedChange = { state.setWorkoutLiveCardSetDone(it) }
                                 )
                                 // Watches and bands skip ongoing notifications: the end of a timer also gets a plain one
-                                LiveCardSwitchRow(
+                                if (workoutLiveCardSeparateAlertSupported) LiveCardSwitchRow(
                                     icon = Icons.Rounded.Watch,
                                     title = stringResource(Res.string.workout_live_card_alert),
                                     description = stringResource(Res.string.workout_live_card_alert_desc),

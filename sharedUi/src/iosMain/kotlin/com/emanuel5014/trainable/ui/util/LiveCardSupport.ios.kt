@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.util
 
-// The iOS Live Activity does not draw the live card yet: the switches stay hidden there
-internal actual val workoutLiveCardSupported: Boolean = false
+internal actual val workoutLiveCardSupported: Boolean = true
+// The end of a rest is a local notification on its own already: watches get it without a switch
+internal actual val workoutLiveCardSeparateAlertSupported: Boolean = false

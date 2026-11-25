@@ -1921,4 +1921,27 @@
     <string name="workout_live_card_set_done_desc">Die Taste erscheint auch während des Satzes; bei gesperrtem Handy musst du es entsperren</string>
     <string name="workout_live_card_alert">Eigener Hinweis am Timer-Ende</string>
     <string name="workout_live_card_alert_desc">Ende von Pause, Aufwärmen und EMOM kommt auch als normale Benachrichtigung, damit Uhren und Fitnessbänder sie bekommen; sie verschwindet, sobald du weitermachst</string>
+    <string name="live_card_set_title">%1$s · Satz %2$d von %3$d</string>
+    <string name="live_card_last_time">letztes Mal %1$d</string>
+    <string name="live_card_exercise_of">Übung %1$d von %2$d</string>
+    <string name="live_card_then">danach %1$s</string>
+    <string name="live_card_rest">Pause</string>
+    <string name="live_card_next">Als Nächstes: %1$s</string>
+    <string name="live_card_next_exercise">Nächste Übung: %1$s</string>
+    <string name="live_card_rest_finished">Pause vorbei</string>
+    <string name="live_card_go">Los</string>
+    <string name="live_card_warmup">Aufwärmen</string>
+    <string name="live_card_all_done">Alle Sätze erledigt</string>
+    <string name="live_card_volume">Volumen %1$s</string>
+    <string name="live_card_done">Fertig</string>
+    <string name="live_card_superset">Supersatz</string>
+    <string name="live_card_exercises_done">%1$d von %2$d Übungen</string>
+    <plurals name="live_card_sets">
+        <item quantity="one">%d Satz</item>
+        <item quantity="other">%d Sätze</item>
+    </plurals>
+    <plurals name="live_card_exercises">
+        <item quantity="one">%d Übung</item>
+        <item quantity="other">%d Übungen</item>
+    </plurals>
 </resources>

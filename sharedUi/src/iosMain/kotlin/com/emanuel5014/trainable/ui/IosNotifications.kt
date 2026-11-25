@@ -15,6 +15,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.datetime.*
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import platform.Foundation.*
 import platform.UIKit.*
 import platform.UserNotifications.*
@@ -178,6 +179,7 @@ internal object IosNotifications {
     private val delivery: IosNotificationDelivery by lazy { AppleNotificationDelivery() }
     val scheduler by lazy { IosNotificationScheduler(delivery) }
     var words: IosNotificationWords? = null
+    var liveWords: IosLiveCardWords? = null
     private val emomIds = (0..59).map { "workout.emom.$it" }
     fun cancelEmom() = scheduler.cancel(emomIds)
     fun cancelTimers() {
@@ -222,7 +224,17 @@ internal fun IosNotificationEffects(preferences: UserPreferencesRepository) {
         stringResource(Res.string.notification_next_set), stringResource(Res.string.notification_next_set_detail),
         stringResource(Res.string.notification_next_set_text), stringResource(Res.string.notification_last_reps), stringResource(Res.string.skip_rest),
         stringResource(Res.string.next_set_done), stringResource(Res.string.open_app_to_continue))
-    SideEffect { IosNotifications.words = words }
+    val liveWords = IosLiveCardWords(
+        stringResource(Res.string.live_card_set_title), stringResource(Res.string.live_card_last_time),
+        stringResource(Res.string.live_card_exercise_of), stringResource(Res.string.live_card_then),
+        stringResource(Res.string.live_card_next), stringResource(Res.string.live_card_next_exercise),
+        stringResource(Res.string.live_card_all_done), stringResource(Res.string.live_card_volume),
+        stringResource(Res.string.live_card_superset), stringResource(Res.string.live_card_exercises_done),
+        pluralStringResource(Res.plurals.live_card_sets, 1), pluralStringResource(Res.plurals.live_card_sets, 2),
+        pluralStringResource(Res.plurals.live_card_exercises, 1), pluralStringResource(Res.plurals.live_card_exercises, 2),
+        stringResource(Res.string.workout_title_quick), stringResource(Res.string.workout_title_cardio),
+        stringResource(Res.string.next_set_done))
+    SideEffect { IosNotifications.words = words; IosNotifications.liveWords = liveWords }
     var activation by remember { mutableIntStateOf(0) }
     DisposableEffect(Unit) {
         val center = NSNotificationCenter.defaultCenter

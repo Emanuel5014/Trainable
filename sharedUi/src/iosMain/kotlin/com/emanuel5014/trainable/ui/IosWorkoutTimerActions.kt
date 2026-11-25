@@ -137,6 +137,7 @@ object IosWorkoutTimerActions {
         lock.withLock {
             try {
                 if (request.kind == EMOM_NOTICE) return@withLock performEmom(request, action)
+                if (request.kind == LIVE_NOTICE) return@withLock performLive(request, action)
                 if (request.kind == REST_NOTICE && action in setOf(REST_MORE_ACTION, REST_NEXT_ACTION)) {
                     val model = models.lastOrNull { it.state.value.sessionId == request.sessionId }
                     return@withLock performRestAction(request, action, model?.let { timersByModel[it] },
@@ -174,6 +175,24 @@ object IosWorkoutTimerActions {
         } else {
             timers.timerEvents.tryEmit(TimerAction.MORE_REST)
         }
+        // Let the model handle it on this (main) dispatcher before the intent returns
+        repeat(5) { yield() }
+        delay(100)
+        return true
+    }
+
+    /**
+     * "Set done" on the live card during the set: only through the open workout, which logs the set only if the card
+     * still shows the set to do. With no workout in memory nothing is written and the card asks to open the app.
+     */
+    private suspend fun performLive(request: IosLiveTimer, action: String): Boolean {
+        if (action != LIVE_NEXT_ACTION) return false
+        val model = models.lastOrNull { it.state.value.sessionId == request.sessionId }
+        if (model == null) {
+            (IosWorkoutLiveActivityBridge.service as? IosLiveCardComposer)?.needingApp()
+            return false
+        }
+        model.logLiveCardSet()
         // Let the model handle it on this (main) dispatcher before the intent returns
         repeat(5) { yield() }
         delay(100)

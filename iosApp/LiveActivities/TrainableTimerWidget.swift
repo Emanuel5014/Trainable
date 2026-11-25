@@ -17,11 +17,18 @@ struct TrainableTimerWidgets: WidgetBundle {
 struct TrainableTimerWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: TrainableTimerAttributes.self) { context in
-            LockScreenTimerView(kind: context.attributes.kind, activityID: context.activityID,
-                                state: context.state, isStale: context.isStale)
-                .activityBackgroundTint(TimerPalette.background)
-                .activitySystemActionForegroundColor(.white)
+            Group {
+                if context.attributes.kind == liveKind {
+                    LiveCardLockView(activityID: context.activityID, state: context.state, isStale: context.isStale)
+                } else {
+                    LockScreenTimerView(kind: context.attributes.kind, activityID: context.activityID,
+                                        state: context.state, isStale: context.isStale)
+                }
+            }
+            .activityBackgroundTint(TimerPalette.background)
+            .activitySystemActionForegroundColor(.white)
         } dynamicIsland: { context in
+            if context.attributes.kind == liveKind { return liveIsland(context) }
             let state = context.state
             let kind = context.attributes.kind
             let accent = TimerPalette.accent(state.accentARGB)
@@ -504,6 +511,299 @@ private struct EmomButtons: View {
         default: return "stop.fill"
         }
     }
+}
+
+// MARK: - Live card of the whole workout
+
+private let liveKind = "workout.live"
+
+extension TrainableTimerAttributes.ContentState {
+    /// The countdown the live card shows is over (a rest or warm-up past its end, a timed set at its goal).
+    func liveFinished(isStale: Bool) -> Bool {
+        switch liveMode {
+        case "rest", "warmup", "clock": return isStale || endsAt <= Date()
+        default: return false
+        }
+    }
+
+    /// The whole workout's clock, from its start.
+    var elapsedInterval: ClosedRange<Date>? {
+        guard let start = workoutStartedAt else { return nil }
+        return start...(liveUntil ?? start.addingTimeInterval(43_200))
+    }
+
+    /// The bar fills the set to do while a rest or a warm-up runs: the time gone, drawn by the system.
+    var fillsCurrentSet: Bool { liveMode == "rest" || liveMode == "warmup" }
+}
+
+/// The time since the workout started. On the dimmed Lock Screen per-second texts turn vague: the start time instead.
+private struct LiveElapsed: View {
+    let state: TrainableTimerAttributes.ContentState
+    @Environment(\.isLuminanceReduced) private var luminanceReduced
+
+    var body: some View {
+        if let interval = state.elapsedInterval {
+            if luminanceReduced {
+                Label { Text(interval.lowerBound, style: .time) } icon: { Image(systemName: "clock") }
+                    .labelStyle(.titleAndIcon)
+            } else {
+                Text(timerInterval: interval, countsDown: false, showsHours: true).monospacedDigit()
+            }
+        }
+    }
+}
+
+/// The big line: the countdown on, the set's value, or what the finished countdown says.
+private struct LiveHero: View {
+    let state: TrainableTimerAttributes.ContentState
+    let isStale: Bool
+    let size: CGFloat
+    @Environment(\.isLuminanceReduced) private var luminanceReduced
+
+    var body: some View {
+        if state.liveFinished(isStale: isStale) {
+            Text(state.finishedText.isEmpty ? state.title : state.finishedText)
+                .font(.system(size: size * 0.55, weight: .bold, design: .rounded))
+                .lineLimit(1).minimumScaleFactor(0.6)
+        } else {
+            switch state.liveMode {
+            case "rest", "warmup", "clock":
+                BigCountdown(interval: state.startedAt...state.endsAt, size: size, showsBell: luminanceReduced)
+            case "emom":
+                BigCountdown(interval: state.clock(kind: emomKind, isStale: isStale), size: size, showsBell: luminanceReduced)
+            case "stopwatch":
+                Text(timerInterval: state.startedAt...state.endsAt, countsDown: false, showsHours: false)
+                    .monospacedDigit()
+                    .font(.system(size: size, weight: .semibold, design: .rounded))
+                    .lineLimit(1).minimumScaleFactor(0.6)
+            default:
+                Text(state.liveValue)
+                    .font(.system(size: size * 0.75, weight: .semibold, design: .rounded))
+                    .lineLimit(1).minimumScaleFactor(0.5)
+            }
+        }
+    }
+}
+
+/// One piece per set: done full, the one to do half lit (filling up during a rest), the ones to come faint.
+private struct LiveSegmentsBar: View {
+    let state: TrainableTimerAttributes.ContentState
+    let isStale: Bool
+    let accent: Color
+
+    var body: some View {
+        if !state.segments.isEmpty {
+            let finished = state.liveFinished(isStale: isStale)
+            HStack(spacing: 4) {
+                ForEach(Array(state.segments.enumerated()), id: \.offset) { _, value in
+                    Group {
+                        if value == 2 {
+                            Capsule().fill(accent)
+                        } else if value == 1 && state.fillsCurrentSet && !finished {
+                            // The system draws a thin track: stretched to the height of the other pieces
+                            ProgressView(timerInterval: state.startedAt...state.endsAt, countsDown: false) {
+                                EmptyView()
+                            } currentValueLabel: { EmptyView() }
+                                .progressViewStyle(.linear)
+                                .tint(accent)
+                                .scaleEffect(x: 1, y: 2.5, anchor: .center)
+                        } else if value == 1 {
+                            // Outlined, so it stands out whatever the theme colour is
+                            Capsule().fill(finished ? accent : accent.opacity(0.35))
+                                .overlay(Capsule().strokeBorder(accent, lineWidth: 1.5))
+                        } else {
+                            Capsule().fill(.white.opacity(0.14))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 6)
+                    .clipShape(Capsule())
+                }
+            }
+        }
+    }
+}
+
+/// The buttons of what the card shows: "Set done" in a set, the rest/warm-up/EMOM ones, the finished rest's ones.
+private struct LiveButtons: View {
+    let activityID: String
+    let state: TrainableTimerAttributes.ContentState
+    let accent: Color
+    let height: CGFloat
+    let isStale: Bool
+
+    var body: some View {
+        switch state.liveMode {
+        case "set":
+            if state.needsApp {
+                Text(state.openAppText)
+                    .font(.subheadline.weight(.semibold)).foregroundStyle(.white.opacity(0.75))
+                    .lineLimit(1).minimumScaleFactor(0.8)
+                    .frame(maxWidth: .infinity, minHeight: height, alignment: .leading)
+            } else if let index = state.actionKeys.firstIndex(of: "live.next") {
+                Button(intent: TimerControlIntent(activityID: activityID, instanceID: state.instanceID, action: "live.next")) {
+                    Label { Text(state.actionLabels[safe: index] ?? "") } icon: { Image(systemName: "checkmark") }
+                        .labelStyle(.titleAndIcon)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                        .foregroundStyle(TimerPalette.onAccent(accent: state.accentARGB))
+                        .frame(maxWidth: .infinity, minHeight: height)
+                        .background(accent, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .font(.subheadline.weight(.semibold))
+            }
+        case "rest", "warmup":
+            if state.liveFinished(isStale: isStale) {
+                if state.hasFinishedRow(kind: "workout.rest") {
+                    FinishedActionRow(activityID: activityID, state: state, accent: accent, height: height, plusWidth: 84)
+                }
+            } else {
+                TimerControlButtons(activityID: activityID, state: state, accent: accent, height: height)
+                    .disabled(isStale)
+            }
+        case "emom":
+            EmomButtons(activityID: activityID, state: state, accent: accent, height: height)
+        default:
+            EmptyView()
+        }
+    }
+}
+
+/// Workout's name, its clock and the exercise it is at, in a narrow column (the Lock Screen allows 160 pt of height).
+private struct LiveSide: View {
+    let state: TrainableTimerAttributes.ContentState
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            HStack(spacing: 4) {
+                AppMark().frame(width: 14, height: 14)
+                Text(state.workoutName).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .font(.caption2.weight(.semibold)).foregroundStyle(.white.opacity(0.65))
+            if state.liveMode != "done" {
+                LiveElapsed(state: state).font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.85))
+            }
+            if !state.liveSide.isEmpty {
+                Text(state.liveSide).font(.caption2).foregroundStyle(.white.opacity(0.6)).lineLimit(1).minimumScaleFactor(0.7)
+            }
+        }
+        .frame(maxWidth: 120, alignment: .trailing)
+    }
+}
+
+private struct LiveCardLockView: View {
+    let activityID: String
+    let state: TrainableTimerAttributes.ContentState
+    let isStale: Bool
+
+    var body: some View {
+        let accent = TimerPalette.accent(state.accentARGB)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
+                VStack(alignment: .leading, spacing: 1) {
+                    LiveHero(state: state, isStale: isStale, size: 40)
+                    if !state.liveTitle.isEmpty {
+                        Text(state.liveTitle).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                    }
+                    if !state.liveDetail.isEmpty {
+                        Text(state.liveDetail).font(.caption).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                LiveSide(state: state)
+            }
+            LiveSegmentsBar(state: state, isStale: isStale, accent: accent)
+            LiveButtons(activityID: activityID, state: state, accent: accent, height: 30, isStale: isStale)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .foregroundStyle(.white)
+    }
+}
+
+/// The small clock of the Dynamic Island: the countdown on, else the workout's time.
+private struct LiveCompactClock: View {
+    let state: TrainableTimerAttributes.ContentState
+    let isStale: Bool
+
+    var body: some View {
+        if state.liveFinished(isStale: isStale) {
+            Image(systemName: "figure.strengthtraining.traditional")
+        } else {
+            switch state.liveMode {
+            case "rest", "warmup", "clock":
+                TimerCountdown(interval: state.startedAt...state.endsAt).frame(width: 40, alignment: .trailing)
+            case "emom":
+                TimerCountdown(interval: state.clock(kind: emomKind, isStale: isStale)).frame(width: 40, alignment: .trailing)
+            case "done":
+                Image(systemName: "checkmark")
+            default:
+                LiveElapsed(state: state).frame(width: 52, alignment: .trailing)
+            }
+        }
+    }
+}
+
+private func liveIsland(_ context: ActivityViewContext<TrainableTimerAttributes>) -> DynamicIsland {
+    let state = context.state
+    let accent = TimerPalette.accent(state.accentARGB)
+    let counting = ["rest", "warmup", "clock"].contains(state.liveMode) && !state.liveFinished(isStale: context.isStale)
+    return DynamicIsland {
+        DynamicIslandExpandedRegion(.leading) {
+            HStack(spacing: 6) {
+                AppMark().frame(width: 20, height: 20)
+                Text(state.workoutName)
+                    .font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.65))
+                    .lineLimit(1).minimumScaleFactor(0.6)
+            }
+            .padding(.leading, 6).padding(.top, 4)
+        }
+        DynamicIslandExpandedRegion(.trailing) {
+            Text(state.liveSide)
+                .font(.caption2).foregroundStyle(.white.opacity(0.6)).lineLimit(1).minimumScaleFactor(0.6)
+                .padding(.trailing, 6).padding(.top, 6)
+        }
+        DynamicIslandExpandedRegion(.bottom) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .center, spacing: 12) {
+                    LiveHero(state: state, isStale: context.isStale, size: 32)
+                        .frame(maxWidth: 130, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(state.liveTitle).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                        if !state.liveDetail.isEmpty {
+                            Text(state.liveDetail).font(.caption).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                LiveSegmentsBar(state: state, isStale: context.isStale, accent: accent)
+                LiveButtons(activityID: context.activityID, state: state, accent: accent, height: 30, isStale: context.isStale)
+            }
+            .padding(.horizontal, 6)
+        }
+    } compactLeading: {
+        HStack(spacing: 4) {
+            AppMark().frame(width: 18, height: 18)
+            if !state.compactText.isEmpty {
+                Text(state.compactText).font(.system(.footnote, design: .rounded, weight: .semibold)).foregroundStyle(accent)
+            }
+        }
+        .padding(.leading, 2)
+    } compactTrailing: {
+        LiveCompactClock(state: state, isStale: context.isStale)
+            .font(.system(.footnote, design: .rounded, weight: .semibold))
+            .foregroundStyle(accent)
+    } minimal: {
+        Group {
+            if counting { TimerRing(interval: state.startedAt...state.endsAt, accent: accent) }
+            else { AppMark() }
+        }
+        .frame(width: 20, height: 20)
+    }
+    .keylineTint(accent)
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? { indices.contains(index) ? self[index] : nil }
 }
 
 // MARK: - Colours

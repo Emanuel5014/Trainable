@@ -33,7 +33,14 @@ final class WorkoutLiveActivityService: NSObject, IosWorkoutLiveActivities {
             finishedActionKeys: Array(timer.finishedActionKeys.prefix(2)),
             finishedActionLabels: Array(timer.finishedActionLabels.prefix(2)).map { String($0.prefix(30)) },
             openAppText: String(timer.openAppText.prefix(120)), needsApp: timer.needsApp,
-            nextSetToken: String(timer.nextSetToken.prefix(60)))
+            nextSetToken: String(timer.nextSetToken.prefix(60)),
+            liveMode: timer.liveMode, workoutName: String(timer.workoutName.prefix(80)),
+            liveValue: String(timer.liveValue.prefix(80)), liveTitle: String(timer.liveTitle.prefix(160)),
+            liveDetail: String(timer.liveDetail.prefix(200)), liveSide: String(timer.liveSide.prefix(60)),
+            segments: Array(timer.segments.prefix(60)).map { Int(truncating: $0) },
+            workoutStartedAt: timer.workoutStartedAtMillis > 0 ? Date(timeIntervalSince1970: Double(timer.workoutStartedAtMillis) / 1000) : nil,
+            liveUntil: timer.liveUntilMillis > 0 ? Date(timeIntervalSince1970: Double(timer.liveUntilMillis) / 1000) : nil,
+            timerKind: timer.timerKind, timerInstanceID: timer.timerInstanceId, compactText: String(timer.compactText.prefix(12)))
         let kind = timer.kind
         DispatchQueue.main.async { TimerLiveActivityCoordinator.shared.set(kind: kind, state: state) }
     }
@@ -59,7 +66,7 @@ final class TimerLiveActivityCoordinator {
     static let shared = TimerLiveActivityCoordinator()
     typealias TimerActivity = Activity<TrainableTimerAttributes>
     typealias State = TrainableTimerAttributes.ContentState
-    private let kinds: Set<String> = ["workout.rest", "workout.warmup", "workout.emom"]
+    private let kinds: Set<String> = ["workout.rest", "workout.warmup", "workout.emom", "workout.live"]
     private var desired: [String: State] = [:]
     private var knownInstances: [String: String] = [:]
     private var dismissedInstances: [String: String] = [:]
@@ -132,7 +139,10 @@ final class TimerLiveActivityCoordinator {
         guard let activity = TimerActivity.activities.first(where: { $0.id == activityID }),
               activity.content.state.instanceID == instanceID, isRunning(activity) else { return }
         let state = activity.content.state
-        let request = IosLiveTimer(kind: activity.attributes.kind, instanceId: instanceID, title: state.title,
+        // A live card's timer buttons act on the timer card it shows, as that card's own buttons would
+        let routed = activity.attributes.kind == "workout.live" && !state.timerKind.isEmpty && action != "live.next"
+        let request = IosLiveTimer(kind: routed ? state.timerKind : activity.attributes.kind,
+            instanceId: routed ? state.timerInstanceID : instanceID, title: state.title,
             detail: state.detail, endsAtMillis: Int64(state.endsAt.timeIntervalSince1970 * 1000),
             totalSeconds: Int32(clamping: Int(state.endsAt.timeIntervalSince(state.startedAt))),
             sessionId: Int32(clamping: state.sessionID), sessionStartedAtMillis: state.sessionStartedAtMillis,
@@ -144,7 +154,9 @@ final class TimerLiveActivityCoordinator {
             roundEndsAtMillis: state.roundEndsAt.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0,
             paused: state.paused, actionKeys: state.actionKeys, actionLabels: state.actionLabels,
             finishedActionKeys: state.finishedActionKeys, finishedActionLabels: state.finishedActionLabels,
-            openAppText: state.openAppText, needsApp: state.needsApp, nextSetToken: state.nextSetToken)
+            openAppText: state.openAppText, needsApp: state.needsApp, nextSetToken: state.nextSetToken,
+            liveMode: "", workoutName: "", liveValue: "", liveTitle: "", liveDetail: "", liveSide: "", segments: [],
+            workoutStartedAtMillis: 0, liveUntilMillis: 0, timerKind: "", timerInstanceId: "", compactText: "")
         _ = try? await IosWorkoutTimerActions.shared.perform(request: request, action: action)
         // Kotlin forwards ActivityKit mutations through the serial main queue. Drain it before the intent exits.
         await withCheckedContinuation { continuation in
@@ -171,6 +183,8 @@ final class TimerLiveActivityCoordinator {
 
     /// When the card is no longer wanted: at its deadline, or later for a finished rest that still offers buttons.
     private func expiry(_ state: State) -> Date {
+        // The live card stays for the whole workout, whatever timer it shows
+        if let until = state.liveUntil { return until }
         let keepsAfterEnd = !state.finishedActionKeys.isEmpty || state.needsApp
         return keepsAfterEnd ? state.endsAt.addingTimeInterval(restFinishedKeepSeconds) : state.endsAt
     }
@@ -196,7 +210,7 @@ final class TimerLiveActivityCoordinator {
                 await duplicate.end(nil, dismissalPolicy: .immediate)
             }
             // An EMOM card turns stale when its minute ends without the app awake; it then shows the run's end.
-            let content = ActivityContent(state: state, staleDate: state.roundEndsAt ?? state.endsAt,
+            let content = ActivityContent(state: state, staleDate: staleDate(kind: kind, state: state),
                 relevanceScore: kind == "workout.warmup" ? 50 : 100)
             if let existing {
                 if existing.content.state != state { await existing.update(content) }
@@ -216,6 +230,16 @@ final class TimerLiveActivityCoordinator {
                     NSLog("Trainable: unable to start timer Live Activity")
                 }
             }
+        }
+    }
+
+    /// When the card no longer shows the truth by itself: at the end of its countdown. A live card in a set has none.
+    private func staleDate(kind: String, state: State) -> Date? {
+        guard kind == "workout.live" else { return state.roundEndsAt ?? state.endsAt }
+        switch state.liveMode {
+        case "rest", "warmup", "clock": return state.endsAt
+        case "emom": return state.roundEndsAt ?? state.endsAt
+        default: return nil
         }
     }
 

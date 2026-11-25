@@ -49,7 +49,26 @@ data class IosLiveTimer(
     val openAppText: String = "",
     val needsApp: Boolean = false,
     /** Rest only: the set "Set done" would log, as the card shows it ([NextSetKey.token]); empty when none. */
-    val nextSetToken: String = ""
+    val nextSetToken: String = "",
+    /** Live card only ([LIVE_NOTICE]): what it shows ([LiveModes]), all words already in the app language. */
+    val liveMode: String = "",
+    val workoutName: String = "",
+    /** The big text of a set or of the finished workout ("80 kg × 8"); empty where the big text is a clock. */
+    val liveValue: String = "",
+    val liveTitle: String = "",
+    val liveDetail: String = "",
+    /** "Exercise 2 of 6", next to the workout's name. */
+    val liveSide: String = "",
+    /** The bar: one value per set, 0 to come, 1 the one to do, 2 done. */
+    val segments: List<Int> = emptyList(),
+    val workoutStartedAtMillis: Long = 0,
+    /** When the live card is no longer wanted (the workout should be long over). */
+    val liveUntilMillis: Long = 0,
+    /** The timer card a live card shows, so its buttons reach that timer: kind and instance, empty for none. */
+    val timerKind: String = "",
+    val timerInstanceId: String = "",
+    /** The set in the Dynamic Island ("3/4"). */
+    val compactText: String = ""
 )
 
 /** Buttons of the finished rest card, as the Live Activity intent sends them. */
@@ -67,7 +86,9 @@ object IosLiveActivityStyle {
 
 /** Installed by Swift before the Compose root starts, following the existing CryptoKit bridge pattern. */
 object IosWorkoutLiveActivityBridge {
+    /** Swift's service, behind the live card composer: callers keep seeing one [IosWorkoutLiveActivities]. */
     var service: IosWorkoutLiveActivities? = null
+        set(value) { field = value?.let { if (it is IosLiveCardComposer) it else IosLiveCardComposer(it) } }
 }
 
 internal data class IosLiveTimerContext(

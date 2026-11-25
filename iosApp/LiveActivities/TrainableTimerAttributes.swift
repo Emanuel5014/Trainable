@@ -34,6 +34,21 @@ struct TrainableTimerAttributes: ActivityAttributes {
         var needsApp: Bool = false
         /** Rest only: the set "Set done" would log, as this card shows it. */
         var nextSetToken: String = ""
+        /** Live card only (kind "workout.live"): what it shows and its words, already in the app language. */
+        var liveMode: String = ""
+        var workoutName: String = ""
+        var liveValue: String = ""
+        var liveTitle: String = ""
+        var liveDetail: String = ""
+        var liveSide: String = ""
+        /** One value per set: 0 to come, 1 the one to do, 2 done. */
+        var segments: [Int] = []
+        var workoutStartedAt: Date? = nil
+        var liveUntil: Date? = nil
+        /** The timer card the live card shows, so its buttons reach that timer. */
+        var timerKind: String = ""
+        var timerInstanceID: String = ""
+        var compactText: String = ""
 
         enum CodingKeys: String, CodingKey {
             case instanceID, title, detail, startedAt, endsAt, sessionID, sessionStartedAtMillis
@@ -41,6 +56,8 @@ struct TrainableTimerAttributes: ActivityAttributes {
             case exercise, setLine, accentARGB
             case roundStartsAt, roundEndsAt, paused, actionKeys, actionLabels
             case finishedActionKeys, finishedActionLabels, openAppText, needsApp, nextSetToken
+            case liveMode, workoutName, liveValue, liveTitle, liveDetail, liveSide, segments, workoutStartedAt, liveUntil
+            case timerKind, timerInstanceID, compactText
         }
     }
     var kind: String
@@ -77,5 +94,17 @@ extension TrainableTimerAttributes.ContentState {
         openAppText = try c.decodeIfPresent(String.self, forKey: .openAppText) ?? ""
         needsApp = try c.decodeIfPresent(Bool.self, forKey: .needsApp) ?? false
         nextSetToken = try c.decodeIfPresent(String.self, forKey: .nextSetToken) ?? ""
+        liveMode = try c.decodeIfPresent(String.self, forKey: .liveMode) ?? ""
+        workoutName = try c.decodeIfPresent(String.self, forKey: .workoutName) ?? ""
+        liveValue = try c.decodeIfPresent(String.self, forKey: .liveValue) ?? ""
+        liveTitle = try c.decodeIfPresent(String.self, forKey: .liveTitle) ?? ""
+        liveDetail = try c.decodeIfPresent(String.self, forKey: .liveDetail) ?? ""
+        liveSide = try c.decodeIfPresent(String.self, forKey: .liveSide) ?? ""
+        segments = try c.decodeIfPresent([Int].self, forKey: .segments) ?? []
+        workoutStartedAt = try c.decodeIfPresent(Date.self, forKey: .workoutStartedAt)
+        liveUntil = try c.decodeIfPresent(Date.self, forKey: .liveUntil)
+        timerKind = try c.decodeIfPresent(String.self, forKey: .timerKind) ?? ""
+        timerInstanceID = try c.decodeIfPresent(String.self, forKey: .timerInstanceID) ?? ""
+        compactText = try c.decodeIfPresent(String.self, forKey: .compactText) ?? ""
     }
 }

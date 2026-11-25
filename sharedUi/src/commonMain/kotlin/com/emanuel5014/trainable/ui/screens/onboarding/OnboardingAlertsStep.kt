@@ -27,6 +27,7 @@ import com.emanuel5014.trainable.sharedui.resources.*
 import com.emanuel5014.trainable.ui.components.Slider
 import org.jetbrains.compose.resources.stringResource
 import com.emanuel5014.trainable.ui.util.workoutLiveCardSupported
+import com.emanuel5014.trainable.ui.util.workoutLiveCardSeparateAlertSupported
 
 /** "Resta aggiornato": timer notifications (+ lock-screen vibration on Android) and the membership reminder. */
 @Composable
@@ -102,7 +103,7 @@ fun AlertsStep(choices: OnboardingChoices, customVibrationSupported: Boolean, he
                         onCheckedChange = { liveCard = it },
                         options = {
                             InnerSwitch(choices.workoutLiveCardSetDone, Res.string.workout_live_card_set_done)
-                            InnerSwitch(choices.workoutLiveCardAlert, Res.string.workout_live_card_alert)
+                            if (workoutLiveCardSeparateAlertSupported) InnerSwitch(choices.workoutLiveCardAlert, Res.string.workout_live_card_alert)
                         }
                     )
                 } else null,
