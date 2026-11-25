@@ -1,0 +1,781 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+
+    <!-- App -->
+    <string name="app_name">Trainable</string>
+
+    <!-- Navigation -->
+
+    <!-- Common Actions -->
+    <string name="save">Kaydet</string>
+    <string name="cancel">İptal</string>
+    <string name="delete">Sil</string>
+    <string name="add">Ekle</string>
+    <string name="close">Kapat</string>
+    <string name="confirm">Onayla</string>
+    <string name="finish">Bitir</string>
+    <string name="continue_text">Devam Et</string>
+    <string name="reset">Sıfırla</string>
+    <string name="retry">Tekrar Dene</string>
+    <string name="dismiss">Kapat</string>
+    <string name="yes">EVET</string>
+    <string name="no">HAYIR</string>
+    <string name="selected">Seçili</string>
+    <string name="total">Toplam</string>
+    <string name="share">Paylaş</string>
+    <string name="share_preview">Paylaşım Önizlemesi</string>
+    <string name="image_saved_gallery">Görsel Galeri\'ye kaydedildi!</string>
+    <string name="failed_save_image">Görsel kaydedilemedi.</string>
+    <string name="share_exercises">Egzersizler</string>
+    <string name="share_sets">Setler</string>
+    <string name="share_volume">Tonaj</string>
+    <string name="share_duration">Süre</string>
+
+    <string name="share_built_for_strength">GÜÇ İÇİN TASARLANDI</string>
+    <string name="share_footer_message">GELİŞİMİNİ TRAINABLE İLE TAKİP ET</string>
+    <string name="later">Daha Sonra</string>
+
+    <!-- General -->
+    <string name="daily">Günlük</string>
+    <string name="weekly">Haftalık</string>
+    <string name="this_week">Bu Hafta</string>
+    <string name="current_week">Mevcut Hafta</string>
+    <string name="this_month">Bu Ay</string>
+    <string name="select_date_range">Tarih Aralığı Seç</string>
+    <string name="kg">kg</string>
+    <string name="kg_short">kg</string>
+    <string name="selected_count">Seçili: %d</string>
+    <string name="more_options">Daha Fazla Seçenek</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">ÖZET</string>
+    <string name="active_plan">Aktif Plan</string>
+    <string name="weekly_load">Haftalık Yük</string>
+    <string name="personal_bests">Kişisel Rekorlar</string>
+    <string name="quick_start">Hızlı Başlangıç</string>
+    <string name="start_workout">ANTRENMANA BAŞLA</string>
+    <string name="start_workout_detail">BAŞLA</string>
+    <string name="no_active_plan">Aktif plan yok</string>
+    <string name="welcome_back">Tekrar hoş geldin</string>
+    <string name="no_workout_today">Bugün için planlanmış antrenman yok</string>
+    <string name="resume_workout">ANTRENMANA DEVAM ET</string>
+    <string name="days_this_week">gün bu hafta</string>
+    <string name="workout_in_progress">Antrenman devam ediyor</string>
+    <string name="goal_met">Hedef tamamlandı</string>
+    <string name="workouts_this_week" formatted="false">%d / %d antrenman</string>
+    <string name="workout_remaining" formatted="false">%d antrenman kaldı</string>
+    <string name="workouts_remaining" formatted="false">%d antrenman kaldı</string>
+    <string name="ready_to_train">Antrenmana hazır mısın?</string>
+    <string name="lets_go">Hadi başlayalım!</string>
+    <string name="no_active_routines_message">Aktif program yok. Oluşturmak için Programlar sekmesine git.</string>
+    <string name="create_first_routine">İlk programını oluştur</string>
+    <string name="no_exercises_today">Bugün için egzersiz yok</string>
+    <string name="existing_workout_message">"%1$s" için tamamlanmamış bir antrenman zaten var. Devam edilsin mi?</string>
+
+    <!-- Routines -->
+    <string name="change_photo">FOTOĞRAFI DEĞİŞTİR</string>
+    <string name="no_archived">Arşivlenmiş program yok</string>
+    <string name="swipe_for_archived">Arşivlenenler için aşağı kaydır</string>
+    <string name="swipe_for_active">Aktif olanlar için aşağı kaydır</string>
+    <string name="schedule_days">PLANLANAN GÜNLER</string>
+    <string name="start_date">BAŞLANGIÇ TARİHİ:</string>
+    <string name="end_date">BİTİŞ TARİHİ:</string>
+    <string name="expires">Bitiş:</string>
+    <string name="expiration_date">Bitiş Tarihi</string>
+    <string name="swipe_actions">Kaydırma İşlemleri</string>
+    <string name="swipe_actions_desc">Öğeleri düzenlemek/arşivlemek/silmek ve egzersizler arasında geçmek için kaydırmayı etkinleştir</string>
+    <string name="edit_category">Kategoriyi Düzenle</string>
+
+    <!-- Exercises -->
+    <string name="exercises_completed">egzersiz tamamlandı</string>
+    <string name="weight_kg">Ağırlık</string>
+    <string name="select_exercise">Egzersiz Seç</string>
+    <string name="tap_to_change_exercise">Egzersizi değiştirmek için dokun</string>
+    <string name="category">Kategori</string>
+    <string name="superset">SÜPER SET</string>
+
+    <!-- Categories -->
+    <string name="category_chest">Göğüs</string>
+    <string name="category_back">Sırt</string>
+    <string name="category_legs">Bacak</string>
+    <string name="category_shoulders">Omuz</string>
+    <string name="category_arms">Kol</string>
+    <string name="category_core">Karın / Core</string>
+
+    <!-- Workout Execution -->
+    <string name="workout_execution">Antrenman Uygulama</string>
+    <string name="workout_execution_title">Antrenman Uygulama</string>
+    <string name="session_in_progress">SEANS DEVAM EDİYOR</string>
+    <string name="exercise_completed">EGZERSİZ TAMAMLANDI</string>
+    <string name="exercise_completed_title">EGZERSİZ TAMAMLANDI</string>
+    <string name="rest_end">DİNLENME BİTTİ</string>
+    <string name="previous_exercise">Önceki</string>
+    <string name="next_exercise">Sonraki</string>
+    <string name="skip_rest">Atla</string>
+    <string name="next_set_done">Set bitti</string>
+    <string name="open_app_to_continue">Devam etmek için Trainable\'ı aç</string>
+    <string name="add_time">+30 sn</string>
+    <string name="rest_timer">Dinlenme Sayacı</string>
+    <string name="warmup_timer">Isınma Sayacı</string>
+    <string name="warmup_timer_finished">Isınma sayacı bitti!</string>
+    <string name="warmup_timer_description">Isınma, esneme veya başka bir aktivite için sayaç ayarla</string>
+    <string name="warmup_timer_notifications_desc">Isınma sayacını sistem bildirimlerinde göster</string>
+    <string name="auto_stop_cardio_at_target">Hedefte kardiyoyu otomatik durdur</string>
+    <string name="auto_stop_cardio_at_target_desc">Hedef süreye ulaşıldığında sayacı otomatik duraklat</string>
+    <string name="auto_stop_time_weight_at_target">Hedefte süreli setleri otomatik durdur</string>
+    <string name="auto_stop_time_weight_at_target_desc">Set hedef süresine ulaşıldığında sayacı otomatik duraklat</string>
+    <string name="exercise_media_too_large">Bu dosya çok büyük. %1$d MB altında bir dosya seçin.</string>
+    <string name="exercise_media_unsupported">Bu dosya açılamadı. Bir görsel veya GIF seçin.</string>
+    <string name="workout_settings">Antrenman</string>
+    <string name="add_duration">Süre ekle</string>
+
+    <!-- Workout Session -->
+    <string name="quick_workout">HIZLI ANTRENMAN</string>
+    <string name="add_workout">Antrenman Ekle</string>
+    <string name="total_workouts">Toplam Antrenman</string>
+
+    <!-- History -->
+    <string name="no_history">Antrenman geçmişi yok</string>
+    <string name="no_history_description">Tamamladığın antrenmanlar burada görünecek.</string>
+    <string name="total_volume">Toplam Hacim</string>
+    <string name="best_performance">En İyi Performans</string>
+
+    <!-- Analytics -->
+    <string name="analytics_consistency_summary">Planlanan %2$d seanstan %1$d tanesi tamamlandı.</string>
+    <string name="analytics_consistency_no_sessions">Henüz planlanmış seans yok.</string>
+    <string name="analytics_strength_summary_positive">Önceki 30 güne göre +%%%s</string>
+    <string name="analytics_strength_summary_negative">Önceki 30 güne göre -%%%s</string>
+    <string name="analytics_strength_no_data">Henüz yeterli PR geçmişi yok.</string>
+    <string name="analytics_no_weight_data">Kilo verisi bulunmuyor</string>
+    <string name="analytics_todays_weight">Bugünkü kilo</string>
+    <string name="total_volume_label">Toplam Tonaj</string>
+    <string name="consistency">İstikrar</string>
+    <string name="strength_index">Güç Endeksi</string>
+    <string name="view_all">TÜMÜNÜ GÖR</string>
+    <string name="show_carousel">KARUSELİ GÖSTER</string>
+    <string name="personal_best">Kişisel Rekor</string>
+    <string name="no_data">Veri yok</string>
+    <string name="body_composition">Vücut Kompozisyonu</string>
+    <string name="structural_balance">Yapısal Denge</string>
+    <string name="workouts_per_week">Antrenman/Hafta</string>
+    <string name="avg_volume">Ort. Tonaj</string>
+    <string name="analytics_time_range_all">TÜMÜ</string>
+
+    <!-- Comparison -->
+    <string name="compare_sessions">Seanslar</string>
+    <string name="compare_session_a">SEANS A</string>
+    <string name="compare_session_b">SEANS B</string>
+    <string name="compare_volume">Tonaj</string>
+    <string name="compare_cardio">Kardiyo</string>
+    <string name="compare_no_cardio_session_a">Seans A\'da kardiyo yok</string>
+    <string name="compare_no_cardio_session_b">Seans B\'de kardiyo yok</string>
+    <string name="analytics_time_period_comparison_desc">İki farklı zaman dilimi arasındaki performansını karşılaştır</string>
+    <string name="analytics_training_days">Antrenman Günleri</string>
+
+    <!-- Settings -->
+    <string name="personalization">KİŞİSELLEŞTİRME</string>
+    <string name="data_backup">VERİ VE YEDEKLEME</string>
+    <string name="account">Hesap</string>
+    <string name="weekly_goal">HAFTALIK HEDEF</string>
+    <string name="tactile_feedback">Dokunsal Geri Bildirim</string>
+    <string name="tactile_feedback_desc">Etkileşimlerde titreşim</string>
+    <string name="vibration_on_interactions">Etkileşimlerde titreşim</string>
+    <string name="dynamic_color">Dinamik Renk</string>
+    <string name="dynamic_color_desc">Duvar kağıdından Material You renklerini kullan</string>
+    <string name="app_palette">Uygulama Paleti</string>
+    <string name="app_palette_desc">Uygulama için özel bir renk şeması seç</string>
+    <string name="theme_mode">Tema</string>
+    <string name="theme_mode_system">Sistem varsayılanı</string>
+    <string name="theme_mode_light">Açık</string>
+    <string name="theme_mode_dark">Koyu</string>
+    <string name="theme_mode_light_short">A</string>
+    <string name="theme_mode_dark_short">K</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="notifications">BİLDİRİMLER</string>
+    <string name="timer_notifications">Sayaç Bildirimleri</string>
+    <string name="timer_notifications_desc">Dinlenme sayacını ve EMOM turlarını sistem bildirimlerinde göster</string>
+    <string name="lockscreen_vibration">Kilit Ekranı Titreşimi</string>
+    <string name="vibration_default">Varsayılan</string>
+    <string name="vibration_seconds">%d saniye</string>
+    <string name="gym_membership_notifications">Üyelik Uyarıları</string>
+    <string name="gym_membership_notifications_desc">Üyeliğin sona ermeden önce bildirim gönder</string>
+    <string name="notify_days_before">Önceden Bildirim Süresi</string>
+    <string name="gym_membership_expiring">Üyelik Sona Eriyor</string>
+    <string name="gym_membership_expiring_desc">Spor salonu üyeliğin %d gün içinde sona erecek. Yenilemeyi unutma!</string>
+    <string name="web_server_notification_channel_name">Web Sunucusu</string>
+    <string name="web_server_notification_channel_desc">Yerel Trainable web sunucusu bildirimi</string>
+    <string name="web_server_notification_title">Web Sunucusu — %s</string>
+    <string name="web_server_notification_text">Sunucu %s adresinde aktif</string>
+    <string name="web_server_notification_instructions">Bilgisayarını aynı Wi-Fi ağına bağla ve adresi tarayıcıda aç.</string>
+    <string name="web_server_notification_stop">Durdur</string>
+    <string name="web_server_section_title">Yerel Sunucu</string>
+    <string name="web_dashboard">Web Paneli</string>
+    <string name="web_server_active">Sunucu aktif</string>
+    <string name="web_server_inactive">Sunucu pasif</string>
+    <string name="web_server_open_browser">Tarayıcıda aç:</string>
+    <string name="web_server_instructions">Bilgisayarını aynı Wi-Fi ağına bağla ve yukarıdaki adresi aç.</string>
+    <string name="language">Dil</string>
+    <string name="language_system_default">Sistem Varsayılanı</string>
+    <string name="current_language">Mevcut: %s</string>
+    <string name="language_english">English</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_portuguese">Português</string>
+    <string name="language_turkish">Türkçe</string>
+
+    <!-- Backup & Data -->
+    <string name="auto_backup">Otomatik Yedekleme</string>
+    <string name="auto_backup_setup">Otomatik Yedekleme Kurulumu</string>
+    <string name="backup_enabled">Her %d günde bir</string>
+    <string name="backup_disabled">Devre dışı</string>
+    <string name="backup_settings">Yedekleme Ayarları</string>
+    <string name="storage_location">Depolama Konumu</string>
+    <string name="custom_folder">Özel klasör</string>
+    <string name="choose_folder">Klasör seç</string>
+    <string name="folder_selected">Klasör seçildi</string>
+    <string name="folder_required_desc">Otomatik yedeklemeleri etkinleştirmek için bir klasör seçilmesi gerekir.</string>
+    <string name="configure_backup">Otomatik yedekleme ayarlarını yapılandır</string>
+    <string name="frequency">Sıklık</string>
+    <string name="keep_last">Son yedekleri tut</string>
+    <string name="backup_s">%d yedek</string>
+    <string name="day_s">%d gün</string>
+    <string name="export_database">VERİTABANINI DIŞA AKTAR</string>
+    <string name="export_csv">CSV DIŞA AKTAR</string>
+    <string name="import_database">VERİTABANINI İÇE AKTAR</string>
+    <string name="export_failed">Dışa aktarma başarısız</string>
+    <string name="import_successful">İçe aktarma başarılı</string>
+    <string name="import_failed">İçe aktarma başarısız</string>
+    <string name="importing_database">İçe aktarılıyor...</string>
+    <string name="exporting_csv">CSV dışa aktarılıyor...</string>
+    <string name="export_ready">Dışa aktarma hazır</string>
+    <string name="csv_exported_successfully">CSV başarıyla dışa aktarıldı!</string>
+    <string name="error_writing_file">Dosya yazma hatası: %s</string>
+    <string name="database_imported">Veritabanı içe aktarıldı. Uygulama yeniden başlatılıyor...</string>
+    <string name="include_images">Görseller Dahil Edilsin mi?</string>
+    <string name="include_images_description">Yedeğine program fotoğraflarını ve egzersiz görsellerini dahil etmek ister misin? Bu işlem dosya boyutunu artıracaktır.</string>
+    <string name="preparing_share">Antrenman kartın hazırlanıyor...</string>
+    <string name="edit_backup">DÜZENLE</string>
+
+    <!-- Nextcloud Backup -->
+    <string name="nextcloud_title">Nextcloud Bulut Yedekleme</string>
+    <string name="nextcloud_backup_desc">Verilerini özel Nextcloud sunucuna yedekle ve geri yükle.</string>
+    <string name="nextcloud_configured_as">%2$s üzerinde %1$s olarak bağlandı</string>
+    <string name="nextcloud_not_configured">Yapılandırılmadı</string>
+    <string name="nextcloud_configure">Nextcloud\'u Yapılandır</string>
+    <string name="nextcloud_setup_title">Nextcloud Kurulumu</string>
+    <string name="nextcloud_server_url">Sunucu URL\'si</string>
+    <string name="nextcloud_server_url_hint">https://cloud.example.com</string>
+    <string name="nextcloud_username">Kullanıcı Adı</string>
+    <string name="nextcloud_password_token">Uygulama Şifresi / Şifre</string>
+    <string name="nextcloud_password_hint">Uygulama Şifresi veya Şifre girin</string>
+    <string name="nextcloud_remote_folder">Uzak Klasör</string>
+    <string name="nextcloud_remote_folder_hint">örn. Trainable/Backups</string>
+    <string name="nextcloud_app_password_notice">İpucu: Güvenlik için Nextcloud Ayarlar &gt; Güvenlik &gt; Cihazlar ve oturumlar bölümünden oluşturulan bir Uygulama Şifresi kullanın.</string>
+    <string name="nextcloud_test_connection">Bağlantıyı Test Et</string>
+    <string name="nextcloud_testing_connection">Bağlantı test ediliyor...</string>
+    <string name="nextcloud_connection_successful">Bağlantı başarılı!</string>
+    <string name="nextcloud_connection_failed">Bağlantı başarısız: %s</string>
+    <string name="nextcloud_backup_now">Nextcloud\'a Yedekle</string>
+    <string name="nextcloud_restore">Nextcloud\'dan Geri Yükle</string>
+    <string name="nextcloud_disconnect">Bağlantıyı Kes</string>
+    <string name="nextcloud_disconnect_confirm">Nextcloud bağlantısını kesmek istediğine emin misin? Sunucudaki yedekler silinmeyecek.</string>
+    <string name="nextcloud_auto_backup">Nextcloud Otomatik Yedekleme</string>
+    <string name="nextcloud_auto_backup_desc">Planlanmış yedekleri otomatik olarak Nextcloud\'a yükle</string>
+    <string name="nextcloud_auto_backup_setup">Nextcloud Otomatik Yedekleme Kurulumu</string>
+    <string name="nextcloud_auto_backup_summary">Her %1$d günde bir • Son %2$d • %3$s</string>
+    <string name="restore_action">Geri Yükle</string>
+    <string name="backup_type_auto">Otomatik</string>
+    <string name="backup_type_manual">Manuel</string>
+    <string name="with_images">Görsellerle</string>
+    <string name="without_images">Görselsiz</string>
+    <string name="nextcloud_wifi_only">Yalnızca Wi-Fi</string>
+    <string name="nextcloud_wifi_only_desc">Yedekleri Nextcloud\'a yalnızca Wi-Fi bağlıyken yükle</string>
+    <string name="nextcloud_backups_list_title">Nextcloud Yedekleri</string>
+    <string name="nextcloud_restore_picker_desc">Bu cihaza geri yüklenecek yedeği seç</string>
+    <string name="nextcloud_loading_backups">Nextcloud yedekleri yükleniyor...</string>
+    <string name="nextcloud_no_backups_found">Uzak klasörde yedek bulunamadı</string>
+    <string name="nextcloud_restore_confirm_title">Veritabanı Geri Yüklensin mi?</string>
+    <string name="nextcloud_restore_confirm_desc">Bu yedeği geri yüklemek mevcut uygulama verilerinin üzerine yazacak ve Trainable\'ı yeniden başlatacak. Devam edilsin mi?</string>
+    <string name="nextcloud_restoring">Nextcloud\'dan geri yükleniyor...</string>
+    <string name="nextcloud_backup_success">Yedek Nextcloud\'a başarıyla yüklendi!</string>
+    <string name="nextcloud_backup_failed">Nextcloud yedeklemesi başarısız: %s</string>
+    <string name="nextcloud_uploading">Yedek Nextcloud\'a yükleniyor...</string>
+
+    <!-- Reset -->
+    <string name="reset_app_button">UYGULAMAYI SIFIRLA</string>
+    <string name="reset_app_dialog">Uygulama Sıfırlansın mı?</string>
+    <string name="reset_app_message">Bu işlem antrenmanlar, programlar ve ayarlar dahil tüm verilerini silecek. Bu işlem geri alınamaz.</string>
+    <string name="restarting_app">Uygulama yeniden başlatılıyor...</string>
+    <string name="reset_complete">Sıfırlama tamamlandı. Yeniden başlatılıyor...</string>
+    <string name="reset_failed">Sıfırlama başarısız: %s</string>
+
+    <!-- Welcome / Setup -->
+    <string name="welcome_title">Trainable\'a Hoş Geldin</string>
+    <string name="welcome_subtitle">Kişisel antrenman arkadaşın</string>
+    <string name="lets_get_started">Hadi başlayalım</string>
+    <string name="whats_your_name">Adın ne?</string>
+    <string name="enter_name">Adını gir</string>
+    <string name="your_weight">Kilon</string>
+    <string name="your_goal">Hedefin</string>
+    <string name="workouts_per_week_goal">Haftalık antrenman sayısı</string>
+    <string name="finish_setup">KURULUMU BİTİR</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">TRAINABLE</string>
+    <string name="onboarding_welcome_desc">Güç antrenmanları için yeni yekpare yol arkadaşın. Sade, güçlü ve performans odaklı.</string>
+    <string name="onboarding_features_title">Antrenmanını\nbir üst seviyeye taşı.</string>
+    <string name="onboarding_feature_suggestions_title">Akıllı Öneriler</string>
+    <string name="onboarding_feature_suggestions_desc">Trainable programını öğrenir ve sıradaki en uygun antrenmanı önerir.</string>
+    <string name="onboarding_feature_control_title">Tam Kontrol</string>
+    <string name="onboarding_feature_control_desc">Dokunsal bir arayüzle programlarını sürükle, bırak ve özelleştir.</string>
+    <string name="onboarding_feature_insights_title">Derin Analizler</string>
+    <string name="onboarding_feature_insights_desc">Antrenman hacmini ve kişisel rekorlarını şık grafiklerle görselleştir.</string>
+    <string name="onboarding_connectivity_title">Bağlı ve\nGüvenli.</string>
+    <string name="onboarding_connectivity_backup_title">Yerel ve Otomatik Yedekler</string>
+    <string name="onboarding_connectivity_backup_desc">Planlı yerel yedeklemeler ve kolay geri yükleme ile verilerini güvende tut.</string>
+    <string name="onboarding_connectivity_share_plans_title">Planları Paylaş</string>
+    <string name="onboarding_connectivity_share_plans_desc">Programlarını .trainableplan dosyası olarak dışa aktar ve arkadaşlarınla paylaş.</string>
+    <string name="onboarding_connectivity_share_workouts_title">Gelişimini Göster</string>
+    <string name="onboarding_connectivity_share_workouts_desc">Tamamladığın antrenmanları ve kişisel rekorlarını şık kartlar halinde paylaş.</string>
+    <string name="onboarding_setup_title">Deneyimini\nkişiselleştir.</string>
+    <string name="onboarding_setup_username_label">Sana nasıl hitap edelim?</string>
+    <string name="onboarding_setup_weight_label">Mevcut kilon (isteğe bağlı)</string>
+    <string name="onboarding_setup_goal_label">Haftalık antrenman hedefi</string>
+    <string name="onboarding_setup_footer">Bunları daha sonra ayarlardan istediğin zaman değiştirebilirsin.</string>
+    <string name="onboarding_theme_title">Temanı\nseç.</string>
+    <string name="onboarding_notifications_title">Gelişmelerden\nhaberdar ol.</string>
+    <string name="onboarding_backup_title">Verilerini\ngüvende tut.</string>
+
+    <!-- Filters & Search -->
+    <string name="no_results_filters">Bu filtreler için sonuç bulunamadı</string>
+    <string name="no_routine">Program yok</string>
+
+    <!-- Filters -->
+    <string name="sharing_options">PAYLAŞIM SEÇENEKLERİ</string>
+    <string name="share_include_images_title">Fotoğraflar Dahil Edilsin mi?</string>
+    <string name="share_include_images_message">Bu programa eklenmiş fotoğraflar var. Bunları .trainableplan dosyasına dahil etmek ister misin?</string>
+    <string name="share_with_images">FOTOĞRAFLARLA PAYLAŞ</string>
+    <string name="share_without_images">YALNIZCA VERİYİ PAYLAŞ</string>
+    <string name="import_plans_title">Programlar İçe Aktarılsın mı?</string>
+    <string name="import_plans_message">Şu programları içe aktarmak üzeresin:</string>
+    <string name="import_plan_summary">%1$s (%2$d egzersiz)</string>
+    <string name="import_confirm">İÇE AKTAR</string>
+
+    <!-- Updates -->
+    <string name="check_for_updates">Güncellemeleri Denetle</string>
+    <string name="beta_updates_title">Beta güncellemeleri</string>
+    <string name="beta_updates_desc">Yeni özellikleri ilk deneyen olmak için ön sürüm versiyonlarını da al.</string>
+    <string name="beta_updates_on_note">Beta sürümlerde hatalar olabilir. Yüklemeden önce verilerini yedekle.</string>
+    <string name="beta_updates_off_note">Şu anda beta sürümündesin: yeni kararlı sürüm çıktığında sunulacaktır.</string>
+    <string name="beta_updates_dialog_title">Beta güncellemeleri alınsın mı?</string>
+    <string name="beta_updates_dialog_text">• Beta sürümler test amaçlıdır: hatalar, çökmeler veya tamamlanmamış ekranlar içerebilir.\n\n• Bir beta sürümü verilerinin saklanma biçimini değiştirebilir. Yüklemeden önce yedek al.\n\n• Beta güncellemelerini kapatmak seni önceki sürüme döndürmez: daha yeni bir kararlı sürüm çıkana kadar betada kalırsın. Daha erken dönmek için uygulamayı kaldırman gerekir, bu da yedekte olmayan her şeyi siler.\n\n• Kararlı sürüm öncesinde düzeltilmeleri için sorunları GitHub\'da bildir.</string>
+    <string name="beta_updates_enable">Beta sürümleri al</string>
+    <string name="update_is_beta">Beta sürüm: hatalar içerebilir. Yüklemeden önce verilerini yedekle.</string>
+    <string name="update_available">Yeni güncelleme mevcut!</string>
+    <string name="version">Sürüm: %s</string>
+    <string name="changelog">Değişiklik Günlüğü:</string>
+    <string name="downloading">İndiriliyor...</string>
+    <string name="update_now">Şimdi güncelle</string>
+    <string name="update_channel_name">Uygulama güncellemeleri</string>
+    <string name="update_channel_desc">Trainable güncellemesinin indirme ilerlemesi ve yüklemeye hazır olduğunda bildirim</string>
+    <string name="update_notification_downloading">Trainable %s indiriliyor</string>
+    <string name="update_progress_of">%1$s / %2$s</string>
+    <string name="update_verifying">Dosya doğrulanıyor…</string>
+    <string name="update_cancel_download">İndirmeyi iptal et</string>
+    <string name="update_hide">Gizle</string>
+    <string name="update_hide_note">Bunu gizleyebilirsin: indirme bildirim çubuğunda devam eder.</string>
+    <string name="update_install">Yükle</string>
+    <string name="update_ready_note">İndirildi ve doğrulandı. Tamamlamak için Yükle\'ye dokun.</string>
+    <string name="update_installing_note">Android penceresinde onayla. Açılmadıysa Yükle\'ye dokun.</string>
+    <string name="update_notification_ready">Güncelleme hazır</string>
+    <string name="update_notification_ready_text">Trainable %s sürümünü yüklemek için dokun</string>
+    <string name="update_notification_failed">Güncelleme tamamlanamadı</string>
+    <string name="update_notification_failed_text">Trainable %s: nedenini görmek için uygulamayı aç</string>
+    <string name="update_failed_title">Güncelleme tamamlanamadı</string>
+    <string name="update_checking">Güncellemeler denetleniyor…</string>
+    <string name="update_up_to_date">En güncel sürümü kullanıyorsun</string>
+    <string name="update_check_failed">Güncellemeler denetlenemedi. %s</string>
+    <string name="update_error_network">Bağlantı yok veya kesildi. Çevrimiçi olduğunda tekrar dene.</string>
+    <string name="update_error_rate_limited">GitHub bu ağdan gelen istekleri sınırlandırıyor. Bir saat sonra tekrar dene.</string>
+    <string name="update_error_server">GitHub beklenen yanıtı vermedi. Daha sonra tekrar dene.</string>
+    <string name="update_error_no_apk">Bu sürümde indirilecek bir Android uygulaması bulunmuyor.</string>
+    <string name="update_error_storage">Yeterli boş alan yok: %s gerekli.</string>
+    <string name="update_error_storage_plain">Güncellemeyi indirmek için yeterli boş alan yok.</string>
+    <string name="update_error_corrupt">İndirilen dosya bozuk olduğu için silindi. Tekrar dene.</string>
+    <string name="update_error_install_conflict">Android güncelleyemiyor: yüklü uygulama farklı bir anahtarla imzalanmış (örneğin hata ayıklama derlemesi veya başka bir kaynak). GitHub\'dan yeniden yüklemeden önce verilerini yedekle.</string>
+    <string name="update_error_install_storage">Güncellemeyi yüklemek için yeterli boş alan yok.</string>
+    <string name="update_error_install">Android güncellemeyi yüklemedi. %s</string>
+    <string name="update_skip_version">Bu sürümü atla</string>
+    <string name="update_metered_note">Tarifeli bir bağlantıdasın: indirme işlemi %s veri kullanacak.</string>
+    <string name="update_open_release">GitHub\'da aç</string>
+    <string name="update_error_other_source">Trainable\'ın bu kopyası GitHub sürümlerinden farklı bir anahtarla imzalanmış (örneğin başka bir mağazadan gelmiş veya özel derleme), bu nedenle Android buradan güncelleyemiyor. GitHub sürümüne geçmek için: verilerini yedekle, uygulamayı kaldır, sürüm sayfasından APK\'yı yükle ve yedeği geri yükle.</string>
+    <string name="update_error_wrong_app">Bu sürümdeki dosya bu uygulamaya ait değil, bu yüzden yüklenmedi. Lütfen GitHub\'da bildir.</string>
+    <string name="update_sheet_title">Trainable %s</string>
+    <string name="update_beta_chip">Beta</string>
+    <string name="update_section_new">Yeni</string>
+    <string name="update_section_improved">İyileştirildi</string>
+    <string name="update_download_size">Güncelleme · %s</string>
+    <string name="update_show_details">Ayrıntıları göster</string>
+    <plurals name="update_fixes_count">
+        <item quantity="one">%d düzeltme</item>
+        <item quantity="other">%d düzeltme</item>
+    </plurals>
+
+    <!-- Camera & Photos -->
+    <string name="camera">Kamera</string>
+    <string name="gallery">Galeri</string>
+    <string name="camera_permission_denied">Fotoğraf çekmek için kamera izni gerekli</string>
+
+    <!-- Gym Membership -->
+    <string name="set_expiry_date">Bitiş Tarihini Ayarla</string>
+    <string name="tap_to_set">Ayarlamak için dokun</string>
+
+    <!-- Cardio -->
+    <string name="cardio_dist_value">%1$s km</string>
+    <string name="cardio_min_format">%1$d dk</string>
+    <string name="cardio_free_form">Serbest</string>
+    <string name="cardio_duration_label">Hedef Süre (dk)</string>
+    <string name="cardio_custom_duration">Özel (dk)</string>
+
+    <!-- About -->
+    <string name="donors">Destekçiler</string>
+
+    <!-- Double back to exit -->
+    <string name="press_back_again">Çıkmak için tekrar geri tuşuna bas</string>
+
+    <!-- Errors -->
+    <string name="error_unknown">Bilinmeyen hata</string>
+    <string name="routine_not_found">Program bulunamadı</string>
+
+    <!-- Notifications -->
+    <string name="notification_next_set">Sıradaki: %1$s - Set %2$d: %3$s × %4$d</string>
+    <string name="notification_last_reps">(son: %1$d)</string>
+
+    <!-- Widget -->
+    <string name="widget_action_resume">Devam Et</string>
+    <string name="widget_action_start">Başla</string>
+    <string name="widget_action_open_app">Uygulamayı aç</string>
+    <string name="widget_trainable_label">Antrenman</string>
+    <string name="widget_trainable_description">Önerilen antrenman ve hızlı başlangıç</string>
+    <string name="widget_weekly_goal_label">Haftalık Hedef</string>
+    <string name="widget_weekly_goal_description">Haftalık antrenman ilerleme takibi</string>
+    <!-- Home-screen widgets (M3 Expressive redesign) -->
+    <string name="widget_label_up_next">Sıradaki</string>
+    <string name="widget_label_suggested_today">Bugün önerilen</string>
+    <string name="widget_label_in_progress">Devam ediyor</string>
+    <string name="widget_started_at">%1$s saatinde başladı</string>
+    <string name="widget_create_routine">Bir program oluştur</string>
+    <string name="widget_goal_title">Haftalık hedef</string>
+    <string name="widget_goal_unit">antrenman</string>
+    <string name="widget_goal_met">Hedef tamamlandı</string>
+    <string name="widget_goal_cardio">bunun %d tanesi kardiyo</string>
+    <string name="widget_quick_start_label">Hızlı başlangıç</string>
+    <string name="widget_quick_start_description">Tek dokunuşla antrenmanını başlat veya devam ettir</string>
+    <string name="widget_cd_start">%1$s başlat</string>
+    <string name="widget_cd_resume">%1$s devam et</string>
+    <string name="widget_cd_open">Trainable\'ı aç</string>
+    <plurals name="widget_exercise_count">
+        <item quantity="one">%d egzersiz</item>
+        <item quantity="other">%d egzersiz</item>
+    </plurals>
+    <plurals name="widget_goal_remaining">
+        <item quantity="one">%d kaldı</item>
+        <item quantity="other">%d kaldı</item>
+    </plurals>
+
+    <!-- Common -->
+    <string name="ok">Tamam</string>
+
+    <!-- Physical Check -->
+    <string name="physical_check_camera_denied">Kamera izni reddedildi</string>
+
+    <!-- Image Editor -->
+
+    <!-- Report -->
+
+    <string name="custom">Özel</string>
+    <string name="custom_weight">Özel Ağırlık</string>
+    <string name="custom_reps">Özel Tekrar</string>
+
+    <!-- AI Scan -->
+    <string name="ai_device_unsupported">Bu cihaz yerleşik yapay zeka için RAM gereksinimlerini karşılamıyor</string>
+    <string name="ai_model_variant">Model</string>
+    <string name="ai_model_requirements">%1$s indirme · %2$d GB RAM gerektirir</string>
+    <string name="ai_model_download">%1$s indir</string>
+    <string name="ai_model_download_retry">İndirmeyi tekrar dene</string>
+    <string name="ai_model_downloading">Model indiriliyor… %%%1$d</string>
+    <string name="ai_model_ready">Model hazır</string>
+    <string name="ai_model_import">Zaten sahip olduğun bir modeli içe aktar</string>
+    <string name="ai_model_import_note">Bir Gemma 4 E2B veya E4B .litertlm dosyası seç. Uygulama içine kopyalanır, bu nedenle orijinalini silene kadar kendi boyutu kadar ek yer kaplar.</string>
+    <string name="ai_model_importing">Model içe aktarılıyor… %%%1$d</string>
+    <string name="ai_import_error_format">Bu bir LiteRT-LM model dosyası (.litertlm) değil.</string>
+    <string name="ai_import_error_unsupported">Bu dosya Trainable\'ın desteklediği Gemma 4 E2B veya E4B değil. GPU, web veya belirli bir çip için derlenmiş sürümler çalışmaz.</string>
+    <string name="ai_import_error_space">Yeterli boş alan yok: yaklaşık %1$s gerekli.</string>
+    <string name="ai_import_error_read">Dosya okunamadı veya kopyalanamadı. Tekrar dene.</string>
+    <string name="ai_import_error_busy">Bu model zaten indiriliyor veya içe aktarılıyor.</string>
+    <string name="ai_model_delete">Sil</string>
+    <string name="ai_model_delete_confirm_title">Model silinsin mi?</string>
+    <string name="ai_model_delete_confirm_desc">Yapay zeka modeli cihazından silinecek. Daha sonra tekrar indirebilirsin.</string>
+    <string name="ai_scan_source_title">Antrenman kağıdını tara</string>
+    <string name="ai_scanning">Kağıt analiz ediliyor…</string>
+    <string name="ai_scan_no_exercises">Fotoğrafta egzersiz algılanmadı</string>
+    <string name="ai_scan_failed">Kağıt analiz edilemedi. Tekrar dene.</string>
+    <string name="ai_scan_phase_model">Model yükleniyor…</string>
+    <string name="ai_scan_phase_connecting">Bağlanıyor…</string>
+    <string name="ai_scan_phase_reading">Kağıt okunuyor…</string>
+    <string name="ai_scan_phase_generating">Egzersizler çıkarılıyor…</string>
+    <string name="ai_scan_show_thinking">Model düşüncesi</string>
+    <string name="ai_scan_hide_thinking">Düşünceyi gizle</string>
+    <string name="ai_scan_thinking_placeholder">Modelin akıl yürütme süreci burada görünecek…</string>
+    <string name="ai_scan_edit_name_and_category">Adı ve kategoriyi düzenle</string>
+    <string name="ai_scan_edit_exercise_title">Egzersizi Düzenle</string>
+    <string name="ai_scan_stop">Taramayı durdur</string>
+    <string name="ai_scan_stop_confirm_title">Tarama durdurulsun mu?</string>
+    <string name="ai_scan_stop_confirm_desc">Kağıt analizi durdurulacak ve yeni bir tarama başlatman gerekecek.</string>
+    <string name="ai_scan_continue">Taramaya devam et</string>
+    <string name="ai_resource_analytics_toggle">Cihaz kaynak analizi</string>
+    <string name="ai_resource_analytics_desc">Yapay zeka taraması sırasında canlı RAM, CPU, pil, sıcaklık ve üretim hızını izle</string>
+    <string name="ai_analytics_title">Kaynak Analizi</string>
+    <string name="ai_analytics_ram">RAM Kullanımı</string>
+    <string name="ai_analytics_app_ram">Uygulama RAM</string>
+    <string name="ai_analytics_system_ram">Sistem RAM</string>
+    <string name="ai_analytics_native_ram">Yerel</string>
+    <string name="ai_analytics_speed">Hız</string>
+    <string name="ai_analytics_battery_temp">Pil ve Sıcaklık</string>
+    <string name="ai_analytics_thermal">Termal Durum</string>
+    <string name="ai_analytics_backend">Arka Uç</string>
+    <string name="ai_analytics_cores">Çekirdekler</string>
+    <string name="ai_analytics_cpu">CPU Kullanımı</string>
+    <string name="ai_disclaimer_beta">Yapay zeka özellikleri BETA aşamasındadır ve hata yapabilir. Çıkarılan egzersizleri ve ayrıntıları her zaman kontrol et.</string>
+    <string name="ai_download_channel_name">Yapay Zeka Model İndirmeleri</string>
+    <string name="ai_download_channel_desc">Arka plandaki yapay zeka model indirmelerinin ilerlemesini gösterir</string>
+    <string name="ai_download_notification_title">Yapay Zeka Modeli İndiriliyor</string>
+    <string name="ai_download_notification_progress">%1$s indiriliyor: %%%2$d</string>
+    <string name="ai_download_notification_complete">Yapay zeka modeli başarıyla indirildi</string>
+    <string name="ai_download_notification_failed">Yapay zeka modeli indirilemedi</string>
+    <string name="ai_download_cancel">İptal</string>
+    <string name="onboarding_ai_title">Yerel Yapay Zeka\nProgram Taraması.</string>
+    <string name="onboarding_ai_desc">Fiziksel spor salonu antrenman kağıtlarını tara ve %100 cihaz içi, gizli yapay zeka kullanarak egzersizleri otomatik içe aktar.</string>
+    <string name="onboarding_ai_toggle_title">Yapay Zeka Program Tarayıcıyı Etkinleştir</string>
+    <string name="onboarding_ai_toggle_desc">Fotoğraflardan setleri, tekrarları ve egzersizleri ayrıştırmak için yerel bir model kullanır.</string>
+    <string name="onboarding_ai_unsupported_desc">Cihazın yerel yapay zeka çalıştırmak için donanım gereksinimlerini (en az 6 GB RAM) karşılamıyor. Programları manuel olarak oluşturmaya ve yönetmeye devam edebilirsin.</string>
+    <string name="onboarding_ai_download_note">Modeli şimdi veya daha sonra istediğin zaman Ayarlar\'dan indirebilirsin.</string>
+
+    <!-- Exercise Types -->
+    <string name="exercise_type_time_and_weight">Süre ve Ağırlık</string>
+    <string name="target_time">Hedef Süre</string>
+    <string name="seconds_short">sn</string>
+    <string name="skip_timer">Sayacı Atla</string>
+    <string name="skip_timer_and_log">Sayacı Atla ve Kaydet</string>
+    <string name="adjust_weight">Ağırlığı Ayarla</string>
+    <string name="time_weight_ready">BAŞLAMAYA HAZIR</string>
+    <string name="time_weight_running">SAYAÇ ÇALIŞIYOR</string>
+    <string name="time_weight_paused">SAYAÇ DURAKLATILDI</string>
+    <!-- v2.3.0 powerlifting START -->
+    <string name="exercise_type_advanced">Gelişmiş</string>
+    <string name="exercise_type_time_and_reps">Süre ve Tekrar</string>
+    <string name="time_reps_value">%1$d sn · %2$d tekrar</string>
+    <string name="cardio_sets_total">%1$d set</string>
+    <string name="mini_set_add">Mini set ekle</string>
+    <string name="mini_set_notification">Mini set</string>
+    <string name="assisted_reps_label">Yardımlı</string>
+    <string name="partial_reps_label">Yarım Tekrar</string>
+    <string name="performed_technique_badge">Yapılan: %1$s</string>
+    <string name="performed_technique_title">Uygulanan teknik</string>
+    <string name="performed_technique_none">Teknik yok</string>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · %2$s duraklama</item>
+        <item quantity="other">%1$s · %2$s duraklama</item>
+    </plurals>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%d yardımlı</item>
+        <item quantity="other">+%d yardımlı</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%d yarım tekrar</item>
+        <item quantity="other">+%d yarım tekrar</item>
+    </plurals>
+    <string name="notification_next_set_text">Sıradaki: %1$s - Set %2$d: %3$s</string>
+    <string name="edit_one_rep_max">1RM Düzenle</string>
+    <string name="block_n">BLOK %1$d</string>
+    <string name="bodyweight_short">VA</string>
+    <string name="total_reps_label">Toplam %1$d tekrar</string>
+    <string name="max_label">MAKS</string>
+    <string name="technique_pause_seconds">Duraklama %1$d″</string>
+    <string name="technique_chains">Zincir</string>
+    <string name="technique_bands">Direnç Bandı</string>
+    <string name="technique_feet_up">Ayaklar Yukarıda</string>
+    <string name="technique_competition">Yarışma</string>
+    <string name="technique_tempo_value">Tempo %1$s</string>
+    <string name="technique_deficit">Defisit</string>
+    <string name="technique_emom">EMOM</string>
+    <string name="notation_input_label">Defterine yazdığın gibi yaz</string>
+    <string name="notation_input_hint" formatted="false">70% 5  75% 3x5 STOP 2\"  80% 20 REP ALSAP</string>
+    <string name="notation_recognised">Algılanan: %1$s</string>
+    <string name="notation_nothing">Henüz bir şey algılanmadı</string>
+    <string name="notation_replace_blocks">Blokları değiştir</string>
+    <string name="week_n">Hafta %1$d</string>
+    <string name="week_of">Hafta %1$d / %2$d</string>
+    <string name="not_in_week">H%1$d içinde değil</string>
+    <string name="week_repeats">Henüz yazılmadı · H%1$d tekrarlanıyor</string>
+    <string name="current_badge">MEVCUT</string>
+    <string name="remove_week">Son haftayı kaldır</string>
+    <string name="program_completed">Program tamamlandı. Harika iş!</string>
+    <string name="restart_program">Yeniden Başlat</string>
+    <string name="extra_badge">EKSTRA</string>
+    <string name="rpe_short">RPE %1$s</string>
+    <string name="notification_next_set_detail">Sıradaki: %1$s - Set %2$d: %3$s × %4$s</string>
+    <string name="emom_hint">EMOM · sonraki set dakika başında</string>
+    <string name="emom_then">Sonra %1$s</string>
+    <string name="emom_notification_channel">EMOM sayacı</string>
+    <string name="emom_notification_title_get_ready">EMOM · Hazırlan</string>
+    <string name="emom_notification_title_work">Tur %1$d/%2$d · Başla</string>
+    <string name="emom_notification_title_rest">Tur %1$d/%2$d · Dinlen</string>
+    <string name="emom_notification_title_paused">EMOM duraklatıldı · Tur %1$d/%2$d</string>
+    <string name="emom_notification_set">%1$s · Set %2$d: %3$s</string>
+    <string name="emom_notification_next">Sıradaki: %1$s · Set %2$d: %3$s</string>
+    <string name="emom_notification_finished_title">EMOM tamamlandı</string>
+    <string name="emom_notification_finished_text">%1$s · tüm turlar bitti</string>
+    <string name="emom_action_done">Tamam</string>
+    <string name="emom_action_pause">Duraklat</string>
+    <string name="emom_action_resume">Devam Et</string>
+    <string name="emom_action_stop">Durdur</string>
+    <string name="scan_use_simple">Düz set × tekrar kullan</string>
+    <string name="one_rep_maxes_empty_title">İlk 1RM değerini ekle</string>
+    <string name="one_rep_maxes_card_desc">%1$d kaldırış takip ediliyor</string>
+    <string name="ai_program_scan_button">Tara</string>
+    <string name="ai_program_scan_title">Program sayfasını tara</string>
+    <string name="ai_program_scan_desc">Bir fotoğraf çek veya seç: yapay zeka blokları doldurur, sen de inceleyip düzenleyebilirsin.</string>
+    <string name="ai_program_scan_failed">Fotoğraftan program okunamadı. Daha net ve yakın bir fotoğraf dene.</string>
+    <string name="ai_err_model_missing">Cihaz içi model indirilmemiş</string>
+    <string name="ai_err_not_configured">Yapay zeka sağlayıcısı ayarlanmamış</string>
+    <string name="ai_err_key_unreadable">Yapay zeka ayarlarından API anahtarını yeniden gir</string>
+    <string name="ai_err_policy_blocked">Düz http:// bağlantısına yalnızca yerel ağında izin verilir</string>
+    <string name="ai_err_unauthorized">Sağlayıcı API anahtarını reddetti</string>
+    <string name="ai_err_model_not_found">Sağlayıcı bu modeli tanımıyor</string>
+    <string name="ai_err_rate_limited">Çok fazla istek: biraz sonra tekrar dene</string>
+    <string name="ai_err_too_large">Fotoğraf sağlayıcı için çok büyük</string>
+    <string name="ai_err_rejected">Sağlayıcı isteği reddetti</string>
+    <string name="ai_err_server">Sağlayıcıda bir sorun oluştu: daha sonra tekrar dene</string>
+    <string name="ai_err_unreachable">Sağlayıcıya ulaşılamıyor: bağlantıyı ve adresi kontrol et</string>
+    <string name="ai_err_stream">Sağlayıcı yanıtı yarıda kesti</string>
+    <string name="ai_err_bad_response">Sağlayıcının yanıtı okunamadı</string>
+    <string name="ai_consent_title">Fotoğraf telefonun dışına gönderilsin mi?</string>
+    <string name="ai_consent_body">Kağıdın fotoğrafı %1$s hizmetine gönderilecek. Bulut hizmetleri kendi sağlayıcısının kurallarına tabidir.</string>
+    <string name="ai_consent_gemini_note">Ücretsiz bir Gemini anahtarıyla Google, ürünlerini geliştirmek için fotoğrafı kullanabilir. Ücretli anahtarda kullanılmaz.</string>
+    <string name="ai_consent_continue">Devam Et</string>
+    <string name="ai_program_review_title">Program algılandı</string>
+    <string name="ai_program_review_hint">İçe aktarılacak haftaları seç. Daha sonra her şeyi düzenleyebilirsin.</string>
+    <string name="ai_program_review_pick_week">İçe aktarılacak haftayı seç. Daha sonra düzenleyebilirsin.</string>
+    <string name="ai_program_save_one_rep_max">1RM %1$s Kaydet</string>
+    <string name="ai_program_import">İçe Aktar</string>
+    <string name="edit_prescription">Programlamayı düzenle</string>
+    <string name="add_prescription">Programlama ekle</string>
+    <string name="advanced_programming">Gelişmiş programlama</string>
+    <string name="advanced_programming_desc" formatted="false">%1RM setleri, duraklama ve zincir gibi teknikler, haftalık programlar, 1RM takibi ve RPE hedefleri</string>
+    <string name="ai_program_review_summary">%1$d hafta · %2$d blok</string>
+    <string name="ai_program_found_max">Sayfada 1RM bulundu</string>
+    <string name="ai_program_save_max_short">Kaydet</string>
+    <string name="ai_program_import_count">İçe Aktar (%1$d)</string>
+    <string name="ai_program_not_matched">“%1$s” bu sayfada bulunamadı. Doğru egzersizi seç:</string>
+    <string name="ai_program_other_exercises">Sayfada bulunan egzersizler</string>
+    <string name="scan_draft_title">Tarama taslak olarak kaydedildi</string>
+    <string name="scan_draft_subtitle">İncelenmeyi bekleyen %1$d egzersiz</string>
+    <string name="scan_draft_resume">Devam Et</string>
+    <string name="scan_draft_discard">Sil</string>
+    <string name="scan_draft_discard_title">Tarama silinsin mi?</string>
+    <string name="scan_draft_discard_desc">Taranan egzersizler kaybolacak ve kağıdı tekrar taraman gerekecek.</string>
+    <!-- v2.3.0 powerlifting END -->
+    <!-- share options + imported maximums -->
+    <string name="import_includes_maximums">%1$d egzersizin maksimum değerlerini içerir</string>
+    <!-- compare sessions v2 -->
+    <!-- onboarding: advanced training + Nextcloud -->
+    <string name="onboarding_advanced_title">Bir powerlifter\ngibi antrenman yap.</string>
+    <string name="onboarding_advanced_percent_title" formatted="false">%1RM ve maksimumlar</string>
+    <string name="onboarding_advanced_percent_desc">Yükleri maksimumunun yüzdesi olarak yaz ve gerçek kilogram karşılıklarını gör.</string>
+    <string name="onboarding_advanced_techniques_title">Teknikler ve RPE</string>
+    <string name="onboarding_advanced_techniques_desc">Duraklamalar, zincirler, tempo, RPE: antrenörlerin yazdığı gibi programla.</string>
+    <string name="onboarding_advanced_weeks_title">Haftalık programlar</string>
+    <string name="onboarding_advanced_weeks_desc">Önündeki haftaları planla ve programın kendiliğinden ilerlemesine izin ver.</string>
+    <string name="onboarding_advanced_scan_title">Programını tara</string>
+    <string name="onboarding_advanced_scan_desc">El yazısı bir sayfanın fotoğrafını çek ve cihaz içi yapay zekanın senin için okumasını sağla.</string>
+    <string name="onboarding_nextcloud_title">Senin bulutun,\nsenin yedeklerin.</string>
+    <string name="onboarding_nextcloud_desc">İsteğe bağlı: verilerinin bir kopyasını telefonun dışında tutmak veya yeni bir cihaza geri yüklemek için kendi Nextcloud hesabını bağla.</string>
+    <string name="nextcloud_connect">Bağlan</string>
+
+    <!-- Starting weight, rep ranges and double progression -->
+
+    <!-- Add workout sheet: routines grouped by active / archived -->
+    <!-- Changing the program during a workout -->
+    <string name="load_preview_line">Blok %1$d: %2$s → %3$s</string>
+    <string name="program_edit_before">Önce</string>
+    <string name="program_edit_original">Orijinal program</string>
+    <string name="program_edit_block_added">+ Blok %1$d: %2$s</string>
+    <string name="program_edit_block_removed">− Blok %1$d: %2$s</string>
+
+    <!-- Import workout history from a CSV file -->
+    <string name="import_csv">CSV İÇE AKTAR</string>
+    <string name="import_history_template_saved">Örnek dosya kaydedildi</string>
+    <string name="import_history_template_error">Dosya kaydedilemedi: %1$s</string>
+    <string name="import_history_template_note_warmup">ısınma</string>
+    <string name="import_history_template_note_easy">hafif tempo</string>
+
+    <!-- Workout journal -->
+    <plurals name="journal_tag_uses">
+        <item quantity="one">%1$d antrenmanda kullanıldı</item>
+        <item quantity="other">%1$d antrenmanda kullanıldı</item>
+    </plurals>
+
+    <!-- RPE: a switch, three scales and the five levels of the simplified one -->
+    <string name="rpe_level_warmup">Isınma</string>
+    <string name="rpe_level_warmup_desc">Çok hafif efor · Hazırlık aşaması</string>
+    <string name="rpe_level_easy">Kolay</string>
+    <string name="rpe_level_easy_desc">Rahat · Yedekte çok güç var</string>
+    <string name="rpe_level_moderate">Orta</string>
+    <string name="rpe_level_moderate_desc">Amaçlı efor · Hâlâ kontrol altında</string>
+    <string name="rpe_level_hard">Zor</string>
+    <string name="rpe_level_hard_desc">Zorlayıcı · Yüksek efor</string>
+    <string name="rpe_level_maximum">Maksimum</string>
+    <string name="rpe_level_maximum_desc">Sınırına yakın · Tükeniş veya maksimum efor</string>
+    <!-- Exercise detail -->
+    <string name="exercise_detail_open">Egzersiz ayrıntıları</string>
+    <!-- Merge and hide exercises -->
+    <!-- Exercises page -->
+    <!-- Favorite exercises -->
+    <!-- Muscles and equipment of an exercise -->
+    <string name="muscle_upper_chest">Üst göğüs</string>
+    <string name="muscle_middle_chest">Orta göğüs</string>
+    <string name="muscle_lower_chest">Alt göğüs</string>
+    <string name="muscle_lats">Kanat (Lat)</string>
+    <string name="muscle_traps">Trapez</string>
+    <string name="muscle_upper_back">Üst sırt</string>
+    <string name="muscle_lower_back">Alt sırt / Bel</string>
+    <string name="muscle_front_delts">Ön omuz</string>
+    <string name="muscle_side_delts">Yan omuz</string>
+    <string name="muscle_rear_delts">Arka omuz</string>
+    <string name="muscle_biceps">Biceps</string>
+    <string name="muscle_triceps">Triceps</string>
+    <string name="muscle_forearms">Ön kol</string>
+    <string name="muscle_abs">Karın</string>
+    <string name="muscle_obliques">Yan karın (Oblik)</string>
+    <string name="muscle_quads">Ön bacak (Quadriceps)</string>
+    <string name="muscle_hamstrings">Arka bacak (Hamstring)</string>
+    <string name="muscle_glutes">Kalça</string>
+    <string name="muscle_calves">Kalf (Baldır)</string>
+    <string name="muscle_adductors">İç bacak (Adduktor)</string>
+    <string name="muscle_abductors">Dış bacak (Abduktor)</string>
+    <string name="equipment_barbell">Halter</string>
+    <string name="equipment_dumbbell">Dambıl</string>
+    <string name="equipment_cable">Kablo</string>
+    <string name="equipment_machine">Makine</string>
+    <string name="equipment_smith_machine">Smith Machine</string>
+    <string name="equipment_bodyweight">Vücut ağırlığı</string>
+    <string name="equipment_landmine">Landmine</string>
+    <string name="equipment_other">Diğer</string>
+    <string name="analytics_time_range_1m">1A</string>
+    <string name="analytics_time_range_1w">1H</string>
+    <string name="analytics_time_range_6m">6A</string>
+</resources>
