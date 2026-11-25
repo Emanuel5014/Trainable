@@ -9,7 +9,7 @@ plugins {
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 /** The app version; versionCode follows from it, so a release only changes this line. */
-val appVersionName = "3.1.0"
+val appVersionName = "3.1.0-beta1"
 
 /**
  * versionCode from a versionName such as "3.0.0", "3.0.0-beta2" or "3.0.0-rc1":

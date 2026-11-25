@@ -1,0 +1,469 @@
+{
+  "version": "3.1.0-beta1",
+  "headline": {
+    "en": "Trainable 3.1: deload workouts, one live card for the whole workout, quick workouts that become routines and a new physical check.",
+    "it": "Trainable 3.1: allenamenti di scarico, una sola card live per tutto l'allenamento, allenamenti veloci che diventano schede e un nuovo check fisico.",
+    "de": "Trainable 3.1: Deload-Trainings, eine Live-Karte für das ganze Training, schnelle Trainings als Routinen und neue Checks.",
+    "es": "Trainable 3.1: entrenamientos de descarga, una sola tarjeta en vivo para todo el entrenamiento, entrenamientos rápidos que se vuelven rutinas y un nuevo chequeo físico.",
+    "fr": "Trainable 3.1 : séances de décharge, une seule carte en direct pour toute la séance, des séances rapides qui deviennent des routines et un nouveau check physique.",
+    "pt": "Trainable 3.1: treinos de descarga, um só cartão ao vivo para o treino inteiro, treinos rápidos que viram rotinas e uma nova checagem física."
+  },
+  "notice": {
+    "en": "Beta of Trainable 3.1. On 3.0.0, turn on \"Beta updates\" in Settings > About to get it from the app, and keep the app open until the installer appears. Your workouts, routines and settings are kept. Going back to 3.0.0 afterwards needs an uninstall, which deletes your data: back up first."
+  },
+  "items": [
+    {
+      "type": "new",
+      "area": "workouts",
+      "title": {
+        "en": "Deload workouts",
+        "it": "Allenamenti di scarico",
+        "de": "Deload-Trainings",
+        "es": "Entrenamientos de descarga",
+        "fr": "Séances de décharge",
+        "pt": "Treinos de descarga"
+      },
+      "summary": {
+        "en": "Mark a workout as deload: lighter weights, left out of stats, records and autofill",
+        "it": "Segna un allenamento come scarico: pesi ridotti, fuori da statistiche, record e autoriempimento",
+        "de": "Markiere ein Training als Deload: leichtere Gewichte, nicht in Statistiken und Rekorden",
+        "es": "Marca un entrenamiento como descarga: menos peso y fuera de estadísticas y récords",
+        "fr": "Marquez une séance comme décharge : charges réduites, hors statistiques et records",
+        "pt": "Marque um treino como descarga: menos peso e fora de estatísticas e recordes"
+      },
+      "details": {
+        "en": "Tap the workout's name and turn on Deload: the weights drop to 60% (change it in Settings > Workout, rounded to your load step) and come back when you turn it off. Autofill skips these workouts, so the next normal session starts from your real weights. They stay in History with a badge, you can switch it from the workout's sheet there, and you choose whether they count for the weekly goal.",
+        "it": "Tocca il nome dell'allenamento e attiva Scarico: i pesi scendono al 60% (lo cambi in Impostazioni > Allenamento, arrotondato al tuo incremento) e tornano come prima quando lo spegni. L'autoriempimento salta questi allenamenti, così il prossimo allenamento normale parte dai tuoi pesi veri. Restano nello Storico con un'etichetta, lì puoi cambiarlo dalla scheda dell'allenamento, e scegli tu se contano per l'obiettivo settimanale.",
+        "de": "Tippe auf den Namen des Trainings und schalte Deload ein: Die Gewichte sinken auf 60 % (änderbar unter Einstellungen > Training, auf deine Gewichtsstufe gerundet) und kehren zurück, wenn du es ausschaltest. Die Vorausfüllung überspringt diese Trainings, damit das nächste normale Training von deinen echten Gewichten startet. Sie bleiben mit einem Abzeichen im Verlauf, dort kannst du es im Blatt des Trainings ändern, und du entscheidest, ob sie fürs Wochenziel zählen.",
+        "es": "Toca el nombre del entrenamiento y activa Descarga: los pesos bajan al 60 % (cámbialo en Ajustes > Entrenamiento, redondeado a tu incremento) y vuelven al apagarlo. El autocompletado se salta estos entrenamientos, así el siguiente normal parte de tus pesos reales. Quedan en el Historial con una etiqueta, allí puedes cambiarlo desde la hoja del entrenamiento, y tú eliges si cuentan para el objetivo semanal.",
+        "fr": "Touchez le nom de la séance et activez Décharge : les charges passent à 60 % (modifiable dans Paramètres > Entraînement, arrondi à votre incrément) et reviennent quand vous l'éteignez. Le pré-remplissage ignore ces séances, la prochaine séance normale repart donc de vos vraies charges. Elles restent dans l'Historique avec un badge, vous pouvez le changer depuis la fiche de la séance, et vous choisissez si elles comptent pour l'objectif hebdomadaire.",
+        "pt": "Toque no nome do treino e ative Descarga: os pesos caem para 60% (mude em Configurações > Treino, arredondado ao seu incremento) e voltam quando você desliga. O preenchimento automático pula esses treinos, então o próximo treino normal parte dos seus pesos reais. Eles ficam no Histórico com uma etiqueta, lá você pode mudar isso na ficha do treino, e você escolhe se contam para a meta semanal."
+      }
+    },
+    {
+      "type": "new",
+      "area": "routines",
+      "title": {
+        "en": "Turn a quick workout into a routine",
+        "it": "Da allenamento veloce a scheda",
+        "de": "Aus schnellem Training eine Routine",
+        "es": "De entrenamiento rápido a rutina",
+        "fr": "D'une séance rapide à une routine",
+        "pt": "De treino rápido a rotina"
+      },
+      "summary": {
+        "en": "Save a quick workout as a routine, with its exercises, sets and reps",
+        "it": "Salva un allenamento veloce come scheda, con esercizi, serie e ripetizioni",
+        "de": "Speichere ein schnelles Training als Routine, mit Übungen, Sätzen und Wiederholungen",
+        "es": "Guarda un entrenamiento rápido como rutina, con sus ejercicios, series y repeticiones",
+        "fr": "Enregistrez une séance rapide comme routine, avec ses exercices, séries et répétitions",
+        "pt": "Salve um treino rápido como rotina, com exercícios, séries e repetições"
+      },
+      "details": {
+        "en": "Three ways: the button in the workout's sheet in History, the message right after you finish a quick workout, or New routine > From a quick workout. The workout moves into the new routine, so the next session starts from its weights. Different reps per set become a list such as 10-8-7, and you can undo it.",
+        "it": "Tre modi: il pulsante nella scheda dell'allenamento nello Storico, il messaggio appena finisci un allenamento veloce, oppure Nuova scheda > Da un allenamento veloce. L'allenamento passa nella nuova scheda, così il prossimo parte dai suoi pesi. Ripetizioni diverse per serie diventano una lista come 10-8-7, e puoi annullare.",
+        "de": "Drei Wege: der Knopf im Blatt des Trainings im Verlauf, die Meldung direkt nach einem schnellen Training oder Neue Routine > Aus einem schnellen Training. Das Training wandert in die neue Routine, damit das nächste von seinen Gewichten startet. Verschiedene Wiederholungen pro Satz werden zu einer Liste wie 10-8-7, und du kannst es rückgängig machen.",
+        "es": "Tres formas: el botón en la hoja del entrenamiento en el Historial, el mensaje justo al terminar un entrenamiento rápido o Nueva rutina > Desde un entrenamiento rápido. El entrenamiento pasa a la nueva rutina, así el siguiente parte de sus pesos. Repeticiones distintas por serie se vuelven una lista como 10-8-7, y puedes deshacerlo.",
+        "fr": "Trois façons : le bouton dans la fiche de la séance dans l'Historique, le message juste après une séance rapide, ou Nouvelle routine > À partir d'une séance rapide. La séance passe dans la nouvelle routine, la suivante repart donc de ses charges. Des répétitions différentes par série deviennent une liste comme 10-8-7, et vous pouvez annuler.",
+        "pt": "Três jeitos: o botão na ficha do treino no Histórico, a mensagem logo depois de terminar um treino rápido ou Nova rotina > De um treino rápido. O treino passa para a nova rotina, então o próximo parte dos pesos dele. Repetições diferentes por série viram uma lista como 10-8-7, e você pode desfazer."
+      }
+    },
+    {
+      "type": "new",
+      "area": "notifications",
+      "title": {
+        "en": "One live card for the whole workout",
+        "it": "Una card live per tutto l'allenamento",
+        "de": "Eine Live-Karte für das ganze Training",
+        "es": "Una tarjeta en vivo para todo el entrenamiento",
+        "fr": "Une carte en direct pour toute la séance",
+        "pt": "Um cartão ao vivo para o treino inteiro"
+      },
+      "summary": {
+        "en": "One card shows the set to do, the rest and the exercise's progress, instead of separate timers",
+        "it": "Una sola card mostra la serie da fare, il riposo e l'avanzamento dell'esercizio",
+        "de": "Eine Karte zeigt den nächsten Satz, die Pause und den Fortschritt der Übung",
+        "es": "Una sola tarjeta muestra la serie que toca, el descanso y el progreso del ejercicio",
+        "fr": "Une seule carte montre la série à faire, le repos et la progression de l'exercice",
+        "pt": "Um só cartão mostra a série a fazer, o descanso e o progresso do exercício"
+      },
+      "details": {
+        "en": "Turn on \"Workout live notification\" in Settings > Notifications (off by default). It replaces the rest, warm-up and EMOM notifications: a bar per set fills during the rest, and \"Set done\" works from the notification. A separate alert at the end of each timer can stay on, so watches and bands still get it.",
+        "it": "Attiva \"Notifica allenamento live\" in Impostazioni > Notifiche (spenta di base). Prende il posto delle notifiche di riposo, riscaldamento ed EMOM: una barra per serie si riempie durante il riposo e \"Serie fatta\" funziona dalla notifica. Un avviso separato a fine timer può restare acceso, così orologi e band lo ricevono ancora.",
+        "de": "Schalte „Live-Trainingsbenachrichtigung“ unter Einstellungen > Mitteilungen ein (standardmäßig aus). Sie ersetzt die Benachrichtigungen für Pause, Aufwärmen und EMOM: ein Balken pro Satz füllt sich in der Pause, und „Satz erledigt“ funktioniert aus der Benachrichtigung. Ein eigener Hinweis am Ende jedes Timers kann an bleiben, damit Uhren und Bänder ihn weiter bekommen.",
+        "es": "Activa \"Notificación del entrenamiento en vivo\" en Ajustes > Notificaciones (apagada por defecto). Sustituye a las notificaciones de descanso, calentamiento y EMOM: una barra por serie se llena durante el descanso y \"Serie hecha\" funciona desde la notificación. Un aviso aparte al final de cada temporizador puede seguir activo, para que relojes y pulseras lo reciban.",
+        "fr": "Activez « Notification de séance en direct » dans Paramètres > Notifications (désactivée par défaut). Elle remplace les notifications de repos, d'échauffement et d'EMOM : une barre par série se remplit pendant le repos, et « Série faite » fonctionne depuis la notification. Une alerte séparée à la fin de chaque minuteur peut rester active, pour que montres et bracelets la reçoivent.",
+        "pt": "Ative \"Notificação do treino ao vivo\" em Configurações > Notificações (desligada por padrão). Ela substitui as notificações de descanso, aquecimento e EMOM: uma barra por série enche durante o descanso, e \"Série feita\" funciona pela notificação. Um aviso separado no fim de cada timer pode continuar ligado, para relógios e pulseiras receberem."
+      },
+      "platforms": [
+        "android"
+      ]
+    },
+    {
+      "type": "new",
+      "area": "notifications",
+      "title": {
+        "en": "One live card for the whole workout",
+        "it": "Una card live per tutto l'allenamento",
+        "de": "Eine Live-Karte für das ganze Training",
+        "es": "Una tarjeta en vivo para todo el entrenamiento",
+        "fr": "Une carte en direct pour toute la séance",
+        "pt": "Um cartão ao vivo para o treino inteiro"
+      },
+      "summary": {
+        "en": "One card shows the set to do, the rest and the exercise's progress, instead of separate timers",
+        "it": "Una sola card mostra la serie da fare, il riposo e l'avanzamento dell'esercizio",
+        "de": "Eine Karte zeigt den nächsten Satz, die Pause und den Fortschritt der Übung",
+        "es": "Una sola tarjeta muestra la serie que toca, el descanso y el progreso del ejercicio",
+        "fr": "Une seule carte montre la série à faire, le repos et la progression de l'exercice",
+        "pt": "Um só cartão mostra a série a fazer, o descanso e o progresso do exercício"
+      },
+      "details": {
+        "en": "Turn on \"Workout live notification\" in Settings > Notifications (off by default). One Live Activity, also in the Dynamic Island, replaces the rest, warm-up and EMOM ones: a bar per set fills during the rest, and \"Set done\" works from the Lock Screen.",
+        "it": "Attiva \"Notifica allenamento live\" in Impostazioni > Notifiche (spenta di base). Una sola Live Activity, anche nella Dynamic Island, prende il posto di quelle di riposo, riscaldamento ed EMOM: una barra per serie si riempie durante il riposo e \"Serie fatta\" funziona dalla schermata di blocco.",
+        "de": "Schalte „Live-Trainingsbenachrichtigung“ unter Einstellungen > Mitteilungen ein (standardmäßig aus). Eine Live-Aktivität, auch in der Dynamic Island, ersetzt die für Pause, Aufwärmen und EMOM: ein Balken pro Satz füllt sich in der Pause, und „Satz erledigt“ funktioniert vom Sperrbildschirm.",
+        "es": "Activa \"Notificación del entrenamiento en vivo\" en Ajustes > Notificaciones (apagada por defecto). Una sola Actividad en vivo, también en la Dynamic Island, sustituye a las de descanso, calentamiento y EMOM: una barra por serie se llena durante el descanso y \"Serie hecha\" funciona desde la pantalla de bloqueo.",
+        "fr": "Activez « Notification de séance en direct » dans Paramètres > Notifications (désactivée par défaut). Une seule Activité en direct, aussi dans la Dynamic Island, remplace celles du repos, de l'échauffement et de l'EMOM : une barre par série se remplit pendant le repos, et « Série faite » fonctionne depuis l'écran verrouillé.",
+        "pt": "Ative \"Notificação do treino ao vivo\" em Configurações > Notificações (desligada por padrão). Uma só Atividade ao Vivo, também na Dynamic Island, substitui as de descanso, aquecimento e EMOM: uma barra por série enche durante o descanso, e \"Série feita\" funciona pela tela bloqueada."
+      },
+      "platforms": [
+        "ios"
+      ]
+    },
+    {
+      "type": "new",
+      "area": "import_export",
+      "title": {
+        "en": "Export only the workouts you want",
+        "it": "Esporta solo gli allenamenti che vuoi",
+        "de": "Nur gewünschte Trainings exportieren",
+        "es": "Exporta solo los entrenamientos que quieras",
+        "fr": "Exportez seulement les séances voulues",
+        "pt": "Exporte só os treinos que quiser"
+      },
+      "summary": {
+        "en": "Choose routines, period, exercises and type before saving the CSV",
+        "it": "Scegli schede, periodo, esercizi e tipo prima di salvare il CSV",
+        "de": "Wähle Routinen, Zeitraum, Übungen und Art, bevor du die CSV speicherst",
+        "es": "Elige rutinas, periodo, ejercicios y tipo antes de guardar el CSV",
+        "fr": "Choisissez routines, période, exercices et type avant d'enregistrer le CSV",
+        "pt": "Escolha rotinas, período, exercícios e tipo antes de salvar o CSV"
+      },
+      "details": {
+        "en": "Settings > Export CSV opens a sheet that counts the workouts as you choose and shows the file name. In History, the button next to \"Show N workouts\" in the Filters sheet saves just the filtered workouts.",
+        "it": "Impostazioni > Esporta CSV apre un pannello che conta gli allenamenti mentre scegli e mostra il nome del file. Nello Storico, il pulsante accanto a \"Mostra N allenamenti\" nel pannello Filtri salva solo gli allenamenti filtrati.",
+        "de": "Einstellungen > CSV exportieren öffnet ein Blatt, das die Trainings beim Auswählen zählt und den Dateinamen zeigt. Im Verlauf speichert der Knopf neben „N Trainings anzeigen“ im Filter-Blatt nur die gefilterten Trainings.",
+        "es": "Ajustes > Exportar CSV abre una hoja que cuenta los entrenamientos mientras eliges y muestra el nombre del archivo. En el Historial, el botón junto a \"Mostrar N entrenamientos\" en la hoja de Filtros guarda solo los filtrados.",
+        "fr": "Paramètres > Exporter CSV ouvre un panneau qui compte les séances pendant votre choix et affiche le nom du fichier. Dans l'Historique, le bouton à côté de « Afficher N séances » dans le panneau Filtres enregistre seulement les séances filtrées.",
+        "pt": "Configurações > Exportar CSV abre um painel que conta os treinos enquanto você escolhe e mostra o nome do arquivo. No Histórico, o botão ao lado de \"Mostrar N treinos\" no painel Filtros salva só os treinos filtrados."
+      }
+    },
+    {
+      "type": "new",
+      "area": "physical_check",
+      "title": {
+        "en": "A new physical check",
+        "it": "Un nuovo check fisico",
+        "de": "Neue Checks",
+        "es": "Un nuevo chequeo físico",
+        "fr": "Un nouveau check physique",
+        "pt": "Uma nova checagem física"
+      },
+      "summary": {
+        "en": "Checks grouped by month with weight changes, a sheet for each check and a better compare",
+        "it": "Check divisi per mese con le variazioni di peso, un pannello per ogni check e un confronto migliore",
+        "de": "Checks nach Monat mit Gewichtsänderung, ein Blatt pro Check und ein besserer Vergleich",
+        "es": "Chequeos por mes con los cambios de peso, una hoja para cada uno y una comparación mejor",
+        "fr": "Checks groupés par mois avec l'évolution du poids, une fiche par check et une meilleure comparaison",
+        "pt": "Checagens por mês com a variação de peso, um painel para cada uma e uma comparação melhor"
+      },
+      "details": {
+        "en": "Tap a check to see its photos, weight and note; add or edit one in a single sheet with camera and gallery. Compare two checks with a slider or side by side, with the change and the days between them. The lock screen and the security settings have a new look too.",
+        "it": "Tocca un check per vedere foto, peso e nota; aggiungi o modifica in un solo pannello con fotocamera e galleria. Confronta due check con il cursore o affiancati, con la variazione e i giorni tra i due. Anche la schermata di blocco e le impostazioni di sicurezza hanno un nuovo aspetto.",
+        "de": "Tippe auf einen Check für Fotos, Gewicht und Notiz; hinzufügen oder bearbeiten in einem Blatt mit Kamera und Galerie. Vergleiche zwei Checks mit Schieberegler oder nebeneinander, mit Änderung und Tagen dazwischen. Sperrbildschirm und Sicherheitseinstellungen sehen ebenfalls neu aus.",
+        "es": "Toca un chequeo para ver fotos, peso y nota; añade o edita en una sola hoja con cámara y galería. Compara dos chequeos con un deslizador o lado a lado, con el cambio y los días entre ellos. La pantalla de bloqueo y los ajustes de seguridad también tienen un nuevo aspecto.",
+        "fr": "Touchez un check pour voir photos, poids et note ; ajoutez ou modifiez dans un seul panneau avec appareil photo et galerie. Comparez deux checks avec un curseur ou côte à côte, avec l'écart et les jours entre eux. L'écran de verrouillage et les réglages de sécurité ont aussi un nouveau look.",
+        "pt": "Toque numa checagem para ver fotos, peso e nota; adicione ou edite num só painel com câmera e galeria. Compare duas checagens com um controle deslizante ou lado a lado, com a variação e os dias entre elas. A tela de bloqueio e as configurações de segurança também têm um visual novo."
+      }
+    },
+    {
+      "type": "new",
+      "area": "updates",
+      "title": {
+        "en": "What's new, inside the app",
+        "it": "Le novità, dentro l'app",
+        "de": "Neuigkeiten in der App",
+        "es": "Las novedades, dentro de la app",
+        "fr": "Les nouveautés, dans l'app",
+        "pt": "As novidades, dentro do app"
+      },
+      "summary": {
+        "en": "After an update the app shows what changed; Settings > About shows it again",
+        "it": "Dopo un aggiornamento l'app mostra cosa è cambiato; Impostazioni > Info lo mostra di nuovo",
+        "de": "Nach einem Update zeigt die App, was neu ist; Einstellungen > Info zeigt es erneut",
+        "es": "Tras una actualización la app muestra qué cambió; Ajustes > Información lo vuelve a mostrar",
+        "fr": "Après une mise à jour, l'app montre ce qui a changé ; Paramètres > À propos le remontre",
+        "pt": "Depois de uma atualização o app mostra o que mudou; Configurações > Sobre mostra de novo"
+      },
+      "platforms": [
+        "ios"
+      ]
+    },
+    {
+      "type": "improved",
+      "area": "physical_check",
+      "title": {
+        "en": "More private physical checks",
+        "it": "Check fisici più privati",
+        "de": "Privatere Checks",
+        "es": "Chequeos físicos más privados",
+        "fr": "Des checks physiques plus privés",
+        "pt": "Checagens físicas mais privadas"
+      },
+      "summary": {
+        "en": "With the password on, weight and notes are encrypted too and screenshots are blocked",
+        "it": "Con la password attiva anche peso e note sono cifrati e gli screenshot sono bloccati",
+        "de": "Mit Passwort werden auch Gewicht und Notizen verschlüsselt und Screenshots gesperrt",
+        "es": "Con la contraseña activa, peso y notas también se cifran y las capturas se bloquean",
+        "fr": "Avec le mot de passe, poids et notes sont aussi chiffrés et les captures d'écran bloquées",
+        "pt": "Com a senha ativa, peso e notas também são criptografados e as capturas de tela bloqueadas"
+      },
+      "details": {
+        "en": "The section locks again when you leave it, after 5 minutes or when the app goes to the background, and asks for your fingerprint or face only once. You can change the password; new ones need at least 8 characters.",
+        "it": "La sezione si blocca di nuovo quando la lasci, dopo 5 minuti o quando l'app va in background, e chiede impronta o volto una volta sola. Puoi cambiare la password; quelle nuove vogliono almeno 8 caratteri.",
+        "de": "Der Bereich sperrt sich wieder, wenn du ihn verlässt, nach 5 Minuten oder wenn die App in den Hintergrund geht, und fragt nur einmal nach Fingerabdruck oder Gesicht. Du kannst das Passwort ändern; neue brauchen mindestens 8 Zeichen.",
+        "es": "La sección se bloquea de nuevo al salir, tras 5 minutos o cuando la app pasa a segundo plano, y pide la huella o la cara una sola vez. Puedes cambiar la contraseña; las nuevas necesitan al menos 8 caracteres.",
+        "fr": "La section se verrouille à nouveau quand vous la quittez, après 5 minutes ou quand l'app passe en arrière-plan, et ne demande l'empreinte ou le visage qu'une fois. Vous pouvez changer le mot de passe ; les nouveaux demandent au moins 8 caractères.",
+        "pt": "A seção bloqueia de novo quando você sai, depois de 5 minutos ou quando o app vai para segundo plano, e pede a digital ou o rosto só uma vez. Você pode mudar a senha; as novas precisam de pelo menos 8 caracteres."
+      }
+    },
+    {
+      "type": "improved",
+      "area": "report",
+      "title": {
+        "en": "A new routine report",
+        "it": "Un nuovo report della scheda",
+        "de": "Ein neuer Routinebericht",
+        "es": "Un nuevo informe de rutina",
+        "fr": "Un nouveau rapport de routine",
+        "pt": "Um novo relatório da rotina"
+      },
+      "summary": {
+        "en": "The report uses the app's font and your theme, with tabs for overview, exercises and workouts",
+        "it": "Il report usa il font dell'app e il tuo tema, con schede per panoramica, esercizi e allenamenti",
+        "de": "Der Bericht nutzt die Schrift der App und dein Theme, mit Tabs für Überblick, Übungen und Trainings",
+        "es": "El informe usa la fuente de la app y tu tema, con pestañas de resumen, ejercicios y entrenamientos",
+        "fr": "Le rapport utilise la police de l'app et votre thème, avec des onglets aperçu, exercices et séances",
+        "pt": "O relatório usa a fonte do app e o seu tema, com abas de resumo, exercícios e treinos"
+      },
+      "details": {
+        "en": "Each exercise shows its best, a trend chart and what the routine asked against what you did. Workouts are grouped by month like History, with the journal inside, in light or dark.",
+        "it": "Ogni esercizio mostra il migliore, un grafico dell'andamento e cosa chiedeva la scheda rispetto a cosa hai fatto. Gli allenamenti sono divisi per mese come nello Storico, con il diario dentro, in chiaro o scuro.",
+        "de": "Jede Übung zeigt ihren Bestwert, ein Verlaufsdiagramm und was die Routine verlangte gegenüber dem, was du gemacht hast. Trainings sind wie im Verlauf nach Monat gruppiert, mit dem Journal darin, hell oder dunkel.",
+        "es": "Cada ejercicio muestra su mejor marca, un gráfico de tendencia y lo que pedía la rutina frente a lo que hiciste. Los entrenamientos se agrupan por mes como en el Historial, con el diario dentro, en claro u oscuro.",
+        "fr": "Chaque exercice montre son meilleur résultat, un graphique d'évolution et ce que demandait la routine face à ce que vous avez fait. Les séances sont groupées par mois comme dans l'Historique, avec le journal, en clair ou sombre.",
+        "pt": "Cada exercício mostra o melhor resultado, um gráfico de evolução e o que a rotina pedia frente ao que você fez. Os treinos ficam agrupados por mês como no Histórico, com o diário dentro, no claro ou escuro."
+      }
+    },
+    {
+      "type": "improved",
+      "area": "workouts",
+      "title": {
+        "en": "A menu on the workout's name",
+        "it": "Un menu sul nome dell'allenamento",
+        "de": "Ein Menü auf dem Trainingsnamen",
+        "es": "Un menú en el nombre del entrenamiento",
+        "fr": "Un menu sur le nom de la séance",
+        "pt": "Um menu no nome do treino"
+      },
+      "summary": {
+        "en": "Tap the name to rename the workout, open its routine or turn on deload",
+        "it": "Tocca il nome per rinominare l'allenamento, aprire la scheda o attivare lo scarico",
+        "de": "Tippe auf den Namen, um das Training umzubenennen, die Routine zu öffnen oder Deload einzuschalten",
+        "es": "Toca el nombre para renombrar el entrenamiento, abrir su rutina o activar la descarga",
+        "fr": "Touchez le nom pour renommer la séance, ouvrir sa routine ou activer la décharge",
+        "pt": "Toque no nome para renomear o treino, abrir a rotina ou ativar a descarga"
+      }
+    },
+    {
+      "type": "improved",
+      "area": "other",
+      "title": {
+        "en": "Better swipe actions",
+        "it": "Azioni a scorrimento migliori",
+        "de": "Bessere Wischaktionen",
+        "es": "Mejores acciones al deslizar",
+        "fr": "De meilleures actions par balayage",
+        "pt": "Ações de deslizar melhores"
+      },
+      "summary": {
+        "en": "A quick flick on a row changes tab; deleting or archiving needs a real drag, with a livelier shape",
+        "it": "Un colpo veloce su una riga cambia scheda; eliminare o archiviare vuole un vero trascinamento",
+        "de": "Ein schnelles Wischen über eine Zeile wechselt den Tab; Löschen oder Archivieren braucht echtes Ziehen",
+        "es": "Un gesto rápido en una fila cambia de pestaña; borrar o archivar requiere arrastrar de verdad",
+        "fr": "Un geste rapide sur une ligne change d'onglet ; supprimer ou archiver demande un vrai glissement",
+        "pt": "Um gesto rápido numa linha muda de aba; apagar ou arquivar pede um arrasto de verdade"
+      },
+      "details": {
+        "en": "In Routines, History and the dashboard's resume card. The action's icon grows into an Expressive shape and pops when you pass the point where it fires.",
+        "it": "In Schede, Storico e nella card per riprendere della dashboard. L'icona dell'azione cresce in una forma Expressive e scatta quando superi il punto in cui parte.",
+        "de": "In Routinen, Verlauf und der Fortsetzen-Karte im Dashboard. Das Symbol der Aktion wächst zu einer Expressive-Form und springt auf, sobald du den Auslösepunkt überschreitest.",
+        "es": "En Rutinas, Historial y la tarjeta para reanudar del panel. El icono de la acción crece en una forma Expressive y salta al pasar el punto en que se activa.",
+        "fr": "Dans Routines, Historique et la carte de reprise du tableau de bord. L'icône de l'action grandit en forme Expressive et rebondit quand vous passez le point de déclenchement.",
+        "pt": "Em Rotinas, Histórico e no cartão para retomar do painel. O ícone da ação cresce numa forma Expressive e salta quando você passa do ponto em que dispara."
+      }
+    },
+    {
+      "type": "improved",
+      "area": "appearance",
+      "title": {
+        "en": "Expressive menus and whole titles",
+        "it": "Menu Expressive e titoli interi",
+        "de": "Expressive-Menüs und ganze Titel",
+        "es": "Menús Expressive y títulos enteros",
+        "fr": "Menus Expressive et titres entiers",
+        "pt": "Menus Expressive e títulos inteiros"
+      },
+      "summary": {
+        "en": "New menus in Analytics and Routines; long screen titles shrink instead of breaking a word",
+        "it": "Nuovi menu in Statistiche e Schede; i titoli lunghi si rimpiccioliscono invece di spezzare una parola",
+        "de": "Neue Menüs in Statistiken und Routinen; lange Titel werden kleiner, statt ein Wort zu trennen",
+        "es": "Nuevos menús en Estadísticas y Rutinas; los títulos largos se encogen en vez de partir una palabra",
+        "fr": "Nouveaux menus dans Statistiques et Routines ; les longs titres rétrécissent au lieu de couper un mot",
+        "pt": "Novos menus em Estatísticas e Rotinas; títulos longos diminuem em vez de quebrar uma palavra"
+      }
+    },
+    {
+      "type": "improved",
+      "area": "liquid_glass",
+      "title": {
+        "en": "Glass panel follows the screen",
+        "it": "Il pannello in vetro segue lo schermo",
+        "de": "Glaspanel folgt dem Bildschirm",
+        "es": "El panel de cristal sigue la pantalla",
+        "fr": "Le panneau en verre suit l'écran",
+        "pt": "O painel de vidro segue a tela"
+      },
+      "summary": {
+        "en": "The workout's glass panel has bottom corners that match the iPhone's screen",
+        "it": "Il pannello in vetro dell'allenamento ha gli angoli in basso uguali a quelli dello schermo dell'iPhone",
+        "de": "Das Glaspanel im Training hat untere Ecken wie der Bildschirm des iPhone",
+        "es": "El panel de cristal del entrenamiento tiene las esquinas inferiores como la pantalla del iPhone",
+        "fr": "Le panneau en verre de la séance a des coins du bas assortis à l'écran de l'iPhone",
+        "pt": "O painel de vidro do treino tem os cantos de baixo iguais aos da tela do iPhone"
+      },
+      "platforms": [
+        "ios"
+      ]
+    },
+    {
+      "type": "improved",
+      "area": "history",
+      "title": {
+        "en": "Names for workouts without a routine",
+        "it": "Nomi per gli allenamenti senza scheda",
+        "de": "Namen für Trainings ohne Routine",
+        "es": "Nombres para entrenamientos sin rutina",
+        "fr": "Des noms pour les séances sans routine",
+        "pt": "Nomes para treinos sem rotina"
+      },
+      "summary": {
+        "en": "They are called Quick Workout or Cardio after what they hold, everywhere in the app",
+        "it": "Si chiamano Allenamento veloce o Cardio in base a cosa contengono, in tutta l'app",
+        "de": "Sie heißen je nach Inhalt Schnelles Training oder Cardio, überall in der App",
+        "es": "Se llaman Entrenamiento rápido o Cardio según lo que contienen, en toda la app",
+        "fr": "Elles s'appellent Séance rapide ou Cardio selon leur contenu, partout dans l'app",
+        "pt": "Eles se chamam Treino rápido ou Cardio conforme o que contêm, em todo o app"
+      },
+      "issues": [
+        75
+      ]
+    },
+    {
+      "type": "improved",
+      "area": "settings",
+      "title": {
+        "en": "Asks before deleting",
+        "it": "Chiede prima di eliminare",
+        "de": "Fragt vor dem Löschen",
+        "es": "Pregunta antes de borrar",
+        "fr": "Demande avant de supprimer",
+        "pt": "Pergunta antes de apagar"
+      },
+      "summary": {
+        "en": "Removing an exercise from a routine, a photo, a 1RM, a body weight or a set now asks first",
+        "it": "Togliere un esercizio da una scheda, una foto, un 1RM, un peso corporeo o una serie ora chiede conferma",
+        "de": "Eine Übung aus einer Routine, ein Foto, ein 1RM, ein Körpergewicht oder einen Satz entfernen fragt jetzt nach",
+        "es": "Quitar un ejercicio de una rutina, una foto, un 1RM, un peso corporal o una serie ahora pide confirmación",
+        "fr": "Retirer un exercice d'une routine, une photo, un 1RM, un poids corporel ou une série demande confirmation",
+        "pt": "Tirar um exercício de uma rotina, uma foto, um 1RM, um peso corporal ou uma série agora pede confirmação"
+      }
+    },
+    {
+      "type": "fixed",
+      "area": "history",
+      "title": {
+        "en": "Deleting an exercise from a workout",
+        "it": "Eliminare un esercizio da un allenamento",
+        "de": "Eine Übung aus einem Training löschen",
+        "es": "Borrar un ejercicio de un entrenamiento",
+        "fr": "Supprimer un exercice d'une séance",
+        "pt": "Apagar um exercício de um treino"
+      },
+      "summary": {
+        "en": "The dialog names the exercise, and cardio exercises now ask before going",
+        "it": "La finestra nomina l'esercizio, e ora anche gli esercizi cardio chiedono prima di sparire",
+        "de": "Der Dialog nennt die Übung, und Cardio-Übungen fragen jetzt auch vorher",
+        "es": "El diálogo nombra el ejercicio, y los ejercicios de cardio ahora también preguntan antes",
+        "fr": "La boîte de dialogue nomme l'exercice, et les exercices cardio demandent aussi avant",
+        "pt": "A janela mostra o nome do exercício, e os exercícios de cardio agora também perguntam antes"
+      },
+      "issues": [
+        73
+      ]
+    },
+    {
+      "type": "fixed",
+      "area": "history",
+      "title": {
+        "en": "Workout names stay linked to the routine",
+        "it": "I nomi degli allenamenti restano legati alla scheda",
+        "de": "Trainingsnamen bleiben mit der Routine verbunden",
+        "es": "Los nombres siguen unidos a la rutina",
+        "fr": "Les noms de séance restent liés à la routine",
+        "pt": "Os nomes dos treinos continuam ligados à rotina"
+      },
+      "summary": {
+        "en": "Editing a workout no longer freezes the routine's old name on it",
+        "it": "Modificare un allenamento non ci blocca più sopra il vecchio nome della scheda",
+        "de": "Ein Training zu bearbeiten friert den alten Routinenamen nicht mehr darauf ein",
+        "es": "Editar un entrenamiento ya no le deja fijo el nombre antiguo de la rutina",
+        "fr": "Modifier une séance n'y fige plus l'ancien nom de la routine",
+        "pt": "Editar um treino não deixa mais fixo nele o nome antigo da rotina"
+      },
+      "issues": [
+        74
+      ]
+    },
+    {
+      "type": "fixed",
+      "area": "analytics",
+      "title": {
+        "en": "Stats only from finished workouts",
+        "it": "Statistiche solo dagli allenamenti finiti",
+        "de": "Statistiken nur aus beendeten Trainings",
+        "es": "Estadísticas solo de entrenamientos terminados",
+        "fr": "Statistiques seulement des séances terminées",
+        "pt": "Estatísticas só de treinos terminados"
+      },
+      "summary": {
+        "en": "Volume, records and strength charts no longer count a workout still in progress",
+        "it": "Volume, record e grafici di forza non contano più un allenamento ancora in corso",
+        "de": "Volumen, Rekorde und Kraftdiagramme zählen kein laufendes Training mehr",
+        "es": "Volumen, récords y gráficos de fuerza ya no cuentan un entrenamiento en curso",
+        "fr": "Volume, records et graphiques de force ne comptent plus une séance en cours",
+        "pt": "Volume, recordes e gráficos de força não contam mais um treino em andamento"
+      }
+    }
+  ]
+}
