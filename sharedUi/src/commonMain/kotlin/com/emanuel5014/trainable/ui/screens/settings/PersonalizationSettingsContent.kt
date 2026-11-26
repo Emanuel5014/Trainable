@@ -143,6 +143,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -291,7 +292,7 @@ private fun LiquidGlassCard(
                 HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                 Text(
-                    stringResource(Res.string.glass_parts).uppercase(),
+                    stringResource(Res.string.glass_parts).uppercaseUi(),
                     style = MaterialTheme.typography.labelMedium,
                     color = Primary,
                     fontWeight = FontWeight.Black

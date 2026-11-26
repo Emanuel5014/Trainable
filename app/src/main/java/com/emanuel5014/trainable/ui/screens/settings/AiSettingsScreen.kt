@@ -68,6 +68,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -112,12 +113,12 @@ fun AiSettingsScreen(
                         viewModel.deleteAiModel()
                     }
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(R.string.delete).uppercaseUi(), color = Error, fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteModelDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(R.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )
@@ -245,7 +246,7 @@ private fun LocalModelControls(
                         )
                         TextButton(onClick = { viewModel.cancelAiModelDownload() }) {
                             Text(
-                                stringResource(R.string.ai_download_cancel).uppercase(),
+                                stringResource(R.string.ai_download_cancel).uppercaseUi(),
                                 color = Error,
                                 fontWeight = FontWeight.ExtraBold
                             )
@@ -274,7 +275,7 @@ private fun LocalModelControls(
                     }
                     TextButton(onClick = onDeleteModelClick) {
                         Text(
-                            stringResource(R.string.ai_model_delete).uppercase(),
+                            stringResource(R.string.ai_model_delete).uppercaseUi(),
                             color = Error,
                             fontWeight = FontWeight.ExtraBold
                         )

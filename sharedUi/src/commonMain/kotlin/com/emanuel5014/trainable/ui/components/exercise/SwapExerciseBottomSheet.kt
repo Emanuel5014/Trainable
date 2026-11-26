@@ -93,6 +93,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
 import com.emanuel5014.trainable.util.RestSeconds
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -430,7 +431,7 @@ private fun SwapExerciseConfigSheet(
             SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.large) {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
                     Text(
-                        text = (if (isAdding) stringResource(Res.string.add_exercise) else stringResource(Res.string.swap_exercise)).uppercase(),
+                        text = (if (isAdding) stringResource(Res.string.add_exercise) else stringResource(Res.string.swap_exercise)).uppercaseUi(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -529,7 +530,7 @@ private fun SwapExerciseConfigSheet(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(Res.string.back).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.back).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -569,7 +570,7 @@ private fun SwapExerciseConfigSheet(
                             else -> true
                         }
                     ) {
-                        Text(stringResource(Res.string.confirm).uppercase(), fontWeight = FontWeight.Black)
+                        Text(stringResource(Res.string.confirm).uppercaseUi(), fontWeight = FontWeight.Black)
                     }
                 }
             }

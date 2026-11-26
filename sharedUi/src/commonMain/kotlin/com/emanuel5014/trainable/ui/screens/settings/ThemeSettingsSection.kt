@@ -157,6 +157,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 private val RAINBOW = listOf(
     Color(0xFFFF0000), Color(0xFFFF8800), Color(0xFFFFFF00), Color(0xFF00FF00), Color(0xFF00CBFF),
@@ -349,7 +350,7 @@ internal fun ThemeSource.label(): StringResource = when (this) {
 @Composable
 private fun SectionLabel(text: StringResource) {
     Text(
-        stringResource(text).uppercase(),
+        stringResource(text).uppercaseUi(),
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Black,
         color = OnSurfaceVariant,

@@ -63,6 +63,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.fromHSV
 import com.emanuel5014.trainable.ui.theme.AppColorSchemes
 import com.emanuel5014.trainable.ui.theme.toHSV
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @Composable
 fun PalettePreviewCircle(
@@ -214,12 +215,12 @@ fun CustomColorPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = { onApply(seedArgb, selectedStyle) }) {
-                Text(stringResource(Res.string.apply).uppercase(), color = Primary)
+                Text(stringResource(Res.string.apply).uppercaseUi(), color = Primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         }
     )

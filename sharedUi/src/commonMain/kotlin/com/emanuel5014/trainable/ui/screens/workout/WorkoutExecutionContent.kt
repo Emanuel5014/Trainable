@@ -145,6 +145,7 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
 import kotlinx.coroutines.launch
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Key of the large exercise media item in the sets list, used to read where the sets end. */
 const val MEDIA_CARD_KEY = "exercise_media_card"
@@ -340,7 +341,7 @@ fun WorkoutExecutionContent(
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                                 GymButton(onClick = { ui.showAddExerciseSheet = true }) {
-                                    Text(stringResource(Res.string.add_exercise_to_workout).uppercase(), fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(Res.string.add_exercise_to_workout).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                                 }
                             }
                         }
@@ -714,12 +715,12 @@ fun CardioExerciseContent(
                         showCompleteDialog = false
                     }
                 ) {
-                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCompleteDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -750,12 +751,12 @@ fun CardioExerciseContent(
                     viewModel.stopCardioTimer(dist)
                     showStopDialog = false
                 }) {
-                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showStopDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -933,7 +934,7 @@ fun CardioHubSection(
                     Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(Res.string.add_exercise).uppercase(),
+                        text = stringResource(Res.string.add_exercise).uppercaseUi(),
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
@@ -967,7 +968,7 @@ fun CardioHubSection(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = stringResource(Res.string.next_exercise_btn).uppercase(),
+                                text = stringResource(Res.string.next_exercise_btn).uppercaseUi(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = OnPrimary.copy(alpha = 0.75f),
                                 fontWeight = FontWeight.ExtraBold
@@ -997,7 +998,7 @@ fun CardioHubSection(
                         Icon(Icons.Rounded.Check, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(Res.string.finish_workout).uppercase(),
+                            text = stringResource(Res.string.finish_workout).uppercaseUi(),
                             fontWeight = FontWeight.ExtraBold
                         )
                     }
@@ -1034,7 +1035,7 @@ fun CardioHubSection(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = stringResource(Res.string.next_exercise_btn).uppercase(),
+                            text = stringResource(Res.string.next_exercise_btn).uppercaseUi(),
                             style = MaterialTheme.typography.labelSmall,
                             color = OnPrimary.copy(alpha = 0.75f),
                             fontWeight = FontWeight.ExtraBold
@@ -1063,7 +1064,7 @@ fun CardioHubSection(
                     Icon(Icons.Rounded.Check, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(Res.string.finish_workout).uppercase(),
+                        text = stringResource(Res.string.finish_workout).uppercaseUi(),
                         fontWeight = FontWeight.ExtraBold
                     )
                 }

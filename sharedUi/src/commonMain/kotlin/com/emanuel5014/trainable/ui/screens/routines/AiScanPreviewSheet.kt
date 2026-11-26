@@ -146,6 +146,7 @@ import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 class ZoomState(
     initialScale: Float = 1f,
@@ -1188,7 +1189,7 @@ private fun EditCustomExerciseSheet(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(stringResource(Res.string.ai_scan_save_changes).uppercase(), fontWeight = FontWeight.Black)
+                        Text(stringResource(Res.string.ai_scan_save_changes).uppercaseUi(), fontWeight = FontWeight.Black)
                     }
 
                     OutlinedButton(
@@ -1294,7 +1295,7 @@ private fun ActionButtonsSection(
             containerColor = SurfaceContainerHigh,
             contentColor = OnSurfaceVariant
         ) {
-            Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
         }
 
         GymButton(
@@ -1302,7 +1303,7 @@ private fun ActionButtonsSection(
             enabled = count > 0,
             modifier = Modifier.weight(1f)
         ) {
-            Text(stringResource(Res.string.ai_scan_add_count, count).uppercase(), fontWeight = FontWeight.Black)
+            Text(stringResource(Res.string.ai_scan_add_count, count).uppercaseUi(), fontWeight = FontWeight.Black)
         }
     }
 }

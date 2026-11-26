@@ -30,6 +30,8 @@ import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
+import com.emanuel5014.trainable.ui.util.lowercaseUi
 
 @Composable
 fun ImportConfirmationDialog(
@@ -52,7 +54,7 @@ fun ImportConfirmationDialog(
                     val cardioLabel = stringResource(Res.string.compare_cardio)
                     val timedLabel = stringResource(Res.string.exercise_type_time_and_weight)
                     val timedRepsLabel = stringResource(Res.string.exercise_type_time_and_reps)
-                    val supersetLabel = stringResource(Res.string.superset).lowercase()
+                    val supersetLabel = stringResource(Res.string.superset).lowercaseUi()
                     val advancedLabel = stringResource(Res.string.exercise_type_advanced)
                     val typeSummary = buildString {
                         val cardio = plan.exercises.count { it.exerciseType == "cardio" }
@@ -102,7 +104,7 @@ fun ImportConfirmationDialog(
                 contentColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
             ) {
-                Text(stringResource(Res.string.import_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.import_confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
@@ -112,7 +114,7 @@ fun ImportConfirmationDialog(
                 contentColor = OnSurfaceVariant,
                 modifier = Modifier.height(48.dp)
             ) {
-                Text(stringResource(Res.string.cancel).uppercase())
+                Text(stringResource(Res.string.cancel).uppercaseUi())
             }
         },
         containerColor = SurfaceContainerHigh,

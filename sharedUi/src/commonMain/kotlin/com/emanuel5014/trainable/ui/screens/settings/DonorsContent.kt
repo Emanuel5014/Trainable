@@ -63,6 +63,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 data class Donor(
     val name: String,
@@ -238,7 +239,7 @@ private fun DonorItem(donor: Donor) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = donor.name.take(1).uppercase(),
+                text = donor.name.take(1).uppercaseUi(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Black,
                 color = Primary

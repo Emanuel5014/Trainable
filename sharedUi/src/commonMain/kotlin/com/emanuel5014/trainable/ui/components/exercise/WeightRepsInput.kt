@@ -82,6 +82,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(FlowPreview::class)
 @Composable
@@ -121,7 +122,7 @@ fun WeightRepsInput(
             }
 
             WheelPickerBox(
-                label = stringResource(Res.string.weight_label_unit, weightUnit.uppercase()),
+                label = stringResource(Res.string.weight_label_unit, weightUnit.uppercaseUi()),
                 value = displayWeight,
                 range = weightRange,
                 onValueChange = { 
@@ -460,7 +461,7 @@ fun WeightTimeInput(
             }
 
             WheelPickerBox(
-                label = stringResource(Res.string.weight_label_unit, weightUnit.uppercase()),
+                label = stringResource(Res.string.weight_label_unit, weightUnit.uppercaseUi()),
                 value = displayWeight,
                 range = weightRange,
                 onValueChange = { 

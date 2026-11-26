@@ -52,6 +52,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Week handling for periodized programs; pass null to [AdvancedPrescriptionEditor] for a single-week context (a session). */
 data class WeekEditing(
@@ -165,7 +166,7 @@ fun AdvancedPrescriptionEditor(
                             }
                         }) {
                             Text(
-                                text = stringResource(Res.string.copy_previous_week, selectedWeek - 1).uppercase(),
+                                text = stringResource(Res.string.copy_previous_week, selectedWeek - 1).uppercaseUi(),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Primary
@@ -182,7 +183,7 @@ fun AdvancedPrescriptionEditor(
                             )
                             Spacer(Modifier.width(4.dp))
                             Text(
-                                text = stringResource(Res.string.delete_week).uppercase(),
+                                text = stringResource(Res.string.delete_week).uppercaseUi(),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Error
@@ -293,7 +294,7 @@ fun AdvancedPrescriptionEditor(
                     contentColor = Error,
                     height = 48
                 ) {
-                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -303,7 +304,7 @@ fun AdvancedPrescriptionEditor(
                     contentColor = OnSurfaceVariant,
                     height = 48
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,

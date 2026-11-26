@@ -67,6 +67,7 @@ import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Dark ink for the white "today" badge. */
 private val TintInk = Color(0xFF1A1A1A)
@@ -195,7 +196,7 @@ internal fun RoutineRow(
             }
             if (isToday && !isSelected) {
                 Text(
-                    text = stringResource(Res.string.today).uppercase(),
+                    text = stringResource(Res.string.today).uppercaseUi(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Black,
                     color = TintInk,

@@ -94,6 +94,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.TertiaryContainer
 import com.emanuel5014.trainable.util.sortedByKeys
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** The advanced editor's program scan, from choosing a photo through applying the selected weeks. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,7 +148,7 @@ fun <Metrics> ProgramScanButton(
     ) {
         Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
-        GymButtonText(stringResource(Res.string.ai_program_scan_button).uppercase(), fontWeight = FontWeight.ExtraBold)
+        GymButtonText(stringResource(Res.string.ai_program_scan_button).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
     }
 
     if (showSource) {
@@ -397,7 +398,7 @@ private fun ProgramScanReviewDialog(
                                 Checkbox(checked = checked, onCheckedChange = { toggle() }, colors = CheckboxDefaults.colors(checkedColor = Primary))
                             }
                             Text(
-                                text = stringResource(Res.string.week_n, week).uppercase(),
+                                text = stringResource(Res.string.week_n, week).uppercaseUi(),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = OnSurface,
                                 fontWeight = FontWeight.Black,
@@ -425,7 +426,7 @@ private fun ProgramScanReviewDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
                 }
                 GymButton(
                     onClick = {
@@ -440,7 +441,7 @@ private fun ProgramScanReviewDialog(
                     height = 52
                 ) {
                     Text(
-                        stringResource(Res.string.ai_program_import_count, selectedCount).uppercase(),
+                        stringResource(Res.string.ai_program_import_count, selectedCount).uppercaseUi(),
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1
                     )

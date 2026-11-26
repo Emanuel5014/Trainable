@@ -159,6 +159,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -256,12 +257,12 @@ fun SettingsContent(
                                     }
                                 }
                             ) {
-                                Text(stringResource(Res.string.save).uppercase(), color = Primary)
+                                Text(stringResource(Res.string.save).uppercaseUi(), color = Primary)
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showEditUsernameDialog = false }) {
-                                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                             }
                         }
                     )
@@ -428,7 +429,7 @@ fun SettingsContent(
                                 },
                                 confirmButton = {
                                     TextButton(onClick = { showNavBarStyleDialog = false }) {
-                                        Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                                        Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                                     }
                                 }
                             )

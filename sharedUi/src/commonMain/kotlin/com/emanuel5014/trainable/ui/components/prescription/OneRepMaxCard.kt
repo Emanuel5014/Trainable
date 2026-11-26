@@ -56,6 +56,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * Tonal card showing the 1RM an exercise's percentages are computed from, with a quick
@@ -83,7 +84,7 @@ fun OneRepMaxCard(
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(Res.string.one_rep_max).uppercase(),
+                    text = stringResource(Res.string.one_rep_max).uppercaseUi(),
                     style = MaterialTheme.typography.labelSmall,
                     color = Primary,
                     fontWeight = FontWeight.Black
@@ -104,7 +105,7 @@ fun OneRepMaxCard(
             }
             if (oneRepMaxKg == null && estimatedKg != null && estimatedKg > 0f) {
                 TextButton(onClick = { onUseEstimate(estimatedKg) }) {
-                    Text(stringResource(Res.string.use_estimate).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                    Text(stringResource(Res.string.use_estimate).uppercaseUi(), fontWeight = FontWeight.ExtraBold, color = Primary)
                 }
             } else {
                 Icon(Icons.Rounded.Edit, contentDescription = stringResource(Res.string.edit_one_rep_max), tint = Primary)
@@ -166,7 +167,7 @@ fun OneRepMaxDialog(
                 contentColor = OnPrimary,
                 modifier = Modifier.height(48.dp)
             ) {
-                Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
@@ -176,7 +177,7 @@ fun OneRepMaxDialog(
                 contentColor = OnSurfaceVariant,
                 modifier = Modifier.height(48.dp)
             ) {
-                Text(stringResource(Res.string.cancel).uppercase())
+                Text(stringResource(Res.string.cancel).uppercaseUi())
             }
         },
         containerColor = SurfaceContainerHigh,

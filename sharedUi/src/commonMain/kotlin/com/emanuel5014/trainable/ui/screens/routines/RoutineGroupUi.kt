@@ -97,6 +97,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 private val DarkInk = Color(0xFF1A1A1A)
 
@@ -411,7 +412,7 @@ internal fun RoutineGroupSheet(
                 contentColor = OnPrimary,
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             ) {
-                Text(stringResource(Res.string.routine_group_create).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.routine_group_create).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
 
             if (choices.isNotEmpty() || canUngroup) {
@@ -541,12 +542,12 @@ internal fun RoutineGroupRenameDialog(initialName: String, onDismiss: () -> Unit
         },
         confirmButton = {
             TextButton(onClick = { onSave(name) }, enabled = name.isNotBlank()) {
-                Text(stringResource(Res.string.save).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.save).uppercaseUi(), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         }
     )
@@ -567,7 +568,7 @@ internal fun RoutineGroupColorDialog(group: RoutineGroupEntity, onDismiss: () ->
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
             }
         }
     )
@@ -587,7 +588,7 @@ private fun SheetHandle() {
 @Composable
 private fun SectionLabel(text: String) {
     Text(
-        text = text.uppercase(),
+        text = text.uppercaseUi(),
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Black,
         color = OnSurfaceVariant

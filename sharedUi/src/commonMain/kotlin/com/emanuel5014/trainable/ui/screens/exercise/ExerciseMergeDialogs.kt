@@ -50,6 +50,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.util.DateFormatter
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * Asks to merge [loserName] into [winnerName], telling what will move. [preview] is null while it is being counted: the
@@ -97,12 +98,12 @@ fun MergePreviewDialog(
                     contentColor = OnPrimary,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.exercise_merge_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.exercise_merge_confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant) }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant) }
         },
         containerColor = SurfaceContainerHigh,
         titleContentColor = OnSurface,
@@ -159,12 +160,12 @@ fun RemoveExerciseDialog(
                     modifier = Modifier.height(48.dp)
                 ) {
                     val label = if (willBeDeleted) Res.string.exercise_action_delete else Res.string.exercise_action_hide
-                    Text(stringResource(label).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(label).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant) }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant) }
         },
         containerColor = SurfaceContainerHigh,
         titleContentColor = OnSurface,
@@ -204,7 +205,7 @@ private fun MergeRow(text: String, info: ExerciseMergeInfo, onUndo: (Int) -> Uni
         Text(text = text, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
         if (info.canUndo) {
             TextButton(onClick = { onUndo(info.mergeId) }, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(Res.string.exercise_merge_undo).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.exercise_merge_undo).uppercaseUi(), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
         } else {
             // A later merge builds on this one: without the line the button would just be missing

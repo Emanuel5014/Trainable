@@ -63,6 +63,7 @@ import com.emanuel5014.trainable.ui.theme.OnTertiaryContainer
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.TertiaryContainer
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** "12:30", or "1:05:00" past the hour. */
 fun cardioTimeText(seconds: Int): String {
@@ -256,12 +257,12 @@ fun CardioSetDialog(
                         Icon(Icons.Rounded.Delete, contentDescription = stringResource(Res.string.cardio_remove_set), tint = Error)
                     }
                 }
-                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercase()) }
+                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercaseUi()) }
                 TextButton(
                     enabled = valid,
                     onClick = { onSave(totalSeconds, com.emanuel5014.trainable.domain.exercise.CardioEntryValues.fieldKm(distance, set.distanceKm, distanceUnit), note, rpe) }
                 ) {
-                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold, color = if (valid) Primary else OnSurface.copy(alpha = 0.4f))
+                    Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold, color = if (valid) Primary else OnSurface.copy(alpha = 0.4f))
                 }
             }
         },

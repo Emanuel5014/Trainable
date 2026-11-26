@@ -109,6 +109,7 @@ import com.emanuel5014.trainable.sharedui.resources.tap_to_set
 import com.emanuel5014.trainable.sharedui.resources.valid_thru
 import com.emanuel5014.trainable.sharedui.resources.week_short
 import com.emanuel5014.trainable.sharedui.resources.year_1
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The Dashboard as both apps draw it. The platform owns the state and its changes ([uiState], [actions]); the
@@ -177,7 +178,7 @@ fun DashboardContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -210,7 +211,7 @@ fun DashboardContent(
                     },
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.start).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.start).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -220,7 +221,7 @@ fun DashboardContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -234,7 +235,7 @@ fun DashboardContent(
             onDismissRequest = { showMembershipDialog = false },
             title = {
                 Text(
-                    text = stringResource(Res.string.gym_membership).uppercase(),
+                    text = stringResource(Res.string.gym_membership).uppercaseUi(),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Black,
                     color = OnSurface
@@ -262,7 +263,7 @@ fun DashboardContent(
                     }
                     
                     Text(
-                        text = stringResource(Res.string.quick_renewal).uppercase(),
+                        text = stringResource(Res.string.quick_renewal).uppercaseUi(),
                         style = MaterialTheme.typography.labelSmall,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold,
@@ -334,7 +335,7 @@ fun DashboardContent(
                             .height(48.dp)
                     ) {
                         Text(
-                            text = stringResource(Res.string.choose_custom_date).uppercase(),
+                            text = stringResource(Res.string.choose_custom_date).uppercaseUi(),
                             fontWeight = FontWeight.ExtraBold,
                             style = MaterialTheme.typography.labelLarge
                         )
@@ -359,7 +360,7 @@ fun DashboardContent(
                                 Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = stringResource(Res.string.remove_membership).uppercase(),
+                                    text = stringResource(Res.string.remove_membership).uppercaseUi(),
                                     fontWeight = FontWeight.ExtraBold
                                 )
                             }
@@ -370,7 +371,7 @@ fun DashboardContent(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showMembershipDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.Bold)
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -420,7 +421,7 @@ fun DashboardContent(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -430,7 +431,7 @@ fun DashboardContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -454,7 +455,7 @@ fun DashboardContent(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -464,7 +465,7 @@ fun DashboardContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,

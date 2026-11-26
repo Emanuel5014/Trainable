@@ -18,6 +18,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Asks, once per provider, whether a photo of a sheet may leave the phone for [ConsentRequest.host]. */
 @Composable
@@ -50,7 +51,7 @@ fun ScanConsentDialog(
         confirmButton = {
             TextButton(onClick = onAccept) {
                 Text(
-                    stringResource(Res.string.ai_consent_continue).uppercase(),
+                    stringResource(Res.string.ai_consent_continue).uppercaseUi(),
                     color = Primary,
                     fontWeight = FontWeight.ExtraBold
                 )
@@ -58,7 +59,7 @@ fun ScanConsentDialog(
         },
         dismissButton = {
             TextButton(onClick = onDecline) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
             }
         }
     )

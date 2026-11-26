@@ -110,6 +110,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Where the cardio entry sheet was opened from; it decides what the sheet shows (spec 6.2). */
 enum class CardioEntryMode { ADD_FROM_HISTORY, ADD_TO_WORKOUT, EDIT_SET }
@@ -285,7 +286,7 @@ fun CardioEntrySheet(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    GymButtonText(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    GymButtonText(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -313,12 +314,12 @@ fun CardioEntrySheet(
                     pendingDate = dateState.selectedDateMillis
                     showDatePicker = false
                 }) {
-                    Text(stringResource(Res.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                    Text(stringResource(Res.string.confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold, color = Primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                 }
             },
             colors = DatePickerDefaults.colors(containerColor = Surface)
@@ -338,12 +339,12 @@ fun CardioEntrySheet(
                     pickedMoment = PickedMoment(date, timeState.hour, timeState.minute)
                     pendingDate = null
                 }) {
-                    Text(stringResource(Res.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                    Text(stringResource(Res.string.confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold, color = Primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDate = null }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                 }
             },
             containerColor = Surface
@@ -358,7 +359,7 @@ fun CardioEntrySheet(
 private fun EntryHeader(label: String, title: String, onChange: (() -> Unit)?, onDelete: (() -> Unit)?) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.padding(bottom = 4.dp)) {
         Text(
-            text = label.uppercase(),
+            text = label.uppercaseUi(),
             style = MaterialTheme.typography.labelMedium.copy(fontSize = ResponsiveSize.labelLargeSize),
             color = Primary,
             fontWeight = FontWeight.ExtraBold

@@ -56,6 +56,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 private class EditorTarget(val row: ProviderRow?)
 
@@ -165,12 +166,12 @@ internal fun AiProvidersSection(
                         viewModel.delete(row.profile.id)
                     }
                 ) {
-                    Text(stringResource(Res.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), color = Error, fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )

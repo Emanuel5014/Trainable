@@ -97,6 +97,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 // The parts of the cardio screen, laid out by CardioFitLayout. Each one takes the density it was picked for.
 
@@ -235,7 +236,7 @@ fun CardioTopBlock(
                     if (targetKm != null && targetKm > 0) {
                         Text(
                             text = if (DistanceUnitConverter.isMiles(LocalDistanceUnit.current)) {
-                                distanceTargetText(targetKm).uppercase()
+                                distanceTargetText(targetKm).uppercaseUi()
                             } else stringResource(Res.string.cardio_target_km_format, targetKm.toString()),
                             style = MaterialTheme.typography.labelMedium,
                             color = OnSurfaceVariant,

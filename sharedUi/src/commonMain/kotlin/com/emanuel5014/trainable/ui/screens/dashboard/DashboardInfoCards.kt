@@ -80,6 +80,7 @@ import com.emanuel5014.trainable.sharedui.resources.valid_thru
 import com.emanuel5014.trainable.sharedui.resources.weekly_goal
 import com.emanuel5014.trainable.sharedui.resources.workout_remaining
 import com.emanuel5014.trainable.sharedui.resources.workouts_remaining
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -230,7 +231,7 @@ fun GymMembershipCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(Res.string.gym_membership).uppercase(),
+                            text = stringResource(Res.string.gym_membership).uppercaseUi(),
                             style = MaterialTheme.typography.labelLarge,
                             color = textColor.copy(alpha = 0.9f),
                             fontWeight = FontWeight.ExtraBold,
@@ -254,7 +255,7 @@ fun GymMembershipCard(
                 ) {
                     Column {
                         Text(
-                            text = username.uppercase(),
+                            text = username.uppercaseUi(),
                             style = MaterialTheme.typography.titleMedium,
                             color = textColor,
                             fontWeight = FontWeight.Bold,

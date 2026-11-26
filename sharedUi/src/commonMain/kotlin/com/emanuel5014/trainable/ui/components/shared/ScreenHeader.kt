@@ -37,6 +37,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.ui.glass.headerGlass
 import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @Composable
 fun ScreenHeader(
@@ -167,7 +168,7 @@ fun ScreenHeader(
                 ) {
                     if (subtitle != null) {
                         Text(
-                            text = subtitle.uppercase(),
+                            text = subtitle.uppercaseUi(),
                             style = MaterialTheme.typography.labelMedium,
                             color = Primary,
                             fontWeight = FontWeight.Black,

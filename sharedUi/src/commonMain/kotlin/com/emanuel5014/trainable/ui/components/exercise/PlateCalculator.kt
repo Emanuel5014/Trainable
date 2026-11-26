@@ -103,6 +103,7 @@ import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlin.math.abs
 import kotlin.math.round
 import kotlin.math.sqrt
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 // Plate colours follow the competition standard (red, blue, yellow, green, white, black, silver)
 private val PlatePalette = listOf(
@@ -281,7 +282,7 @@ fun PlateCalculatorSheet(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = stringResource(Res.string.plate_calculator).uppercase(),
+                        text = stringResource(Res.string.plate_calculator).uppercaseUi(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -438,7 +439,7 @@ fun PlateCalculatorSheet(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = stringResource(Res.string.plate_apply, "${format(loadedTotal)} $weightUnit").uppercase(),
+                        text = stringResource(Res.string.plate_apply, "${format(loadedTotal)} $weightUnit").uppercaseUi(),
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
@@ -477,7 +478,7 @@ fun PlateCalculatorSheet(
 @Composable
 private fun SheetLabel(text: String, modifier: Modifier = Modifier) {
     Text(
-        text = text.uppercase(),
+        text = text.uppercaseUi(),
         style = MaterialTheme.typography.labelMedium,
         color = OnSurfaceVariant,
         fontWeight = FontWeight.ExtraBold,
@@ -640,12 +641,12 @@ private fun BarWeightDialog(
         },
         confirmButton = {
             TextButton(onClick = { value?.let(onConfirm) }, enabled = value != null) {
-                Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase())
+                Text(stringResource(Res.string.cancel).uppercaseUi())
             }
         },
         containerColor = SurfaceContainerHigh,

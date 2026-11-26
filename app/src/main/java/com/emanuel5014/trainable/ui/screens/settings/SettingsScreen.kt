@@ -129,6 +129,7 @@ import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import kotlin.system.exitProcess
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -314,12 +315,12 @@ fun SettingsScreen(
                         }
                     }
                 ) {
-                    Text(stringResource(R.string.reset_app_button).uppercase(), color = Error)
+                    Text(stringResource(R.string.reset_app_button).uppercaseUi(), color = Error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(R.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )

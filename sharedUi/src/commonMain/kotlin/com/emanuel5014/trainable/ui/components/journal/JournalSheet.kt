@@ -28,6 +28,7 @@ import com.emanuel5014.trainable.ui.components.SheetFormFooter
 import com.emanuel5014.trainable.ui.components.SheetFormLayout
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.Surface
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Edits the journal of an existing workout. Saving hands back the cleaned journal; dismissing discards the edits. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +69,7 @@ fun JournalSheet(
             }
             SheetFormFooter(horizontalPadding = 24.dp) {
                 GymButton(onClick = { onSave(journal.cleaned()) }, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }

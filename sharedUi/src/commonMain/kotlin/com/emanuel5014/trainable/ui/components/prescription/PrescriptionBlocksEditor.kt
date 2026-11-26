@@ -123,6 +123,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 private val BLOCK_REST_OPTIONS = listOf(60, 90, 120, 150, 180, 240, 300)
 
@@ -226,7 +227,7 @@ fun PrescriptionBlocksEditor(
                 Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(if (footerActions != null) Res.string.add_block_short else Res.string.add_block).uppercase(),
+                    text = stringResource(if (footerActions != null) Res.string.add_block_short else Res.string.add_block).uppercaseUi(),
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1
                 )
@@ -630,7 +631,7 @@ private fun TechniquesPicker(
 @Composable
 private fun SectionLabel(text: String) {
     Text(
-        text = text.uppercase(),
+        text = text.uppercaseUi(),
         style = MaterialTheme.typography.labelSmall,
         color = OnSurfaceVariant,
         fontWeight = FontWeight.Black

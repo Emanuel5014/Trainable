@@ -59,6 +59,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The form to create or edit an exercise, one for every screen that does either. The name is refused while it is that of
@@ -181,14 +182,14 @@ fun ExerciseFormDialog(
                 enabled = canConfirm
             ) {
                 Text(
-                    text = stringResource(if (editingId != null) Res.string.save else Res.string.add).uppercase(),
+                    text = stringResource(if (editingId != null) Res.string.save else Res.string.add).uppercaseUi(),
                     fontWeight = FontWeight.ExtraBold
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainerHigh,

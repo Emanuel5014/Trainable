@@ -86,6 +86,7 @@ import com.emanuel5014.trainable.sharedui.resources.storage_location
 import com.emanuel5014.trainable.sharedui.resources.with_images
 import com.emanuel5014.trainable.sharedui.resources.without_images
 import com.emanuel5014.trainable.sharedui.resources.yes
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** What the backup rows and dialogs show (Settings › Data): the same values Android's Settings screen collected. */
 data class BackupSettingsUiState(
@@ -272,12 +273,12 @@ fun BackupSettingsCards(
                         showBackupSetupDialog = false
                     }
                 ) {
-                    Text(stringResource(Res.string.save).uppercase(), color = if (autoBackupFolderUri != null) Primary else OnSurfaceVariant)
+                    Text(stringResource(Res.string.save).uppercaseUi(), color = if (autoBackupFolderUri != null) Primary else OnSurfaceVariant)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showBackupSetupDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                 }
             }
         )
@@ -466,7 +467,7 @@ fun BackupSettingsCards(
                         showNextcloudSetupDialog = false
                     }
                 ) {
-                    Text(stringResource(Res.string.save).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.save).uppercaseUi(), color = Primary)
                 }
             },
             dismissButton = {
@@ -476,7 +477,7 @@ fun BackupSettingsCards(
                         showNextcloudSetupDialog = false
                     }
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                 }
             }
         )
@@ -622,12 +623,12 @@ fun BackupSettingsCards(
                         showNextcloudBackupSetupDialog = false
                     }
                 ) {
-                    Text(stringResource(Res.string.save).uppercase(), color = Primary, fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.save).uppercaseUi(), color = Primary, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showNextcloudBackupSetupDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                 }
             }
         )
@@ -910,7 +911,7 @@ fun BackupSettingsCards(
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Text(
-                                    stringResource(Res.string.cancel).uppercase(),
+                                    stringResource(Res.string.cancel).uppercaseUi(),
                                     color = OnSurfaceVariant,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -1018,12 +1019,12 @@ fun BackupSettingsCards(
                     containerColor = Primary,
                     contentColor = OnPrimary
                 ) {
-                    Text(stringResource(Res.string.restore_action).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.restore_action).uppercaseUi(), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { selectedBackupForRestore = null }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                 }
             }
         )
@@ -1053,12 +1054,12 @@ fun BackupSettingsCards(
                         showNextcloudDisconnectDialog = false
                     }
                 ) {
-                    Text(stringResource(Res.string.nextcloud_disconnect).uppercase(), color = Error, fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.nextcloud_disconnect).uppercaseUi(), color = Error, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showNextcloudDisconnectDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                 }
             }
         )
@@ -1156,7 +1157,7 @@ fun BackupSettingsCards(
                                     }
                                 }
                                 TextButton(onClick = { showBackupSetupDialog = true }) {
-                                    Text(stringResource(Res.string.edit_backup).uppercase(), color = Primary)
+                                    Text(stringResource(Res.string.edit_backup).uppercaseUi(), color = Primary)
                                 }
                             }
                         }
@@ -1287,7 +1288,7 @@ fun BackupSettingsCards(
                                         }
                                     }
                                     TextButton(onClick = { showNextcloudBackupSetupDialog = true }) {
-                                        Text(stringResource(Res.string.edit_backup).uppercase(), color = Primary)
+                                        Text(stringResource(Res.string.edit_backup).uppercaseUi(), color = Primary)
                                     }
                                 }
                             }
@@ -1340,10 +1341,10 @@ fun BackupSettingsCards(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 TextButton(onClick = { showNextcloudSetupDialog = true }) {
-                                    Text(stringResource(Res.string.edit_backup).uppercase(), color = Primary)
+                                    Text(stringResource(Res.string.edit_backup).uppercaseUi(), color = Primary)
                                 }
                                 TextButton(onClick = { showNextcloudDisconnectDialog = true }) {
-                                    Text(stringResource(Res.string.nextcloud_disconnect).uppercase(), color = Error)
+                                    Text(stringResource(Res.string.nextcloud_disconnect).uppercaseUi(), color = Error)
                                 }
                             }
                         }

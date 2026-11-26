@@ -76,6 +76,7 @@ import com.emanuel5014.trainable.ui.theme.Surface as SurfaceColor
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /*
  * The machine setup of an exercise (issue #67): how the lifter sets the seat, the backrest or the pins, typed once and
@@ -243,7 +244,7 @@ fun ExerciseSetupSheet(
                 if (SetupNote.chips(text).isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = stringResource(Res.string.exercise_setup_preview).uppercase(),
+                            text = stringResource(Res.string.exercise_setup_preview).uppercaseUi(),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = OnSurfaceVariant
@@ -256,13 +257,13 @@ fun ExerciseSetupSheet(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!initial.isNullOrBlank()) {
                         TextButton(onClick = { onSave(null) }) {
-                            Text(stringResource(Res.string.exercise_setup_clear).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                            Text(stringResource(Res.string.exercise_setup_clear).uppercaseUi(), color = Error, fontWeight = FontWeight.ExtraBold)
                         }
                     } else {
                         Spacer(Modifier.size(0.dp))
                     }
                     GymButton(onClick = { onSave(text) }, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }

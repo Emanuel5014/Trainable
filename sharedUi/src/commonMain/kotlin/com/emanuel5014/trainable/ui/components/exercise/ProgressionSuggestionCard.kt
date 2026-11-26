@@ -32,6 +32,7 @@ import com.emanuel5014.trainable.domain.prescription.DoubleProgression
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * Double progression: every set of the last workout reached the top of the rep range, so the load can go up.
@@ -87,7 +88,7 @@ fun ProgressionSuggestionCard(
                 height = 40,
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp)
             ) {
-                Text(stringResource(Res.string.apply).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.apply).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
             IconButton(onClick = onDismiss) {
                 Icon(

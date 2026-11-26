@@ -98,6 +98,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import androidx.compose.foundation.layout.BoxScope
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** The bottom hub of the workout: the card of the active set, its editor, the rest card and the way to the next exercise. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -205,7 +206,7 @@ fun BoxScope.WorkoutHub(
                             Column {
                                 HubSlot(expansion = expansion, from = 0.3f, to = 0.55f) {
                                     Text(
-                                        text = stringResource(Res.string.warmup_label).uppercase(),
+                                        text = stringResource(Res.string.warmup_label).uppercaseUi(),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = OnTertiary.copy(alpha = 0.7f),
                                         fontWeight = FontWeight.ExtraBold,
@@ -363,7 +364,7 @@ fun BoxScope.WorkoutHub(
                                         Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = stringResource(Res.string.add_exercise).uppercase(),
+                                            text = stringResource(Res.string.add_exercise).uppercaseUi(),
                                             fontWeight = FontWeight.ExtraBold
                                         )
                                     }
@@ -607,7 +608,7 @@ private fun SetPanel(
                                     Icon(Icons.Rounded.Check, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        stringResource(Res.string.done).uppercase(),
+                                        stringResource(Res.string.done).uppercaseUi(),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.ExtraBold
                                     )

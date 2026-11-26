@@ -41,6 +41,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import kotlin.math.absoluteValue
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @Composable
 fun PersonalBestsSection(personalBests: List<PersonalBestUiModel>) {
@@ -199,7 +200,7 @@ private fun PersonalBestCard(
                     textAlign = if (isLarge) androidx.compose.ui.text.style.TextAlign.Center else null
                 )
                 Text(
-                    text = best.category.uppercase(),
+                    text = best.category.uppercaseUi(),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant
                 )

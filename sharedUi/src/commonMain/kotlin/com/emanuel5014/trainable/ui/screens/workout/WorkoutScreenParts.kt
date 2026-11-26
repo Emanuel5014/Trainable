@@ -71,6 +71,7 @@ import com.emanuel5014.trainable.ui.theme.OnTertiary
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 enum class HubMode { Logging, Editing, EditingSet, Resting, MiniSet, Completed, Cardio }
 
@@ -212,7 +213,7 @@ fun RowScope.HubPreviousButton(
                 modifier = Modifier.weight(1f).graphicsLayer { alpha = label }
             ) {
                 Text(
-                    text = stringResource(Res.string.previous_exercise_btn).uppercase(),
+                    text = stringResource(Res.string.previous_exercise_btn).uppercaseUi(),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold,

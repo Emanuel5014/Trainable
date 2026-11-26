@@ -32,6 +32,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * Finishing a workout with the journal on: the question of the plain dialog and, under it, "How did it go?" with
@@ -92,10 +93,10 @@ fun FinishWorkoutSheet(
             SheetFormFooter(horizontalPadding = 24.dp) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     GymButton(onClick = onFinish, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(Res.string.finish_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.finish_confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                     TextButton(onClick = onCancel) {
-                        Text(stringResource(Res.string.cancel).uppercase(), color = Primary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary, fontWeight = FontWeight.Bold)
                     }
                 }
             }

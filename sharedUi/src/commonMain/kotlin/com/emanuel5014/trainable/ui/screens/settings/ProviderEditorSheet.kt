@@ -86,6 +86,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import kotlinx.coroutines.launch
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Adds a provider ([editing] null) or edits a saved one; the API key is never shown again once saved. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -285,7 +286,7 @@ fun ProviderEditorSheet(
 
             if (savedKeyExists && !clearKey) {
                 TextButton(onClick = { clearKey = true }) {
-                    Text(stringResource(Res.string.ai_provider_key_remove).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.ai_provider_key_remove).uppercaseUi(), color = Error, fontWeight = FontWeight.ExtraBold)
                 }
             }
 
@@ -317,7 +318,7 @@ fun ProviderEditorSheet(
                 },
                 enabled = !busy && urlCheck is UrlCheck.Ok && !keyInvalid
             ) {
-                Text(stringResource(Res.string.ai_provider_models_load).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.ai_provider_models_load).uppercaseUi(), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
 
             if (models.isNotEmpty()) {
@@ -355,7 +356,7 @@ fun ProviderEditorSheet(
                     contentColor = Primary,
                     enabled = !busy && urlCheck is UrlCheck.Ok && model.isNotBlank() && !keyMissing && !keyInvalid
                 ) {
-                    Text(stringResource(Res.string.ai_provider_test).uppercase(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                    Text(stringResource(Res.string.ai_provider_test).uppercaseUi(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
                 }
                 Spacer(Modifier.width(12.dp))
                 GymButton(
@@ -363,7 +364,7 @@ fun ProviderEditorSheet(
                     modifier = Modifier.weight(1f),
                     enabled = canSave && !busy
                 ) {
-                    Text(stringResource(Res.string.ai_provider_save).uppercase(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                    Text(stringResource(Res.string.ai_provider_save).uppercaseUi(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
                 }
             }
         }

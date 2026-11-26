@@ -44,6 +44,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.fromHSV
 import com.emanuel5014.trainable.ui.theme.toHSV
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** How far saturation and brightness can go: a tag name is written in its colour, so it must not fade into the surface. */
 private const val MIN_SATURATION = 0.25f
@@ -119,12 +120,12 @@ fun TagColorPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = { onApply(argb) }) {
-                Text(stringResource(Res.string.apply).uppercase(), color = Primary)
+                Text(stringResource(Res.string.apply).uppercaseUi(), color = Primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         }
     )

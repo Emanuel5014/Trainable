@@ -43,6 +43,7 @@ import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * Edits the advanced prescription of one exercise of an already recorded session.
@@ -76,7 +77,7 @@ fun ExercisePrescriptionSheet(
             SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.large) {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
                     Text(
-                        text = stringResource(Res.string.prescription).uppercase(),
+                        text = stringResource(Res.string.prescription).uppercaseUi(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -128,7 +129,7 @@ fun ExercisePrescriptionSheet(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -141,7 +142,7 @@ fun ExercisePrescriptionSheet(
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.Black)
+                        Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.Black)
                     }
                 }
             }

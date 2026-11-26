@@ -14,6 +14,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * Asks before doing something: [title] and [message] say what, [confirmLabel] does it, Cancel does nothing.
@@ -36,7 +37,7 @@ fun ConfirmDialog(
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
-                    confirmLabel.uppercase(),
+                    confirmLabel.uppercaseUi(),
                     color = if (destructive) Error else Primary,
                     fontWeight = FontWeight.ExtraBold
                 )
@@ -44,7 +45,7 @@ fun ConfirmDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         }
     )

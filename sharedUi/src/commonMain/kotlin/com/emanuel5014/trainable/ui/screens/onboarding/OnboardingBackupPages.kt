@@ -67,6 +67,7 @@ import com.emanuel5014.trainable.sharedui.resources.onboarding_nextcloud_desc
 import com.emanuel5014.trainable.sharedui.resources.onboarding_nextcloud_title
 import com.emanuel5014.trainable.sharedui.resources.onboarding_setup_footer
 import com.emanuel5014.trainable.sharedui.resources.storage_location
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 // The onboarding's backup pieces: local folder and Nextcloud cards for "I tuoi dati", and the Nextcloud connection
 // form that the Welcome restore sheet uses too.
@@ -368,12 +369,12 @@ fun NextcloudRestoreDialog(
             },
             confirmButton = {
                 TextButton(enabled = !isRestoring, onClick = { onConfirm(selected) }) {
-                    Text(stringResource(Res.string.confirm).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.confirm).uppercaseUi(), color = Primary, fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(enabled = !isRestoring, onClick = onBack) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                 }
             }
         )
@@ -411,7 +412,7 @@ fun NextcloudRestoreDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         }
     )

@@ -215,6 +215,7 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import kotlinx.coroutines.launch
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -323,7 +324,7 @@ fun RoutineListContent(
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = stringResource(Res.string.share))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.share).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.share).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             } else if (showOwnFab) {
                 ExtendedFloatingActionButton(
@@ -536,7 +537,7 @@ fun RoutineListContent(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = title.uppercase(),
+                                text = title.uppercaseUi(),
                                 style = MaterialTheme.typography.labelLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.labelLarge.fontSize)),
                                 fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold,
                                 color = contentColor,
@@ -768,7 +769,7 @@ fun RoutineListContent(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -778,7 +779,7 @@ fun RoutineListContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -805,7 +806,7 @@ fun RoutineListContent(
                     contentColor = Primary,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(if (isArchiving) Res.string.archive else Res.string.unarchive).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(if (isArchiving) Res.string.archive else Res.string.unarchive).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -815,7 +816,7 @@ fun RoutineListContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -839,7 +840,7 @@ fun RoutineListContent(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -849,7 +850,7 @@ fun RoutineListContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -874,7 +875,7 @@ fun RoutineListContent(
                     contentColor = Primary,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(if (isArchiving) Res.string.archive else Res.string.unarchive).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(if (isArchiving) Res.string.archive else Res.string.unarchive).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -884,7 +885,7 @@ fun RoutineListContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -1044,7 +1045,7 @@ fun RoutineListContent(
                             containerColor = SurfaceContainerHigh,
                             contentColor = OnSurfaceVariant
                         ) {
-                            Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                            Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                         }
                     
                         GymButton(
@@ -1067,7 +1068,7 @@ fun RoutineListContent(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = stringResource(Res.string.create).uppercase(),
+                                text = stringResource(Res.string.create).uppercaseUi(),
                                 fontWeight = FontWeight.Black
                             )
                         }
@@ -1092,7 +1093,7 @@ fun RoutineListContent(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(Res.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -1101,7 +1102,7 @@ fun RoutineListContent(
                     containerColor = Color.Transparent,
                     contentColor = OnSurfaceVariant
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             }
         ) {
@@ -1121,7 +1122,7 @@ fun RoutineListContent(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(Res.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -1133,7 +1134,7 @@ fun RoutineListContent(
                     containerColor = Color.Transparent,
                     contentColor = Error
                 ) {
-                    Text(stringResource(Res.string.reset).uppercase())
+                    Text(stringResource(Res.string.reset).uppercaseUi())
                 }
             }
         ) {
@@ -1190,7 +1191,7 @@ private fun ExportOptionsDialog(
                 onClick = { onConfirm(includeImages && prompt.hasImages, includeMaximums && prompt.hasMaximums) },
                 modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
             ) {
-                Text(stringResource(Res.string.share).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.share).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
@@ -1200,7 +1201,7 @@ private fun ExportOptionsDialog(
                 contentColor = OnSurfaceVariant,
                 modifier = Modifier.height(48.dp)
             ) {
-                Text(stringResource(Res.string.cancel).uppercase())
+                Text(stringResource(Res.string.cancel).uppercaseUi())
             }
         },
         containerColor = SurfaceContainerHigh,

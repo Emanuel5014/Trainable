@@ -63,6 +63,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** The heart's own red, the same in every theme: the heart icon and the curve. */
 internal val HeartRed = Color(0xFFE5484D)
@@ -208,7 +209,7 @@ private fun HeartData(data: SessionHeartDataEntity, maxHeartRate: Int) {
         if (total > 0 && total * 2 >= durationSeconds) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    stringResource(Res.string.heart_zones).uppercase(),
+                    stringResource(Res.string.heart_zones).uppercaseUi(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.8.sp,

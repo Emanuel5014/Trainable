@@ -98,6 +98,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.domain.prescription.IntensityType
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.RepMode
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** The sets of a strength or timed exercise, grouped by block, with the large media card and the room for the hub below. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -175,12 +176,12 @@ fun ColumnScope.SetList(
                                 viewModel.removeSetFromExercise(targetIndex, index)
                                 showDeleteConfirm = false
                             }) {
-                                Text(stringResource(Res.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                                Text(stringResource(Res.string.delete).uppercaseUi(), color = Error, fontWeight = FontWeight.ExtraBold)
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showDeleteConfirm = false }) {
-                                Text(stringResource(Res.string.cancel).uppercase())
+                                Text(stringResource(Res.string.cancel).uppercaseUi())
                             }
                         },
                         containerColor = SurfaceContainerHigh,
@@ -225,7 +226,7 @@ fun ColumnScope.SetList(
                                             Res.string.block_header, p.blockIndex + 1,
                                             (listOf(PrescriptionFormatter.headline(block, prescriptionLabels)) +
                                                 block.techniques.map { prescriptionText.technique(it) }).joinToString(" · ")
-                                        ).uppercase()
+                                        ).uppercaseUi()
                                         set.isExtra -> stringResource(Res.string.extra_badge)
                                         else -> ""
                                     },
@@ -516,7 +517,7 @@ fun ColumnScope.SetList(
                 ) {
                     Icon(Icons.Rounded.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.add_extra_set).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.add_extra_set).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -561,7 +562,7 @@ fun ColumnScope.SetList(
                                     } else {
                                         Res.string.add_exercise
                                     }
-                                ).uppercase(),
+                                ).uppercaseUi(),
                                 fontWeight = FontWeight.ExtraBold
                             )
                         }

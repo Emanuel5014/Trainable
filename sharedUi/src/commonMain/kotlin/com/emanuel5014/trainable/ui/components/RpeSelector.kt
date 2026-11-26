@@ -80,6 +80,7 @@ import com.emanuel5014.trainable.domain.rpe.RpeSettings
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Whether RPE is asked for and on which scale, provided once at the app root like [LocalAdvancedProgramming]. */
 val LocalRpeSettings = staticCompositionLocalOf { RpeSettings() }
@@ -145,7 +146,7 @@ fun RpeSelector(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            text = stringResource(Res.string.rpe_optional).uppercase(),
+            text = stringResource(Res.string.rpe_optional).uppercaseUi(),
             style = MaterialTheme.typography.labelSmall,
             color = OnSurfaceVariant,
             fontWeight = FontWeight.Black

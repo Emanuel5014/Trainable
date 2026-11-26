@@ -16,6 +16,7 @@ import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.one_rep_maxes
 import com.emanuel5014.trainable.ui.theme.*
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** The compact entry on Analytics, with the current lifts supplied by the platform. */
 @Composable
@@ -33,7 +34,7 @@ fun OneRepMaxesEntryContent(subtitle: String, onClick: () -> Unit, modifier: Mod
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(Res.string.one_rep_maxes).uppercase(),
+                    text = stringResource(Res.string.one_rep_maxes).uppercaseUi(),
                     style = MaterialTheme.typography.labelMedium,
                     color = Primary,
                     fontWeight = FontWeight.Black

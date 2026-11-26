@@ -109,6 +109,8 @@ import com.emanuel5014.trainable.ui.components.rememberWorkoutElapsed
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
+import com.emanuel5014.trainable.ui.util.uppercaseUi
+import com.emanuel5014.trainable.ui.util.lowercaseUi
 
 private fun nowMillis(): Long = Clock.System.now().toEpochMilliseconds()
 
@@ -164,16 +166,16 @@ private val LiveNextSet.icon: ImageVector
 @Composable
 private fun phaseLabel(ui: LiveWorkoutUi): String = stringResource(
     if (ui.phase == LiveWorkoutUi.Phase.WARMUP) Res.string.dashboard_live_warmup else Res.string.dashboard_live_rest
-).uppercase()
+).uppercaseUi()
 
 @Composable
 private fun nowSetLabel(next: LiveNextSet): String =
     if (next.kind == SetKind.EMOM && next.emomRound != null && next.emomRounds != null) emomLabel(next)
-    else stringResource(Res.string.dashboard_live_now_set, next.setNumber.toString(), next.setsInExercise.toString()).uppercase()
+    else stringResource(Res.string.dashboard_live_now_set, next.setNumber.toString(), next.setsInExercise.toString()).uppercaseUi()
 
 @Composable
 private fun emomLabel(next: LiveNextSet): String =
-    stringResource(Res.string.dashboard_live_emom_round, (next.emomRound ?: 1).toString(), (next.emomRounds ?: 1).toString()).uppercase()
+    stringResource(Res.string.dashboard_live_emom_round, (next.emomRound ?: 1).toString(), (next.emomRounds ?: 1).toString()).uppercaseUi()
 
 @Composable
 private fun thenLine(next: LiveNextSet): String =
@@ -273,7 +275,7 @@ private fun LiveStatus(ui: LiveWorkoutUi, isActive: Boolean) {
         Box(Modifier.size(8.dp).clip(CircleShape).background(ResumeInk))
         Spacer(Modifier.width(6.dp))
         Text(
-            stringResource(Res.string.dashboard_live_in_progress, elapsed).uppercase(),
+            stringResource(Res.string.dashboard_live_in_progress, elapsed).uppercaseUi(),
             style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.ExtraBold,
             color = ResumeInk,
@@ -412,7 +414,7 @@ private fun liveSummary(ui: LiveWorkoutUi): String {
     val parts = mutableListOf(ui.workoutTitle.displayText(), stringResource(Res.string.dashboard_live_in_progress, elapsedText(ui.elapsedMinutes)))
     when (ui.phase) {
         LiveWorkoutUi.Phase.REST, LiveWorkoutUi.Phase.WARMUP -> {
-            parts += "${phaseLabel(ui).lowercase()} ${clock(ui.seconds)}"
+            parts += "${phaseLabel(ui).lowercaseUi()} ${clock(ui.seconds)}"
             ui.next?.let { parts += thenLine(it) }
         }
         LiveWorkoutUi.Phase.SET_TIMER, LiveWorkoutUi.Phase.CARDIO -> {
@@ -421,7 +423,7 @@ private fun liveSummary(ui: LiveWorkoutUi): String {
             timerFootnote(ui)?.let { parts += it }
         }
         LiveWorkoutUi.Phase.ALL_DONE -> parts += stringResource(Res.string.dashboard_live_all_done)
-        else -> ui.next?.let { parts += "${it.exerciseName}, ${nowSetLabel(it).lowercase()}, ${it.loadText()}" }
+        else -> ui.next?.let { parts += "${it.exerciseName}, ${nowSetLabel(it).lowercaseUi()}, ${it.loadText()}" }
     }
     return parts.joinToString(". ")
 }
@@ -658,7 +660,7 @@ internal fun LiveWorkoutPanel(
                 PanelTitle(next.exerciseName)
                 PanelFootnote(stringResource(Res.string.dashboard_live_every_minute, next.loadText()))
                 Spacer(Modifier.height(16.dp))
-                InkButton(Icons.Rounded.PlayArrow, stringResource(Res.string.dashboard_live_resume_emom).uppercase(), onOpen)
+                InkButton(Icons.Rounded.PlayArrow, stringResource(Res.string.dashboard_live_resume_emom).uppercaseUi(), onOpen)
                 Spacer(Modifier.height(10.dp))
                 PanelFootnote(stringResource(Res.string.dashboard_live_emom_hint), alpha = 0.75f)
             }
@@ -678,7 +680,7 @@ internal fun LiveWorkoutPanel(
                     Spacer(Modifier.height(18.dp))
                     val token = next.keyToken
                     if (buttons.showSetDone && token != null) {
-                        InkButton(Icons.Rounded.Check, stringResource(Res.string.next_set_done).uppercase()) {
+                        InkButton(Icons.Rounded.Check, stringResource(Res.string.next_set_done).uppercaseUi()) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress); onSetDone(token)
                         }
                     } else {
@@ -781,7 +783,7 @@ internal fun LiveExerciseList(ui: LiveWorkoutUi, onOpen: () -> Unit, modifier: M
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().padding(start = 6.dp, end = 6.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
             Text(
-                stringResource(Res.string.dashboard_live_exercises_header, (current + 1).toString(), ui.exercises.size.toString()).uppercase(),
+                stringResource(Res.string.dashboard_live_exercises_header, (current + 1).toString(), ui.exercises.size.toString()).uppercaseUi(),
                 style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = scheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f)
             )

@@ -226,6 +226,7 @@ import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 import com.emanuel5014.trainable.ui.screens.routines.routineRowCorners
 import com.emanuel5014.trainable.ui.screens.routines.toShape
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -556,7 +557,7 @@ fun HistoryContent(
                             description = stringResource(Res.string.try_adjust_filters),
                             action = {
                                 GymButton(onClick = { state.setFilters(HistoryFilters()) }) {
-                                    Text(stringResource(Res.string.clear_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(Res.string.clear_filters).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                                 }
                             }
                         )
@@ -735,7 +736,7 @@ fun HistoryContent(
                         containerColor = errorColor.copy(alpha = 0.1f),
                         contentColor = errorColor
                     ) {
-                        Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 dismissButton = {
@@ -744,7 +745,7 @@ fun HistoryContent(
                         containerColor = Color.Transparent,
                         contentColor = onSurfaceVariantColor
                     ) {
-                        Text(stringResource(Res.string.cancel).uppercase())
+                        Text(stringResource(Res.string.cancel).uppercaseUi())
                     }
                 },
                 containerColor = surfaceContainerHighColor,
@@ -767,7 +768,7 @@ fun HistoryContent(
                         containerColor = errorColor.copy(alpha = 0.1f),
                         contentColor = errorColor
                     ) {
-                        Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 dismissButton = {
@@ -776,7 +777,7 @@ fun HistoryContent(
                         containerColor = Color.Transparent,
                         contentColor = onSurfaceVariantColor
                     ) {
-                        Text(stringResource(Res.string.cancel).uppercase())
+                        Text(stringResource(Res.string.cancel).uppercaseUi())
                     }
                 },
                 containerColor = surfaceContainerHighColor,
@@ -802,7 +803,7 @@ fun HistoryContent(
                             containerColor = surfaceContainerHighColor,
                             contentColor = onSurfaceVariantColor
                         ) {
-                            Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                            Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                         }
                         GymButton(
                             onClick = {
@@ -816,7 +817,7 @@ fun HistoryContent(
                             containerColor = primaryColor.copy(alpha = 0.15f),
                             contentColor = primaryColor
                         ) {
-                            Text(stringResource(Res.string.edit).uppercase(), fontWeight = FontWeight.ExtraBold)
+                            Text(stringResource(Res.string.edit).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                         }
                     }
                 },
@@ -1161,7 +1162,7 @@ fun EditSetDialog(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        stringResource(Res.string.cancel).uppercase(),
+                        stringResource(Res.string.cancel).uppercaseUi(),
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
@@ -1201,7 +1202,7 @@ fun EditSetDialog(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        stringResource(Res.string.save).uppercase(),
+                        stringResource(Res.string.save).uppercaseUi(),
                         fontWeight = FontWeight.Black,
                         style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,

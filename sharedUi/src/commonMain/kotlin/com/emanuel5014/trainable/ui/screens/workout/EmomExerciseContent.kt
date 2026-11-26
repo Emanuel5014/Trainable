@@ -97,6 +97,7 @@ import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The execution screen of an EMOM exercise: a minute clock built on the timer of the cardio and
@@ -189,7 +190,7 @@ fun EmomExerciseContent(
                 },
                 confirmButton = {
                     TextButton(onClick = { editIndex = null }) {
-                        Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 containerColor = SurfaceContainerHigh,

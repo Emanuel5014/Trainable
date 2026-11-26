@@ -46,6 +46,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The search field of an exercise list with the button of the muscle and equipment filter beside it; the sheet opens from the
@@ -129,7 +130,7 @@ fun ExerciseTraitFilterSheet(
                     color = OnSurface
                 )
                 TextButton(onClick = { onFilterChange(TraitFilter.NONE) }, enabled = filter.isActive) {
-                    Text(stringResource(Res.string.exercise_filters_reset).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.exercise_filters_reset).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             }
             Text(

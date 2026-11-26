@@ -40,6 +40,7 @@ import com.emanuel5014.trainable.sharedui.resources.heart_title
 import com.emanuel5014.trainable.sharedui.resources.heart_total_kcal
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** A workout's heart rate as the share card shows it. */
 data class ShareHeart(
@@ -92,7 +93,7 @@ fun ShareHeartSection(heart: ShareHeart, textPrimary: Color, textSecondary: Colo
             Icon(Icons.Rounded.Favorite, contentDescription = null, tint = HeartRed, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(6.dp))
             Text(
-                stringResource(Res.string.heart_title).uppercase(),
+                stringResource(Res.string.heart_title).uppercaseUi(),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Black,
                 color = HeartRed,
@@ -136,7 +137,7 @@ private fun ShareHeartValue(value: String, label: String, valueColor: Color, lab
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
         Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = valueColor, maxLines = 1)
         Text(
-            label.uppercase(),
+            label.uppercaseUi(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = labelColor,

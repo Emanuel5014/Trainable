@@ -35,6 +35,7 @@ import platform.UIKit.*
 import platform.UniformTypeIdentifiers.UTTypeData
 import platform.UniformTypeIdentifiers.UTTypeZIP
 import platform.darwin.NSObject
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 internal object IosBackups {
     val manager by lazy { IosBackupManager() }
@@ -131,9 +132,9 @@ internal fun IosResetButton() {
                 catch (_: Exception) { show(getString(Res.string.reset_failed)) }
                 finally { busy = false }
             }
-        }) { Text(stringResource(Res.string.reset_app_button).uppercase(), color = Error) } },
+        }) { Text(stringResource(Res.string.reset_app_button).uppercaseUi(), color = Error) } },
         dismissButton = { TextButton(enabled = !busy, onClick = { confirm = false }) {
-            Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+            Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
         } })
 }
 

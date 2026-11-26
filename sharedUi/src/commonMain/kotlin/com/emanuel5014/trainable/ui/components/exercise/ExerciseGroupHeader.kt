@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Spacing
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @Composable
 fun ExerciseGroupHeader(
@@ -44,7 +45,7 @@ fun ExerciseGroupHeader(
         Spacer(modifier = Modifier.width(Spacing.medium))
         
         Text(
-            text = groupName.uppercase(),
+            text = groupName.uppercaseUi(),
             style = MaterialTheme.typography.titleMedium,
             color = OnSurface,
             fontWeight = FontWeight.ExtraBold

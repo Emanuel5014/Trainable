@@ -85,6 +85,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * Under the rest timer when the set just logged came out short of its reps: a tap turns the rest into the short
@@ -107,7 +108,7 @@ fun MiniSetOfferButton(missing: Int, onClick: () -> Unit, modifier: Modifier = M
 @Composable
 fun MiniSetPauseLabel(setNumber: Int, modifier: Modifier = Modifier) {
     Text(
-        text = stringResource(Res.string.mini_set_pause, setNumber).uppercase(),
+        text = stringResource(Res.string.mini_set_pause, setNumber).uppercaseUi(),
         style = MaterialTheme.typography.labelMedium,
         color = Tertiary,
         fontWeight = FontWeight.ExtraBold,
@@ -174,7 +175,7 @@ fun CountStepper(
     val inner = 6.dp
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         label?.let {
-            Text(text = it.uppercase(), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
+            Text(text = it.uppercaseUi(), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
             FilledIconButton(
@@ -371,12 +372,12 @@ fun PerformedTechniqueDialog(
                     }
                     onSave(done.takeIf { it != planned }, applyToFollowing)
                 }) {
-                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                    Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold, color = Primary)
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant) }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant) }
         },
         containerColor = SurfaceContainerHigh,
         titleContentColor = OnSurface,

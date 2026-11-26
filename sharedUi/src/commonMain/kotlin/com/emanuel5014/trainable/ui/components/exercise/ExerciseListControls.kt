@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** The search box of every exercise list: a magnifier, and a cross that clears the text once there is some. */
 @Composable
@@ -174,7 +175,7 @@ fun ExerciseEmptyState(modifier: Modifier = Modifier, onReset: (() -> Unit)? = n
         // With the muscle and equipment filter on, the way out is one tap away instead of a dead end
         if (onReset != null) {
             TextButton(onClick = onReset) {
-                Text(stringResource(Res.string.exercise_filters_reset).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.exercise_filters_reset).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
         }
     }

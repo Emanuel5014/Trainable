@@ -67,6 +67,7 @@ import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -172,7 +173,7 @@ fun ExercisePickerBottomSheet(
                     AnimatedVisibility(visible = !imeVisible) {
                         Column {
                             Text(
-                                text = stringResource(if (locked) Res.string.select_activity else Res.string.select_exercise).uppercase(),
+                                text = stringResource(if (locked) Res.string.select_activity else Res.string.select_exercise).uppercaseUi(),
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontSize = ResponsiveSize.labelLargeSize
                                 ),
@@ -331,7 +332,7 @@ fun ExercisePickerBottomSheet(
 @Composable
 private fun SectionLabel(text: String) {
     Text(
-        text = text.uppercase(),
+        text = text.uppercaseUi(),
         style = MaterialTheme.typography.labelMedium,
         color = OnSurfaceVariant,
         fontWeight = FontWeight.ExtraBold,

@@ -107,6 +107,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The ways into "save as routine", from anywhere in the app: the History sheet of a quick workout, the end of a quick
@@ -375,7 +376,7 @@ private fun SaveAsRoutineSheet(
                 MovesNotice()
                 Text(
                     text = (pluralStringResource(Res.plurals.routine_from_exercises, exercises.size, exercises.size) + " · " +
-                        RoutineFromWorkout.setCount(exercises).let { pluralStringResource(Res.plurals.routine_from_sets, it, it) }).uppercase(),
+                        RoutineFromWorkout.setCount(exercises).let { pluralStringResource(Res.plurals.routine_from_sets, it, it) }).uppercaseUi(),
                     style = MaterialTheme.typography.labelMedium,
                     color = OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold
@@ -390,7 +391,7 @@ private fun SaveAsRoutineSheet(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = { onCreate(name) },
@@ -574,7 +575,7 @@ private fun RoutineSourcePickerSheet(
             SheetFormBody(horizontalPadding = ResponsiveSize.horizontalPadding, spacing = 16.dp) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = stringResource(Res.string.new_routine).uppercase(),
+                        text = stringResource(Res.string.new_routine).uppercaseUi(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold

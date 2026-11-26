@@ -73,6 +73,7 @@ import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** The dialogs that can open before the workout has loaded (technique as done, media viewer, detail, rename, new 1RM, restore). */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -149,12 +150,12 @@ fun WorkoutEarlyDialogs(
                     viewModel.updateSessionName(ui.newSessionName)
                     ui.showRenameDialog = false
                 }) {
-                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { ui.showRenameDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -185,12 +186,12 @@ fun WorkoutEarlyDialogs(
                     contentColor = OnPrimary,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.save_new_one_rep_max).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.save_new_one_rep_max).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.resolveOneRepMaxSuggestion(accept = false) }) {
-                    Text(stringResource(Res.string.not_now).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.not_now).uppercaseUi(), color = OnSurfaceVariant)
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -265,12 +266,12 @@ fun WorkoutDialogs(
                     viewModel.startWarmupTimer(ui.warmupTimerDuration)
                     ui.showWarmupTimerDialog = false
                 }) {
-                    Text(stringResource(Res.string.start).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.start).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { ui.showWarmupTimerDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -485,7 +486,7 @@ fun WorkoutDialogs(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -495,7 +496,7 @@ fun WorkoutDialogs(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -540,7 +541,7 @@ fun WorkoutDialogs(
                     },
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.finish_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.finish_confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -550,7 +551,7 @@ fun WorkoutDialogs(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,

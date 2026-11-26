@@ -299,6 +299,7 @@ import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 private fun getSupersetRange(index: Int, list: List<PlanExerciseWithDetails>): IntRange {
     val sid = list.getOrNull(index)?.planExercise?.supersetId ?: return index..index
@@ -571,7 +572,7 @@ fun RoutineDetailContent(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -581,7 +582,7 @@ fun RoutineDetailContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -618,7 +619,7 @@ fun RoutineDetailContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -642,7 +643,7 @@ fun RoutineDetailContent(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.reset).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.reset).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -652,7 +653,7 @@ fun RoutineDetailContent(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -670,7 +671,7 @@ fun RoutineDetailContent(
     // A routine just made from a workout can be taken back from here, once
     val createdSnackbar = remember { androidx.compose.material3.SnackbarHostState() }
     val createdText = stringResource(Res.string.routine_created)
-    val undoText = stringResource(Res.string.cancel).uppercase()
+    val undoText = stringResource(Res.string.cancel).uppercaseUi()
     LaunchedEffect(state) {
         // Collected, not keyed on the value: taking it back must not cancel the snackbar on screen
         RoutineFromWorkoutRequests.created.collect { created ->
@@ -754,7 +755,7 @@ fun RoutineDetailContent(
                 item {
                     ScreenHeader(
                         title = details.plan.nome,
-                        subtitle = stringResource(Res.string.routine_details).uppercase(),
+                        subtitle = stringResource(Res.string.routine_details).uppercaseUi(),
                         navigationIcon = {
                             GymIconButton(
                                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
@@ -850,7 +851,7 @@ fun RoutineDetailContent(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = stringResource(Res.string.week_of, viewWeek, details.plan.weeksCount).uppercase(),
+                                    text = stringResource(Res.string.week_of, viewWeek, details.plan.weeksCount).uppercaseUi(),
                                     style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
                                     color = Primary,
                                     fontWeight = FontWeight.Black
@@ -865,7 +866,7 @@ fun RoutineDetailContent(
                                     } else {
                                         TextButton(onClick = { state.setCurrentWeek(viewWeek) }) {
                                             Text(
-                                                text = stringResource(Res.string.set_as_current_week).uppercase(),
+                                                text = stringResource(Res.string.set_as_current_week).uppercaseUi(),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = Primary
@@ -1545,7 +1546,7 @@ fun RoutineDetailContent(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = if (isLinked) stringResource(Res.string.unlink_superset).uppercase() else stringResource(Res.string.link_with_next).uppercase(),
+                                        text = if (isLinked) stringResource(Res.string.unlink_superset).uppercaseUi() else stringResource(Res.string.link_with_next).uppercaseUi(),
                                         fontWeight = FontWeight.ExtraBold
                                     )
                                 }
@@ -1583,7 +1584,7 @@ fun RoutineDetailContent(
                             containerColor = SurfaceContainerHigh,
                             contentColor = OnSurfaceVariant
                         ) {
-                            GymButtonText(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                            GymButtonText(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                         }
                     
                         GymButton(
@@ -1737,7 +1738,7 @@ fun RoutineDetailContent(
                             enabled = canSaveExercise
                         ) {
                             GymButtonText(
-                                text = if (editingExercise == null) stringResource(Res.string.add).uppercase() else stringResource(Res.string.save).uppercase(),
+                                text = if (editingExercise == null) stringResource(Res.string.add).uppercaseUi() else stringResource(Res.string.save).uppercaseUi(),
                                 fontWeight = FontWeight.Black
                             )
                         }
@@ -1983,7 +1984,7 @@ fun RoutineDetailContent(
                             containerColor = SurfaceContainerHigh,
                             contentColor = OnSurfaceVariant
                         ) {
-                            Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                            Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                         }
                     
                         GymButton(
@@ -2013,7 +2014,7 @@ fun RoutineDetailContent(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = stringResource(Res.string.save).uppercase(),
+                                text = stringResource(Res.string.save).uppercaseUi(),
                                 fontWeight = FontWeight.Black
                             )
                         }
@@ -2038,7 +2039,7 @@ fun RoutineDetailContent(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(Res.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -2047,7 +2048,7 @@ fun RoutineDetailContent(
                     containerColor = Color.Transparent,
                     contentColor = OnSurfaceVariant
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             }
         ) {
@@ -2067,7 +2068,7 @@ fun RoutineDetailContent(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(Res.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -2079,7 +2080,7 @@ fun RoutineDetailContent(
                     containerColor = Color.Transparent,
                     contentColor = Error
                 ) {
-                    Text(stringResource(Res.string.reset).uppercase())
+                    Text(stringResource(Res.string.reset).uppercaseUi())
                 }
             }
         ) {
@@ -2235,7 +2236,7 @@ private fun DropMenuItem(
         text = {
             Column {
                 Text(text, style = MaterialTheme.typography.bodyLarge)
-                Text(category.uppercase(), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+                Text(category.uppercaseUi(), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
             }
         },
         onClick = onClick

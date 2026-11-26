@@ -22,6 +22,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Marks an exercise the user deleted from the exercise list while a routine or a workout still has it. */
 @Composable
@@ -57,12 +58,12 @@ fun RestoreExerciseDialog(
                 contentColor = OnPrimary,
                 modifier = Modifier.height(48.dp)
             ) {
-                Text(stringResource(Res.string.deleted_exercise_restore).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.deleted_exercise_restore).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onSkip) {
-                Text(skipLabel.uppercase(), color = OnSurfaceVariant)
+                Text(skipLabel.uppercaseUi(), color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainerHigh,

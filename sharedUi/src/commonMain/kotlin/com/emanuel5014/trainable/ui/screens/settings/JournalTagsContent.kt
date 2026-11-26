@@ -102,6 +102,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import kotlinx.coroutines.launch
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** What the screen is asking about right now; at most one dialog is open. */
 private sealed interface TagDialog {
@@ -168,7 +169,7 @@ fun JournalTagsContent(
                     GymButton(onClick = { dialog = TagDialog.Create }) {
                         Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(Res.string.journal_new_tag).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.journal_new_tag).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             )
@@ -186,7 +187,7 @@ fun JournalTagsContent(
                     GymButton(onClick = { dialog = TagDialog.Create }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(Res.string.journal_new_tag).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.journal_new_tag).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                 }
                 items(tags, key = { it.id }) { tag ->
@@ -283,7 +284,7 @@ fun JournalTagsContent(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { dialog = null }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )
@@ -325,7 +326,7 @@ fun JournalTagsContent(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { dialog = null }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )
@@ -482,12 +483,12 @@ private fun NameDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(name) }, enabled = name.isNotBlank()) {
-                Text(stringResource(Res.string.save).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.save).uppercaseUi(), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         }
     )

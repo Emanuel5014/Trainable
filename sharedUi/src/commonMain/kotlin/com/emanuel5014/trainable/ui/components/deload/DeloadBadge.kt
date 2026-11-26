@@ -23,6 +23,7 @@ import com.emanuel5014.trainable.sharedui.resources.deload_badge
 import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.SecondaryContainer
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * "DELOAD": marks a deload workout (see DeloadRules) in the workout bar, the history and the exercise detail. The
@@ -47,7 +48,7 @@ fun DeloadBadge(modifier: Modifier = Modifier, showIcon: Boolean = true) {
             )
         }
         Text(
-            text = stringResource(Res.string.deload_badge).uppercase(),
+            text = stringResource(Res.string.deload_badge).uppercaseUi(),
             style = MaterialTheme.typography.labelSmall,
             color = OnSecondaryContainer,
             fontWeight = FontWeight.ExtraBold,

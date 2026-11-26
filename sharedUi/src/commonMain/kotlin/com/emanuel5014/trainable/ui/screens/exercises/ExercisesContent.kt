@@ -107,6 +107,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * Where the exercises are managed: the list with its filters, a way to create one, the media of each, and (further down)
@@ -232,12 +233,12 @@ fun ExercisesContent(
                     showRemoveAll = false
                     controller.removeAll()
                 }) {
-                    Text(stringResource(Res.string.exercise_media_remove_all).uppercase(), color = Error)
+                    Text(stringResource(Res.string.exercise_media_remove_all).uppercaseUi(), color = Error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRemoveAll = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )
@@ -350,7 +351,7 @@ fun ExercisesContent(
                     if (withMediaCount > 0) {
                         TextButton(onClick = { showRemoveAll = true }) {
                             Text(
-                                stringResource(Res.string.exercise_media_remove_all).uppercase(),
+                                stringResource(Res.string.exercise_media_remove_all).uppercaseUi(),
                                 color = Error,
                                 fontWeight = FontWeight.ExtraBold
                             )
@@ -399,7 +400,7 @@ fun ExercisesContent(
                             .padding(top = 12.dp, bottom = 6.dp)
                     ) {
                         Text(
-                            text = group.category.uppercase(),
+                            text = group.category.uppercaseUi(),
                             style = MaterialTheme.typography.labelLarge,
                             color = Primary,
                             fontWeight = FontWeight.ExtraBold

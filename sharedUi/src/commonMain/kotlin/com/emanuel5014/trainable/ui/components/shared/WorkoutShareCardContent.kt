@@ -64,6 +64,7 @@ import com.emanuel5014.trainable.data.local.relation.SetWithExercise
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @Composable
 fun WorkoutShareCardContent(
@@ -214,7 +215,7 @@ fun WorkoutShareCardContent(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = appName.uppercase(),
+                text = appName.uppercaseUi(),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Black,
                 color = textPrimary,
@@ -226,7 +227,7 @@ fun WorkoutShareCardContent(
 
         // Title and Date
         Text(
-            text = planName.uppercase(),
+            text = planName.uppercaseUi(),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Black,
             fontStyle = FontStyle.Italic,
@@ -237,7 +238,7 @@ fun WorkoutShareCardContent(
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = DateFormatter.format(sessionDetails.session.timestamp).uppercase(),
+            text = DateFormatter.format(sessionDetails.session.timestamp).uppercaseUi(),
             style = MaterialTheme.typography.labelLarge,
             color = primaryColor,
             fontWeight = FontWeight.ExtraBold,
@@ -347,7 +348,7 @@ fun WorkoutShareCardContent(
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = translatedCategory.uppercase(),
+                            text = translatedCategory.uppercaseUi(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.ExtraBold,
                             color = primaryColor,
@@ -392,7 +393,7 @@ fun WorkoutShareCardContent(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = stringResource(Res.string.superset).uppercase(),
+                                        text = stringResource(Res.string.superset).uppercaseUi(),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Black,
                                         color = primaryColor,
@@ -547,7 +548,7 @@ fun WorkoutShareCardContent(
                                 .padding(14.dp)
                         ) {
                             Text(
-                                text = cardioTitle.uppercase(),
+                                text = cardioTitle.uppercaseUi(),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Black,
                                 color = primaryColor,
@@ -580,7 +581,7 @@ fun WorkoutShareCardContent(
                                 Text(
                                     text = if (com.emanuel5014.trainable.util.DistanceUnitConverter.isMiles(distanceUnit)) {
                                         com.emanuel5014.trainable.util.DistanceUnitConverter.displayNumber(cardio.distanza, distanceUnit) +
-                                            " " + com.emanuel5014.trainable.ui.components.distanceUnitLabel(distanceUnit).uppercase()
+                                            " " + com.emanuel5014.trainable.ui.components.distanceUnitLabel(distanceUnit).uppercaseUi()
                                     } else "${cardio.distanza} KM",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.ExtraBold,
@@ -614,7 +615,7 @@ fun WorkoutShareCardContent(
         )
         Spacer(modifier = Modifier.height(14.dp))
         Text(
-            text = stringResource(Res.string.share_footer_message).uppercase(),
+            text = stringResource(Res.string.share_footer_message).uppercaseUi(),
             style = MaterialTheme.typography.labelSmall,
             color = textSecondary.copy(alpha = 0.5f),
             fontWeight = FontWeight.Bold
@@ -642,7 +643,7 @@ fun ShareExerciseHeader(
         modifier = modifier,
         content = {
             Text(
-                text = name.uppercase(),
+                text = name.uppercaseUi(),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Black,
                 color = nameColor,
@@ -745,7 +746,7 @@ fun RowScope.ShareStat(value: String, label: String, valueColor: Color, labelCol
         Spacer(modifier = Modifier.height(2.dp))
         val labelStyle = MaterialTheme.typography.labelSmall
         Text(
-            text = label.uppercase(),
+            text = label.uppercaseUi(),
             style = labelStyle,
             fontWeight = FontWeight.Bold,
             color = labelColor,

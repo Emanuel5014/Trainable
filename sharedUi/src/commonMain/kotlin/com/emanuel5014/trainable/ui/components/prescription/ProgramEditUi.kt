@@ -97,6 +97,7 @@ import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** The pill an exercise wears once its prescription was changed during the workout. */
 @Composable
@@ -168,7 +169,7 @@ fun ProgramEditScopeDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold, color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold, color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainerHigh,
@@ -243,7 +244,7 @@ fun LoadPercentSheet(
             SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.large) {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
                     Text(
-                        text = stringResource(Res.string.load_sheet_title).uppercase(),
+                        text = stringResource(Res.string.load_sheet_title).uppercaseUi(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -393,7 +394,7 @@ fun LoadPercentSheet(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -402,7 +403,7 @@ fun LoadPercentSheet(
                         enabled = delta != 0f,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(stringResource(Res.string.apply).uppercase(), fontWeight = FontWeight.Black)
+                        Text(stringResource(Res.string.apply).uppercaseUi(), fontWeight = FontWeight.Black)
                     }
                 }
             }
@@ -413,7 +414,7 @@ fun LoadPercentSheet(
 @Composable
 private fun SectionTitle(text: String) {
     Text(
-        text = text.uppercase(),
+        text = text.uppercaseUi(),
         style = MaterialTheme.typography.labelSmall,
         color = OnSurfaceVariant,
         fontWeight = FontWeight.Black
@@ -529,7 +530,7 @@ fun ProgramEditHistoryDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.close).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                Text(stringResource(Res.string.close).uppercaseUi(), fontWeight = FontWeight.ExtraBold, color = Primary)
             }
         },
         containerColor = SurfaceContainerHigh,
@@ -542,7 +543,7 @@ fun ProgramEditHistoryDialog(
 @Composable
 private fun EditLine(label: String, text: String) {
     Column {
-        Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontWeight = FontWeight.Black)
+        Text(label.uppercaseUi(), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontWeight = FontWeight.Black)
         Text(text, style = MaterialTheme.typography.bodyMedium, color = OnSurface, fontWeight = FontWeight.Bold)
     }
 }

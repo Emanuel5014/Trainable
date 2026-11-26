@@ -29,6 +29,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The calendar that picks a range of days, for the history filters and the CSV export: [onPicked] gets the first and the
@@ -53,7 +54,7 @@ fun HistoryDateRangeDialog(onDismiss: () -> Unit, onPicked: (from: Long, to: Lon
                 },
                 enabled = dateRangePickerState.selectedStartDateMillis != null && dateRangePickerState.selectedEndDateMillis != null
             ) {
-                Text(stringResource(Res.string.apply_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.apply_filters).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
@@ -62,7 +63,7 @@ fun HistoryDateRangeDialog(onDismiss: () -> Unit, onPicked: (from: Long, to: Lon
                 containerColor = Color.Transparent,
                 contentColor = OnSurfaceVariant
             ) {
-                Text(stringResource(Res.string.cancel).uppercase())
+                Text(stringResource(Res.string.cancel).uppercaseUi())
             }
         },
         colors = DatePickerDefaults.colors(

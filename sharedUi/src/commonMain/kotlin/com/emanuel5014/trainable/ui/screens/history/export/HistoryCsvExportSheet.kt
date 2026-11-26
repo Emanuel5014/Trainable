@@ -132,6 +132,7 @@ import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Saves a CSV the user names the place of: Android's file picker, iOS's document picker. */
 fun interface CsvFileSaver {
@@ -536,7 +537,7 @@ private fun ExportFooter(ui: HistoryCsvExportUi, onExport: () -> Unit) {
                 Icon(Icons.Rounded.FileDownload, contentDescription = null, modifier = Modifier.size(20.dp))
             }
             Spacer(Modifier.width(10.dp))
-            Text(stringResource(Res.string.csv_export_button).uppercase(), fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(Res.string.csv_export_button).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
         }
     }
 }
@@ -636,8 +637,8 @@ private fun ExercisePage(
         SheetFormFooter(horizontalPadding = 20.dp) {
             GymButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = if (picked.isEmpty()) stringResource(Res.string.done).uppercase()
-                    else pluralStringResource(Res.plurals.csv_export_done_count, picked.size, picked.size).uppercase(),
+                    text = if (picked.isEmpty()) stringResource(Res.string.done).uppercaseUi()
+                    else pluralStringResource(Res.plurals.csv_export_done_count, picked.size, picked.size).uppercaseUi(),
                     fontWeight = FontWeight.ExtraBold
                 )
             }

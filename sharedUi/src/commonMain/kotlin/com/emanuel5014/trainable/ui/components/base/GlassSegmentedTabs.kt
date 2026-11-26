@@ -55,6 +55,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.round
 import kotlin.math.roundToInt
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 private val TabHeight = 44.dp
 private val TabGap = 4.dp
@@ -215,7 +216,7 @@ private fun TabLabels(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = title.uppercase(),
+                    text = title.uppercaseUi(),
                     style = MaterialTheme.typography.labelLarge.copy(fontSize = labelSize),
                     fontWeight = if (selected) FontWeight.Black else FontWeight.SemiBold,
                     color = color,

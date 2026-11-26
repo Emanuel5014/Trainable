@@ -79,6 +79,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.ui.components.LocalPlanImage
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The "add workout" sheet of the history: an empty workout on top, then the routines the way they are meant to be
@@ -296,7 +297,7 @@ private fun SectionHeader(
             Icon(icon, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(16.dp))
         }
         Text(
-            text = label.uppercase(),
+            text = label.uppercaseUi(),
             style = MaterialTheme.typography.labelMedium,
             color = OnSurfaceVariant,
             fontWeight = FontWeight.ExtraBold,

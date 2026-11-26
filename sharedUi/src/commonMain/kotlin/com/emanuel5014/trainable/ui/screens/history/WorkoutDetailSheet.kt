@@ -112,6 +112,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.ui.util.fullDate
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** One run of an exercise in a workout: the same exercise done again later is a run of its own. */
 private data class ExerciseWithSets(
@@ -611,7 +612,7 @@ private fun HistoryExerciseGroup(
     Column(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = exerciseName.uppercase(),
+                text = exerciseName.uppercaseUi(),
                 style = MaterialTheme.typography.labelLarge,
                 // Deleted from the exercise list: still in the history, greyed out
                 color = if (isDeleted) OnSurfaceVariant.copy(alpha = 0.7f) else Primary,
@@ -823,7 +824,7 @@ private fun HistoryCardioBlock(
             Icon(cardioIcon(translatedTitle), contentDescription = null, tint = titleColor, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = translatedTitle.uppercase(),
+                text = translatedTitle.uppercaseUi(),
                 style = MaterialTheme.typography.labelLarge,
                 color = titleColor,
                 fontWeight = FontWeight.ExtraBold,
@@ -955,7 +956,7 @@ internal fun ArchivedRoutineBadge(modifier: Modifier = Modifier) {
             modifier = Modifier.size(12.dp)
         )
         Text(
-            text = stringResource(Res.string.routine_archived_badge).uppercase(),
+            text = stringResource(Res.string.routine_archived_badge).uppercaseUi(),
             style = MaterialTheme.typography.labelSmall,
             color = OnSurfaceVariant,
             fontWeight = FontWeight.ExtraBold,

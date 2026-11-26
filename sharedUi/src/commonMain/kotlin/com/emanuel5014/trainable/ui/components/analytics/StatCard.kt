@@ -23,6 +23,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @Composable
 fun StatCard(
@@ -43,7 +44,7 @@ fun StatCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = title.uppercase(),
+                text = title.uppercaseUi(),
                 style = MaterialTheme.typography.labelMedium,
                 color = OnSurfaceVariant
             )

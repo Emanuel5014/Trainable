@@ -49,6 +49,7 @@ import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 private const val LOADING = "\u0000loading"
 
@@ -134,7 +135,7 @@ internal fun IosLanguageDialog(selected: String, onPick: (String) -> Unit, onDis
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         }
     )

@@ -135,6 +135,7 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.Instant
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** From this many routines the picker gets a search field; below it the folded groups keep the list short. */
 private const val SEARCH_MIN_ROUTINES = 20
@@ -253,8 +254,8 @@ fun HistoryFilterBottomSheet(
                     }
                     GymButton(onClick = ::close, modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (counts.shown == 0) stringResource(Res.string.history_filter_none_shown).uppercase()
-                            else pluralStringResource(Res.plurals.history_filter_show, counts.shown, counts.shown).uppercase(),
+                            text = if (counts.shown == 0) stringResource(Res.string.history_filter_none_shown).uppercaseUi()
+                            else pluralStringResource(Res.plurals.history_filter_show, counts.shown, counts.shown).uppercaseUi(),
                             fontWeight = FontWeight.ExtraBold
                         )
                     }
@@ -294,7 +295,7 @@ private fun FilterHeader(shown: Int, total: Int, canReset: Boolean, onReset: () 
 @Composable
 internal fun SectionLabel(text: String) {
     Text(
-        text = text.uppercase(),
+        text = text.uppercaseUi(),
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Black,
         color = OnSurfaceVariant,

@@ -176,6 +176,8 @@ import com.emanuel5014.trainable.sharedui.resources.search_exercises
 import com.emanuel5014.trainable.sharedui.resources.sets
 import com.emanuel5014.trainable.sharedui.resources.training_plans
 import com.emanuel5014.trainable.sharedui.resources.workout_logs
+import com.emanuel5014.trainable.ui.util.uppercaseUi
+import com.emanuel5014.trainable.ui.util.lowercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1073,7 +1075,7 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
             ) {
                 Column {
                     Text(
-                        text = exercise.category.uppercase(),
+                        text = exercise.category.uppercaseUi(),
                         style = MaterialTheme.typography.labelSmall,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -1272,7 +1274,7 @@ fun ExercisePickerBottomSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = stringResource(Res.string.add).uppercase(),
+                        text = stringResource(Res.string.add).uppercaseUi(),
                         color = if (selectedIds.isNotEmpty()) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold
@@ -1746,7 +1748,7 @@ fun WorkoutCalendarSection(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(Res.string.workout_logs).uppercase(),
+                        text = stringResource(Res.string.workout_logs).uppercaseUi(),
                         style = MaterialTheme.typography.labelMedium,
                         color = OnSurfaceVariant,
                         fontWeight = FontWeight.ExtraBold
@@ -1980,7 +1982,7 @@ fun CategoryVolumeChartSection(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "${row.volume.toInt()} ${stringResource(Res.string.sets).lowercase()}",
+                                    text = "${row.volume.toInt()} ${stringResource(Res.string.sets).lowercaseUi()}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Primary

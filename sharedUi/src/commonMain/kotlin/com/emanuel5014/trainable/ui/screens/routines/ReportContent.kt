@@ -49,6 +49,7 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The report's preview with Save and Share. Writing the file, sharing it and showing the HTML ([preview]) are the
@@ -90,7 +91,7 @@ fun ReportContent(
                     ) {
                         Icon(Icons.Rounded.Download, contentDescription = stringResource(Res.string.save))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
 
                     Spacer(modifier = Modifier.width(Spacing.small))
@@ -105,7 +106,7 @@ fun ReportContent(
                     ) {
                         Icon(Icons.Rounded.Share, contentDescription = stringResource(Res.string.share))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(Res.string.share).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.share).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -122,7 +123,7 @@ fun ReportContent(
             Box(modifier = Modifier.actionGlassSource(actionGlass)) {
                 ScreenHeader(
                     title = stringResource(Res.string.report),
-                    subtitle = stringResource(Res.string.report_preview).uppercase(),
+                    subtitle = stringResource(Res.string.report_preview).uppercaseUi(),
                     navigationIcon = {
                         GymIconButton(
                             icon = Icons.AutoMirrored.Rounded.ArrowBack,

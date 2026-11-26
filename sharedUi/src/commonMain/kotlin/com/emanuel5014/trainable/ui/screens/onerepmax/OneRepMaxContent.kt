@@ -102,6 +102,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.ui.util.DateFormatter
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,7 +131,7 @@ fun OneRepMaxContent(
                 elevation = actionGlassElevation(actionGlass),
                 modifier = Modifier.actionGlass(actionGlass, Primary),
                 icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
-                text = { Text(stringResource(Res.string.add_one_rep_max).uppercase(), fontWeight = FontWeight.ExtraBold) }
+                text = { Text(stringResource(Res.string.add_one_rep_max).uppercaseUi(), fontWeight = FontWeight.ExtraBold) }
             )
         }
     ) { padding ->
@@ -321,7 +322,7 @@ private fun OneRepMaxDetailSheet(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = stringResource(Res.string.one_rep_max_current).uppercase(),
+                    text = stringResource(Res.string.one_rep_max_current).uppercaseUi(),
                     style = MaterialTheme.typography.labelMedium,
                     color = Primary,
                     fontWeight = FontWeight.ExtraBold
@@ -410,7 +411,7 @@ private fun OneRepMaxDetailSheet(
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(Res.string.add_one_rep_max).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.add_one_rep_max).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
         }
     }
@@ -419,7 +420,7 @@ private fun OneRepMaxDetailSheet(
 @Composable
 private fun SectionTitle(text: String) {
     Text(
-        text = text.uppercase(),
+        text = text.uppercaseUi(),
         style = MaterialTheme.typography.labelMedium,
         color = OnSurfaceVariant,
         fontWeight = FontWeight.Black

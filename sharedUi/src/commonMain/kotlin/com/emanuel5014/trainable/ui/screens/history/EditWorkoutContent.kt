@@ -167,6 +167,8 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
+import com.emanuel5014.trainable.ui.util.uppercaseUi
+import com.emanuel5014.trainable.ui.util.lowercaseUi
 
 /**
  * Stable lazy-list key of a row in the edit screen: exercises and cardio logs share one list. An exercise done twice in
@@ -660,7 +662,7 @@ fun EditWorkoutContent(
                     containerColor = Error.copy(alpha = 0.12f),
                     contentColor = Error
                 ) {
-                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -669,7 +671,7 @@ fun EditWorkoutContent(
                     containerColor = Color.Transparent,
                     contentColor = OnSurfaceVariant
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -693,7 +695,7 @@ fun EditWorkoutContent(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -703,7 +705,7 @@ fun EditWorkoutContent(
                         containerColor = Error.copy(alpha = 0.15f),
                         contentColor = Error
                     ) {
-                        Text(stringResource(Res.string.delete).uppercase())
+                        Text(stringResource(Res.string.delete).uppercaseUi())
                     }
                 }
             },
@@ -728,7 +730,7 @@ fun EditWorkoutContent(
                     containerColor = Error.copy(alpha = 0.1f),
                     contentColor = Error
                 ) {
-                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -737,7 +739,7 @@ fun EditWorkoutContent(
                     containerColor = Color.Transparent,
                     contentColor = OnSurfaceVariant
                 ) {
-                    Text(stringResource(Res.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercaseUi())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -816,7 +818,7 @@ fun EditExerciseCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = ExerciseTranslations.translateCategory(exerciseState.exercise.categoria, languageCode).uppercase(),
+                    text = ExerciseTranslations.translateCategory(exerciseState.exercise.categoria, languageCode).uppercaseUi(),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold,
@@ -936,7 +938,7 @@ fun EditExerciseCard(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = stringResource(Res.string.superset).uppercase(),
+                                    text = stringResource(Res.string.superset).uppercaseUi(),
                                     style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
                                     color = Primary,
                                     fontWeight = FontWeight.ExtraBold,
@@ -965,7 +967,7 @@ fun EditExerciseCard(
                                 Text(
                                     text = stringResource(
                                         if (setKind == SetLogKind.TIME_AND_REPS) Res.string.time_and_reps_badge else Res.string.time_and_weight_badge
-                                    ).uppercase(),
+                                    ).uppercaseUi(),
                                     style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
                                     color = Primary,
                                     fontWeight = FontWeight.ExtraBold,
@@ -1005,7 +1007,7 @@ fun EditExerciseCard(
                     }
                     if (headerText != null) {
                         Text(
-                            text = headerText.uppercase(),
+                            text = headerText.uppercaseUi(),
                             style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
                             color = Primary,
                             fontWeight = FontWeight.Black,
@@ -1045,7 +1047,7 @@ fun EditExerciseCard(
                 ) {
                     Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.add).uppercase(), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.add).uppercaseUi(), style = MaterialTheme.typography.labelLarge)
                 }
                 if (!isTimeAndWeight && advancedOn) {
                     GymButton(
@@ -1058,7 +1060,7 @@ fun EditExerciseCard(
                         Icon(Icons.Rounded.Percent, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            stringResource(Res.string.prescription).uppercase(),
+                            stringResource(Res.string.prescription).uppercaseUi(),
                             style = MaterialTheme.typography.labelLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -1207,7 +1209,7 @@ fun CardioEditCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(Res.string.cardio_cat_label).uppercase(),
+                    text = stringResource(Res.string.cardio_cat_label).uppercaseUi(),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold,
@@ -1284,7 +1286,7 @@ fun CardioEditCard(
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(Res.string.add).uppercase(), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.add).uppercaseUi(), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -1419,7 +1421,7 @@ fun WorkoutSessionHeaderCard(
                     val countLabel = if (exerciseCount == 1) {
                         stringResource(Res.string.exercise)
                     } else {
-                        stringResource(Res.string.share_exercises).lowercase()
+                        stringResource(Res.string.share_exercises).lowercaseUi()
                     }
                     Text(
                         text = "$exerciseCount $countLabel",
@@ -1614,7 +1616,7 @@ fun EditWorkoutDetailsBottomSheet(
                         contentColor = OnSurfaceVariant,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.cancel).uppercaseUi(), fontWeight = FontWeight.Bold)
                     }
 
                     GymButton(
@@ -1627,7 +1629,7 @@ fun EditWorkoutDetailsBottomSheet(
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -1649,12 +1651,12 @@ fun EditWorkoutDetailsBottomSheet(
                         showDatePickerDialog = false
                     }
                 ) {
-                    Text(stringResource(Res.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                    Text(stringResource(Res.string.confirm).uppercaseUi(), fontWeight = FontWeight.ExtraBold, color = Primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePickerDialog = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                 }
             },
             colors = androidx.compose.material3.DatePickerDefaults.colors(

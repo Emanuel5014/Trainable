@@ -86,6 +86,7 @@ import com.emanuel5014.trainable.sharedui.resources.exercise_media_remove
 import com.emanuel5014.trainable.sharedui.resources.exercise_media_remove_message
 import com.emanuel5014.trainable.sharedui.resources.exercise_media_remove_title
 import com.emanuel5014.trainable.sharedui.resources.exercise_media_replace
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 @Composable
 fun SharedExerciseMediaSlot(
@@ -301,12 +302,12 @@ fun SharedExerciseMediaViewer(
                     showRemoveConfirm = false
                     onRemove()
                 }) {
-                    Text(stringResource(Res.string.exercise_media_remove).uppercase(), color = Error)
+                    Text(stringResource(Res.string.exercise_media_remove).uppercaseUi(), color = Error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRemoveConfirm = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )

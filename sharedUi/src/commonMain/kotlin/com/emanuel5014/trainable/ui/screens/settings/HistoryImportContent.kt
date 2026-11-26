@@ -220,6 +220,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.emanuel5014.trainable.ui.util.PlatformBackHandler
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 private const val PAGE = 30
 
@@ -1063,7 +1064,7 @@ private fun DoneContent(done: HistoryImportState.Done, onUndo: () -> Unit, onFin
             },
             dismissButton = {
                 TextButton(onClick = { confirmUndo = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )
@@ -1128,7 +1129,7 @@ private fun DoneContent(done: HistoryImportState.Done, onUndo: () -> Unit, onFin
         }
         Spacer(Modifier.height(32.dp))
         GymButton(onClick = onFinish, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(Res.string.done).uppercase(), fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(Res.string.done).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
         }
         if (!done.undone) {
             Spacer(Modifier.height(8.dp))

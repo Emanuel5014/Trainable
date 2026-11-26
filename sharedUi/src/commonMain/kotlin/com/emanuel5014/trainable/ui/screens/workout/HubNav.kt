@@ -39,6 +39,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** How loud the way to the next exercise is: quiet while sets are left to do, the main action once the exercise is done. */
 enum class HubNavEmphasis { Tonal, Filled }
@@ -132,7 +133,7 @@ fun HubNav(
                         Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(Res.string.finish).uppercase(),
+                            text = stringResource(Res.string.finish).uppercaseUi(),
                             style = MaterialTheme.typography.labelLarge,
                             color = Primary,
                             fontWeight = FontWeight.ExtraBold,
@@ -147,7 +148,7 @@ fun HubNav(
                     Icon(Icons.Rounded.Check, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(Res.string.finish_workout).uppercase(),
+                        text = stringResource(Res.string.finish_workout).uppercaseUi(),
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
@@ -160,7 +161,7 @@ fun HubNav(
 private fun NextLabel(name: String, labelColor: androidx.compose.ui.graphics.Color, nameColor: androidx.compose.ui.graphics.Color, modifier: Modifier) {
     Column(horizontalAlignment = Alignment.End, modifier = modifier) {
         Text(
-            text = stringResource(Res.string.next_exercise_btn).uppercase(),
+            text = stringResource(Res.string.next_exercise_btn).uppercaseUi(),
             style = MaterialTheme.typography.labelSmall,
             color = labelColor,
             fontWeight = FontWeight.ExtraBold,

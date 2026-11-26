@@ -46,6 +46,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The exercise customization of the old screen, as a card of the exercises page: the switch that lets the presets be
@@ -144,12 +145,12 @@ fun ResetNamesDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         text = { Text(stringResource(Res.string.reset_exercise_names_message), color = OnSurfaceVariant) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(Res.string.reset).uppercase(), color = Error)
+                Text(stringResource(Res.string.reset).uppercaseUi(), color = Error)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
             }
         }
     )

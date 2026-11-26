@@ -162,6 +162,7 @@ import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * Everything the app knows about one exercise: its media, records and every finished performance. A full-screen dialog
@@ -522,7 +523,7 @@ fun ExerciseDetailContent(
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = ExerciseTranslations.translateCategory(exercise.categoria, state.languageCode).uppercase(),
+                        text = ExerciseTranslations.translateCategory(exercise.categoria, state.languageCode).uppercaseUi(),
                         style = MaterialTheme.typography.labelLarge,
                         color = if (exercise.isDeleted) OnSurfaceVariant.copy(alpha = 0.7f) else Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -904,7 +905,7 @@ private fun SetupCard(note: String?, onEdit: (() -> Unit)?) {
             if (onEdit != null) {
                 TextButton(onClick = onEdit) {
                     Text(
-                        stringResource(if (note != null) Res.string.edit else Res.string.add).uppercase(),
+                        stringResource(if (note != null) Res.string.edit else Res.string.add).uppercaseUi(),
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
@@ -925,7 +926,7 @@ private fun SetupCard(note: String?, onEdit: (() -> Unit)?) {
 @Composable
 private fun SectionTitle(text: String, modifier: Modifier = Modifier.padding(bottom = 8.dp)) {
     Text(
-        text = text.uppercase(),
+        text = text.uppercaseUi(),
         style = MaterialTheme.typography.labelMedium,
         color = OnSurfaceVariant,
         fontWeight = FontWeight.ExtraBold,

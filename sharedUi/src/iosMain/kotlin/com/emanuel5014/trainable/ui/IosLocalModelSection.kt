@@ -78,6 +78,7 @@ import platform.UIKit.UIDocumentPickerViewController
 import platform.UIKit.UIViewController
 import platform.UniformTypeIdentifiers.UTTypeData
 import platform.darwin.NSObject
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The on-device model in the iOS AI settings (A5-4), the same controls as Android's LocalModelControls with one model
@@ -107,12 +108,12 @@ internal fun IosLocalModelSection(activeIsLocal: Boolean, store: IosModelStore =
             text = { Text(stringResource(Res.string.ai_model_delete_confirm_desc), color = OnSurfaceVariant) },
             confirmButton = {
                 TextButton(onClick = { confirmDelete = false; store.delete() }) {
-                    Text(stringResource(Res.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), color = Error, fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { confirmDelete = false }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )
@@ -163,7 +164,7 @@ internal fun IosLocalModelSection(activeIsLocal: Boolean, store: IosModelStore =
                     // An import is a local copy that finishes on its own; only a download can be stopped
                     if (!current.importing) {
                         TextButton(onClick = { store.cancelDownload() }) {
-                            Text(stringResource(Res.string.ai_download_cancel).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                            Text(stringResource(Res.string.ai_download_cancel).uppercaseUi(), color = Error, fontWeight = FontWeight.ExtraBold)
                         }
                     }
                 }
@@ -180,7 +181,7 @@ internal fun IosLocalModelSection(activeIsLocal: Boolean, store: IosModelStore =
                     Text(stringResource(Res.string.ai_model_ready), style = MaterialTheme.typography.bodyMedium, color = OnSurface)
                 }
                 TextButton(onClick = { confirmDelete = true }) {
-                    Text(stringResource(Res.string.ai_model_delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.ai_model_delete).uppercaseUi(), color = Error, fontWeight = FontWeight.ExtraBold)
                 }
             }
             is AiModelStatus.Error -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

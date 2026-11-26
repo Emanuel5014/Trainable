@@ -65,6 +65,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * The custom categories: add, rename, delete. The rules are those of the old customization screen (a blank or an already
@@ -175,12 +176,12 @@ fun CategoriesSheet(
                     onDelete(category)
                     toDelete = null
                 }) {
-                    Text(stringResource(Res.string.delete).uppercase(), color = Error)
+                    Text(stringResource(Res.string.delete).uppercaseUi(), color = Error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { toDelete = null }) {
-                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercaseUi(), color = Primary)
                 }
             }
         )
@@ -281,12 +282,12 @@ private fun CategoryNameDialog(
                 containerColor = Primary,
                 contentColor = OnPrimary
             ) {
-                Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.save).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         }
     )

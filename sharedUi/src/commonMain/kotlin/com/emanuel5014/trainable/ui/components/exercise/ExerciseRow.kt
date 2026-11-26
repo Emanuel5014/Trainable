@@ -35,6 +35,7 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /**
  * An exercise as every list shows it, the exercises page and both pickers alike: the [thumbnail] (when the list has them),
@@ -133,12 +134,12 @@ fun ExercisePickRow(
         badges = {
             when {
                 isSelected -> PrescriptionPill(
-                    text = stringResource(Res.string.exercise_picked_badge).uppercase(),
+                    text = stringResource(Res.string.exercise_picked_badge).uppercaseUi(),
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     emphasized = true
                 )
-                isCurrent -> PrescriptionPill(text = stringResource(Res.string.current_badge).uppercase(), containerColor = Surface)
+                isCurrent -> PrescriptionPill(text = stringResource(Res.string.current_badge).uppercaseUi(), containerColor = Surface)
             }
             if (note != null) PrescriptionPill(text = note, containerColor = Surface)
         },

@@ -90,6 +90,7 @@ import com.emanuel5014.trainable.ui.util.PlatformBackHandler
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 /** Shared scan entry, draft banner and review, with the platform's photo sources and error presentation. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -213,11 +214,11 @@ fun <Metrics> rememberRoutineScanUi(
                         TextButton(onClick = {
                             showDiscardDraftDialog = false
                             model.discardScanDraft()
-                        }) { Text(stringResource(Res.string.scan_draft_discard).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold) }
+                        }) { Text(stringResource(Res.string.scan_draft_discard).uppercaseUi(), color = Error, fontWeight = FontWeight.ExtraBold) }
                     },
                     dismissButton = {
                         TextButton(onClick = { showDiscardDraftDialog = false }) {
-                            Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
+                            Text(stringResource(Res.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
                         }
                     }
                 )
@@ -425,7 +426,7 @@ fun ScanProgressOverlay(
                     }
                 ) {
                     Text(
-                        text = stringResource(Res.string.ai_scan_stop).uppercase(),
+                        text = stringResource(Res.string.ai_scan_stop).uppercaseUi(),
                         color = Error,
                         fontWeight = FontWeight.ExtraBold
                     )
@@ -434,7 +435,7 @@ fun ScanProgressOverlay(
             dismissButton = {
                 TextButton(onClick = { showCancelConfirmation = false }) {
                     Text(
-                        text = stringResource(Res.string.ai_scan_continue).uppercase(),
+                        text = stringResource(Res.string.ai_scan_continue).uppercaseUi(),
                         color = Primary
                     )
                 }
@@ -519,7 +520,7 @@ private fun ScanDraftBanner(
             )
         }
         TextButton(onClick = onResume) {
-            Text(stringResource(Res.string.scan_draft_resume).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(Res.string.scan_draft_resume).uppercaseUi(), color = Primary, fontWeight = FontWeight.ExtraBold)
         }
         IconButton(onClick = onDiscard) {
             Icon(Icons.Rounded.Close, contentDescription = stringResource(Res.string.scan_draft_discard), tint = OnSurfaceVariant)

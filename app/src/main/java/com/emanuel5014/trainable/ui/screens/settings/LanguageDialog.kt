@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.util.uppercaseUi
 
 private val languageCodes = listOf("system", "en", "it", "es", "fr", "de", "pt", "tr")
 
@@ -47,7 +48,7 @@ fun LanguageDialog(currentLanguage: String?, onPick: (String) -> Unit, onDismiss
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(R.string.cancel).uppercaseUi(), color = OnSurfaceVariant)
             }
         }
     )
