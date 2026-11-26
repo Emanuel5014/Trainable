@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -34,12 +35,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -48,6 +52,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -72,7 +77,8 @@ private const val HOLD_MILLIS = 500L
 
 /**
  * The list of every exercise of the workout, opened by holding a finger on the previous/next buttons of the hub.
- * It is only to look at: it stays while the finger stays and closes when the finger lifts.
+ * It stays while the finger stays: sliding the finger over a line picks that exercise, and lifting it there goes to
+ * it. Lifting it anywhere else (or on the exercise already shown) only closes the list.
  */
 @Stable
 class ExerciseOverviewState {
@@ -82,32 +88,84 @@ class ExerciseOverviewState {
     /** The last [anchor], kept so the list can shrink back into the buttons after it closes. */
     var lastAnchor by mutableStateOf(Offset.Zero)
         private set
+    /** Where the finger is (root coordinates) once it has moved with the list open. */
+    var finger by mutableStateOf<Offset?>(null)
+        private set
+    /** The exercise (its index in the workout) whose line is under the finger, null when it is on none. */
+    var hovered by mutableStateOf<Int?>(null)
+        private set
     var hapticEnabled = true
+    /** Goes to the exercise at the given index: called when the finger lifts on its line. */
+    var onSelect: (Int) -> Unit = {}
+
+    /** The lines on screen, by exercise index: read when the finger moves, so they are always where they are drawn. */
+    internal val lines = mutableMapOf<Int, LayoutCoordinates>()
 
     fun open(at: Offset) {
         lastAnchor = at
         anchor = at
+        finger = null
+        hovered = null
+    }
+
+    /**
+     * The finger moved to [to]: the line under it. Only its height counts, so a finger off the side still picks, and
+     * the thin gap between two lines belongs to the nearer one, so the pick never blinks off while the finger slides.
+     */
+    fun move(to: Offset) {
+        finger = to
+        var best: Int? = null
+        var bestDistance = Float.MAX_VALUE
+        lines.forEach { (index, coordinates) ->
+            if (!coordinates.isAttached) return@forEach
+            val bounds = coordinates.boundsInRoot()
+            if (bounds.height <= 0f) return@forEach
+            val distance = when {
+                to.y < bounds.top -> bounds.top - to.y
+                to.y >= bounds.bottom -> to.y - bounds.bottom
+                else -> 0f
+            }
+            if (distance <= bounds.height * 0.15f && distance < bestDistance) {
+                best = index
+                bestDistance = distance
+            }
+        }
+        hovered = best
+    }
+
+    /** The finger lifted: to the exercise under it, if any, and the list closes. */
+    fun release() {
+        val picked = hovered
+        close()
+        if (picked != null) onSelect(picked)
     }
 
     fun close() {
         anchor = null
+        finger = null
+        hovered = null
     }
 }
 
 val LocalExerciseOverview = staticCompositionLocalOf<ExerciseOverviewState?> { null }
 
 /**
- * Holding a finger still on these buttons for [HOLD_MILLIS] opens the exercise list; lifting it closes the list.
- * A tap stays a tap and a drag (the hub, a swipe) stays a drag: the hold only counts while the finger has not moved.
- * Once the list is open the touch belongs to it, so lifting the finger never also presses the button under it.
+ * Holding a finger still on these buttons for [HOLD_MILLIS] opens the exercise list; sliding it picks a line and lifting
+ * it goes there (or only closes the list). A tap stays a tap and a drag (the hub, a swipe) stays a drag: the hold only
+ * counts while the finger has not moved. Once the list is open the touch belongs to it, so lifting the finger never
+ * also presses the button under it.
  */
 @Composable
 fun Modifier.holdForExerciseOverview(): Modifier {
     val overview = LocalExerciseOverview.current ?: return this
     val haptic = LocalHapticFeedback.current
     val bounds = remember { mutableStateOf(Offset.Zero) }
+    val coordinates = remember { mutableStateOf<LayoutCoordinates?>(null) }
     return this
-        .onGloballyPositioned { bounds.value = it.boundsInRoot().center }
+        .onGloballyPositioned {
+            bounds.value = it.boundsInRoot().center
+            coordinates.value = it
+        }
         .pointerInput(overview) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -127,13 +185,21 @@ fun Modifier.holdForExerciseOverview(): Modifier {
 
                 if (overview.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 overview.open(bounds.value)
+                var lifted = false
                 try {
                     do {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
                         event.changes.forEach { it.consume() }
+                        val change = event.changes.firstOrNull { it.id == down.id }
+                        val node = coordinates.value
+                        if (change != null && change.pressed && node != null && node.isAttached) {
+                            overview.move(node.localToRoot(change.position))
+                        }
                     } while (event.changes.any { it.pressed })
+                    lifted = true
                 } finally {
-                    overview.close()
+                    // A touch taken away (the screen left, the gesture cancelled) never jumps
+                    if (lifted) overview.release() else overview.close()
                 }
             }
         }
@@ -189,6 +255,34 @@ fun ExerciseOverview(state: WorkoutState, overview: ExerciseOverviewState, langu
     // The list cannot be scrolled with the finger held elsewhere: a long workout opens around the current exercise
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = (currentGroup - 2).coerceAtLeast(0))
     var center by remember { mutableStateOf(Offset.Zero) }
+    val listCoordinates = remember { mutableStateOf<LayoutCoordinates?>(null) }
+    val density = LocalDensity.current
+    val haptic = LocalHapticFeedback.current
+    // A tick each time the finger reaches another line
+    LaunchedEffect(overview.hovered) {
+        if (overview.hovered != null && overview.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+    }
+    // A long workout scrolls while the finger rests near the top or bottom of the list. The bottom edge only counts
+    // once the finger has been inside the list: it comes up from the buttons and must not drag the list on its way.
+    LaunchedEffect(open) {
+        if (!open) return@LaunchedEffect
+        val edge = with(density) { 44.dp.toPx() }
+        val maxStep = with(density) { 12.dp.toPx() }
+        var inside = false
+        while (true) {
+            withFrameNanos { }
+            val finger = overview.finger ?: continue
+            val box = listCoordinates.value?.takeIf { it.isAttached }?.boundsInRoot() ?: continue
+            if (finger.y > box.top + edge && finger.y < box.bottom - edge) inside = true
+            if (!inside) continue
+            val step = when {
+                finger.y < box.top + edge -> -maxStep * ((box.top + edge - finger.y) / edge).coerceAtMost(1f)
+                finger.y > box.bottom - edge -> maxStep * ((finger.y - (box.bottom - edge)) / edge).coerceAtMost(1f)
+                else -> 0f
+            }
+            if (step != 0f && listState.scrollBy(step) != 0f) overview.move(finger)
+        }
+    }
     val anchor = overview.lastAnchor
     val p = progress
     val stagger = 0.1f
@@ -238,19 +332,19 @@ fun ExerciseOverview(state: WorkoutState, overview: ExerciseOverviewState, langu
             LazyColumn(
                 state = listState,
                 userScrollEnabled = false,
+                modifier = Modifier.onGloballyPositioned { listCoordinates.value = it },
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 val lastStart = (groups.size - 1).coerceAtLeast(1) * stagger
                 itemsIndexed(groups) { index, group ->
                     val local = ((linesProgress * (1f + lastStart)) - index * stagger).coerceIn(0f, 1f)
-                    val density = LocalDensity.current
                     Box(
                         modifier = Modifier.graphicsLayer {
                             alpha = local
                             translationY = with(density) { 20.dp.toPx() } * (1f - local)
                         }
                     ) {
-                        OverviewGroupView(group, state.currentExerciseIndex, languageCode)
+                        OverviewGroupView(group, state.currentExerciseIndex, overview, languageCode)
                     }
                 }
             }
@@ -259,9 +353,9 @@ fun ExerciseOverview(state: WorkoutState, overview: ExerciseOverviewState, langu
 }
 
 @Composable
-private fun OverviewGroupView(group: OverviewGroup, currentIndex: Int, languageCode: String) {
+private fun OverviewGroupView(group: OverviewGroup, currentIndex: Int, overview: ExerciseOverviewState, languageCode: String) {
     if (group.supersetId == null) {
-        group.items.forEach { OverviewLine(it.value, it.index == currentIndex, languageCode) }
+        group.items.forEach { OverviewLine(it.index, it.value, it.index == currentIndex, overview, languageCode) }
         return
     }
     Column(
@@ -277,20 +371,43 @@ private fun OverviewGroupView(group: OverviewGroup, currentIndex: Int, languageC
             color = Primary,
             modifier = Modifier.padding(start = 12.dp, top = 4.dp, bottom = 2.dp)
         )
-        group.items.forEach { OverviewLine(it.value, it.index == currentIndex, languageCode) }
+        group.items.forEach { OverviewLine(it.index, it.value, it.index == currentIndex, overview, languageCode) }
     }
 }
 
 @Composable
-private fun OverviewLine(exercise: WorkoutExerciseState, isCurrent: Boolean, languageCode: String) {
+private fun OverviewLine(
+    index: Int,
+    exercise: WorkoutExerciseState,
+    isCurrent: Boolean,
+    overview: ExerciseOverviewState,
+    languageCode: String
+) {
     val done = exercise.setsDone()
     val total = exercise.setsTotal()
     val isDone = total > 0 && done >= total
+    val isHovered = overview.hovered == index
+    // The line under the finger lifts a little and fills more, so it is clear where lifting it goes
+    val lift by animateFloatAsState(if (isHovered) 1f else 0f, spring(dampingRatio = 0.6f, stiffness = 700f), label = "overview_line")
+    DisposableEffect(index) { onDispose { overview.lines.remove(index) } }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(46.dp)
-            .background(if (isCurrent) Primary.copy(alpha = 0.14f) else Color.Transparent, RoundedCornerShape(14.dp))
+            .onGloballyPositioned { overview.lines[index] = it }
+            .graphicsLayer {
+                val scale = 1f + 0.035f * lift
+                scaleX = scale
+                scaleY = scale
+            }
+            .background(
+                when {
+                    isHovered -> Primary.copy(alpha = 0.30f)
+                    isCurrent -> Primary.copy(alpha = 0.14f)
+                    else -> Color.Transparent
+                },
+                RoundedCornerShape(14.dp)
+            )
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -2319,6 +2319,12 @@ class WorkoutModel(
         }
     }
 
+    /** Straight to the exercise at [index] (chosen in the exercise list or on the progress strip). */
+    fun goToExercise(index: Int) {
+        if (_state.value.isFinishing || _state.value.emomRun != null) return
+        _state.update { if (index in it.exercises.indices && index != it.currentExerciseIndex) it.copy(currentExerciseIndex = index) else it }
+    }
+
     private var oneRepMaxReviewDone = false
 
     fun finishWorkout() {

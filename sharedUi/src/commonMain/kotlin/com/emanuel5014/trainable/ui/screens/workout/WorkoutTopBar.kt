@@ -63,7 +63,8 @@ fun WorkoutTopBar(
     ui: WorkoutScreenUiState,
     onClose: () -> Unit,
     onNavigateToRoutine: (Int) -> Unit,
-    onSetDeload: (Boolean) -> Unit = {}
+    onSetDeload: (Boolean) -> Unit = {},
+    onSelectExercise: (Int) -> Unit = {}
 ) {
     val fractions = remember(state.exercises) { ExerciseProgress.fractions(state.exercises) }
     Column {
@@ -203,7 +204,10 @@ fun WorkoutTopBar(
     ExerciseProgressStrip(
         fractions = fractions,
         currentIndex = state.currentExerciseIndex,
-        completedCount = state.completedExercises
+        completedCount = state.completedExercises,
+        hapticEnabled = state.hapticEnabled,
+        // An EMOM running keeps its exercise, like the previous/next buttons
+        onSelect = onSelectExercise.takeIf { state.emomRun == null }
     )
     }
 }

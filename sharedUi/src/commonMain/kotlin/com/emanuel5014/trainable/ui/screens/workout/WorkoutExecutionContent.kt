@@ -302,9 +302,10 @@ fun WorkoutExecutionContent(
         }
     }
 
-    // Holding the previous/next buttons shows every exercise of the workout over the screen
+    // Holding the previous/next buttons shows every exercise of the workout over the screen; sliding the finger picks one
     val exerciseOverview = remember { ExerciseOverviewState() }
     exerciseOverview.hapticEnabled = state.hapticEnabled
+    exerciseOverview.onSelect = viewModel::goToExercise
     CompositionLocalProvider(LocalExerciseOverview provides exerciseOverview) {
         Box(modifier = Modifier.fillMaxSize()) {
             Scaffold(
@@ -314,7 +315,8 @@ fun WorkoutExecutionContent(
                         ui = ui,
                         onClose = safeNavigateBack,
                         onNavigateToRoutine = onNavigateToRoutine,
-                        onSetDeload = viewModel::setDeload
+                        onSetDeload = viewModel::setDeload,
+                        onSelectExercise = viewModel::goToExercise
                     )
                 },
                 containerColor = Surface

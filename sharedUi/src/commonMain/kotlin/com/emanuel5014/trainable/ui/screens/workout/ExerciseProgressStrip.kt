@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.screens.workout
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,12 +19,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalHapticFeedback
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -42,7 +50,8 @@ private val MIN_WAVY_SEGMENT_WIDTH = 20.dp
 /**
  * One segment per exercise under the top bar: full when the exercise is done, partly filled while it is being done (the
  * fill follows the sets logged), with a wave on the current one. [fractions] come from [ExerciseProgress.fractions];
- * on the right, how many exercises are done. It only shows progress: it takes no taps.
+ * on the right, how many exercises are done. With [onSelect], a tap on a segment goes to that exercise: the whole
+ * height of the strip and its side margins take the tap, since a segment alone is too thin for a finger.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -50,20 +59,52 @@ fun ExerciseProgressStrip(
     fractions: List<Float>,
     currentIndex: Int,
     completedCount: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    hapticEnabled: Boolean = true,
+    onSelect: ((Int) -> Unit)? = null
 ) {
     if (fractions.isEmpty()) return
     val description = stringResource(Res.string.workout_progress_description, currentIndex + 1, fractions.size, completedCount)
+    val haptic = LocalHapticFeedback.current
+    val strip = remember { mutableStateOf<LayoutCoordinates?>(null) }
+    val segments = remember { mutableStateOf<LayoutCoordinates?>(null) }
+    val gap: Dp = if (fractions.size > 12) 2.dp else 3.dp
+    val count = fractions.size
+    // The tap handler lives across recompositions: it reads the newest values through these
+    val shownIndex by rememberUpdatedState(currentIndex)
+    val select by rememberUpdatedState(onSelect)
+    val haptics by rememberUpdatedState(hapticEnabled)
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .then(
+                if (onSelect == null) Modifier else Modifier
+                    .onGloballyPositioned { strip.value = it }
+                    .pointerInput(count) {
+                        detectTapGestures { tap ->
+                            val from = strip.value?.takeIf { it.isAttached } ?: return@detectTapGestures
+                            val box = segments.value?.takeIf { it.isAttached } ?: return@detectTapGestures
+                            // The tap from the start of the segments; one segment and its gap each
+                            val x = box.localPositionOf(from, tap).x
+                            val width = box.size.width.toFloat()
+                            // The count on the right is not a segment
+                            if (x > width + gap.toPx() * 2) return@detectTapGestures
+                            val step = (width + gap.toPx()) / count
+                            val index = (x / step).toInt().coerceIn(0, count - 1)
+                            val go = select ?: return@detectTapGestures
+                            if (index != shownIndex) {
+                                if (haptics) haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                go(index)
+                            }
+                        }
+                    }
+            )
             .padding(start = 20.dp, end = 20.dp, bottom = 8.dp)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        BoxWithConstraints(modifier = Modifier.weight(1f)) {
-            val gap: Dp = if (fractions.size > 12) 2.dp else 3.dp
+        BoxWithConstraints(modifier = Modifier.weight(1f).onGloballyPositioned { segments.value = it }) {
             val segmentWidth = (maxWidth - gap * (fractions.size - 1)) / fractions.size
             val wavy = segmentWidth >= MIN_WAVY_SEGMENT_WIDTH
             Row(
