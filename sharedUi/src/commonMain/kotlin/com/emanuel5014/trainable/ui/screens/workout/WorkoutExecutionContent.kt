@@ -58,11 +58,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -341,7 +341,7 @@ fun WorkoutExecutionContent(
                                 modifier = Modifier.padding(32.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.DoneAll,
+                                    imageVector = Icons.Rounded.FitnessCenter,
                                     contentDescription = null,
                                     tint = OnSurfaceVariant.copy(alpha = 0.5f),
                                     modifier = Modifier.size(64.dp)

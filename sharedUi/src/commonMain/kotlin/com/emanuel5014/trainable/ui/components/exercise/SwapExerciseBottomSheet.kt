@@ -76,7 +76,7 @@ import com.emanuel5014.trainable.sharedui.resources.all_categories
 import com.emanuel5014.trainable.sharedui.resources.back
 import com.emanuel5014.trainable.sharedui.resources.cardio_duration_slider
 import com.emanuel5014.trainable.sharedui.resources.confirm
-import com.emanuel5014.trainable.sharedui.resources.exercise_details
+import com.emanuel5014.trainable.sharedui.resources.select_exercise
 import com.emanuel5014.trainable.sharedui.resources.filter_custom
 import com.emanuel5014.trainable.sharedui.resources.filter_favorites
 import com.emanuel5014.trainable.sharedui.resources.keep_prescription_on_swap
@@ -301,7 +301,8 @@ fun SwapExerciseBottomSheet(
                                         Text(
                                             text = when {
                                                 quickAdd != null -> stringResource(Res.string.quick_picker_title)
-                                                isAdding -> stringResource(Res.string.exercise_details)
+                                                // A list to pick from: the details come in the next step
+                                                isAdding -> stringResource(Res.string.select_exercise)
                                                 else -> stringResource(Res.string.swap_exercise_message)
                                             },
                                             style = MaterialTheme.typography.headlineMedium.copy(

@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.foundation.layout.BoxWithConstraints
 import com.emanuel5014.trainable.ui.screens.history.displayText
 import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.SecondaryContainer
@@ -84,12 +89,9 @@ fun WorkoutTopBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = state.title.displayText(),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+                    WorkoutTitleText(
+                        title = state.title.displayText(),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
                         modifier = Modifier.weight(1f, fill = false)
                     )
                     if (state.isDeload) DeloadBadge(showIcon = false)
@@ -256,4 +258,38 @@ private fun SessionElapsedLabel(startedAt: Long) {
         fontWeight = FontWeight.ExtraBold,
         maxLines = 1
     )
+}
+
+/** The smallest share of its size the workout's name shrinks to before it takes a second line. */
+private const val TITLE_MIN_SCALE = 0.75f
+
+/**
+ * The workout's name on one line beside the top bar's buttons: it shrinks (down to [TITLE_MIN_SCALE]) rather than
+ * wrap, so "Quick Workout" or a long routine name does not push the progress strip down. A name too long even then
+ * goes back to the full size on two lines, ending in an ellipsis.
+ */
+@Composable
+private fun WorkoutTitleText(title: String, style: TextStyle, modifier: Modifier = Modifier) {
+    BoxWithConstraints(modifier = modifier) {
+        val measurer = rememberTextMeasurer()
+        val maxWidthPx = constraints.maxWidth
+        // The system font size is part of the measure: a change of it must measure again
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val fitted = remember(title, style, maxWidthPx, density) {
+            if (maxWidthPx == Constraints.Infinity || maxWidthPx <= 0 || !style.fontSize.isSp) return@remember null
+            val base = style.fontSize.value
+            var size = base
+            while (size >= base * TITLE_MIN_SCALE) {
+                val candidate = style.copy(fontSize = size.sp)
+                if (measurer.measure(title, candidate, maxLines = 1, softWrap = false).size.width <= maxWidthPx) return@remember candidate
+                size -= 0.5f
+            }
+            null
+        }
+        if (fitted != null) {
+            Text(text = title, style = fitted, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+        } else {
+            Text(text = title, style = style, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+    }
 }
