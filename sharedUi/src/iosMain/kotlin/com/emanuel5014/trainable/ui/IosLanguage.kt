@@ -38,6 +38,7 @@ import com.emanuel5014.trainable.sharedui.resources.language_french
 import com.emanuel5014.trainable.sharedui.resources.language_german
 import com.emanuel5014.trainable.sharedui.resources.language_italian
 import com.emanuel5014.trainable.sharedui.resources.language_portuguese
+import com.emanuel5014.trainable.sharedui.resources.language_turkish
 import com.emanuel5014.trainable.sharedui.resources.language_spanish
 import com.emanuel5014.trainable.sharedui.resources.language_system_default
 import com.emanuel5014.trainable.ui.screens.settings.LanguageOption
@@ -113,7 +114,8 @@ internal fun iosLanguageOptions(): List<Pair<String, String>> = listOf(
     "es" to stringResource(Res.string.language_spanish),
     "fr" to stringResource(Res.string.language_french),
     "de" to stringResource(Res.string.language_german),
-    "pt" to stringResource(Res.string.language_portuguese)
+    "pt" to stringResource(Res.string.language_portuguese),
+    "tr" to stringResource(Res.string.language_turkish)
 )
 
 /** The language picker of Settings, shared with the onboarding Welcome step. */

@@ -1255,6 +1255,7 @@
     <string name="language_french">Français</string>
     <string name="language_german">Deutsch</string>
     <string name="language_portuguese">Português</string>
+    <string name="language_turkish">Türkçe</string>
     <string name="export_csv">EXPORTAR CSV</string>
     <string name="import_confirm">IMPORTAR</string>
     <string name="import_includes_maximums">Incluye los 1RM de %1$d ejercicios</string>

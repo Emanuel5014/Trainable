@@ -662,5 +662,7 @@ enum GalleryText {
                "Démarrage rapide", "Démarrez ou reprenez votre séance d'un geste", "Ouvrir Trainable", "Ouvre l'app là où vous l'avez laissée"],
         "pt": ["Treino", "Treino sugerido e início rápido", "Meta Semanal", "Acompanhamento da meta semanal",
                "Início rápido", "Inicie ou retome seu treino com um toque", "Abrir Trainable", "Abre o app onde você parou"],
+        "tr": ["Antrenman", "Önerilen antrenman ve hızlı başlangıç", "Haftalık Hedef", "Haftalık antrenman ilerleme takibi",
+               "Hızlı başlangıç", "Tek dokunuşla antrenmanını başlat veya devam ettir", "Trainable'ı aç", "Uygulamayı kaldığın yerden aç"],
     ]
 }

@@ -376,6 +376,7 @@ fun SettingsScreen(
                                             "fr" -> stringResource(R.string.language_french)
                                             "de" -> stringResource(R.string.language_german)
                                             "pt" -> stringResource(R.string.language_portuguese)
+                                            "tr" -> stringResource(R.string.language_turkish)
                                             else -> stringResource(R.string.language_system_default)
                                         },
                                         style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant

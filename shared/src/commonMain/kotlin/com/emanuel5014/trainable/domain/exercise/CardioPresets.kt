@@ -28,11 +28,11 @@ object CardioPresets {
         WALKING to listOf("Walking", "Walk", "Camminata", "Gehen", "Caminar", "Marche", "Caminhada")
     )
 
-    private val languages = listOf("it", "es", "fr", "de", "pt")
+    private val languages = listOf("it", "es", "fr", "de", "pt", "tr")
 
     /**
      * The folded names a cardio log may carry to belong to [preset]: its current stored name (also when the user
-     * renamed it), its original English name, its five translations and, for the three slots, the old chip words.
+     * renamed it), its original English name, its six translations and, for the three slots, the old chip words.
      */
     fun aliasesOf(preset: ExerciseEntity): Set<String> {
         val names = mutableListOf(preset.nome)

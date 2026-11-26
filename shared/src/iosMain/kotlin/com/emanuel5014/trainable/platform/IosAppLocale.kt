@@ -11,7 +11,7 @@ import platform.Foundation.preferredLanguages
  * `Locale.current` read; "system" removes it so the phone's languages apply again.
  */
 object IosAppLocale {
-    val SUPPORTED = listOf("en", "it", "es", "fr", "de", "pt")
+    val SUPPORTED = listOf("en", "it", "es", "fr", "de", "pt", "tr")
     private const val APPLE_LANGUAGES = "AppleLanguages"
     private const val CHOICE_KEY = "app_language.choice"
 

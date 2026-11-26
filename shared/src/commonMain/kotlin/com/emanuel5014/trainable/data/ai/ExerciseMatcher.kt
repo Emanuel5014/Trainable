@@ -21,7 +21,8 @@ class ExerciseMatcher(
                 ExerciseTranslations.es,
                 ExerciseTranslations.fr,
                 ExerciseTranslations.de,
-                ExerciseTranslations.pt
+                ExerciseTranslations.pt,
+                ExerciseTranslations.tr
             ).forEach { translations ->
                 translations.forEach { (canonical, localized) ->
                     byCanonicalName[canonical.lowercase()]?.let { exercise ->

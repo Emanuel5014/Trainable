@@ -223,6 +223,7 @@
     <string name="language_french">Français</string>
     <string name="language_german">Deutsch</string>
     <string name="language_portuguese">Português</string>
+    <string name="language_turkish">Türkçe</string>
 
     <!-- Backup & Data -->
     <string name="auto_backup">Copia de Seguridad</string>

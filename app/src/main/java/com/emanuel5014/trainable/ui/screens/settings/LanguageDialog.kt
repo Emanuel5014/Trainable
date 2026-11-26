@@ -12,7 +12,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 
-private val languageCodes = listOf("system", "en", "it", "es", "fr", "de", "pt")
+private val languageCodes = listOf("system", "en", "it", "es", "fr", "de", "pt", "tr")
 
 /** The name of a language code as the language picker shows it ("system" = follow the phone). */
 @Composable
@@ -23,6 +23,7 @@ fun languageName(code: String?): String = when (code) {
     "fr" -> stringResource(R.string.language_french)
     "de" -> stringResource(R.string.language_german)
     "pt" -> stringResource(R.string.language_portuguese)
+    "tr" -> stringResource(R.string.language_turkish)
     else -> stringResource(R.string.language_system_default)
 }
 
