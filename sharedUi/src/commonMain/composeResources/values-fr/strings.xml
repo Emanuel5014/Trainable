@@ -1912,9 +1912,9 @@
         <item quantity="many">%1$d décharges dans cette sélection</item>
     </plurals>
     <plurals name="csv_export_warmup_hint">
-        <item quantity="one">%1$d série d\'échauffement dans cette sélection</item>
-        <item quantity="other">%1$d séries d\'échauffement dans cette sélection</item>
-        <item quantity="many">%1$d séries d\'échauffement dans cette sélection</item>
+        <item quantity="one">%1$d série d'échauffement dans cette sélection</item>
+        <item quantity="other">%1$d séries d'échauffement dans cette sélection</item>
+        <item quantity="many">%1$d séries d'échauffement dans cette sélection</item>
     </plurals>
     <plurals name="csv_export_workouts">
         <item quantity="one">%1$d séance</item>

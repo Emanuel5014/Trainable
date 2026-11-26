@@ -1956,7 +1956,7 @@
         <item quantity="one">%1$d fix</item>
         <item quantity="other">%1$d fixes</item>
     </plurals>
-    <string name="whats_new_title">What\'s new</string>
-    <string name="whats_new_settings">What\'s new in this version</string>
+    <string name="whats_new_title">What's new</string>
+    <string name="whats_new_settings">What's new in this version</string>
     <string name="whats_new_done">Got it</string>
 </resources>
