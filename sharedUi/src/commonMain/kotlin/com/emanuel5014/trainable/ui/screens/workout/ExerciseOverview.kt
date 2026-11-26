@@ -224,10 +224,10 @@ private fun groupsOf(exercises: List<WorkoutExerciseState>): List<OverviewGroup>
     return groups
 }
 
-private fun WorkoutExerciseState.setsDone(): Int =
+internal fun WorkoutExerciseState.setsDone(): Int =
     if (isCardio) cardioSets.count { it.isCompleted } else sets.count { it.isCompleted }
 
-private fun WorkoutExerciseState.setsTotal(): Int = if (isCardio) cardioSets.size else sets.size
+internal fun WorkoutExerciseState.setsTotal(): Int = if (isCardio) cardioSets.size else sets.size
 
 /**
  * The exercise list over the whole screen. It grows out of the buttons that were held into a card in the middle of
@@ -434,7 +434,7 @@ private fun OverviewLine(
 
 /** Done: a filled circle with a tick. Being done now: a ring with a dot. Still to do: a faint ring. */
 @Composable
-private fun StatusMark(isDone: Boolean, isCurrent: Boolean) {
+internal fun StatusMark(isDone: Boolean, isCurrent: Boolean) {
     when {
         isDone -> Box(
             modifier = Modifier.size(24.dp).background(Primary, CircleShape),

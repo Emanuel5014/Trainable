@@ -101,6 +101,8 @@ fun WorkoutTopBar(
                     canRename = canRename,
                     canOpenRoutine = routineId != null,
                     isDeload = state.isDeload,
+                    canOrganize = state.isQuickWorkout && state.exercises.isNotEmpty(),
+                    onOrganize = { ui.showOrganizeSheet = true },
                     onRename = {
                         ui.newSessionName = state.editableName
                         ui.showRenameDialog = true

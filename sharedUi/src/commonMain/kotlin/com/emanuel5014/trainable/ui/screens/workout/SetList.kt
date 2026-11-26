@@ -35,7 +35,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
@@ -68,6 +70,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.quick_add_set
+import com.emanuel5014.trainable.sharedui.resources.quick_add_exercise
+import com.emanuel5014.trainable.sharedui.resources.organize_exercises
 import com.emanuel5014.trainable.sharedui.resources.add_exercise
 import com.emanuel5014.trainable.sharedui.resources.add_extra_set
 import com.emanuel5014.trainable.sharedui.resources.add_set
@@ -521,7 +526,52 @@ fun ColumnScope.SetList(
                 }
             }
         }
-         if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
+        if (state.isQuickWorkout) {
+            // A quick workout: short labels side by side, and the way to organise the exercises
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    GymButton(
+                        onClick = { viewModel.addSetToExercise(targetIndex) },
+                        modifier = Modifier.weight(1f),
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = Primary,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp)
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(Res.string.quick_add_set).uppercaseUi(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                    }
+                    GymButton(
+                        onClick = {
+                            ui.isAddingAfterCurrent = false
+                            ui.showAddExerciseSheet = true
+                        },
+                        modifier = Modifier.weight(1f),
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = Primary,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp)
+                    ) {
+                        // A dumbbell, so it never reads as the "+" of a set next to it
+                        Icon(Icons.Rounded.FitnessCenter, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(Res.string.quick_add_exercise).uppercaseUi(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                    }
+                    GymButton(
+                        onClick = { ui.showOrganizeSheet = true },
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = Primary,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp)
+                    ) {
+                        Icon(Icons.Rounded.SwapVert, contentDescription = stringResource(Res.string.organize_exercises))
+                    }
+                }
+            }
+        } else if (state.inlineExerciseModificationsEnabled) {
             item {
                 Row(
                     modifier = Modifier

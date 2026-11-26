@@ -1984,4 +1984,21 @@
         <item quantity="one">%1$d Satz</item>
         <item quantity="other">%1$d Sätze</item>
     </plurals>
+    <string name="organize_exercises">Übungen ordnen</string>
+    <string name="organize_hint">Gedrückt halten und ziehen, um zu verschieben. Tippe auf eine Übung für weitere Aktionen.</string>
+    <string name="organize_locked">Stoppe den Timer, um Übungen zu verschieben oder zu entfernen.</string>
+    <string name="remove_exercise_title">%1$s entfernen?</string>
+    <string name="remove_exercise">Entfernen</string>
+    <string name="quick_add_set">Satz</string>
+    <string name="quick_add_exercise">Übung</string>
+    <plurals name="remove_exercise_done_sets">
+        <item quantity="one">Der gemachte Satz wird gelöscht.</item>
+        <item quantity="other">Die %1$d gemachten Sätze werden gelöscht.</item>
+    </plurals>
+    <string name="organize_go_to">Zur Übung</string>
+    <string name="organize_link_next">Supersatz mit der nächsten</string>
+    <string name="organize_unlink">Aus dem Supersatz lösen</string>
+    <string name="organize_remove">Aus dem Training entfernen</string>
+    <string name="organize_started">Schon begonnen</string>
+    <string name="organize_to_do">Noch offen</string>
 </resources>

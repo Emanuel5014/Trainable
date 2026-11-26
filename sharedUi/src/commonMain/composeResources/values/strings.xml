@@ -1985,4 +1985,21 @@
         <item quantity="one">%1$d set</item>
         <item quantity="other">%1$d sets</item>
     </plurals>
+    <string name="organize_exercises">Organize exercises</string>
+    <string name="organize_hint">Press and hold to drag into a new order. Tap an exercise for the other actions.</string>
+    <string name="organize_locked">Stop the timer to move or remove exercises.</string>
+    <string name="remove_exercise_title">Remove %1$s?</string>
+    <string name="remove_exercise">Remove</string>
+    <string name="quick_add_set">Set</string>
+    <string name="quick_add_exercise">Exercise</string>
+    <plurals name="remove_exercise_done_sets">
+        <item quantity="one">The set you did will be deleted.</item>
+        <item quantity="other">The %1$d sets you did will be deleted.</item>
+    </plurals>
+    <string name="organize_go_to">Go to exercise</string>
+    <string name="organize_link_next">Superset with the next one</string>
+    <string name="organize_unlink">Leave the superset</string>
+    <string name="organize_remove">Remove from workout</string>
+    <string name="organize_started">Already started</string>
+    <string name="organize_to_do">To do</string>
 </resources>

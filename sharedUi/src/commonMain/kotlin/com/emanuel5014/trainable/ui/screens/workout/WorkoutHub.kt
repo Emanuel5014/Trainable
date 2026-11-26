@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -341,6 +342,9 @@ fun BoxScope.WorkoutHub(
                     HubMode.Completed -> {
                         val isLastExercise = state.currentExerciseIndex == state.exercises.size - 1
                         val allowModify = state.isQuickWorkout || state.inlineExerciseModificationsEnabled
+                        // After the last exercise of a quick workout the next step is another exercise: adding is
+                        // the main action and finishing stays one quiet tap away
+                        val addFirst = state.isQuickWorkout && isLastExercise
                         // On the strip Add and the mini-set offer are gone
                         Column(modifier = Modifier.fillMaxWidth()) {
                             // The last set of the workout has no rest to offer it in
@@ -357,11 +361,11 @@ fun BoxScope.WorkoutHub(
                                             ui.showAddExerciseSheet = true
                                         },
                                         modifier = Modifier.fillMaxWidth(),
-                                        containerColor = SurfaceContainerHigh,
-                                        contentColor = Primary,
+                                        containerColor = if (addFirst) Primary else SurfaceContainerHigh,
+                                        contentColor = if (addFirst) OnPrimary else Primary,
                                         pressMorph = true
                                     ) {
-                                        Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
+                                        Icon(if (addFirst) Icons.Rounded.FitnessCenter else Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = stringResource(Res.string.add_exercise).uppercaseUi(),
@@ -372,7 +376,7 @@ fun BoxScope.WorkoutHub(
                             }
 
                             HubNav(
-                                emphasis = HubNavEmphasis.Filled,
+                                emphasis = if (addFirst) HubNavEmphasis.Tonal else HubNavEmphasis.Filled,
                                 previousName = if (state.currentExerciseIndex > 0) state.exercises[state.currentExerciseIndex - 1].exercise.nome else null,
                                 nextName = if (!isLastExercise) state.exercises[state.currentExerciseIndex + 1].exercise.nome else null,
                                 isLast = isLastExercise,

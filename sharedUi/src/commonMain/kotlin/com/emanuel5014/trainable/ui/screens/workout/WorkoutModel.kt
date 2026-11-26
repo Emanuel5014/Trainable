@@ -3761,6 +3761,104 @@ class WorkoutModel(
         }
     }
 
+    /**
+     * Puts the exercises in a new order ("Organise exercises" of a quick workout): [order] lists every current index once,
+     * the started exercises first in the order they were done (they keep their place in the history). The ones not
+     * started take new placeholder orders in their new order, so the workout comes back the same way when reopened; a
+     * superset split by the move is linked again only where its exercises still sit together.
+     */
+    fun reorderExercises(order: List<Int>) {
+        val sessionId = _state.value.sessionId ?: return
+        if (!_state.value.canOrganizeExercises) return
+        modelScope.launch {
+            appendLock.withLock {
+                setRowsLock.withLock {
+                    val curr = _state.value
+                    if (order.sorted() != curr.exercises.indices.toList()) return@withLock
+                    val moved = order.map { curr.exercises[it] }
+                    val ids = ExerciseOrganizer.keepSupersetsTogether(moved.map { it.supersetId }) { kotlin.uuid.Uuid.random().toString() }
+                    var nextPlaceholder = nextPlaceholderOrder(curr)
+                    val renumbered = moved.mapIndexed { i, ex ->
+                        val newOrder = if (ex.hasExecutionRank) ex.executionOrder else nextPlaceholder++
+                        ex.copy(executionOrder = newOrder, supersetId = ids[i])
+                    }
+                    renumbered.forEachIndexed { i, ex ->
+                        val before = moved[i]
+                        if (ex.executionOrder != before.executionOrder) {
+                            workoutRepository.moveExerciseRows(sessionId, ex.exercise.id, before.executionOrder, ex.executionOrder)
+                            if (ex.isCardio) workoutRepository.moveCardioRows(sessionId, ex.exercise.id, before.executionOrder, ex.executionOrder)
+                        }
+                        if (ex.supersetId != before.supersetId) {
+                            workoutRepository.setExerciseSuperset(sessionId, ex.exercise.id, ex.executionOrder, ex.supersetId)
+                        }
+                    }
+                    _state.update { s ->
+                        s.copy(
+                            exercises = renumbered,
+                            currentExerciseIndex = order.indexOf(s.currentExerciseIndex).coerceAtLeast(0),
+                            miniSetOffer = null
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Takes the exercise at [index] out of the quick workout, with whatever was logged for it. A superset left with one
+     * exercise is no superset any more; the workout stays on the exercise it showed (or the one after the removed one).
+     */
+    fun removeExercise(index: Int) {
+        val sessionId = _state.value.sessionId ?: return
+        if (!_state.value.canOrganizeExercises) return
+        modelScope.launch {
+            appendLock.withLock {
+                setRowsLock.withLock {
+                    val curr = _state.value
+                    val removed = curr.exercises.getOrNull(index) ?: return@withLock
+                    removeExerciseRows(sessionId, index, removed)
+                    val remaining = curr.exercises.filterIndexed { i, _ -> i != index }
+                    val ids = ExerciseOrganizer.keepSupersetsTogether(remaining.map { it.supersetId }) { kotlin.uuid.Uuid.random().toString() }
+                    val relinked = remaining.mapIndexed { i, ex -> if (ex.supersetId == ids[i]) ex else ex.copy(supersetId = ids[i]) }
+                    relinked.forEachIndexed { i, ex ->
+                        if (ex.supersetId != remaining[i].supersetId) {
+                            workoutRepository.setExerciseSuperset(sessionId, ex.exercise.id, ex.executionOrder, ex.supersetId)
+                        }
+                    }
+                    _state.update { s ->
+                        val current = when {
+                            s.currentExerciseIndex > index -> s.currentExerciseIndex - 1
+                            else -> s.currentExerciseIndex
+                        }.coerceIn(0, (relinked.size - 1).coerceAtLeast(0))
+                        s.copy(exercises = relinked, currentExerciseIndex = current, miniSetOffer = null)
+                    }
+                }
+            }
+        }
+    }
+
+    /** Links the exercise at [index] with the next one as a superset ([linked] true) or cuts that link. */
+    fun linkExerciseWithNext(index: Int, linked: Boolean) {
+        val sessionId = _state.value.sessionId ?: return
+        if (!_state.value.canOrganizeExercises) return
+        modelScope.launch {
+            appendLock.withLock {
+                setRowsLock.withLock {
+                    val curr = _state.value
+                    if (index !in 0 until curr.exercises.size - 1) return@withLock
+                    val ids = ExerciseOrganizer.linkWithNext(curr.exercises.map { it.supersetId }, index, linked) { kotlin.uuid.Uuid.random().toString() }
+                    val relinked = curr.exercises.mapIndexed { i, ex -> if (ex.supersetId == ids[i]) ex else ex.copy(supersetId = ids[i]) }
+                    relinked.forEachIndexed { i, ex ->
+                        if (ex.supersetId != curr.exercises[i].supersetId) {
+                            workoutRepository.setExerciseSuperset(sessionId, ex.exercise.id, ex.executionOrder, ex.supersetId)
+                        }
+                    }
+                    _state.update { it.copy(exercises = relinked) }
+                }
+            }
+        }
+    }
+
     /** One add at a time: each new exercise takes its placeholder order from the ones added before it. */
     private val appendLock = Mutex()
 

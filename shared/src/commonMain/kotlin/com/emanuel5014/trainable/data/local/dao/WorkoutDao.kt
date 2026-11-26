@@ -612,6 +612,10 @@ interface WorkoutDao {
     @Query("UPDATE set_logs SET ordine_esercizio = :order WHERE session_id = :sessionId AND exercise_id = :exerciseId")
     suspend fun updateExerciseOrderInSession(sessionId: Int, exerciseId: Int, order: Int)
 
+    /** Links (or unlinks, with null) the rows of one exercise of the session (identified by exercise and order) to a superset. */
+    @Query("UPDATE set_logs SET superset_id = :supersetId WHERE session_id = :sessionId AND exercise_id = :exerciseId AND ordine_esercizio = :order")
+    suspend fun setExerciseSuperset(sessionId: Int, exerciseId: Int, order: Int, supersetId: String?)
+
     /** Moves the rows of one exercise of the session (identified by exercise and order) to a new order. */
     @Query("UPDATE set_logs SET ordine_esercizio = :to WHERE session_id = :sessionId AND exercise_id = :exerciseId AND ordine_esercizio = :from")
     suspend fun moveExerciseRows(sessionId: Int, exerciseId: Int, from: Int, to: Int)

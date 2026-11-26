@@ -15,7 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -89,7 +89,7 @@ fun QuickWorkoutStart(
         )
         Spacer(modifier = Modifier.height(4.dp))
         GymButton(onClick = onAddExercises, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Rounded.Add, contentDescription = null)
+            Icon(Icons.Rounded.FitnessCenter, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(Res.string.quick_start_add).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
         }

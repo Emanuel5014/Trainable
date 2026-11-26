@@ -2010,4 +2010,22 @@
         <item quantity="other">%1$d séries</item>
         <item quantity="many">%1$d séries</item>
     </plurals>
+    <string name="organize_exercises">Organiser les exercices</string>
+    <string name="organize_hint">Maintiens et fais glisser pour déplacer. Touche un exercice pour les autres actions.</string>
+    <string name="organize_locked">Arrête le minuteur pour déplacer ou retirer des exercices.</string>
+    <string name="remove_exercise_title">Retirer %1$s ?</string>
+    <string name="remove_exercise">Retirer</string>
+    <string name="quick_add_set">Série</string>
+    <string name="quick_add_exercise">Exercice</string>
+    <plurals name="remove_exercise_done_sets">
+        <item quantity="one">La série faite sera supprimée.</item>
+        <item quantity="other">Les %1$d séries faites seront supprimées.</item>
+        <item quantity="many">Les %1$d séries faites seront supprimées.</item>
+    </plurals>
+    <string name="organize_go_to">Aller à l'exercice</string>
+    <string name="organize_link_next">Superset avec le suivant</string>
+    <string name="organize_unlink">Retirer du superset</string>
+    <string name="organize_remove">Retirer de la séance</string>
+    <string name="organize_started">Déjà commencés</string>
+    <string name="organize_to_do">À faire</string>
 </resources>

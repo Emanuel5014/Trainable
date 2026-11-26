@@ -926,6 +926,10 @@ class WorkoutRepository(
     suspend fun moveCardioRows(sessionId: Int, exerciseId: Int, from: Int, to: Int) =
         workoutDao.moveCardioRows(sessionId, exerciseId, from, to)
 
+    /** Links (or unlinks, with null) the rows of one exercise of the session to a superset. */
+    suspend fun setExerciseSuperset(sessionId: Int, exerciseId: Int, order: Int, supersetId: String?) =
+        workoutDao.setExerciseSuperset(sessionId, exerciseId, order, supersetId)
+
     suspend fun deleteExerciseRows(sessionId: Int, exerciseId: Int, order: Int) =
         workoutDao.deleteExerciseRows(sessionId, exerciseId, order)
 

@@ -169,6 +169,15 @@ data class WorkoutState(
         get() = timerShowTimeButtons && timerSubtractEnabled
 }
 
+/**
+ * Whether the exercises of the workout can be moved, removed or linked now ("Organise exercises"): only in a quick
+ * workout, and not while something follows an exercise by its place (an EMOM, a mini-set, an auto-advance chain, a set
+ * or cardio timer).
+ */
+val WorkoutState.canOrganizeExercises: Boolean
+    get() = isQuickWorkout && !isFinishing && emomRun == null && miniSet == null && !autoAdvanceChain &&
+        !setTimerRunning && !setTimerPaused && !cardioTimerRunning && !cardioTimerPaused
+
 data class MiniSetOffer(val exerciseIndex: Int, val setIndex: Int, val missing: Int)
 
 data class MiniSetRun(

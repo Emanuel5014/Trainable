@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.ListAlt
 import androidx.compose.material.icons.automirrored.rounded.TrendingDown
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.deload_workout
 import com.emanuel5014.trainable.sharedui.resources.deload_workout_desc
 import com.emanuel5014.trainable.sharedui.resources.open_routine
+import com.emanuel5014.trainable.sharedui.resources.organize_exercises
 import com.emanuel5014.trainable.sharedui.resources.rename_workout
 import com.emanuel5014.trainable.ui.components.menu.ExpressiveMenu
 import com.emanuel5014.trainable.ui.components.menu.ExpressiveMenuGap
@@ -46,6 +48,9 @@ internal fun WorkoutTitleMenu(
     canRename: Boolean,
     canOpenRoutine: Boolean,
     isDeload: Boolean,
+    /** "Organise exercises", offered in a quick workout that has some. */
+    canOrganize: Boolean = false,
+    onOrganize: () -> Unit = {},
     onRename: () -> Unit,
     onOpenRoutine: () -> Unit,
     onSetDeload: (Boolean) -> Unit
@@ -53,20 +58,34 @@ internal fun WorkoutTitleMenu(
     ExpressiveMenu(expanded = expanded, onDismissRequest = onDismiss, width = 296.dp) {
         val actions = buildList {
             if (canRename) add(TitleAction.RENAME)
+            if (canOrganize) add(TitleAction.ORGANIZE)
             if (canOpenRoutine) add(TitleAction.OPEN_ROUTINE)
         }
         actions.forEachIndexed { i, action ->
-            val rename = action == TitleAction.RENAME
             ExpressiveMenuItem(
-                text = stringResource(if (rename) Res.string.rename_workout else Res.string.open_routine),
-                leadingIcon = if (rename) Icons.Rounded.Edit else Icons.AutoMirrored.Rounded.ListAlt,
+                text = stringResource(
+                    when (action) {
+                        TitleAction.RENAME -> Res.string.rename_workout
+                        TitleAction.ORGANIZE -> Res.string.organize_exercises
+                        TitleAction.OPEN_ROUTINE -> Res.string.open_routine
+                    }
+                ),
+                leadingIcon = when (action) {
+                    TitleAction.RENAME -> Icons.Rounded.Edit
+                    TitleAction.ORGANIZE -> Icons.Rounded.SwapVert
+                    TitleAction.OPEN_ROUTINE -> Icons.AutoMirrored.Rounded.ListAlt
+                },
                 position = MenuRowPosition(i, actions.size),
                 onClick = {
                     onDismiss()
-                    if (rename) onRename() else onOpenRoutine()
+                    when (action) {
+                        TitleAction.RENAME -> onRename()
+                        TitleAction.ORGANIZE -> onOrganize()
+                        TitleAction.OPEN_ROUTINE -> onOpenRoutine()
+                    }
                 },
                 // Opening the routine leaves the workout screen: the arrow says so
-                trailing = if (rename) null else {
+                trailing = if (action != TitleAction.OPEN_ROUTINE) null else {
                     { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = OnSurfaceVariant) }
                 }
             )
@@ -84,7 +103,7 @@ internal fun WorkoutTitleMenu(
     }
 }
 
-private enum class TitleAction { RENAME, OPEN_ROUTINE }
+private enum class TitleAction { RENAME, ORGANIZE, OPEN_ROUTINE }
 
 /** The small round arrow after the workout's name: the name opens a menu; it turns over while the menu is open. */
 @Composable

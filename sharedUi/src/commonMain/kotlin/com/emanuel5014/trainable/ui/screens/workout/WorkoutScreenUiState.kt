@@ -37,6 +37,8 @@ class WorkoutScreenUiState internal constructor(initialSessionName: String) {
     var programHistoryFor by mutableStateOf<Int?>(null)
 
     var showAddExerciseSheet by mutableStateOf(false)
+    /** "Organise exercises" of a quick workout: move, remove and link its exercises. */
+    var showOrganizeSheet by mutableStateOf(false)
     var isAddingAfterCurrent by mutableStateOf(false)
     var showCancelDialog by mutableStateOf(false)
     var showFinishDialog by mutableStateOf(false)

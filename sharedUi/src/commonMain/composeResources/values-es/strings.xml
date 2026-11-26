@@ -2007,4 +2007,21 @@
         <item quantity="one">%1$d serie</item>
         <item quantity="other">%1$d series</item>
     </plurals>
+    <string name="organize_exercises">Organizar ejercicios</string>
+    <string name="organize_hint">Mantén pulsado y arrastra para mover. Toca un ejercicio para las demás acciones.</string>
+    <string name="organize_locked">Detén el temporizador para mover o quitar ejercicios.</string>
+    <string name="remove_exercise_title">¿Quitar %1$s?</string>
+    <string name="remove_exercise">Quitar</string>
+    <string name="quick_add_set">Serie</string>
+    <string name="quick_add_exercise">Ejercicio</string>
+    <plurals name="remove_exercise_done_sets">
+        <item quantity="one">La serie hecha se borrará.</item>
+        <item quantity="other">Las %1$d series hechas se borrarán.</item>
+    </plurals>
+    <string name="organize_go_to">Ir al ejercicio</string>
+    <string name="organize_link_next">Superserie con el siguiente</string>
+    <string name="organize_unlink">Separar de la superserie</string>
+    <string name="organize_remove">Quitar del entrenamiento</string>
+    <string name="organize_started">Ya empezados</string>
+    <string name="organize_to_do">Por hacer</string>
 </resources>

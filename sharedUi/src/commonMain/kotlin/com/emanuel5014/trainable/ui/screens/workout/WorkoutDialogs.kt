@@ -432,6 +432,26 @@ fun WorkoutDialogs(
         }
     }
 
+    if (ui.showOrganizeSheet && state.isQuickWorkout) {
+        OrganizeExercisesSheet(
+            state = state,
+            languageCode = languageCode,
+            onReorder = viewModel::reorderExercises,
+            onRemove = viewModel::removeExercise,
+            onLinkWithNext = viewModel::linkExerciseWithNext,
+            onOpen = { index ->
+                viewModel.goToExercise(index)
+                ui.showOrganizeSheet = false
+            },
+            onAddExercise = {
+                ui.showOrganizeSheet = false
+                ui.isAddingAfterCurrent = false
+                ui.showAddExerciseSheet = true
+            },
+            onDismiss = { ui.showOrganizeSheet = false }
+        )
+    }
+
     if (ui.showAddExerciseSheet) {
         // A quick workout adds with one tap, showing what each exercise was last done with
         val quickAdd = if (state.isQuickWorkout) {

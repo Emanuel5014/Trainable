@@ -1983,4 +1983,21 @@
         <item quantity="one">%1$d set</item>
         <item quantity="other">%1$d set</item>
     </plurals>
+    <string name="organize_exercises">Egzersizleri düzenle</string>
+    <string name="organize_hint">Taşımak için basılı tutup sürükle. Diğer işlemler için bir egzersize dokun.</string>
+    <string name="organize_locked">Egzersizleri taşımak veya kaldırmak için zamanlayıcıyı durdur.</string>
+    <string name="remove_exercise_title">%1$s kaldırılsın mı?</string>
+    <string name="remove_exercise">Kaldır</string>
+    <string name="quick_add_set">Set</string>
+    <string name="quick_add_exercise">Egzersiz</string>
+    <plurals name="remove_exercise_done_sets">
+        <item quantity="one">Yapılan set silinecek.</item>
+        <item quantity="other">Yapılan %1$d set silinecek.</item>
+    </plurals>
+    <string name="organize_go_to">Egzersize git</string>
+    <string name="organize_link_next">Sonrakiyle süper set</string>
+    <string name="organize_unlink">Süper setten ayır</string>
+    <string name="organize_remove">Antrenmandan kaldır</string>
+    <string name="organize_started">Başlananlar</string>
+    <string name="organize_to_do">Yapılacaklar</string>
 </resources>
