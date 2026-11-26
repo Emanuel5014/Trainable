@@ -26,6 +26,7 @@ import com.emanuel5014.trainable.data.local.relation.ExerciseSetWithSession
 import com.emanuel5014.trainable.data.local.relation.PlanLastSession
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.data.local.relation.ExerciseLastSet
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.domain.exercise.CardioProvenance
@@ -284,6 +285,32 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM workout_sessions WHERE is_finished = 1 ORDER BY timestamp DESC LIMIT :limit")
     fun getRecentSessions(limit: Int): Flow<List<WorkoutSessionEntity>>
+
+    /** The last [limit] finished workouts with their sets and cardio, newest first (a quick workout repeats one of them). */
+    @Transaction
+    @Query("SELECT * FROM workout_sessions WHERE is_finished = 1 ORDER BY timestamp DESC, id DESC LIMIT :limit")
+    fun getRecentSessionsWithDetails(limit: Int): Flow<List<SessionWithDetails>>
+
+    /**
+     * The completed working sets of every exercise in its last finished workout that was not a deload (see
+     * [ExerciseLastSet]). Two workouts of the same exercise with the same start are both returned.
+     */
+    @Query("""
+        SELECT sl.exercise_id AS exerciseId, sl.numero_serie AS setNumber, sl.peso_sollevato AS weightKg, sl.reps_effettive AS reps,
+            sl.durata_secondi AS seconds, sl.exercise_type AS exerciseType, sl.rest_timer_seconds AS restSeconds,
+            ws.timestamp AS timestamp
+        FROM set_logs sl
+        INNER JOIN workout_sessions ws ON ws.id = sl.session_id
+        INNER JOIN (
+            SELECT sl2.exercise_id AS lastExerciseId, MAX(ws2.timestamp) AS lastTimestamp
+            FROM set_logs sl2
+            INNER JOIN workout_sessions ws2 ON ws2.id = sl2.session_id
+            WHERE ws2.is_finished = 1 AND ws2.is_deload = 0 AND sl2.is_completed = 1 AND sl2.is_warmup = 0
+            GROUP BY sl2.exercise_id
+        ) AS latest ON latest.lastExerciseId = sl.exercise_id AND latest.lastTimestamp = ws.timestamp
+        WHERE ws.is_finished = 1 AND ws.is_deload = 0 AND sl.is_completed = 1 AND sl.is_warmup = 0
+    """)
+    fun getExerciseLastSets(): Flow<List<ExerciseLastSet>>
 
     @Query("SELECT * FROM workout_sessions WHERE is_finished = 0 ORDER BY timestamp DESC")
     fun getUnfinishedSessions(): Flow<List<WorkoutSessionEntity>>

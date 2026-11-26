@@ -1958,4 +1958,30 @@
     <string name="whats_new_title">Neuigkeiten</string>
     <string name="whats_new_settings">Neu in dieser Version</string>
     <string name="whats_new_done">Verstanden</string>
+    <string name="quick_start_title">Womit startest du?</string>
+    <string name="quick_start_subtitle">Füge deine Übungen hinzu oder starte ein früheres Training mit seinen Gewichten neu.</string>
+    <string name="quick_start_add">Übungen hinzufügen</string>
+    <string name="quick_start_repeat">Ein Training wiederholen</string>
+    <string name="yesterday">gestern</string>
+    <string name="quick_repeat_title">Dieses Training wiederholen?</string>
+    <string name="quick_repeat_message">Die Übungen werden mit den Sätzen, Wiederholungen und Gewichten von diesem Tag hinzugefügt.</string>
+    <string name="quick_repeat_confirm">Wiederholen</string>
+    <string name="quick_picker_title">Wähle deine Übungen</string>
+    <string name="quick_picker_hint">Tippen zum Hinzufügen, gedrückt halten für mehrere</string>
+    <string name="quick_picker_hint_selecting">Tippe die anderen in der Reihenfolge an, in der du sie machst</string>
+    <string name="recent_exercises">Zuletzt</string>
+    <string name="all_exercises_header">Alle Übungen</string>
+    <string name="exercise_setup_button">Sätze, Wiederholungen und Pause</string>
+    <plurals name="add_n_exercises">
+        <item quantity="one">%1$d Übung hinzufügen</item>
+        <item quantity="other">%1$d Übungen hinzufügen</item>
+    </plurals>
+    <plurals name="quick_exercise_count">
+        <item quantity="one">%1$d Übung</item>
+        <item quantity="other">%1$d Übungen</item>
+    </plurals>
+    <plurals name="quick_set_count">
+        <item quantity="one">%1$d Satz</item>
+        <item quantity="other">%1$d Sätze</item>
+    </plurals>
 </resources>

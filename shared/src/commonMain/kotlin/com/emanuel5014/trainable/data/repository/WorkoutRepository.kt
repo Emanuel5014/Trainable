@@ -35,6 +35,7 @@ import com.emanuel5014.trainable.data.local.relation.CardioSetWithSession
 import com.emanuel5014.trainable.data.local.relation.ExerciseSetWithSession
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.data.local.relation.ExerciseLastSet
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
@@ -594,6 +595,16 @@ class WorkoutRepository(
     fun getCardioSessionCountSince(sinceTimestamp: Long): Flow<Int> = workoutDao.getCardioSessionCountSince(sinceTimestamp)
     
     fun getRecentSessions(limit: Int = 10): Flow<List<WorkoutSessionEntity>> = workoutDao.getRecentSessions(limit)
+
+    /** The last [limit] finished workouts with their sets and cardio, newest first. */
+    fun getRecentSessionsWithDetails(limit: Int): Flow<List<SessionWithDetails>> = workoutDao.getRecentSessionsWithDetails(limit)
+
+    /** The working sets of every exercise in its last finished workout (see [WorkoutDao.getExerciseLastSets]). */
+    fun getExerciseLastSets(): Flow<List<ExerciseLastSet>> = workoutDao.getExerciseLastSets()
+
+    /** The sets of the exercise in its last finished workout of any routine, quick ones included (not a deload). */
+    suspend fun getLastWorkoutSetsForExercise(exerciseId: Int): List<SetLogEntity> =
+        workoutDao.getLastFinishedSetsForExercise(exerciseId).first()
 
     fun getUnfinishedSessions(): Flow<List<WorkoutSessionEntity>> = workoutDao.getUnfinishedSessions()
 

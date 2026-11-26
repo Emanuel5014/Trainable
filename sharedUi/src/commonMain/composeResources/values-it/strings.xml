@@ -1981,4 +1981,30 @@
     <string name="whats_new_title">Novità</string>
     <string name="whats_new_settings">Novità di questa versione</string>
     <string name="whats_new_done">Ho capito</string>
+    <string name="quick_start_title">Da dove parti?</string>
+    <string name="quick_start_subtitle">Aggiungi i tuoi esercizi o riparti da un allenamento già fatto, con i suoi pesi.</string>
+    <string name="quick_start_add">Aggiungi esercizi</string>
+    <string name="quick_start_repeat">Ripeti un allenamento</string>
+    <string name="yesterday">ieri</string>
+    <string name="quick_repeat_title">Ripetere questo allenamento?</string>
+    <string name="quick_repeat_message">Gli esercizi vengono aggiunti con le serie, le ripetizioni e i pesi di quel giorno.</string>
+    <string name="quick_repeat_confirm">Ripeti</string>
+    <string name="quick_picker_title">Scegli gli esercizi</string>
+    <string name="quick_picker_hint">Tocca per aggiungere, tieni premuto per sceglierne più di uno</string>
+    <string name="quick_picker_hint_selecting">Tocca gli altri nell'ordine in cui li farai</string>
+    <string name="recent_exercises">Recenti</string>
+    <string name="all_exercises_header">Tutti gli esercizi</string>
+    <string name="exercise_setup_button">Serie, ripetizioni e recupero</string>
+    <plurals name="add_n_exercises">
+        <item quantity="one">Aggiungi %1$d esercizio</item>
+        <item quantity="other">Aggiungi %1$d esercizi</item>
+    </plurals>
+    <plurals name="quick_exercise_count">
+        <item quantity="one">%1$d esercizio</item>
+        <item quantity="other">%1$d esercizi</item>
+    </plurals>
+    <plurals name="quick_set_count">
+        <item quantity="one">%1$d serie</item>
+        <item quantity="other">%1$d serie</item>
+    </plurals>
 </resources>

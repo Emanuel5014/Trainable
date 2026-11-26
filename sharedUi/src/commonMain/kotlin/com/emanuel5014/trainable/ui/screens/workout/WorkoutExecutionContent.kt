@@ -323,7 +323,17 @@ fun WorkoutExecutionContent(
             ) { paddingValues ->
                 val panelGlass = platform.rememberPanel()
                 Box(modifier = Modifier.fillMaxSize().padding(paddingValues.bodyPadding())) {
-                    if (state.totalExercises == 0) {
+                    if (state.totalExercises == 0 && state.isQuickWorkout) {
+                        // A new quick workout: add exercises, or start again from a past workout
+                        LaunchedEffect(Unit) { viewModel.loadQuickWorkoutHistory() }
+                        val repeatable by viewModel.repeatableWorkouts.collectAsState()
+                        QuickWorkoutStart(
+                            workouts = repeatable,
+                            languageCode = languageCode,
+                            onAddExercises = { ui.showAddExerciseSheet = true },
+                            onRepeat = { viewModel.repeatWorkout(it.sessionId) }
+                        )
+                    } else if (state.totalExercises == 0) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,

@@ -4,8 +4,18 @@ import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.current_badge
 import com.emanuel5014.trainable.sharedui.resources.custom
 import com.emanuel5014.trainable.sharedui.resources.exercise_picked_badge
+import com.emanuel5014.trainable.sharedui.resources.exercise_setup_button
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -43,13 +53,17 @@ import com.emanuel5014.trainable.ui.util.uppercaseUi
  * [badges]. What only some lists have goes in [trailing] (the info button of a picker). The badges sit under the name
  * rather than beside it so a long name keeps the whole width the thumbnail and the button leave it.
  */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun ExerciseRow(
     name: String,
     category: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** A long press, where the list has one (picking more than one exercise). */
+    onLongClick: (() -> Unit)? = null,
+    /** Before the thumbnail, e.g. the place of a picked exercise in the order. */
+    leading: (@Composable () -> Unit)? = null,
     thumbnail: (@Composable () -> Unit)? = null,
     isCustom: Boolean = false,
     isHidden: Boolean = false,
@@ -63,11 +77,15 @@ fun ExerciseRow(
             .fillMaxWidth()
             .clip(Shapes.medium)
             .background(containerColor)
-            .clickable(role = Role.Button, onClick = onClick)
+            .then(
+                if (onLongClick != null) Modifier.combinedClickable(role = Role.Button, onLongClick = onLongClick, onClick = onClick)
+                else Modifier.clickable(role = Role.Button, onClick = onClick)
+            )
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        leading?.invoke()
         thumbnail?.invoke()
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
@@ -118,19 +136,44 @@ fun ExercisePickRow(
     onThumbnailClick: () -> Unit = {},
     onInfoClick: (() -> Unit)? = null,
     /** A small note after the badges, e.g. when the exercise was last used. */
-    note: String? = null
+    note: String? = null,
+    onLongClick: (() -> Unit)? = null,
+    /** Place of the exercise among the ones picked together (1, 2, ...); null when it is not picked. */
+    selectionNumber: Int? = null,
+    /** Opens the sets, reps and rest of the exercise before adding it (the quick workout picker adds it with one tap). */
+    onSetupClick: (() -> Unit)? = null
 ) {
     ExerciseRow(
         name = ExerciseTranslations.translate(exercise.nome, languageCode),
         category = ExerciseTranslations.translateCategory(exercise.categoria, languageCode),
         onClick = onClick,
         modifier = modifier,
+        onLongClick = onLongClick,
+        leading = selectionNumber?.let { number ->
+            {
+                Box(
+                    modifier = Modifier.size(28.dp).clip(CircleShape).background(Primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = number.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = OnPrimary,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+        },
         thumbnail = if (showThumbnail) {
             { LocalExercisePlatformUi.current.ListThumbnail(exercise.mediaPath, onThumbnailClick, null) }
         } else null,
         isCustom = exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID,
         isFavorite = exercise.isFavorite,
-        containerColor = if (isSelected) Primary.copy(alpha = 0.1f) else SurfaceContainerHigh,
+        containerColor = when {
+            selectionNumber != null -> Primary.copy(alpha = 0.16f)
+            isSelected -> Primary.copy(alpha = 0.1f)
+            else -> SurfaceContainerHigh
+        },
         badges = {
             when {
                 isSelected -> PrescriptionPill(
@@ -143,6 +186,17 @@ fun ExercisePickRow(
             }
             if (note != null) PrescriptionPill(text = note, containerColor = Surface)
         },
-        trailing = onInfoClick?.let { { ExerciseInfoButton(onClick = it) } }
+        trailing = if (onInfoClick == null && onSetupClick == null) null else {
+            {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    onSetupClick?.let {
+                        IconButton(onClick = it) {
+                            Icon(Icons.Rounded.Tune, contentDescription = stringResource(Res.string.exercise_setup_button), tint = OnSurfaceVariant)
+                        }
+                    }
+                    onInfoClick?.let { ExerciseInfoButton(onClick = it) }
+                }
+            }
+        }
     )
 }

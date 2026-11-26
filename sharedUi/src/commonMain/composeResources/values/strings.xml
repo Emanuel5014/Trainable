@@ -1959,4 +1959,30 @@
     <string name="whats_new_title">What's new</string>
     <string name="whats_new_settings">What's new in this version</string>
     <string name="whats_new_done">Got it</string>
+    <string name="quick_start_title">Where do you start?</string>
+    <string name="quick_start_subtitle">Add your exercises, or start again from a past workout with its weights.</string>
+    <string name="quick_start_add">Add exercises</string>
+    <string name="quick_start_repeat">Repeat a workout</string>
+    <string name="yesterday">yesterday</string>
+    <string name="quick_repeat_title">Repeat this workout?</string>
+    <string name="quick_repeat_message">The exercises are added with the sets, reps and weights of that day.</string>
+    <string name="quick_repeat_confirm">Repeat</string>
+    <string name="quick_picker_title">Pick your exercises</string>
+    <string name="quick_picker_hint">Tap to add, press and hold to pick more than one</string>
+    <string name="quick_picker_hint_selecting">Tap the others in the order you will do them</string>
+    <string name="recent_exercises">Recent</string>
+    <string name="all_exercises_header">All exercises</string>
+    <string name="exercise_setup_button">Sets, reps and rest</string>
+    <plurals name="add_n_exercises">
+        <item quantity="one">Add %1$d exercise</item>
+        <item quantity="other">Add %1$d exercises</item>
+    </plurals>
+    <plurals name="quick_exercise_count">
+        <item quantity="one">%1$d exercise</item>
+        <item quantity="other">%1$d exercises</item>
+    </plurals>
+    <plurals name="quick_set_count">
+        <item quantity="one">%1$d set</item>
+        <item quantity="other">%1$d sets</item>
+    </plurals>
 </resources>

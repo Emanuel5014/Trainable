@@ -1957,4 +1957,30 @@
     <string name="whats_new_title">Yenilikler</string>
     <string name="whats_new_settings">Bu sürümdeki yenilikler</string>
     <string name="whats_new_done">Anladım</string>
+    <string name="quick_start_title">Nereden başlıyorsun?</string>
+    <string name="quick_start_subtitle">Egzersizlerini ekle ya da geçmiş bir antrenmanı ağırlıklarıyla tekrarla.</string>
+    <string name="quick_start_add">Egzersiz ekle</string>
+    <string name="quick_start_repeat">Bir antrenmanı tekrarla</string>
+    <string name="yesterday">dün</string>
+    <string name="quick_repeat_title">Bu antrenman tekrarlansın mı?</string>
+    <string name="quick_repeat_message">Egzersizler o günün setleri, tekrarları ve ağırlıklarıyla eklenir.</string>
+    <string name="quick_repeat_confirm">Tekrarla</string>
+    <string name="quick_picker_title">Egzersizlerini seç</string>
+    <string name="quick_picker_hint">Eklemek için dokun, birden fazla seçmek için basılı tut</string>
+    <string name="quick_picker_hint_selecting">Diğerlerine yapacağın sırayla dokun</string>
+    <string name="recent_exercises">Son kullanılanlar</string>
+    <string name="all_exercises_header">Tüm egzersizler</string>
+    <string name="exercise_setup_button">Set, tekrar ve dinlenme</string>
+    <plurals name="add_n_exercises">
+        <item quantity="one">%1$d egzersiz ekle</item>
+        <item quantity="other">%1$d egzersiz ekle</item>
+    </plurals>
+    <plurals name="quick_exercise_count">
+        <item quantity="one">%1$d egzersiz</item>
+        <item quantity="other">%1$d egzersiz</item>
+    </plurals>
+    <plurals name="quick_set_count">
+        <item quantity="one">%1$d set</item>
+        <item quantity="other">%1$d set</item>
+    </plurals>
 </resources>

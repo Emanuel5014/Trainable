@@ -20,6 +20,7 @@ import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.forRun
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
+import com.emanuel5014.trainable.data.local.relation.SetWithExercise
 import com.emanuel5014.trainable.data.local.entity.belongsTo
 import com.emanuel5014.trainable.data.local.entity.exerciseIn
 import com.emanuel5014.trainable.data.local.entity.exerciseKey
@@ -147,6 +148,10 @@ class WorkoutModel(
         /** Fetch every set of the previous session (advanced exercises match them per block). */
         const val ALL_SETS = 500
 
+        /** Finished workouts read for the quick workout's "Repeat a workout", and how many of them it lists. */
+        const val RECENT_WORKOUTS_SCANNED = 20
+        const val RECENT_WORKOUTS_SHOWN = 8
+
         /** Wait after the last change before the dashboard's copy is written (a tick changes the state several times). */
         const val LIVE_SNAPSHOT_DEBOUNCE_MILLIS = 300L
 
@@ -203,6 +208,34 @@ class WorkoutModel(
 
     private val _categories = MutableStateFlow<List<String>>(emptyList())
     val categories: StateFlow<List<String>> = _categories.asStateFlow()
+
+    /**
+     * Exercise id -> its best set the last time it was done, for the notes of the quick workout picker. Read once, on
+     * [loadQuickWorkoutHistory]: only finished workouts count, so nothing done during this one changes it.
+     */
+    private val _exerciseLastTimes = MutableStateFlow<Map<Int, ExerciseLastTime>>(emptyMap())
+    val exerciseLastTimes: StateFlow<Map<Int, ExerciseLastTime>> = _exerciseLastTimes.asStateFlow()
+
+    /** The last finished workouts a quick workout can start from (its empty screen), read on [loadQuickWorkoutHistory]. */
+    private val _repeatableWorkouts = MutableStateFlow<List<RepeatableWorkout>?>(null)
+    val repeatableWorkouts: StateFlow<List<RepeatableWorkout>?> = _repeatableWorkouts.asStateFlow()
+
+    private var quickHistoryLoaded = false
+
+    /** Reads what the quick workout screen shows from the past, once per workout. */
+    fun loadQuickWorkoutHistory() {
+        if (quickHistoryLoaded) return
+        quickHistoryLoaded = true
+        modelScope.launch {
+            _exerciseLastTimes.value = ExerciseLastTime.of(workoutRepository.getExerciseLastSets().first())
+        }
+        modelScope.launch {
+            val names = _allExercises.value.ifEmpty { exerciseRepository.getAllExercisesIncludingDeleted().first() }
+                .associate { it.id to it.nome }
+            val sessions = workoutRepository.getRecentSessionsWithDetails(RECENT_WORKOUTS_SCANNED).first()
+            _repeatableWorkouts.value = RepeatableWorkout.of(sessions, names).take(RECENT_WORKOUTS_SHOWN)
+        }
+    }
 
     private var timerJob: Job? = null
     private var warmupTimerJob: Job? = null
@@ -526,6 +559,10 @@ class WorkoutModel(
     }
 
     private suspend fun getPreviousSetsForExercise(planId: Int?, exerciseId: Int, limitSets: Int = 3): List<SetLogEntity> {
+        // A quick workout has no routine of its own: the last time is the last workout of any routine with the exercise
+        if (_state.value.isQuickWorkout) {
+            return QuickAddPlan.workingSets(workoutRepository.getLastWorkoutSetsForExercise(exerciseId)).take(limitSets)
+        }
         if (planId != null && planId != 0 && planId != -1) {
             return workoutRepository.getLastSessionSetsForExercise(planId, exerciseId, limitSets)
         }
@@ -1418,11 +1455,16 @@ class WorkoutModel(
         repsRange: RepRange?,
         previousSets: List<SetLogEntity>,
         kind: SetLogKind,
-        defaultTargetSeconds: Int
+        defaultTargetSeconds: Int,
+        /** Start each set from the weight of the same set last time (the last one for sets beyond it), not from 0. */
+        prefillWeights: Boolean = false
     ): List<WorkoutSetState> {
         val repsList = parseReps(repsTarget, targetSets)
         return (1..targetSets).map { num ->
             val prevSet = previousSets.getOrNull(num - 1)
+            val startWeight = if (prefillWeights && kind != SetLogKind.TIME_AND_REPS) {
+                (prevSet ?: previousSets.lastOrNull())?.pesoSollevato ?: 0f
+            } else 0f
             val reps = repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 }
             val setDuration = when (kind) {
                 SetLogKind.TIME_AND_WEIGHT -> prevSet?.durataSecondi ?: defaultTargetSeconds
@@ -1433,7 +1475,7 @@ class WorkoutModel(
                 SetLogEntity(
                     sessionId = sessionId,
                     exerciseId = exerciseId,
-                    pesoSollevato = 0f,
+                    pesoSollevato = startWeight,
                     repsEffettive = reps,
                     numeroSerie = num,
                     isCompleted = false,
@@ -1447,7 +1489,7 @@ class WorkoutModel(
             WorkoutSetState(
                 id = logId.toInt(),
                 setNumber = num,
-                weight = 0f,
+                weight = startWeight,
                 reps = reps,
                 isCompleted = false,
                 previousNote = prevSet?.note,
@@ -3300,7 +3342,8 @@ class WorkoutModel(
             } else {
                 createPlainRows(
                     sessionId, newExerciseId, executionOrder, exState.supersetId, restTimer,
-                    targetSets, repsTarget, repsRange, previousSets, setKind, defaultTargetSeconds
+                    targetSets, repsTarget, repsRange, previousSets, setKind, defaultTargetSeconds,
+                    prefillWeights = currentState.isQuickWorkout
                 )
             }
             val progression = if (repsRange != null && advancedBlocks.isEmpty()) {
@@ -3625,73 +3668,191 @@ class WorkoutModel(
         /** Top of a rep range; [repsTarget] is then its bottom. */
         repsMax: Int? = null
     ) {
-        val sessionId = _state.value.sessionId ?: return
+        modelScope.launch {
+            appendLock.withLock {
+                val index = appendExercise(
+                    exercise, targetSets, repsTarget, restTimer, cardioDurationMinutes, exerciseType,
+                    cardioSetsCount, durataTargetSecondi, blocks, repsMax
+                ) ?: return@withLock
+                _state.update { it.copy(currentExerciseIndex = index) }
+            }
+        }
+    }
+
+    /**
+     * Adds the exercises picked in the quick workout picker with one tap (or several with a long press), in that order,
+     * each with the sets, reps, rest and weights of the last time it was done (see [QuickAddPlan]); the workout moves to
+     * the first of them. [typeFor] gives the type an exercise was last added with, [fallbackRest] the rest last confirmed.
+     */
+    fun quickAddExercises(exercises: List<ExerciseEntity>, typeFor: (Int) -> String, fallbackRest: Int?) {
+        if (exercises.isEmpty()) return
+        modelScope.launch {
+            appendLock.withLock {
+                var first: Int? = null
+                exercises.forEach { exercise ->
+                    val isCardio = exercise.categoria.equals("Cardio", ignoreCase = true)
+                    val index = if (isCardio) {
+                        appendExercise(exercise, targetSets = 1, repsTarget = "1", restTimer = fallbackRest, exerciseType = "cardio")
+                    } else {
+                        val plan = QuickAddPlan.from(
+                            workoutRepository.getLastWorkoutSetsForExercise(exercise.id),
+                            fallbackType = typeFor(exercise.id),
+                            fallbackRest = fallbackRest
+                        )
+                        appendExercise(
+                            exercise, targetSets = plan.sets, repsTarget = plan.repsTarget, restTimer = plan.restSeconds,
+                            exerciseType = plan.exerciseType, durataTargetSecondi = plan.seconds
+                        )
+                    }
+                    if (first == null) first = index
+                }
+                first?.let { index -> _state.update { it.copy(currentExerciseIndex = index) } }
+            }
+        }
+    }
+
+    /**
+     * Copies the exercises of the finished workout [sessionId] into this one, in the order they were done, each with the
+     * sets, reps, weights and rest done then; exercises done as a superset stay linked. The workout opens on the first.
+     */
+    fun repeatWorkout(sessionId: Int) {
+        if (_state.value.sessionId == null) return
+        modelScope.launch {
+            val source = workoutRepository.getSessionWithDetails(sessionId).firstOrNull() ?: return@launch
+            val exercisesById = _allExercises.value.associateBy { it.id }
+            // A new link for each superset of the old workout, so the copy is not tied to it
+            val supersets = mutableMapOf<String, String>()
+            // Strength and cardio exercises, each by the order it had in the old workout
+            val strength = source.sets.groupBy { it.setLog.ordineEsercizio to it.setLog.exerciseId }.values.toList()
+            val cardio = source.cardio.filter { it.isCompleted && it.exerciseId != null }
+                .groupBy { it.ordineEsercizio to it.exerciseId }.values.toList()
+            val steps = (strength.map { it.first().setLog.ordineEsercizio to it } + cardio.map { it.first().ordineEsercizio to it })
+                .sortedBy { it.first }
+            appendLock.withLock {
+                var first: Int? = null
+                steps.forEach { (_, rows) ->
+                    val index = when (val head = rows.first()) {
+                        is SetWithExercise -> {
+                            val sets = QuickAddPlan.workingSets(rows.map { (it as SetWithExercise).setLog })
+                            if (sets.isEmpty()) null else {
+                                val plan = QuickAddPlan.from(sets, fallbackType = "strength", fallbackRest = null)
+                                val supersetId = sets.first().supersetId?.let { old -> supersets.getOrPut(old) { kotlin.uuid.Uuid.random().toString() } }
+                                appendExercise(
+                                    head.exercise, targetSets = plan.sets, repsTarget = plan.repsTarget, restTimer = plan.restSeconds,
+                                    exerciseType = plan.exerciseType, durataTargetSecondi = plan.seconds,
+                                    previousSetsOverride = sets, supersetId = supersetId
+                                )
+                            }
+                        }
+                        is CardioLogEntity -> exercisesById[head.exerciseId]?.let { exercise ->
+                            val seconds = head.durataTargetSecondi ?: head.durataSecondi
+                            appendExercise(
+                                exercise, targetSets = 1, repsTarget = "1", restTimer = null,
+                                cardioDurationMinutes = ((seconds + 30) / 60).coerceAtLeast(1),
+                                exerciseType = "cardio", cardioSetsCount = rows.size
+                            )
+                        }
+                        else -> null
+                    }
+                    if (first == null) first = index
+                }
+                first?.let { index -> _state.update { it.copy(currentExerciseIndex = index) } }
+            }
+        }
+    }
+
+    /** One add at a time: each new exercise takes its placeholder order from the ones added before it. */
+    private val appendLock = Mutex()
+
+    /**
+     * Puts [exercise] at the end of the workout and writes its rows; returns where it ended up, or null without a
+     * session. [previousSetsOverride] are the sets to copy reps, weights and notes from instead of the last time's
+     * (repeating a past workout); [supersetId] links it to the exercises with the same one.
+     */
+    private suspend fun appendExercise(
+        exercise: ExerciseEntity,
+        targetSets: Int = 3,
+        repsTarget: String = "8",
+        restTimer: Int? = 90,
+        cardioDurationMinutes: Int? = null,
+        exerciseType: String = "strength",
+        cardioSetsCount: Int = 1,
+        durataTargetSecondi: Int? = null,
+        blocks: List<PrescriptionBlock>? = null,
+        repsMax: Int? = null,
+        previousSetsOverride: List<SetLogEntity>? = null,
+        supersetId: String? = null
+    ): Int? {
+        val sessionId = _state.value.sessionId ?: return null
         val isCardio = exercise.categoria.equals("Cardio", ignoreCase = true) || exerciseType == "cardio"
         val setKind = SetLogKind.ofExerciseType(exerciseType)
         val targetDurationSeconds = if (isCardio) (cardioDurationMinutes ?: 15) * 60 else durataTargetSecondi
         val defaultTargetSeconds = durataTargetSecondi ?: 45
         val advancedBlocks = if (isCardio) emptyList() else blocks.orEmpty()
 
-        modelScope.launch {
-            val currentState = _state.value
-            // A placeholder until the exercise is started, so it cannot clash with the order of one that already was
-            val executionOrder = nextPlaceholderOrder(currentState)
-            val newOneRepMaxKg = if (advancedBlocks.isNotEmpty()) oneRepMaxRepository.currentOnce(exercise.id)?.weightKg else null
+        val currentState = _state.value
+        // A placeholder until the exercise is started, so it cannot clash with the order of one that already was
+        val executionOrder = nextPlaceholderOrder(currentState)
+        val newOneRepMaxKg = if (advancedBlocks.isNotEmpty()) oneRepMaxRepository.currentOnce(exercise.id)?.weightKg else null
 
-            val previousSets = if (isCardio) emptyList() else getPreviousSetsForExercise(currentState.planId, exercise.id, if (advancedBlocks.isNotEmpty()) ALL_SETS else targetSets)
-            val prevPerfStr = previousPerformanceText(previousSets, setKind)
-
-            val repsRange = rangeFor(exerciseType, repsTarget, repsMax)
-
-            val newCardioSets = if (isCardio) createCardioRows(sessionId, exercise, executionOrder, targetDurationSeconds, cardioSetsCount) else emptyList()
-            
-            val initialSets = if (advancedBlocks.isNotEmpty()) {
-                createAdvancedRows(sessionId, exercise.id, executionOrder, null, restTimer, advancedBlocks, previousSets, newOneRepMaxKg)
-            } else if (isCardio) emptyList() else {
-                createPlainRows(
-                    sessionId, exercise.id, executionOrder, null, restTimer,
-                    targetSets, repsTarget, repsRange, previousSets, setKind, defaultTargetSeconds
-                )
-            }
-            val progression = if (repsRange != null && !isCardio && advancedBlocks.isEmpty()) {
-                progressionFor(
-                    targetSets, repsRange,
-                    getPreviousSetsForExercise(currentState.planId, exercise.id, ALL_SETS),
-                    currentState.weightUnit, currentState.loadRoundingIncrement
-                )
-            } else null
-
-            _state.update { curr ->
-                val mutableExercises = curr.exercises.toMutableList()
-                val actualIndex = mutableExercises.size
-
-                mutableExercises.add(
-                    WorkoutExerciseState(
-                        exercise = exercise,
-                        planDetails = null,
-                        executionOrder = executionOrder,
-                        sets = initialSets,
-                        previousPerformance = prevPerfStr,
-                        customRestSeconds = restTimer,
-                        customRepsTarget = repsTarget,
-                        customRepsMax = repsRange?.max,
-                        progression = progression,
-                        isCardio = isCardio,
-                        cardioDurataTargetSeconds = targetDurationSeconds,
-                        cardioSets = newCardioSets,
-                        exerciseType = exerciseType,
-                        timeTargetSeconds = durataTargetSecondi,
-                        blocks = advancedBlocks,
-                        oneRepMaxKg = newOneRepMaxKg
-                    )
-                )
-                curr.copy(
-                    exercises = mutableExercises,
-                    currentExerciseIndex = actualIndex
-                )
-            }
-            if (_state.value.isDeload) rescaleForDeload(true, _state.value.currentExerciseIndex)
+        val previousSets = when {
+            isCardio -> emptyList()
+            previousSetsOverride != null -> previousSetsOverride
+            else -> getPreviousSetsForExercise(currentState.planId, exercise.id, if (advancedBlocks.isNotEmpty()) ALL_SETS else targetSets)
         }
+        val prevPerfStr = previousPerformanceText(previousSets, setKind)
+
+        val repsRange = rangeFor(exerciseType, repsTarget, repsMax)
+
+        val newCardioSets = if (isCardio) createCardioRows(sessionId, exercise, executionOrder, targetDurationSeconds, cardioSetsCount) else emptyList()
+
+        val initialSets = if (advancedBlocks.isNotEmpty()) {
+            createAdvancedRows(sessionId, exercise.id, executionOrder, supersetId, restTimer, advancedBlocks, previousSets, newOneRepMaxKg)
+        } else if (isCardio) emptyList() else {
+            createPlainRows(
+                sessionId, exercise.id, executionOrder, supersetId, restTimer,
+                targetSets, repsTarget, repsRange, previousSets, setKind, defaultTargetSeconds,
+                prefillWeights = currentState.isQuickWorkout
+            )
+        }
+        val progression = if (repsRange != null && !isCardio && advancedBlocks.isEmpty()) {
+            progressionFor(
+                targetSets, repsRange,
+                getPreviousSetsForExercise(currentState.planId, exercise.id, ALL_SETS),
+                currentState.weightUnit, currentState.loadRoundingIncrement
+            )
+        } else null
+
+        var actualIndex = 0
+        _state.update { curr ->
+            val mutableExercises = curr.exercises.toMutableList()
+            actualIndex = mutableExercises.size
+
+            mutableExercises.add(
+                WorkoutExerciseState(
+                    exercise = exercise,
+                    planDetails = null,
+                    executionOrder = executionOrder,
+                    sets = initialSets,
+                    previousPerformance = prevPerfStr,
+                    customRestSeconds = restTimer,
+                    customRepsTarget = repsTarget,
+                    customRepsMax = repsRange?.max,
+                    progression = progression,
+                    isCardio = isCardio,
+                    cardioDurataTargetSeconds = targetDurationSeconds,
+                    cardioSets = newCardioSets,
+                    exerciseType = exerciseType,
+                    timeTargetSeconds = durataTargetSecondi,
+                    blocks = advancedBlocks,
+                    oneRepMaxKg = newOneRepMaxKg,
+                    supersetId = supersetId
+                )
+            )
+            curr.copy(exercises = mutableExercises)
+        }
+        if (_state.value.isDeload) rescaleForDeload(true, actualIndex)
+        return actualIndex
     }
 
     fun addExerciseAfterCurrent(
@@ -3735,7 +3896,8 @@ class WorkoutModel(
             } else if (isCardio) emptyList() else {
                 createPlainRows(
                     sessionId, exercise.id, newOrder, null, restTimer,
-                    targetSets, repsTarget, repsRange, previousSets, setKind, defaultTargetSeconds
+                    targetSets, repsTarget, repsRange, previousSets, setKind, defaultTargetSeconds,
+                    prefillWeights = currentState.isQuickWorkout
                 )
             }
             val progression = if (repsRange != null && !isCardio && advancedBlocks.isEmpty()) {

@@ -19,6 +19,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import com.emanuel5014.trainable.ui.components.QuickAddPicker
+import com.emanuel5014.trainable.sharedui.resources.today
+import com.emanuel5014.trainable.sharedui.resources.yesterday
+import com.emanuel5014.trainable.sharedui.resources.days_ago
+import org.jetbrains.compose.resources.pluralStringResource
+import com.emanuel5014.trainable.ui.components.formatWeight
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -426,7 +433,24 @@ fun WorkoutDialogs(
     }
 
     if (ui.showAddExerciseSheet) {
+        // A quick workout adds with one tap, showing what each exercise was last done with
+        val quickAdd = if (state.isQuickWorkout) {
+            LaunchedEffect(Unit) { viewModel.loadQuickWorkoutHistory() }
+            val lastTimes by viewModel.exerciseLastTimes.collectAsState()
+            val lastDone = remember(lastTimes) { lastTimes.mapValues { it.value.timestamp } }
+            QuickAddPicker(
+                lastDone = lastDone,
+                note = { id -> lastTimes[id]?.let { lastTimeNote(it, state.weightUnit) } },
+                onAdd = { exercises, typeFor, rest ->
+                    viewModel.quickAddExercises(exercises, typeFor, rest)
+                    ui.isAddingAfterCurrent = false
+                    ui.showAddExerciseSheet = false
+                },
+                lastSetup = { id -> lastTimes[id]?.let { Triple(it.sets, it.repsTarget, it.restSeconds) } }
+            )
+        } else null
         SwapExerciseBottomSheet(
+            quickAdd = quickAdd,
             currentSets = 3,
             currentReps = "8",
             availableExercises = availableExercises,
@@ -558,5 +582,28 @@ fun WorkoutDialogs(
             titleContentColor = OnSurface,
             textContentColor = OnSurfaceVariant
         )
+    }
+}
+
+/** "100 kg × 5 · 4 days ago", "45 s · yesterday": the best set of the last time and how long ago it was. */
+@Composable
+internal fun lastTimeNote(last: ExerciseLastTime, weightUnit: String): String {
+    val load = when {
+        last.seconds != null && last.weightKg > 0f -> "${formatWeight(last.weightKg, weightUnit)} × ${last.seconds} s"
+        last.seconds != null -> "${last.seconds} s"
+        else -> "${formatWeight(last.weightKg, weightUnit)} × ${last.reps}"
+    }
+    return "$load · ${daysAgoText(last.timestamp)}"
+}
+
+/** "today", "yesterday", "4 days ago" (calendar days in the phone's time zone). */
+@Composable
+internal fun daysAgoText(timestamp: Long): String {
+    val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
+    val days = com.emanuel5014.trainable.ui.screens.physicalcheck.daysBetween(timestamp, kotlin.time.Clock.System.now().toEpochMilliseconds(), zone)
+    return when {
+        days <= 0 -> stringResource(Res.string.today)
+        days == 1 -> stringResource(Res.string.yesterday)
+        else -> pluralStringResource(Res.plurals.days_ago, days, days)
     }
 }

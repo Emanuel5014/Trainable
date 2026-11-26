@@ -61,6 +61,15 @@ import androidx.compose.ui.draw.clip
 import org.jetbrains.compose.resources.stringResource
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.add_custom_exercise
+import com.emanuel5014.trainable.sharedui.resources.add_n_exercises
+import com.emanuel5014.trainable.sharedui.resources.all_exercises_header
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.quick_picker_hint
+import com.emanuel5014.trainable.sharedui.resources.quick_picker_hint_selecting
+import com.emanuel5014.trainable.sharedui.resources.quick_picker_title
+import com.emanuel5014.trainable.sharedui.resources.recent_exercises
+import org.jetbrains.compose.resources.pluralStringResource
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.emanuel5014.trainable.sharedui.resources.add_exercise
 import com.emanuel5014.trainable.sharedui.resources.advanced_needs_block
 import com.emanuel5014.trainable.sharedui.resources.all_categories
@@ -95,6 +104,25 @@ import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
 import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.ui.util.uppercaseUi
 
+/**
+ * How the picker adds exercises to a quick workout: a tap adds the exercise at once with what it was done with last time,
+ * a long press starts picking several (added together, in the order tapped), and the ⚙ of a row opens the usual
+ * sets, reps and rest first. Cardio keeps its own step (minutes and intervals).
+ */
+class QuickAddPicker(
+    /** Exercise id -> when it was last done: the most recent ones are listed first. */
+    val lastDone: Map<Int, Long>,
+    /** The note under an exercise ("100 kg × 5 · 4 days ago"); null for one never done. */
+    val note: @Composable (exerciseId: Int) -> String?,
+    /** Adds the exercises in this order; [typeFor] is the type each was last added with, the rest the last confirmed one. */
+    val onAdd: (exercises: List<ExerciseEntity>, typeFor: (Int) -> String, restSeconds: Int?) -> Unit,
+    /** Where the ⚙ of an exercise opens: the sets, reps ("10-8-6") and rest of its last time; null for one never done. */
+    val lastSetup: (exerciseId: Int) -> Triple<Int, String, Int?>? = { null }
+)
+
+/** How many recently done exercises the quick workout picker lists on top. */
+private const val RECENT_SHOWN = 6
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwapExerciseBottomSheet(
@@ -122,7 +150,9 @@ fun SwapExerciseBottomSheet(
     /** Exercises that cannot be picked (the ones a screen that keys its list by exercise already has). */
     excludedExerciseIds: Set<Int> = emptySet(),
     /** When set, a picked cardio exercise is handed over at once (the sheet closes) instead of asking minutes and sets. */
-    onCardioPicked: ((ExerciseEntity) -> Unit)? = null
+    onCardioPicked: ((ExerciseEntity) -> Unit)? = null,
+    /** When set, the picker adds to a quick workout with one tap (see [QuickAddPicker]). */
+    quickAdd: QuickAddPicker? = null
 ) {
     rememberResponsiveSize()
 
@@ -148,6 +178,11 @@ fun SwapExerciseBottomSheet(
         }
     }
 
+    // The exercises picked together with a long press, in the order they were tapped
+    var picked by remember { mutableStateOf(listOf<ExerciseEntity>()) }
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    fun ExerciseEntity.isCardioExercise() = categoria.equals("Cardio", ignoreCase = true)
+
     val filteredExercises = remember(
         availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds, traitFilter
     ) {
@@ -168,6 +203,37 @@ fun SwapExerciseBottomSheet(
     val rememberedRest by memory.lastRestSeconds.collectAsState()
     // The type each exercise was last added with: step 2 opens the selector on it
     val rememberedTypes by memory.types.collectAsState()
+
+    fun addNow(exercises: List<ExerciseEntity>) {
+        quickAdd?.onAdd?.invoke(exercises, { id -> ExerciseTypeMemory.typeFor(rememberedTypes, id) }, rememberedRest)
+        onDismiss()
+    }
+
+    /** A tap in the quick workout picker: adds the exercise, or (while picking several) puts it in or out of the pick. */
+    fun quickTap(exercise: ExerciseEntity) {
+        when {
+            picked.isNotEmpty() -> if (!exercise.isCardioExercise()) {
+                picked = if (picked.any { it.id == exercise.id }) picked.filterNot { it.id == exercise.id } else picked + exercise
+            }
+            // Cardio asks its minutes and intervals first
+            exercise.isCardioExercise() -> pick(exercise)
+            else -> addNow(listOf(exercise))
+        }
+    }
+
+    fun quickLongPress(exercise: ExerciseEntity) {
+        if (exercise.isCardioExercise()) return pick(exercise)
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        if (picked.none { it.id == exercise.id }) picked = picked + exercise
+    }
+
+    // Recently done exercises on top while nothing narrows the list
+    val recentExercises = remember(quickAdd?.lastDone, availableExercises, excludedExerciseIds) {
+        val lastDone = quickAdd?.lastDone.orEmpty()
+        availableExercises.filter { it.id in lastDone && it.id !in excludedExerciseIds }
+            .sortedByDescending { lastDone[it.id] }
+            .take(RECENT_SHOWN)
+    }
 
     val allLabel = stringResource(Res.string.all_categories)
     val favoritesLabel = stringResource(Res.string.filter_favorites)
@@ -233,13 +299,26 @@ fun SwapExerciseBottomSheet(
                                             fontWeight = FontWeight.ExtraBold
                                         )
                                         Text(
-                                            text = if (isAdding) stringResource(Res.string.exercise_details) else stringResource(Res.string.swap_exercise_message),
+                                            text = when {
+                                                quickAdd != null -> stringResource(Res.string.quick_picker_title)
+                                                isAdding -> stringResource(Res.string.exercise_details)
+                                                else -> stringResource(Res.string.swap_exercise_message)
+                                            },
                                             style = MaterialTheme.typography.headlineMedium.copy(
                                                 fontSize = ResponsiveSize.headlineMediumSize
                                             ),
                                             color = OnSurface,
                                             fontWeight = FontWeight.Black
                                         )
+                                        if (quickAdd != null) {
+                                            Text(
+                                                text = stringResource(
+                                                    if (picked.isEmpty()) Res.string.quick_picker_hint else Res.string.quick_picker_hint_selecting
+                                                ),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = OnSurfaceVariant
+                                            )
+                                        }
                                     }
 
                                     Spacer(modifier = Modifier.height(Spacing.large))
@@ -271,25 +350,75 @@ fun SwapExerciseBottomSheet(
                                 .fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(Spacing.small)
                         ) {
+                            val showRecent = quickAdd != null && recentExercises.isNotEmpty() && searchQuery.isBlank() &&
+                                selectedCategory == null && !showOnlyCustom && !showOnlyFavorites && !traitFilter.isActive
+                            @Composable
+                            fun PickRow(exercise: ExerciseEntity) {
+                                if (quickAdd == null) {
+                                    ExercisePickRow(
+                                        exercise = exercise,
+                                        languageCode = languageCode,
+                                        onClick = { pick(exercise) },
+                                        isSelected = exercise.id == selectedExercise?.id,
+                                        isCurrent = exercise.id == currentExerciseId,
+                                        showThumbnail = showThumbnails,
+                                        onThumbnailClick = { exerciseMediaToView = exercise },
+                                        onInfoClick = { detailExerciseId = exercise.id }
+                                    )
+                                } else {
+                                    val place = picked.indexOfFirst { it.id == exercise.id }
+                                    ExercisePickRow(
+                                        exercise = exercise,
+                                        languageCode = languageCode,
+                                        onClick = { quickTap(exercise) },
+                                        onLongClick = { quickLongPress(exercise) },
+                                        selectionNumber = (place + 1).takeIf { place >= 0 },
+                                        showThumbnail = showThumbnails,
+                                        onThumbnailClick = { exerciseMediaToView = exercise },
+                                        onInfoClick = { detailExerciseId = exercise.id },
+                                        onSetupClick = if (picked.isEmpty()) ({ pick(exercise) }) else null,
+                                        note = quickAdd.note(exercise.id)
+                                    )
+                                }
+                            }
+                            if (showRecent) {
+                                item(key = "recent-header") { QuickSectionLabel(stringResource(Res.string.recent_exercises)) }
+                                items(recentExercises, key = { "recent-${it.id}" }) { exercise -> PickRow(exercise) }
+                                item(key = "all-header") { QuickSectionLabel(stringResource(Res.string.all_exercises_header)) }
+                            }
                             if (filteredExercises.isEmpty()) {
                                 item { ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null) }
                             }
-                            items(filteredExercises) { exercise ->
-                                ExercisePickRow(
-                                    exercise = exercise,
-                                    languageCode = languageCode,
-                                    onClick = { pick(exercise) },
-                                    isSelected = exercise.id == selectedExercise?.id,
-                                    isCurrent = exercise.id == currentExerciseId,
-                                    showThumbnail = showThumbnails,
-                                    onThumbnailClick = { exerciseMediaToView = exercise },
-                                    onInfoClick = { detailExerciseId = exercise.id }
-                                )
-                            }
+                            items(filteredExercises) { exercise -> PickRow(exercise) }
                         }
                     },
                     footer = {
-                        AnimatedVisibility(visible = !imeVisible) {
+                        // Picking several: the button that adds them takes the place of the custom-exercise one
+                        if (quickAdd != null && picked.isNotEmpty()) {
+                            Column {
+                                Spacer(modifier = Modifier.height(Spacing.medium))
+                                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium), verticalAlignment = Alignment.CenterVertically) {
+                                    GymButton(
+                                        onClick = { picked = emptyList() },
+                                        containerColor = SurfaceContainerHigh,
+                                        contentColor = OnSurface
+                                    ) {
+                                        Text(stringResource(Res.string.cancel), fontWeight = FontWeight.ExtraBold)
+                                    }
+                                    GymButton(
+                                        onClick = { addNow(picked) },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(Icons.Rounded.Add, contentDescription = null)
+                                        Spacer(modifier = Modifier.width(Spacing.small))
+                                        Text(
+                                            pluralStringResource(Res.plurals.add_n_exercises, picked.size, picked.size).uppercaseUi(),
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
+                                }
+                            }
+                        } else AnimatedVisibility(visible = !imeVisible) {
                             Column {
                                 Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -328,16 +457,17 @@ fun SwapExerciseBottomSheet(
                     )
                 } else {
                     selectedExercise?.let { ex ->
+                        val lastSetup = quickAdd?.lastSetup?.invoke(ex.id)
                         SwapExerciseConfigSheet(
                             exercise = ex,
                             languageCode = languageCode,
-                            initialSets = currentSets.toString(),
-                            initialReps = currentReps,
+                            initialSets = (lastSetup?.first ?: currentSets).toString(),
+                            initialReps = lastSetup?.second ?: currentReps,
                             initialRepsMax = currentRepsMax,
                             initialBlocks = initialBlocks,
                             advancedEnabled = onAdvancedExerciseSelected != null && LocalAdvancedProgramming.current,
                             initialType = ExerciseTypeMemory.typeFor(rememberedTypes, ex.id),
-                            initialRestSeconds = rememberedRest ?: RestSeconds.DEFAULT,
+                            initialRestSeconds = lastSetup?.third ?: rememberedRest ?: RestSeconds.DEFAULT,
                             onConfirm = { sets, reps, rest, exerciseType, durataTargetSec ->
                                 rest?.let { memory.rememberRest(it) }
                                 memory.rememberType(ex.id, exerciseType)
@@ -371,7 +501,13 @@ fun SwapExerciseBottomSheet(
             languageCode = languageCode,
             showDescription = false,
             onConfirm = { form ->
-                onAddCustomExercise(form.name, form.category) { createdExercise -> pick(createdExercise) }
+                onAddCustomExercise(form.name, form.category) { createdExercise ->
+                    when {
+                        quickAdd == null || createdExercise.isCardioExercise() -> pick(createdExercise)
+                        picked.isNotEmpty() -> picked = picked + createdExercise
+                        else -> addNow(listOf(createdExercise))
+                    }
+                }
                 showAddCustomDialog = false
             },
             onDismiss = { showAddCustomDialog = false }
@@ -754,3 +890,15 @@ fun RestSlider(
     }
 }
 
+
+/** "RECENT" / "ALL EXERCISES" above the parts of the quick workout picker. */
+@Composable
+private fun QuickSectionLabel(text: String) {
+    Text(
+        text = text.uppercaseUi(),
+        style = MaterialTheme.typography.labelMedium,
+        color = OnSurfaceVariant,
+        fontWeight = FontWeight.ExtraBold,
+        modifier = Modifier.padding(top = Spacing.small)
+    )
+}
