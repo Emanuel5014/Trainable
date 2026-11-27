@@ -617,7 +617,8 @@ class AnalyticsState(
                 exerciseName = ExerciseTranslations.translate(row.exerciseName, languageCode),
                 category = ExerciseTranslations.translateCategory(row.category, languageCode),
                 maxWeightKg = row.maxWeight,
-                reps = row.reps
+                reps = row.reps,
+                categoryKey = row.category
             )
         }
 

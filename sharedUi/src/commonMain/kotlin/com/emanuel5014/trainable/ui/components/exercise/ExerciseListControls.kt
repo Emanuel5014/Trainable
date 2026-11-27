@@ -50,47 +50,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.util.uppercaseUi
 
-/** The search box of every exercise list: a magnifier, and a cross that clears the text once there is some. */
+/**
+ * The search box of every exercise list: a capsule with the magnifier, the text and a cross that clears it once there is
+ * some, then [trailing] (the filter button of a list that has one). Glass when the search bars are, filled otherwise.
+ */
 @Composable
-fun ExerciseSearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
-    if (LocalGlassSettings.current.isOn(GlassPart.SearchBars) && LocalPlatformGlass.current.hasSurfaceGlass) {
-        GlassSearchField(query = query, onQueryChange = onQueryChange, modifier = modifier)
-        return
-    }
-    GymInputField(
-        value = query,
-        onValueChange = onQueryChange,
-        label = stringResource(Res.string.search_exercises),
-        modifier = modifier.fillMaxWidth(),
-        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = OnSurfaceVariant) },
-        trailingIcon = if (query.isNotEmpty()) {
-            {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Rounded.Close, contentDescription = stringResource(Res.string.close), tint = OnSurfaceVariant)
-                }
-            }
-        } else null
-    )
-}
-
-/** The search field as an iOS 26 search bar: a capsule of glass with the magnifier, the text and a clear button. */
-@Composable
-private fun GlassSearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+fun ExerciseSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    trailing: (@Composable () -> Unit)? = null
+) {
+    val glass = LocalGlassSettings.current.isOn(GlassPart.SearchBars) && LocalPlatformGlass.current.hasSurfaceGlass
     val placeholder = stringResource(Res.string.search_exercises)
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
-            .surfaceGlass(GlassPart.SearchBars)
-            .clip(RoundedCornerShape(50))
-            .padding(start = 16.dp, end = 4.dp),
+            .height(56.dp)
+            .then(
+                if (glass) Modifier.surfaceGlass(GlassPart.SearchBars).clip(RoundedCornerShape(50))
+                else Modifier.clip(RoundedCornerShape(50)).background(SurfaceContainerHigh)
+            )
+            .padding(start = 18.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(Icons.Rounded.Search, contentDescription = null, tint = OnSurfaceVariant)
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (query.isEmpty()) {
                 Text(placeholder, style = MaterialTheme.typography.bodyLarge, color = OnSurfaceVariant, maxLines = 1)
@@ -110,9 +99,8 @@ private fun GlassSearchField(query: String, onQueryChange: (String) -> Unit, mod
             IconButton(onClick = { onQueryChange("") }) {
                 Icon(Icons.Rounded.Close, contentDescription = stringResource(Res.string.close), tint = OnSurfaceVariant)
             }
-        } else {
-            Spacer(modifier = Modifier.width(12.dp))
         }
+        if (trailing != null) trailing() else if (query.isEmpty()) Spacer(modifier = Modifier.width(4.dp))
     }
 }
 

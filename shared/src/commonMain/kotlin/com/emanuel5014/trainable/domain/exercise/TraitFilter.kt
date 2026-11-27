@@ -19,6 +19,13 @@ data class TraitFilter(val muscles: Set<Muscle> = emptySet(), val equipment: Set
 
     fun toggle(equipment: Equipment): TraitFilter = copy(equipment = this.equipment.toggled(equipment))
 
+    /** Whether every muscle of [zone] is chosen. */
+    fun hasWhole(zone: MuscleZone): Boolean = muscles.containsAll(zone.muscles)
+
+    /** Chooses every muscle of [zone], or none of them when they were all chosen already. */
+    fun toggle(zone: MuscleZone): TraitFilter =
+        copy(muscles = if (hasWhole(zone)) muscles - zone.muscles.toSet() else muscles + zone.muscles)
+
     companion object {
         val NONE = TraitFilter()
     }

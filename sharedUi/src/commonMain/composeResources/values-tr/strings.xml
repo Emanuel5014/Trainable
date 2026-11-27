@@ -191,6 +191,8 @@
     <string name="exercise_picked_badge">Seçili</string>
     <string name="exercise_traits_equipment">Ekipman</string>
     <string name="exercise_traits_muscles">Kaslar</string>
+    <string name="exercise_filters_heading">Kaslar ve ekipman</string>
+    <string name="filter_whole_zone">Tüm bölge</string>
     <string name="exercise_traits_muscles_count">%1$d/%2$d</string>
     <string name="exercise_traits_not_set">Belirtilmedi</string>
     <string name="no_exercises_found">Egzersiz bulunamadı</string>
@@ -1970,10 +1972,15 @@
     <string name="quick_picker_hint_selecting">Diğerlerine yapacağın sırayla dokun</string>
     <string name="recent_exercises">Son kullanılanlar</string>
     <string name="all_exercises_header">Tüm egzersizler</string>
+    <string name="picker_same_category">Aynı kas · %1$s</string>
     <string name="exercise_setup_button">Set, tekrar ve dinlenme</string>
     <plurals name="add_n_exercises">
         <item quantity="one">%1$d egzersiz ekle</item>
         <item quantity="other">%1$d egzersiz ekle</item>
+    </plurals>
+    <plurals name="filter_show_n_exercises">
+        <item quantity="one">%1$d egzersizi göster</item>
+        <item quantity="other">%1$d egzersizi göster</item>
     </plurals>
     <plurals name="quick_exercise_count">
         <item quantity="one">%1$d egzersiz</item>

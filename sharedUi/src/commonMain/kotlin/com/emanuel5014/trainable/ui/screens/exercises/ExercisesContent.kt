@@ -366,7 +366,8 @@ fun ExercisesContent(
                     onQueryChange = { query = it },
                     traitFilter = traitFilter,
                     onTraitFilterChange = { traitFilter = it },
-                    resultCount = groups.sumOf { it.entries.size }
+                    resultCount = groups.sumOf { it.entries.size },
+                    languageCode = languageCode
                 )
             }
 

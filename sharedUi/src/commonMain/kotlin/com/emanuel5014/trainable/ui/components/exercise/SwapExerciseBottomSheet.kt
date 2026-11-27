@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.rememberLazyListState
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
 import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
@@ -60,7 +65,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import org.jetbrains.compose.resources.stringResource
 import com.emanuel5014.trainable.sharedui.resources.Res
-import com.emanuel5014.trainable.sharedui.resources.add_custom_exercise
+import com.emanuel5014.trainable.sharedui.resources.current_badge
+import com.emanuel5014.trainable.sharedui.resources.picker_same_category
 import com.emanuel5014.trainable.sharedui.resources.add_n_exercises
 import com.emanuel5014.trainable.sharedui.resources.all_exercises_header
 import com.emanuel5014.trainable.sharedui.resources.cancel
@@ -122,6 +128,9 @@ class QuickAddPicker(
 
 /** How many recently done exercises the quick workout picker lists on top. */
 private const val RECENT_SHOWN = 6
+
+/** How many exercises of the same muscle group the swap picker lists under the one being replaced. */
+private const val SAME_CATEGORY_SHOWN = 6
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -261,6 +270,17 @@ fun SwapExerciseBottomSheet(
     }
 
     val imeVisible = isKeyboardVisible
+    val listState = rememberLazyListState()
+    val fabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
+    // Sections (current, same muscle, recent) only while nothing narrows the list
+    val narrowed = searchQuery.isNotBlank() || selectedCategory != null || showOnlyCustom || showOnlyFavorites || traitFilter.isActive
+    val currentExercise = remember(availableExercises, currentExerciseId, isAdding) {
+        if (isAdding || currentExerciseId == null) null else availableExercises.firstOrNull { it.id == currentExerciseId }
+    }
+    // The recent ones load just after the sheet opens and go above the rows already shown: the list would stay on those
+    // (rows keep their place by key), so it goes back to its top to show them
+    val hasRecent = recentExercises.isNotEmpty()
+    LaunchedEffect(hasRecent) { if (hasRecent) listState.scrollToItem(0) }
 
     when (step) {
         1 -> {
@@ -268,6 +288,7 @@ fun SwapExerciseBottomSheet(
                 onDismissRequest = onDismiss,
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
                 containerColor = Surface,
+                contentWindowInsets = PickerSheetInsets,
                 dragHandle = {
                     Box(
                         modifier = Modifier
@@ -279,50 +300,30 @@ fun SwapExerciseBottomSheet(
                 },
                 modifier = modifier
             ) {
+                val bottomInset = pickerBottomInset()
+                Box {
                 ExercisePickerSheetLayout(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = ResponsiveSize.cardPadding)
-                        .padding(bottom = ResponsiveSize.cardPadding),
+                        .padding(horizontal = ResponsiveSize.cardPadding),
                     header = {
                         Column {
-                            // Title and the custom-exercise button make way for the list while the keyboard is up
+                            // The title makes way for the list while the keyboard is up
                             AnimatedVisibility(visible = !imeVisible) {
                                 Column {
-                                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
-                                        Text(
-                                            text = if (isAdding) stringResource(Res.string.add_exercise) else stringResource(Res.string.swap_exercise),
-                                            style = MaterialTheme.typography.labelMedium.copy(
-                                                fontSize = ResponsiveSize.labelLargeSize
-                                            ),
-                                            color = Primary,
-                                            fontWeight = FontWeight.ExtraBold
+                                    ExercisePickerHeader(
+                                        eyebrow = stringResource(if (isAdding) Res.string.add_exercise else Res.string.swap_exercise),
+                                        title = when {
+                                            quickAdd != null -> stringResource(Res.string.quick_picker_title)
+                                            // A list to pick from: the details come in the next step
+                                            isAdding -> stringResource(Res.string.select_exercise)
+                                            else -> stringResource(Res.string.swap_exercise_message)
+                                        },
+                                        hint = if (quickAdd == null) null else stringResource(
+                                            if (picked.isEmpty()) Res.string.quick_picker_hint else Res.string.quick_picker_hint_selecting
                                         )
-                                        Text(
-                                            text = when {
-                                                quickAdd != null -> stringResource(Res.string.quick_picker_title)
-                                                // A list to pick from: the details come in the next step
-                                                isAdding -> stringResource(Res.string.select_exercise)
-                                                else -> stringResource(Res.string.swap_exercise_message)
-                                            },
-                                            style = MaterialTheme.typography.headlineMedium.copy(
-                                                fontSize = ResponsiveSize.headlineMediumSize
-                                            ),
-                                            color = OnSurface,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                        if (quickAdd != null) {
-                                            Text(
-                                                text = stringResource(
-                                                    if (picked.isEmpty()) Res.string.quick_picker_hint else Res.string.quick_picker_hint_selecting
-                                                ),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = OnSurfaceVariant
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(Spacing.large))
+                                    )
+                                    Spacer(modifier = Modifier.height(Spacing.medium))
                                 }
                             }
 
@@ -331,30 +332,27 @@ fun SwapExerciseBottomSheet(
                                 onQueryChange = { searchQuery = it },
                                 traitFilter = traitFilter,
                                 onTraitFilterChange = { traitFilter = it },
-                                resultCount = filteredExercises.size
+                                resultCount = filteredExercises.size,
+                                languageCode = languageCode
                             )
-
-                            Spacer(modifier = Modifier.height(Spacing.medium))
 
                             AnimatedVisibility(visible = !imeVisible) {
                                 Column {
+                                    Spacer(modifier = Modifier.height(Spacing.small))
                                     ExerciseFilterBar(options = filterOptions)
-
-                                    Spacer(modifier = Modifier.height(Spacing.medium))
                                 }
                             }
                         }
                     },
                     list = {
                         LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                            state = listState,
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(PickerRowGap),
+                            contentPadding = PaddingValues(top = PickerListTop, bottom = if (picked.isEmpty()) bottomInset + PickerFabClearance else 0.dp)
                         ) {
-                            val showRecent = quickAdd != null && recentExercises.isNotEmpty() && searchQuery.isBlank() &&
-                                selectedCategory == null && !showOnlyCustom && !showOnlyFavorites && !traitFilter.isActive
                             @Composable
-                            fun PickRow(exercise: ExerciseEntity) {
+                            fun PickRow(exercise: ExerciseEntity, shape: Shape) {
                                 if (quickAdd == null) {
                                     ExercisePickRow(
                                         exercise = exercise,
@@ -364,7 +362,8 @@ fun SwapExerciseBottomSheet(
                                         isCurrent = exercise.id == currentExerciseId,
                                         showThumbnail = showThumbnails,
                                         onThumbnailClick = { exerciseMediaToView = exercise },
-                                        onInfoClick = { detailExerciseId = exercise.id }
+                                        onInfoClick = { detailExerciseId = exercise.id },
+                                        shape = shape
                                     )
                                 } else {
                                     val place = picked.indexOfFirst { it.id == exercise.id }
@@ -378,25 +377,53 @@ fun SwapExerciseBottomSheet(
                                         onThumbnailClick = { exerciseMediaToView = exercise },
                                         onInfoClick = { detailExerciseId = exercise.id },
                                         onSetupClick = if (picked.isEmpty()) ({ pick(exercise) }) else null,
-                                        note = quickAdd.note(exercise.id)
+                                        note = quickAdd.note(exercise.id),
+                                        shape = shape
                                     )
                                 }
                             }
+                            val showRecent = quickAdd != null && recentExercises.isNotEmpty() && !narrowed
+                            // Swapping: the exercise being replaced on top, then the others of its muscle group
+                            val current = currentExercise.takeIf { !narrowed }
+                            val sameCategory = if (current == null) emptyList() else filteredExercises
+                                .filter { it.categoria == current.categoria && it.id != current.id }
+                                .take(SAME_CATEGORY_SHOWN)
+                            if (current != null) {
+                                item(key = "current-header") { ExercisePickerSectionLabel(stringResource(Res.string.current_badge), first = true) }
+                                pickerGroup(listOf(current), "current", { it.id }) { exercise, shape -> PickRow(exercise, shape) }
+                            }
+                            if (sameCategory.isNotEmpty() && current != null) {
+                                item(key = "same-header") {
+                                    ExercisePickerSectionLabel(
+                                        stringResource(
+                                            Res.string.picker_same_category,
+                                            ExerciseTranslations.translateCategory(current.categoria, languageCode)
+                                        )
+                                    )
+                                }
+                                pickerGroup(sameCategory, "same", { it.id }) { exercise, shape -> PickRow(exercise, shape) }
+                            }
                             if (showRecent) {
-                                item(key = "recent-header") { QuickSectionLabel(stringResource(Res.string.recent_exercises)) }
-                                items(recentExercises, key = { "recent-${it.id}" }) { exercise -> PickRow(exercise) }
-                                item(key = "all-header") { QuickSectionLabel(stringResource(Res.string.all_exercises_header)) }
+                                item(key = "recent-header") {
+                                    ExercisePickerSectionLabel(stringResource(Res.string.recent_exercises), first = current == null)
+                                }
+                                pickerGroup(recentExercises, "recent", { it.id }) { exercise, shape -> PickRow(exercise, shape) }
+                            }
+                            if (current != null || showRecent) {
+                                item(key = "all-header") { ExercisePickerSectionLabel(stringResource(Res.string.all_exercises_header)) }
                             }
                             if (filteredExercises.isEmpty()) {
-                                item { ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null) }
+                                item(key = "empty") { ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null) }
                             }
-                            items(filteredExercises) { exercise -> PickRow(exercise) }
+                            // The exercise being replaced is already on top
+                            val all = if (current == null) filteredExercises else filteredExercises.filter { it.id != current.id }
+                            pickerGroup(all, "all", { it.id }) { exercise, shape -> PickRow(exercise, shape) }
                         }
                     },
                     footer = {
                         // Picking several: the button that adds them takes the place of the custom-exercise one
                         if (quickAdd != null && picked.isNotEmpty()) {
-                            Column {
+                            Column(modifier = Modifier.padding(bottom = ResponsiveSize.cardPadding + bottomInset)) {
                                 Spacer(modifier = Modifier.height(Spacing.medium))
                                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium), verticalAlignment = Alignment.CenterVertically) {
                                     GymButton(
@@ -419,24 +446,20 @@ fun SwapExerciseBottomSheet(
                                     }
                                 }
                             }
-                        } else AnimatedVisibility(visible = !imeVisible) {
-                            Column {
-                                Spacer(modifier = Modifier.height(Spacing.medium))
-
-                                GymButton(
-                                    onClick = { showAddCustomDialog = true },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    containerColor = SurfaceContainerHigh,
-                                    contentColor = OnSurface
-                                ) {
-                                    Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
-                                    Spacer(modifier = Modifier.width(Spacing.medium))
-                                    Text(stringResource(Res.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
-                                }
-                            }
                         }
                     }
                 )
+                PickerCreateFab(
+                    label = stringResource(Res.string.new_exercise),
+                    // Picking several, the add button at the bottom takes its place
+                    visible = !imeVisible && picked.isEmpty(),
+                    expanded = fabExpanded,
+                    onClick = { showAddCustomDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = ResponsiveSize.cardPadding, bottom = ResponsiveSize.cardPadding + bottomInset)
+                )
+                }
             }
         }
         2 -> {
@@ -889,17 +912,4 @@ fun RestSlider(
             modifier = Modifier.fillMaxWidth()
         )
     }
-}
-
-
-/** "RECENT" / "ALL EXERCISES" above the parts of the quick workout picker. */
-@Composable
-private fun QuickSectionLabel(text: String) {
-    Text(
-        text = text.uppercaseUi(),
-        style = MaterialTheme.typography.labelMedium,
-        color = OnSurfaceVariant,
-        fontWeight = FontWeight.ExtraBold,
-        modifier = Modifier.padding(top = Spacing.small)
-    )
 }

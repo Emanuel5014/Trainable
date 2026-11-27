@@ -26,7 +26,9 @@ data class PersonalBestUiModel(
     val exerciseName: String,
     val category: String,
     val maxWeightKg: Float,
-    val reps: Int
+    val reps: Int,
+    /** The stored (untranslated) category, which picks the shape of the exercise in a picker. */
+    val categoryKey: String = ""
 )
 
 data class ConsistencyUiModel(

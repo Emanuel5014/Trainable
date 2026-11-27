@@ -191,6 +191,8 @@
     <string name="exercise_picked_badge">Sélectionné</string>
     <string name="exercise_traits_equipment">Équipement</string>
     <string name="exercise_traits_muscles">Muscles</string>
+    <string name="exercise_filters_heading">Muscles et équipement</string>
+    <string name="filter_whole_zone">Toute la zone</string>
     <string name="exercise_traits_muscles_count">%1$d/%2$d</string>
     <string name="exercise_traits_not_set">Non défini</string>
     <string name="no_exercises_found">Aucun exercice trouvé</string>
@@ -1994,11 +1996,16 @@
     <string name="quick_picker_hint_selecting">Touche les autres dans l'ordre où tu les feras</string>
     <string name="recent_exercises">Récents</string>
     <string name="all_exercises_header">Tous les exercices</string>
+    <string name="picker_same_category">Même muscle · %1$s</string>
     <string name="exercise_setup_button">Séries, répétitions et repos</string>
     <plurals name="add_n_exercises">
         <item quantity="one">Ajouter %1$d exercice</item>
         <item quantity="other">Ajouter %1$d exercices</item>
         <item quantity="many">Ajouter %1$d exercices</item>
+    </plurals>
+    <plurals name="filter_show_n_exercises">
+        <item quantity="one">Afficher %1$d exercice</item>
+        <item quantity="other">Afficher %1$d exercices</item>
     </plurals>
     <plurals name="quick_exercise_count">
         <item quantity="one">%1$d exercice</item>

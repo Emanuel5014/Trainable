@@ -1,5 +1,18 @@
 package com.emanuel5014.trainable.ui.screens.analytics
 
+import com.emanuel5014.trainable.ui.components.pickerBottomInset
+import com.emanuel5014.trainable.ui.components.PickerSheetInsets
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import com.emanuel5014.trainable.ui.components.GymButton
+import com.emanuel5014.trainable.ui.components.CategoryAvatar
+import com.emanuel5014.trainable.ui.components.SelectedCheckBadge
+import com.emanuel5014.trainable.ui.components.ExerciseRow
+import com.emanuel5014.trainable.ui.components.pickerGroup
+import com.emanuel5014.trainable.ui.components.ExerciseEmptyState
+import com.emanuel5014.trainable.ui.components.PickerRowGap
+import com.emanuel5014.trainable.ui.components.ExerciseSearchField
+import com.emanuel5014.trainable.ui.components.ExercisePickerHeader
 import com.emanuel5014.trainable.sharedui.resources.body_weight_delete_message
 import com.emanuel5014.trainable.sharedui.resources.body_weight_delete_title
 import com.emanuel5014.trainable.ui.components.dialogs.ConfirmDeleteDialog
@@ -1143,6 +1156,11 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
     }
 }
 
+/**
+ * Picks the exercises whose records (or charts) the analytics show: several at once, each tap putting one in or out.
+ * The same look as the other exercise pickers: joined rows with the shape of the muscle group, a check in its place
+ * once picked.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExercisePickerBottomSheet(
@@ -1171,172 +1189,82 @@ fun ExercisePickerBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Surface,
-        dragHandle = null
+        contentWindowInsets = PickerSheetInsets,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .size(width = 32.dp, height = 4.dp)
+                    .clip(CircleShape)
+                    .background(OnSurfaceVariant.copy(alpha = 0.4f))
+            )
+        }
     ) {
+        val bottomInset = pickerBottomInset()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.medium)
-                .padding(top = 24.dp, bottom = 10.dp)
+                .padding(horizontal = ResponsiveSize.cardPadding)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = Spacing.small),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(Res.string.analytics_choose_exercises),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold
-                )
+            Row(verticalAlignment = Alignment.Top) {
+                Box(modifier = Modifier.weight(1f)) {
+                    ExercisePickerHeader(
+                        eyebrow = stringResource(Res.string.analytics_selected_count, selectedIds.size),
+                        title = stringResource(Res.string.analytics_choose_exercises)
+                    )
+                }
                 if (selectedIds.isNotEmpty()) {
                     TextButton(onClick = onClearAll) {
-                        Icon(
-                            Icons.Rounded.Clear,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(text = stringResource(Res.string.analytics_clear))
+                        Icon(Icons.Rounded.Clear, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = stringResource(Res.string.analytics_clear), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
 
-            Text(
-                text = stringResource(Res.string.analytics_selected_count, selectedIds.size),
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (selectedIds.isNotEmpty()) Primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = if (selectedIds.isNotEmpty()) FontWeight.ExtraBold else FontWeight.Medium
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.small))
-
-            TextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp)),
-                placeholder = { Text(stringResource(Res.string.search_exercises)) },
-                leadingIcon = {
-                    Icon(Icons.Rounded.Search, contentDescription = null)
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Rounded.Clear, contentDescription = stringResource(Res.string.analytics_clear_search))
-                        }
-                    }
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceContainerHigh,
-                    unfocusedContainerColor = SurfaceContainerHigh,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-
             Spacer(modifier = Modifier.height(Spacing.medium))
-            HorizontalDivider(color = SurfaceContainerHigh)
+            ExerciseSearchField(query = searchQuery, onQueryChange = { searchQuery = it })
 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false)
-                    .heightIn(min = 160.dp, max = if (onConfirmAdd != null) 300.dp else 350.dp)
+                    .heightIn(min = 160.dp),
+                verticalArrangement = Arrangement.spacedBy(PickerRowGap),
+                contentPadding = PaddingValues(
+                    top = Spacing.medium,
+                    bottom = if (onConfirmAdd == null) ResponsiveSize.cardPadding + bottomInset else 0.dp
+                )
             ) {
-                items(filteredExercises) { exercise ->
+                if (filteredExercises.isEmpty()) {
+                    item(key = "empty") { ExerciseEmptyState() }
+                }
+                pickerGroup(filteredExercises, "exercise", { it.exerciseId }) { exercise, shape ->
                     val isSelected = exercise.exerciseId in selectedIds
-                    ExercisePickerItem(
-                        exercise = exercise,
-                        isSelected = isSelected,
-                        onToggle = { onToggleSelection(exercise.exerciseId) },
-                        enabled = true
+                    ExerciseRow(
+                        name = exercise.exerciseName,
+                        category = exercise.category,
+                        onClick = { onToggleSelection(exercise.exerciseId) },
+                        thumbnail = {
+                            if (isSelected) SelectedCheckBadge()
+                            else CategoryAvatar(exercise.categoryKey, exercise.category)
+                        },
+                        containerColor = if (isSelected) Primary.copy(alpha = 0.16f) else SurfaceContainerHigh,
+                        shape = shape,
+                        modifier = Modifier.semantics { selected = isSelected }
                     )
                 }
             }
 
             if (onConfirmAdd != null) {
                 Spacer(modifier = Modifier.height(Spacing.medium))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.small)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(if (selectedIds.isNotEmpty()) Primary else SurfaceContainerHigh)
-                        .clickable(enabled = selectedIds.isNotEmpty()) {
-                            onConfirmAdd()
-                        }
-                        .padding(vertical = 14.dp),
-                    contentAlignment = Alignment.Center
+                GymButton(
+                    onClick = onConfirmAdd,
+                    enabled = selectedIds.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = ResponsiveSize.cardPadding + bottomInset)
                 ) {
-                    Text(
-                        text = stringResource(Res.string.add).uppercaseUi(),
-                        color = if (selectedIds.isNotEmpty()) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                    Text(stringResource(Res.string.add).uppercaseUi(), fontWeight = FontWeight.ExtraBold)
                 }
-                Spacer(modifier = Modifier.height(Spacing.small))
-            }
-        }
-    }
-}
-
-@Composable
-fun ExercisePickerItem(
-    exercise: PersonalBestUiModel,
-    isSelected: Boolean,
-    onToggle: () -> Unit,
-    enabled: Boolean
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) Primary.copy(alpha = 0.12f) else SurfaceContainerHigh
-        ),
-        shape = RoundedCornerShape(16.dp),
-        onClick = onToggle
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = exercise.exerciseName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = exercise.category,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Primary
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(if (isSelected) Primary else Color.Transparent),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    if (isSelected) Icons.Rounded.Check else Icons.Rounded.Add,
-                    contentDescription = null,
-                    tint = if (isSelected) OnPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp)
-                )
             }
         }
     }

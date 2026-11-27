@@ -191,6 +191,8 @@
     <string name="exercise_picked_badge">Ausgewählt</string>
     <string name="exercise_traits_equipment">Ausrüstung</string>
     <string name="exercise_traits_muscles">Muskeln</string>
+    <string name="exercise_filters_heading">Muskeln und Ausrüstung</string>
+    <string name="filter_whole_zone">Ganzer Bereich</string>
     <string name="exercise_traits_muscles_count">%1$d/%2$d</string>
     <string name="exercise_traits_not_set">Nicht festgelegt</string>
     <string name="no_exercises_found">Keine Übungen gefunden</string>
@@ -1971,10 +1973,15 @@
     <string name="quick_picker_hint_selecting">Tippe die anderen in der Reihenfolge an, in der du sie machst</string>
     <string name="recent_exercises">Zuletzt</string>
     <string name="all_exercises_header">Alle Übungen</string>
+    <string name="picker_same_category">Gleicher Muskel · %1$s</string>
     <string name="exercise_setup_button">Sätze, Wiederholungen und Pause</string>
     <plurals name="add_n_exercises">
         <item quantity="one">%1$d Übung hinzufügen</item>
         <item quantity="other">%1$d Übungen hinzufügen</item>
+    </plurals>
+    <plurals name="filter_show_n_exercises">
+        <item quantity="one">%1$d Übung anzeigen</item>
+        <item quantity="other">%1$d Übungen anzeigen</item>
     </plurals>
     <plurals name="quick_exercise_count">
         <item quantity="one">%1$d Übung</item>

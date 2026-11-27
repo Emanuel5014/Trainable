@@ -9,9 +9,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
@@ -30,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -69,13 +67,15 @@ fun ExerciseRow(
     isHidden: Boolean = false,
     isFavorite: Boolean = false,
     containerColor: Color = SurfaceContainerHigh,
+    /** The row's outline; a picker passes its place in a joined group ([pickerRowShape]). */
+    shape: Shape = Shapes.medium,
     badges: @Composable () -> Unit = {},
     trailing: (@Composable () -> Unit)? = null
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(Shapes.medium)
+            .clip(shape)
             .background(containerColor)
             .then(
                 if (onLongClick != null) Modifier.combinedClickable(role = Role.Button, onLongClick = onLongClick, onClick = onClick)
@@ -141,32 +141,29 @@ fun ExercisePickRow(
     /** Place of the exercise among the ones picked together (1, 2, ...); null when it is not picked. */
     selectionNumber: Int? = null,
     /** Opens the sets, reps and rest of the exercise before adding it (the quick workout picker adds it with one tap). */
-    onSetupClick: (() -> Unit)? = null
+    onSetupClick: (() -> Unit)? = null,
+    /** Its place in a joined group of the picker ([pickerRowShape]). */
+    shape: Shape = Shapes.medium
 ) {
+    val category = ExerciseTranslations.translateCategory(exercise.categoria, languageCode)
     ExerciseRow(
         name = ExerciseTranslations.translate(exercise.nome, languageCode),
-        category = ExerciseTranslations.translateCategory(exercise.categoria, languageCode),
+        category = category,
         onClick = onClick,
         modifier = modifier,
         onLongClick = onLongClick,
-        leading = selectionNumber?.let { number ->
-            {
-                Box(
-                    modifier = Modifier.size(28.dp).clip(CircleShape).background(Primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = number.toString(),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = OnPrimary,
-                        fontWeight = FontWeight.Black
-                    )
-                }
+        // With pictures the number goes before the picture; without, it takes the place of the muscle shape
+        leading = selectionNumber?.takeIf { showThumbnail }?.let { number -> { SelectionNumberBadge(number, size = 32.dp) } },
+        thumbnail = when {
+            showThumbnail && exercise.mediaPath != null -> {
+                { LocalExercisePlatformUi.current.ListThumbnail(exercise.mediaPath, onThumbnailClick, null) }
             }
+            // A list with pictures: one without its own keeps the muscle shape, as big as a picture so names line up
+            showThumbnail -> { { CategoryAvatar(exercise.categoria, category, size = THUMBNAIL_SIZE) } }
+            selectionNumber != null -> { { SelectionNumberBadge(selectionNumber) } }
+            else -> { { CategoryAvatar(exercise.categoria, category) } }
         },
-        thumbnail = if (showThumbnail) {
-            { LocalExercisePlatformUi.current.ListThumbnail(exercise.mediaPath, onThumbnailClick, null) }
-        } else null,
+        shape = shape,
         isCustom = exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID,
         isFavorite = exercise.isFavorite,
         containerColor = when {
@@ -200,3 +197,6 @@ fun ExercisePickRow(
         }
     )
 }
+
+/** The size of a picture in a list row ([ExercisePlatformUi.ListThumbnail]); a muscle shape in its place takes the same. */
+private val THUMBNAIL_SIZE = 56.dp
