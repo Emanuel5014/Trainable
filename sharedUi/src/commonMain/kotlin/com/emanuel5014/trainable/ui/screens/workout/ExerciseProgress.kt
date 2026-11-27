@@ -14,4 +14,26 @@ object ExerciseProgress {
             fraction(exercise.sets.count { it.isCompleted }, exercise.sets.size)
         }
     }
+
+    /**
+     * Where a tap at [x] lands among segments that start at [starts] and end at [ends] (same order, same unit): the
+     * segment under it, or the nearest one when it falls in a gap or past an end.
+     */
+    fun segmentAt(x: Float, starts: FloatArray, ends: FloatArray): Int {
+        if (starts.isEmpty()) return -1
+        var best = 0
+        var bestDistance = Float.MAX_VALUE
+        for (i in starts.indices) {
+            val distance = when {
+                x < starts[i] -> starts[i] - x
+                x > ends[i] -> x - ends[i]
+                else -> return i
+            }
+            if (distance < bestDistance) {
+                bestDistance = distance
+                best = i
+            }
+        }
+        return best
+    }
 }
